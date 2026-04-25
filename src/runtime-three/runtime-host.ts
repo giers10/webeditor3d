@@ -329,8 +329,7 @@ const DIALOGUE_PARTICIPANT_RESTORE_EPSILON_DEGREES = 0.5;
 const TARGETING_LUX_FOLLOW_RATE = 8;
 const TARGETING_LUX_BOB_RATE = 4.2;
 const TARGETING_LUX_PULSE_RATE = 6.5;
-const TARGETING_SIDE_SWITCH_YAW_THRESHOLD_RADIANS = (12 * Math.PI) / 180;
-const TARGETING_CANCEL_YAW_THRESHOLD_RADIANS = (60 * Math.PI) / 180;
+const TARGETING_SIDE_SWITCH_EPSILON_RADIANS = Math.PI / 180;
 const TARGETING_MAX_ACTIVE_TARGET_DISTANCE = 15;
 // Proposed-target camera nudging is intentionally disabled for now. Lux alone
 // should communicate proposal without moving the gameplay camera.
@@ -657,6 +656,7 @@ export class RuntimeHost {
   private runtimeTargetCandidates: RuntimeTargetCandidate[] = [];
   private proposedRuntimeTarget: RuntimeTargetCandidate | null = null;
   private activeRuntimeTargetReference: RuntimeTargetReference | null = null;
+  private runtimeTargetLookInputHeldDirection: -1 | 1 | null = null;
   private previousTargetCycleInputActive = false;
   private activeCameraRigOverrideEntityId: string | null = null;
   private activeCameraSourceKey: RuntimeCameraSourceKey | null = null;
@@ -807,6 +807,8 @@ export class RuntimeHost {
         ) ?? { ...desiredCameraPosition },
       resolveThirdPersonTargetAssist: () =>
         this.resolveThirdPersonTargetAssist(),
+      handleRuntimeTargetLookInput: (horizontalIntent) =>
+        this.handleRuntimeTargetLookInput(horizontalIntent),
       isCameraDrivenExternally: () =>
         this.resolveActiveRuntimeCameraRig() !== null ||
         this.resolveDialogueAttentionNpc() !== null,
@@ -5429,6 +5431,7 @@ export class RuntimeHost {
     this.runtimeTargetCandidates = [];
     this.proposedRuntimeTarget = null;
     this.activeRuntimeTargetReference = null;
+    this.runtimeTargetLookInputHeldDirection = null;
     this.previousTargetCycleInputActive = false;
     this.targetingLuxInitialized = false;
     this.targetingVisualTime = 0;
@@ -5453,6 +5456,7 @@ export class RuntimeHost {
 
   private setActiveRuntimeTargetReference(reference: RuntimeTargetReference | null) {
     this.activeRuntimeTargetReference = reference;
+    this.runtimeTargetLookInputHeldDirection = null;
   }
 
   private refreshRuntimeTargetingState() {
@@ -5519,6 +5523,11 @@ export class RuntimeHost {
       if (this.activeController === this.firstPersonController) {
         this.clearRuntimeTargetingState();
       }
+      return;
+    }
+
+    if (this.activeRuntimeTargetReference !== null) {
+      this.clearActiveRuntimeTarget();
       return;
     }
 
