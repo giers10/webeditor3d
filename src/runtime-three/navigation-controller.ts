@@ -151,7 +151,6 @@ export interface RuntimeControllerContext {
     radius: number
   ): Vec3;
   resolveThirdPersonTargetAssist?(): RuntimeThirdPersonTargetAssist | null;
-  reportThirdPersonCameraLookIntent?(yawDeltaRadians: number): void;
   isCameraDrivenExternally(): boolean;
   getCameraYawRadians(): number;
   isInputSuspended(): boolean;
