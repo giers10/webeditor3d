@@ -3194,7 +3194,7 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
-  it("switches an active target toward the user's horizontal camera look intent", () => {
+  it("switches an active target once from horizontal look input while consuming camera control", () => {
     const host = new RuntimeHost({
       enableRendering: false
     });
@@ -3213,7 +3213,7 @@ describe("RuntimeHost", () => {
         kind: "npc";
         entityId: string;
       } | null;
-      camera: PerspectiveCamera;
+      handleRuntimeTargetLookInput(horizontalIntent: -1 | 0 | 1): boolean;
       updateActiveRuntimeTargetLockState(): void;
     };
 
@@ -3270,10 +3270,13 @@ describe("RuntimeHost", () => {
       entityId: "npc-active"
     };
 
-    hostInternals.camera.position.set(0, 1.6, 0);
-    hostInternals.camera.lookAt(2, 1.6, 5);
-    hostInternals.updateActiveRuntimeTargetLockState();
+    expect(hostInternals.handleRuntimeTargetLookInput(1)).toBe(true);
 
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-right"
+    });
+    expect(hostInternals.handleRuntimeTargetLookInput(1)).toBe(true);
     expect(hostInternals.activeRuntimeTargetReference).toEqual({
       kind: "npc",
       entityId: "npc-right"
@@ -3281,7 +3284,7 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
-  it("clears an active target after a large horizontal camera turn when another target is available", () => {
+  it("does not switch active target from camera angle without look input", () => {
     const host = new RuntimeHost({
       enableRendering: false
     });
@@ -3351,7 +3354,10 @@ describe("RuntimeHost", () => {
     hostInternals.camera.lookAt(10, 1.6, 3);
     hostInternals.updateActiveRuntimeTargetLockState();
 
-    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-active"
+    });
     host.dispose();
   });
 
@@ -3377,7 +3383,7 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-far",
             visible: true,
-            position: { x: 0, y: 0, z: 40 },
+            position: { x: 0, y: 0, z: 16 },
             collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
             name: "Far",
             defaultDialogueId: null,
