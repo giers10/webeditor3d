@@ -244,13 +244,10 @@ describe("ThirdPersonNavigationController", () => {
   it("does not reuse the previous high orbit pitch when targeting starts", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();
-    let axes = [0, 0, 0, 1];
     let targetAssistActive = false;
-    const getGamepads = vi.fn<() => Gamepad[]>(() => [
-      createMockGamepad({
-        axes
-      })
-    ]);
+    const controllerInternals = controller as unknown as {
+      pitchRadians: number;
+    };
     const targetContext = {
       ...context,
       resolveThirdPersonTargetAssist: () =>
@@ -266,18 +263,13 @@ describe("ThirdPersonNavigationController", () => {
           : null
     };
 
-    Object.defineProperty(navigator, "getGamepads", {
-      configurable: true,
-      value: getGamepads
-    });
-
     controller.activate(targetContext);
     const defaultCameraY = targetContext.camera.position.y;
 
-    controller.update(1);
+    controllerInternals.pitchRadians = 1.2;
+    controller.update(0);
     const highOrbitCameraY = targetContext.camera.position.y;
 
-    axes = [0, 0, 0, 0];
     targetAssistActive = true;
     controller.update(0);
 
