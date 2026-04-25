@@ -490,10 +490,6 @@ describe("RuntimeHost", () => {
     const gameplayPose = captureCameraPose(hostInternals.camera);
     hostInternals.applyActiveCameraRig(0.175, gameplayPose);
 
-    const expectedMidpoint = new Vector3(1, 1.36, 1).sub(
-      hostInternals.camera.position
-    );
-
     expect(hostInternals.currentPauseState).toEqual({
       paused: true,
       source: "dialogue"
@@ -505,11 +501,20 @@ describe("RuntimeHost", () => {
 
     hostInternals.applyActiveCameraRig(0.175, gameplayPose);
 
-    expect(
-      hostInternals.camera
-        .getWorldDirection(new Vector3())
-        .angleTo(expectedMidpoint.normalize())
-    ).toBeLessThan(0.45);
+    const cameraForward = hostInternals.camera.getWorldDirection(new Vector3());
+    const playerFocusDirection = new Vector3(
+      -hostInternals.camera.position.x,
+      1.312 - hostInternals.camera.position.y,
+      -hostInternals.camera.position.z
+    ).normalize();
+    const npcFocusDirection = new Vector3(
+      2 - hostInternals.camera.position.x,
+      1.408 - hostInternals.camera.position.y,
+      2 - hostInternals.camera.position.z
+    ).normalize();
+
+    expect(cameraForward.dot(playerFocusDirection)).toBeGreaterThan(0.6);
+    expect(cameraForward.dot(npcFocusDirection)).toBeGreaterThan(0.6);
 
     host.dispose();
   });
