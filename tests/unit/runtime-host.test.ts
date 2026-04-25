@@ -66,7 +66,7 @@ import {
   type RuntimeSceneLoadState
 } from "../../src/runtime-three/runtime-host";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
-import { AnimationClip, BoxGeometry, PerspectiveCamera, Vector3, type AnimationMixer } from "three";
+import { AnimationClip, BoxGeometry, PerspectiveCamera, Quaternion, Vector3, type AnimationMixer } from "three";
 import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-collider-fixtures";
 
 function createDeferred<T>() {
@@ -3124,10 +3124,94 @@ describe("RuntimeHost", () => {
       z: -2
     });
     expect(placement.luxPosition.y).toBeCloseTo(2.18);
-    expect(placement.activeMarkerPosition.y).toBeGreaterThan(
-      placement.luxPosition.y
-    );
-    expect(placement.activeMarkerScale).toBeGreaterThan(1);
+    expect(placement.activeMarkerPosition).toMatchObject({
+      x: 1,
+      y: 1.1,
+      z: -2
+    });
+    expect(placement.activeMarkerRadius).toBeGreaterThan(0.6);
+    expect(placement.activeMarkerScale).toBeGreaterThan(0.75);
+  });
+
+  it("uses three active target arrows that point inward at target center", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      activeRuntimeTargetReference: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      targetingActiveGroup: {
+        children: unknown[];
+        position: Vector3;
+        visible: boolean;
+      };
+      targetingActiveArrows: Array<{
+        position: Vector3;
+        quaternion: Quaternion;
+      }>;
+      camera: PerspectiveCamera;
+      updateRuntimeTargetingVisuals(dt: number): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-active",
+            visible: true,
+            position: { x: 0, y: 0, z: 4 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Active",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-active", sourceEntityId: "npc-active", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      feetPosition: { x: 0, y: 0, z: 0 },
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+    hostInternals.camera.position.set(0, 1.6, -3);
+    hostInternals.camera.lookAt(0, 0.9, 4);
+    hostInternals.camera.updateMatrixWorld();
+    hostInternals.camera.updateProjectionMatrix();
+
+    hostInternals.updateRuntimeTargetingVisuals(0.25);
+
+    expect(hostInternals.targetingActiveGroup.visible).toBe(true);
+    expect(hostInternals.targetingActiveGroup.children).toHaveLength(3);
+    expect(hostInternals.targetingActiveGroup.position.y).toBeCloseTo(0.9);
+
+    for (const arrow of hostInternals.targetingActiveArrows) {
+      const inwardDirection = arrow.position.clone().multiplyScalar(-1).normalize();
+      const arrowTipDirection = new Vector3(0, 1, 0)
+        .applyQuaternion(arrow.quaternion)
+        .normalize();
+
+      expect(arrow.position.length()).toBeGreaterThan(0.7);
+      expect(arrowTipDirection.dot(inwardDirection)).toBeGreaterThan(0.99);
+    }
+
+    host.dispose();
   });
 
   it("flies Lux out from the player center when a target is proposed", () => {
