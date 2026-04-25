@@ -1844,6 +1844,10 @@ export class RuntimeHost {
     this.activeRuntimeCameraRig =
       nextSource.kind === "rig" ? nextSource.rig : null;
 
+    if (nextSource.kind === "gameplay" && this.currentDialogue === null) {
+      this.activeDialogueAttentionState = null;
+    }
+
     if (
       this.cameraTransitionState !== null &&
       this.cameraTransitionState.destinationSourceKey === nextSourceKey
