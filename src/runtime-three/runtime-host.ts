@@ -5529,6 +5529,7 @@ export class RuntimeHost {
     this.runtimeTargetSwitchInputHeld = false;
     this.previousTargetCycleInputActive = false;
     this.targetingLuxInitialized = false;
+    this.targetingLuxFlightState = "hidden";
     this.targetingVisualTime = 0;
     this.targetingVisualGroup.visible = false;
     this.targetingLuxGroup.visible = false;
