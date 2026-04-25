@@ -477,6 +477,7 @@ export class FirstPersonNavigationController implements NavigationController {
         ...this.feetPosition
       },
       eyePosition,
+      yawDegrees: (this.yawRadians * 180) / Math.PI,
       grounded: this.grounded,
       locomotionState: this.locomotionState,
       movement: cloneRuntimePlayerMovement(
