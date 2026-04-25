@@ -60,6 +60,7 @@ import { createModelInstance } from "../../src/assets/model-instances";
 import { RapierCollisionWorld } from "../../src/runtime-three/rapier-collision-world";
 import {
   RuntimeHost,
+  resolveRuntimeTargetVisualPlacement,
   type RuntimeDialogueState,
   type RuntimePauseState,
   type RuntimeSceneLoadState
