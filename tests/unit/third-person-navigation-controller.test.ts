@@ -167,6 +167,77 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(context);
   });
 
+  it("smooths the third-person camera back out when collision clears", () => {
+    const { context } = createRuntimeControllerContext();
+    const controller = new ThirdPersonNavigationController();
+    let collisionScale = 0.25;
+    let latestPivot: Vec3 | null = null;
+    let latestDesiredCameraPosition: Vec3 | null = null;
+    const distanceBetween = (left: Vec3, right: Vec3) =>
+      Math.hypot(left.x - right.x, left.y - right.y, left.z - right.z);
+
+    context.resolveThirdPersonCameraCollision = vi.fn(
+      (pivot: Vec3, desiredCameraPosition: Vec3) => {
+        latestPivot = { ...pivot };
+        latestDesiredCameraPosition = { ...desiredCameraPosition };
+
+        return {
+          x: pivot.x + (desiredCameraPosition.x - pivot.x) * collisionScale,
+          y: pivot.y + (desiredCameraPosition.y - pivot.y) * collisionScale,
+          z: pivot.z + (desiredCameraPosition.z - pivot.z) * collisionScale
+        };
+      }
+    );
+
+    controller.activate(context);
+
+    const blockedDistance = distanceBetween(
+      {
+        x: context.camera.position.x,
+        y: context.camera.position.y,
+        z: context.camera.position.z
+      },
+      latestPivot ?? { x: 0, y: 0, z: 0 }
+    );
+
+    collisionScale = 1;
+    controller.update(0.1);
+
+    const recoveringDistance = distanceBetween(
+      {
+        x: context.camera.position.x,
+        y: context.camera.position.y,
+        z: context.camera.position.z
+      },
+      latestPivot ?? { x: 0, y: 0, z: 0 }
+    );
+    const desiredDistance = distanceBetween(
+      latestDesiredCameraPosition ?? { x: 0, y: 0, z: 0 },
+      latestPivot ?? { x: 0, y: 0, z: 0 }
+    );
+
+    expect(recoveringDistance).toBeGreaterThan(blockedDistance);
+    expect(recoveringDistance).toBeLessThan(desiredDistance);
+
+    controller.update(1);
+
+    const finalDistance = distanceBetween(
+      {
+        x: context.camera.position.x,
+        y: context.camera.position.y,
+        z: context.camera.position.z
+      },
+      latestPivot ?? { x: 0, y: 0, z: 0 }
+    );
+    const finalDesiredDistance = distanceBetween(
+      latestDesiredCameraPosition ?? { x: 0, y: 0, z: 0 },
+      latestPivot ?? { x: 0, y: 0, z: 0 }
+    );
+
+    expect(finalDistance).toBeCloseTo(finalDesiredDistance);
+    controller.deactivate(context);
+  });
+
   it("uses lock-on look input as a temporary offset that returns to center", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();
