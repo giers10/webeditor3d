@@ -3847,6 +3847,7 @@ describe("RuntimeHost", () => {
           start: { x: number; y: number; z: number },
           end: { x: number; y: number; z: number }
         ): boolean;
+        dispose(): void;
       };
       runtimeTargetCandidates: Array<{
         kind: "npc";
@@ -3896,7 +3897,8 @@ describe("RuntimeHost", () => {
       eyePosition: { x: 0, y: 1.6, z: 0 }
     };
     hostInternals.collisionWorld = {
-      isLineSegmentClear: (_start, end) => end.z < 8
+      isLineSegmentClear: (_start, end) => end.z < 8,
+      dispose: vi.fn()
     };
     hostInternals.camera.position.set(0, 1.6, 0);
     hostInternals.camera.lookAt(0, 0.9, 8);
@@ -3932,6 +3934,7 @@ describe("RuntimeHost", () => {
           start: { x: number; y: number; z: number },
           end: { x: number; y: number; z: number }
         ): boolean;
+        dispose(): void;
       };
       runtimeTargetCandidates: Array<{
         kind: "npc";
@@ -3982,7 +3985,8 @@ describe("RuntimeHost", () => {
     };
     hostInternals.collisionWorld = {
       isLineSegmentClear: (start, end) =>
-        start.x !== 0 || end.z !== 7
+        start.x !== 0 || end.z !== 7,
+      dispose: vi.fn()
     };
     hostInternals.camera.position.set(1, 1.6, 0);
     hostInternals.camera.lookAt(0, 0.9, 7);
@@ -4014,6 +4018,7 @@ describe("RuntimeHost", () => {
       currentPlayerControllerTelemetry: unknown;
       collisionWorld: {
         isLineSegmentClear(): boolean;
+        dispose(): void;
       };
       activeRuntimeTargetReference: {
         kind: "npc";
@@ -4048,7 +4053,8 @@ describe("RuntimeHost", () => {
       eyePosition: { x: 0, y: 1.6, z: 0 }
     };
     hostInternals.collisionWorld = {
-      isLineSegmentClear: () => false
+      isLineSegmentClear: () => false,
+      dispose: vi.fn()
     };
     hostInternals.activeRuntimeTargetReference = {
       kind: "npc",
