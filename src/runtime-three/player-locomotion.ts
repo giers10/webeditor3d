@@ -501,7 +501,8 @@ export function stepPlayerLocomotion(
     options.verticalVelocity > VERTICAL_ASCENT_EPSILON;
   const canUseImmediateGrounding =
     options.previousLocomotionState === undefined ||
-    options.previousLocomotionState.grounded;
+    options.previousLocomotionState.grounded ||
+    options.verticalVelocity <= VERTICAL_ASCENT_EPSILON;
   const currentlyGrounded =
     currentGroundProbe.grounded &&
     !ascendingFromPreviousFrame &&
