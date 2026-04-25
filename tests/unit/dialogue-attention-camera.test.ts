@@ -249,9 +249,31 @@ describe("resolveDialogueAttentionCameraSolution", () => {
     });
     const projectedPlayer = projectPoint(solution, playerFocusPoint);
     const projectedNpc = projectPoint(solution, npcFocusPoint);
+    const projectedPlayerHead = projectPoint(solution, {
+      x: playerFocusPoint.x,
+      y: playerFocusPoint.y + 0.26,
+      z: playerFocusPoint.z
+    });
+    const projectedPlayerTorso = projectPoint(solution, {
+      x: playerFocusPoint.x,
+      y: playerFocusPoint.y - 0.82,
+      z: playerFocusPoint.z
+    });
+    const projectedNpcHead = projectPoint(solution, {
+      x: npcFocusPoint.x,
+      y: npcFocusPoint.y + 0.26,
+      z: npcFocusPoint.z
+    });
+    const projectedNpcTorso = projectPoint(solution, {
+      x: npcFocusPoint.x,
+      y: npcFocusPoint.y - 0.82,
+      z: npcFocusPoint.z
+    });
 
-    expect(Math.abs(projectedNpc.x - projectedPlayer.x)).toBeGreaterThan(0.42);
+    expect(projectedPlayer.x * projectedNpc.x).toBeLessThan(0);
     expect(Math.abs(projectedPlayer.x)).toBeLessThan(0.75);
     expect(Math.abs(projectedNpc.x)).toBeLessThan(0.75);
+    expect(Math.abs(projectedPlayerHead.y - projectedPlayerTorso.y)).toBeGreaterThan(0.22);
+    expect(Math.abs(projectedNpcHead.y - projectedNpcTorso.y)).toBeGreaterThan(0.22);
   });
 });
