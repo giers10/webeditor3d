@@ -153,7 +153,6 @@ import {
   RuntimeInteractionSystem,
   resolveRuntimeTargetCandidates,
   resolveRuntimeTargetReference,
-  resolveStableRuntimeTargetProposal,
   type RuntimeDialogueStartSource,
   type RuntimeInteractionDispatcher,
   type RuntimeInteractionPrompt,
@@ -337,6 +336,8 @@ const TARGETING_SCREEN_SWITCH_MIN_DISTANCE = 0.04;
 const TARGETING_SCREEN_SWITCH_MIN_ALIGNMENT = 0.68;
 const TARGETING_SCREEN_SWITCH_MAX_ABS_X = 1.35;
 const TARGETING_SCREEN_SWITCH_MAX_ABS_Y = 1.25;
+const TARGETING_SCREEN_PROPOSAL_MAX_ABS_X = 1;
+const TARGETING_SCREEN_PROPOSAL_MAX_ABS_Y = 1;
 const TARGETING_MAX_ACTIVE_TARGET_DISTANCE = 15;
 // Proposed-target camera nudging is intentionally disabled for now. Lux alone
 // should communicate proposal without moving the gameplay camera.
@@ -5579,10 +5580,10 @@ export class RuntimeHost {
       this.setActiveRuntimeTargetReference(null);
     }
 
-    this.proposedRuntimeTarget = resolveStableRuntimeTargetProposal(
-      this.runtimeTargetCandidates,
-      previousProposedId
-    );
+    this.proposedRuntimeTarget =
+      this.resolveRuntimeTargetCandidateNearestScreenCenter() ??
+      this.runtimeTargetCandidates[0] ??
+      null;
   }
 
   private activateOrCycleRuntimeTarget() {
@@ -5733,7 +5734,7 @@ export class RuntimeHost {
     let bestCandidate: RuntimeTargetCandidate | null = null;
     let bestAlignment = TARGETING_SCREEN_SWITCH_MIN_ALIGNMENT;
     let bestScreenDistance = 0;
-    const inputX = -input.horizontal / inputLength;
+    const inputX = input.horizontal / inputLength;
     const inputY = input.vertical / inputLength;
 
     for (const candidate of this.runtimeTargetCandidates) {
@@ -5786,6 +5787,49 @@ export class RuntimeHost {
     return bestCandidate;
   }
 
+  private resolveRuntimeTargetCandidateNearestScreenCenter(
+    options: { exclude?: RuntimeTargetReference | null } = {}
+  ): RuntimeTargetCandidate | null {
+    const exclude = options.exclude ?? null;
+    let bestCandidate: RuntimeTargetCandidate | null = null;
+    let bestScreenDistanceSquared = Number.POSITIVE_INFINITY;
+
+    for (const candidate of this.runtimeTargetCandidates) {
+      if (
+        exclude !== null &&
+        candidate.kind === exclude.kind &&
+        candidate.entityId === exclude.entityId
+      ) {
+        continue;
+      }
+
+      const screenPoint = this.resolveRuntimeTargetScreenPoint(candidate.center);
+
+      if (
+        screenPoint === null ||
+        Math.abs(screenPoint.x) > TARGETING_SCREEN_PROPOSAL_MAX_ABS_X ||
+        Math.abs(screenPoint.y) > TARGETING_SCREEN_PROPOSAL_MAX_ABS_Y
+      ) {
+        continue;
+      }
+
+      const screenDistanceSquared =
+        screenPoint.x * screenPoint.x + screenPoint.y * screenPoint.y;
+
+      if (
+        bestCandidate === null ||
+        screenDistanceSquared < bestScreenDistanceSquared ||
+        (screenDistanceSquared === bestScreenDistanceSquared &&
+          candidate.score > bestCandidate.score)
+      ) {
+        bestCandidate = candidate;
+        bestScreenDistanceSquared = screenDistanceSquared;
+      }
+    }
+
+    return bestCandidate;
+  }
+
   private updateActiveRuntimeTargetLockState() {
     if (
       this.activeRuntimeTargetReference === null ||
@@ -5808,6 +5852,20 @@ export class RuntimeHost {
         activeTarget.center
       ) > TARGETING_MAX_ACTIVE_TARGET_DISTANCE
     ) {
+      const replacementTarget =
+        this.resolveRuntimeTargetCandidateNearestScreenCenter({
+          exclude: this.activeRuntimeTargetReference
+        });
+
+      if (replacementTarget !== null) {
+        this.setActiveRuntimeTargetReference({
+          kind: replacementTarget.kind,
+          entityId: replacementTarget.entityId
+        });
+        this.proposedRuntimeTarget = replacementTarget;
+        return;
+      }
+
       this.setActiveRuntimeTargetReference(null);
       return;
     }
