@@ -379,9 +379,17 @@ function createTransientResourceUrl(file: ProjectAssetStorageFileRecord): { revo
     };
   }
 
+  const dataUrl = createDataUrlForStoredFile(file);
+  const previousCacheEnabled = Cache.enabled;
+  Cache.enabled = true;
+  Cache.add(dataUrl, file.bytes.slice(0));
+
   return {
-    url: createDataUrlForStoredFile(file),
-    revoke: () => undefined
+    url: dataUrl,
+    revoke: () => {
+      Cache.remove(dataUrl);
+      Cache.enabled = previousCacheEnabled;
+    }
   };
 }
 
