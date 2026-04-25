@@ -5620,13 +5620,14 @@ export class RuntimeHost {
       if (npc !== null) {
         switch (npc.collider.mode) {
           case "capsule": {
+            const collider = npc.collider;
             const sampleClearance =
               Math.max(
-                npc.collider.radius,
+                collider.radius,
                 TARGETING_VISIBILITY_TARGET_CLEARANCE
               ) + TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
             const yAt = (factor: number) =>
-              npc.position.y + npc.collider.height * factor;
+              npc.position.y + collider.height * factor;
 
             return [
               {
@@ -5645,18 +5646,19 @@ export class RuntimeHost {
             ];
           }
           case "box": {
+            const collider = npc.collider;
             const sampleClearance =
               clampScalar(
                 Math.max(
-                  npc.collider.size.x,
-                  npc.collider.size.y,
-                  npc.collider.size.z
+                  collider.size.x,
+                  collider.size.y,
+                  collider.size.z
                 ) * 0.25,
                 0.35,
                 0.75
               ) + TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
             const yAt = (factor: number) =>
-              npc.position.y + npc.collider.size.y * factor;
+              npc.position.y + collider.size.y * factor;
 
             return [
               {
