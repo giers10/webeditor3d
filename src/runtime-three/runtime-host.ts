@@ -798,6 +798,9 @@ export class RuntimeHost {
         ) ?? { ...desiredCameraPosition },
       resolveThirdPersonTargetAssist: () =>
         this.resolveThirdPersonTargetAssist(),
+      reportThirdPersonCameraLookIntent: (yawDeltaRadians) => {
+        this.reportThirdPersonCameraLookIntent(yawDeltaRadians);
+      },
       isCameraDrivenExternally: () =>
         this.resolveActiveRuntimeCameraRig() !== null ||
         this.resolveDialogueAttentionNpc() !== null,
@@ -4769,6 +4772,7 @@ export class RuntimeHost {
     this.updateRuntimeDialogueParticipants(cameraDt);
     this.refreshRuntimeTargetingState();
     this.activeController?.update(simulationDt);
+    this.updateActiveRuntimeTargetLockState();
     const activeCameraRig = this.applyActiveCameraRig(cameraDt, previousCameraPose);
     this.updateRuntimeTargetingVisuals(cameraDt);
 
@@ -5418,6 +5422,7 @@ export class RuntimeHost {
     this.runtimeTargetCandidates = [];
     this.proposedRuntimeTarget = null;
     this.activeRuntimeTargetReference = null;
+    this.runtimeTargetLookYawDeltaRadians = 0;
     this.previousTargetCycleInputActive = false;
     this.targetingLuxInitialized = false;
     this.targetingVisualTime = 0;
