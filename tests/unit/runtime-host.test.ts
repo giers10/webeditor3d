@@ -3641,6 +3641,62 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("clears active target on manual look boundary without retargeting", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      controllerContext: {
+        handleRuntimeTargetLookBoundaryReached(): boolean;
+      };
+      runtimeTargetCandidates: Array<{
+        kind: "npc";
+        entityId: string;
+        prompt: string;
+        position: { x: number; y: number; z: number };
+        center: { x: number; y: number; z: number };
+        distance: number;
+        range: number;
+        viewDot: number;
+        score: number;
+      }>;
+      proposedRuntimeTarget: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      activeRuntimeTargetReference: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+    };
+
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+    hostInternals.proposedRuntimeTarget = null;
+    hostInternals.runtimeTargetCandidates = [
+      {
+        kind: "npc",
+        entityId: "npc-near",
+        prompt: "Talk",
+        position: { x: 0, y: 0, z: 6 },
+        center: { x: 0, y: 0.9, z: 6 },
+        distance: 6,
+        range: 1.5,
+        viewDot: 1,
+        score: 2
+      }
+    ];
+
+    expect(
+      hostInternals.controllerContext.handleRuntimeTargetLookBoundaryReached()
+    ).toBe(false);
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    expect(hostInternals.proposedRuntimeTarget).toBeNull();
+    host.dispose();
+  });
+
   it("clears an active target when the player moves too far away without an on-screen fallback", () => {
     const host = new RuntimeHost({
       enableRendering: false
