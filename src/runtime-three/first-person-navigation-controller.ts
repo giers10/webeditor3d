@@ -537,6 +537,15 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
+    const targetLookConsumed =
+      this.context?.handleRuntimeTargetLookInput?.(
+        event.movementX > 0 ? 1 : event.movementX < 0 ? -1 : 0
+      ) ?? false;
+
+    if (targetLookConsumed) {
+      return;
+    }
+
     this.yawRadians -= event.movementX * LOOK_SENSITIVITY;
     this.pitchRadians = clampPitch(
       this.pitchRadians - event.movementY * LOOK_SENSITIVITY
