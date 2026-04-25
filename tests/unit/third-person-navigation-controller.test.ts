@@ -278,7 +278,7 @@ describe("ThirdPersonNavigationController", () => {
     expect(highOrbitCameraY).toBeGreaterThan(defaultCameraY + 2);
     expect(firstTargetFrameCameraY).toBeGreaterThan(defaultCameraY + 1);
     expect(firstTargetFrameCameraY).toBeLessThan(highOrbitCameraY);
-    expect(targetContext.camera.position.y).toBeCloseTo(defaultCameraY, 1);
+    expect(controllerInternals.pitchRadians).toBeCloseTo(0.35, 4);
 
     controller.deactivate(targetContext);
   });
