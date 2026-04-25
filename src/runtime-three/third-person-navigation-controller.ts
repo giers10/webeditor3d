@@ -38,6 +38,7 @@ const MAX_PITCH_RADIANS = Math.PI * 0.45;
 export const THIRD_PERSON_CAMERA_COLLISION_RADIUS = 0.2;
 const CAMERA_PIVOT_EYE_HEIGHT_FACTOR = 0.85;
 const TARGET_ASSIST_YAW_SPEED = 2.2;
+const TARGET_ASSIST_ORBIT_PITCH_RETURN_SPEED = 5.5;
 const TARGET_ASSIST_VERTICAL_LOOK_SPEED = 3.4;
 const TARGET_ASSIST_VERTICAL_LOOK_LIMIT = 1.25;
 const TARGET_ASSIST_VERTICAL_COLLISION_FADE_START_RATIO = 0.28;
@@ -419,7 +420,12 @@ export class ThirdPersonNavigationController implements NavigationController {
           targetAssist.targetPosition.x - this.feetPosition.x,
           targetAssist.targetPosition.z - this.feetPosition.z
         );
-        this.pitchRadians = DEFAULT_PITCH_RADIANS;
+        this.pitchRadians = dampScalar(
+          this.pitchRadians,
+          DEFAULT_PITCH_RADIANS,
+          TARGET_ASSIST_ORBIT_PITCH_RETURN_SPEED * targetAssist.strength,
+          dt
+        );
         this.cameraYawRadians = dampAngleRadians(
           this.cameraYawRadians,
           targetYaw,
