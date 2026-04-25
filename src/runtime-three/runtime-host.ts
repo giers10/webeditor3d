@@ -3584,7 +3584,7 @@ export class RuntimeHost {
       z: this.camera.position.z
     });
     const fogTelemetry =
-      this.activeRuntimeCameraRig !== null
+      this.isActiveExternalCameraSource()
         ? {
             cameraSubmerged:
               cameraVolumeState.inWater &&
