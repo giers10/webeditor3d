@@ -306,6 +306,9 @@ const RUNTIME_CLOCK_PUBLISH_INTERVAL_SECONDS = 1 / 30;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 const CAMERA_RIG_POINTER_LOOK_SENSITIVITY = 0.004;
 const CAMERA_RIG_GAMEPAD_LOOK_SPEED = 2.2;
+const DIALOGUE_ATTENTION_CAMERA_TRANSITION_DURATION_SECONDS = 0.35;
+const DIALOGUE_ATTENTION_PLAYER_FOCUS_HEIGHT_FACTOR = 0.82;
+const DIALOGUE_ATTENTION_NPC_FOCUS_HEIGHT_FACTOR = 0.88;
 
 function dampScalar(current: number, target: number, rate: number, dt: number) {
   return current + (target - current) * Math.min(1, dt * rate);
@@ -344,10 +347,13 @@ export interface RuntimeDialogueState {
 
 export interface RuntimePauseState {
   paused: boolean;
-  source: "manual" | "control" | "mixed" | null;
+  source: "manual" | "control" | "dialogue" | "mixed" | null;
 }
 
-type RuntimeCameraSourceKey = "gameplay" | `rig:${string}`;
+type RuntimeCameraSourceKey =
+  | "gameplay"
+  | `rig:${string}`
+  | `dialogue:${string}`;
 
 interface RuntimeCameraPose {
   position: Vector3;
@@ -361,6 +367,24 @@ interface RuntimeCameraTransitionState {
   toPose: RuntimeCameraPose;
   destinationSourceKey: RuntimeCameraSourceKey;
 }
+
+interface RuntimeDialogueAttentionState {
+  npcEntityId: string;
+  sideSign: DialogueAttentionSideSign;
+}
+
+type RuntimeResolvedCameraSource =
+  | {
+      kind: "gameplay";
+    }
+  | {
+      kind: "rig";
+      rig: RuntimeCameraRig;
+    }
+  | {
+      kind: "dialogue";
+      state: RuntimeDialogueAttentionState;
+    };
 
 export class RuntimeHost {
   private readonly scene = new Scene();
