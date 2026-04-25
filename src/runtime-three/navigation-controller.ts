@@ -121,6 +121,11 @@ export interface RuntimePlayerVolumeState {
   waterSurfaceHeight: number | null;
 }
 
+export interface RuntimeThirdPersonTargetAssist {
+  targetPosition: Vec3;
+  strength: number;
+}
+
 export interface RuntimeControllerContext {
   camera: PerspectiveCamera;
   domElement: HTMLCanvasElement;
@@ -145,6 +150,7 @@ export interface RuntimeControllerContext {
     desiredCameraPosition: Vec3,
     radius: number
   ): Vec3;
+  resolveThirdPersonTargetAssist?(): RuntimeThirdPersonTargetAssist | null;
   isCameraDrivenExternally(): boolean;
   getCameraYawRadians(): number;
   isInputSuspended(): boolean;
