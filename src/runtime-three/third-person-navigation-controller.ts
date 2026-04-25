@@ -199,6 +199,8 @@ export class ThirdPersonNavigationController implements NavigationController {
       this.yawRadians = (spawn.yawDegrees * Math.PI) / 180;
       this.cameraYawRadians = this.yawRadians;
       this.pitchRadians = DEFAULT_PITCH_RADIANS;
+      this.targetLookOffsetYawRadians = 0;
+      this.targetLookOffsetPitchRadians = 0;
       this.cameraDistance = DEFAULT_CAMERA_DISTANCE;
       this.verticalVelocity = 0;
       this.grounded = false;
@@ -272,6 +274,8 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.yawRadians = 0;
     this.cameraYawRadians = 0;
     this.pitchRadians = DEFAULT_PITCH_RADIANS;
+    this.targetLookOffsetYawRadians = 0;
+    this.targetLookOffsetPitchRadians = 0;
     this.cameraDistance = DEFAULT_CAMERA_DISTANCE;
     this.verticalVelocity = 0;
     this.grounded = false;
@@ -453,6 +457,8 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.yawRadians = (yawDegrees * Math.PI) / 180;
     this.cameraYawRadians = this.yawRadians;
     this.pitchRadians = DEFAULT_PITCH_RADIANS;
+    this.targetLookOffsetYawRadians = 0;
+    this.targetLookOffsetPitchRadians = 0;
     this.verticalVelocity = 0;
     this.grounded = false;
     this.jumpPressed = false;
