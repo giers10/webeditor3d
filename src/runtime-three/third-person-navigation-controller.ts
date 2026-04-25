@@ -366,21 +366,9 @@ export class ThirdPersonNavigationController implements NavigationController {
         targetLookResult.switchedTarget !== true &&
         targetLookResult.switchInputHeld !== true
       ) {
-        this.targetLookOffsetYawRadians = Math.max(
-          -TARGET_LOOK_OFFSET_YAW_LIMIT,
-          Math.min(
-            TARGET_LOOK_OFFSET_YAW_LIMIT,
-            this.targetLookOffsetYawRadians -
-              lookInput.horizontal * TARGET_LOOK_OFFSET_GAMEPAD_SPEED * dt
-          )
-        );
-        this.targetLookOffsetPitchRadians = Math.max(
-          -TARGET_LOOK_OFFSET_PITCH_LIMIT,
-          Math.min(
-            TARGET_LOOK_OFFSET_PITCH_LIMIT,
-            this.targetLookOffsetPitchRadians -
-              lookInput.vertical * TARGET_LOOK_OFFSET_GAMEPAD_SPEED * dt
-          )
+        this.applyTargetLookOffsetDelta(
+          -lookInput.horizontal * TARGET_LOOK_OFFSET_GAMEPAD_SPEED * dt,
+          -lookInput.vertical * TARGET_LOOK_OFFSET_GAMEPAD_SPEED * dt
         );
       }
     } else if (!cameraDrivenExternally && lookInputActive) {
@@ -771,21 +759,9 @@ export class ThirdPersonNavigationController implements NavigationController {
         targetLookResult.switchedTarget !== true &&
         targetLookResult.switchInputHeld !== true
       ) {
-        this.targetLookOffsetYawRadians = Math.max(
-          -TARGET_LOOK_OFFSET_YAW_LIMIT,
-          Math.min(
-            TARGET_LOOK_OFFSET_YAW_LIMIT,
-            this.targetLookOffsetYawRadians -
-              deltaX * TARGET_LOOK_OFFSET_POINTER_SENSITIVITY
-          )
-        );
-        this.targetLookOffsetPitchRadians = Math.max(
-          -TARGET_LOOK_OFFSET_PITCH_LIMIT,
-          Math.min(
-            TARGET_LOOK_OFFSET_PITCH_LIMIT,
-            this.targetLookOffsetPitchRadians +
-              deltaY * TARGET_LOOK_OFFSET_POINTER_SENSITIVITY
-          )
+        this.applyTargetLookOffsetDelta(
+          -deltaX * TARGET_LOOK_OFFSET_POINTER_SENSITIVITY,
+          deltaY * TARGET_LOOK_OFFSET_POINTER_SENSITIVITY
         );
       }
       return;
