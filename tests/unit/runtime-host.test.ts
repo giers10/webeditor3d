@@ -656,6 +656,72 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("smooths runtime camera collision recovery when an obstruction clears", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      camera: PerspectiveCamera;
+      collisionWorld: RapierCollisionWorld | null;
+      applyCameraPose(
+        pose: {
+          position: Vector3;
+          lookTarget: Vector3;
+          collisionPivot: Vector3;
+          collisionRadius: number;
+        },
+        dt?: number
+      ): void;
+    };
+    const pivot = new Vector3(0, 1, 0);
+    const desiredPosition = new Vector3(0, 2, -4);
+    const pose = {
+      position: desiredPosition,
+      lookTarget: new Vector3(0, 1, 0),
+      collisionPivot: pivot,
+      collisionRadius: 0.2
+    };
+    let collisionScale = 0.25;
+    const distanceFromPivot = () =>
+      hostInternals.camera.position.distanceTo(pivot);
+    const desiredDistance = desiredPosition.distanceTo(pivot);
+
+    hostInternals.collisionWorld = {
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (
+          collisionPivot: { x: number; y: number; z: number },
+          desiredCameraPosition: { x: number; y: number; z: number }
+        ) => ({
+          x:
+            collisionPivot.x +
+            (desiredCameraPosition.x - collisionPivot.x) * collisionScale,
+          y:
+            collisionPivot.y +
+            (desiredCameraPosition.y - collisionPivot.y) * collisionScale,
+          z:
+            collisionPivot.z +
+            (desiredCameraPosition.z - collisionPivot.z) * collisionScale
+        })
+      )
+    } as unknown as RapierCollisionWorld;
+
+    hostInternals.applyCameraPose(pose, 0);
+    const blockedDistance = distanceFromPivot();
+
+    collisionScale = 1;
+    hostInternals.applyCameraPose(pose, 0.1);
+    const recoveringDistance = distanceFromPivot();
+
+    expect(recoveringDistance).toBeGreaterThan(blockedDistance);
+    expect(recoveringDistance).toBeLessThan(desiredDistance);
+
+    hostInternals.applyCameraPose(pose, 1);
+
+    expect(distanceFromPivot()).toBeCloseTo(desiredDistance);
+    host.dispose();
+  });
+
   it("stages dialogue participants with minimum spacing and restores npc yaw after dialogue", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const canOccupyPlayerShape = vi.fn(() => true);
