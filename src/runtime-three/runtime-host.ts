@@ -4519,7 +4519,15 @@ export class RuntimeHost {
       return;
     }
 
+    if (
+      dialogue === null ||
+      this.activeDialogueAttentionState?.npcEntityId !== dialogue.npcEntityId
+    ) {
+      this.activeDialogueAttentionState = null;
+    }
+
     this.currentDialogue = dialogue;
+    this.setDialoguePauseActive(dialogue !== null);
     this.runtimeDialogueHandler?.(dialogue);
   }
 
