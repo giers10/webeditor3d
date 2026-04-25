@@ -325,6 +325,9 @@ const DIALOGUE_PARTICIPANT_MIN_SURFACE_DISTANCE = 0.5;
 const DIALOGUE_PARTICIPANT_PUSHBACK_DURATION_SECONDS = 0.3;
 const DIALOGUE_PARTICIPANT_YAW_BLEND_RATE = 8;
 const DIALOGUE_PARTICIPANT_RESTORE_EPSILON_DEGREES = 0.5;
+const TARGETING_LUX_FOLLOW_RATE = 8;
+const PROPOSED_TARGET_CAMERA_ASSIST_STRENGTH = 0.28;
+const ACTIVE_TARGET_CAMERA_ASSIST_STRENGTH = 0.55;
 
 function dampScalar(current: number, target: number, rate: number, dt: number) {
   return current + (target - current) * Math.min(1, dt * rate);
@@ -470,6 +473,34 @@ export class RuntimeHost {
   private readonly brushGroup = new Group();
   private readonly terrainGroup = new Group();
   private readonly modelGroup = new Group();
+  private readonly targetingVisualGroup = new Group();
+  private readonly targetingLuxGroup = new Group();
+  private readonly targetingActiveGroup = new Group();
+  private readonly targetingLuxMesh = new Mesh(
+    new SphereGeometry(0.065, 16, 8),
+    new MeshBasicMaterial({
+      color: 0x8df7ff,
+      transparent: true,
+      opacity: 0.95
+    })
+  );
+  private readonly targetingActiveRing = new Mesh(
+    new TorusGeometry(0.42, 0.018, 8, 36),
+    new MeshBasicMaterial({
+      color: 0xfff2a2,
+      transparent: true,
+      opacity: 0.95
+    })
+  );
+  private readonly targetingActiveArrow = new Mesh(
+    new ConeGeometry(0.12, 0.24, 12),
+    new MeshBasicMaterial({
+      color: 0xfff2a2,
+      transparent: true,
+      opacity: 0.95
+    })
+  );
+  private targetingLuxInitialized = false;
   private readonly firstPersonController =
     new FirstPersonNavigationController();
   private readonly thirdPersonController =
@@ -566,6 +597,10 @@ export class RuntimeHost {
   private currentClockState: RuntimeClockState | null = null;
   private lastPublishedClockState: RuntimeClockState | null = null;
   private currentPlayerAudioHooks: RuntimePlayerAudioHookState | null = null;
+  private runtimeTargetCandidates: RuntimeTargetCandidate[] = [];
+  private proposedRuntimeTarget: RuntimeTargetCandidate | null = null;
+  private activeRuntimeTargetReference: RuntimeTargetReference | null = null;
+  private previousTargetCycleInputActive = false;
   private activeCameraRigOverrideEntityId: string | null = null;
   private activeCameraSourceKey: RuntimeCameraSourceKey | null = null;
   private activeRuntimeCameraRig: RuntimeCameraRig | null = null;
@@ -609,6 +644,17 @@ export class RuntimeHost {
     this.scene.add(this.brushGroup);
     this.scene.add(this.terrainGroup);
     this.scene.add(this.modelGroup);
+    this.targetingLuxGroup.add(this.targetingLuxMesh);
+    this.targetingActiveArrow.position.y = 0.58;
+    this.targetingActiveArrow.rotation.x = Math.PI;
+    this.targetingActiveGroup.add(this.targetingActiveRing);
+    this.targetingActiveGroup.add(this.targetingActiveArrow);
+    this.targetingVisualGroup.add(this.targetingLuxGroup);
+    this.targetingVisualGroup.add(this.targetingActiveGroup);
+    this.targetingVisualGroup.visible = false;
+    this.targetingLuxGroup.visible = false;
+    this.targetingActiveGroup.visible = false;
+    this.scene.add(this.targetingVisualGroup);
     this.underwaterSceneFog.density = 0;
     this.scene.fog = this.underwaterSceneFog;
     this.renderer = enableRendering
@@ -695,6 +741,8 @@ export class RuntimeHost {
           desiredCameraPosition,
           radius
         ) ?? { ...desiredCameraPosition },
+      resolveThirdPersonTargetAssist: () =>
+        this.resolveThirdPersonTargetAssist(),
       isCameraDrivenExternally: () =>
         this.resolveActiveRuntimeCameraRig() !== null ||
         this.resolveDialogueAttentionNpc() !== null,
