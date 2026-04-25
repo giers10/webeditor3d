@@ -186,6 +186,7 @@ export class ThirdPersonNavigationController implements NavigationController {
   private latestJumpStarted = false;
   private latestHeadBump = false;
   private smoothedFeetY = 0;
+  private smoothedCameraCollisionDistance: number | null = null;
   private previousPlanarDisplacement = {
     x: 0,
     y: 0,
