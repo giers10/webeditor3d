@@ -2645,14 +2645,14 @@ export class RuntimeHost {
         collisionPivot:
           this.cameraTransitionState.toPose.collisionPivot?.clone() ?? null,
         collisionRadius: this.cameraTransitionState.toPose.collisionRadius ?? null
-      });
+      }, dt);
 
       if (blendT >= 1) {
         this.cameraTransitionState = null;
       }
     } else {
       this.cameraTransitionState = null;
-      this.applyCameraPose(targetPose);
+      this.applyCameraPose(targetPose, dt);
     }
 
     if (nextSource.kind !== "gameplay") {
