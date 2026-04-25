@@ -881,6 +881,7 @@ export class RuntimeHost {
     this.thirdPersonController.resetSceneState();
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
+    this.clearRuntimeTargetingState();
     this.setRuntimeDialogue(null);
     this.manualPauseActive = false;
     this.controlPauseActive = false;
@@ -954,6 +955,10 @@ export class RuntimeHost {
 
   setNavigationMode(mode: RuntimeNavigationMode) {
     this.desiredNavigationMode = mode;
+
+    if (mode === "firstPerson") {
+      this.clearRuntimeTargetingState();
+    }
 
     if (this.runtimeScene === null || !this.sceneReady) {
       return;
@@ -1099,6 +1104,7 @@ export class RuntimeHost {
     this.activeController = null;
     this.resetPlayerCameraEffects();
     this.setInteractionPrompt(null);
+    this.clearRuntimeTargetingState();
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     this.clearLocalLights();
@@ -1144,6 +1150,12 @@ export class RuntimeHost {
     this.environmentBlendCache?.dispose();
     this.shaderSkyEnvironmentBlendCache?.dispose();
     this.shaderSkyEnvironmentCache?.dispose();
+    this.targetingLuxMesh.geometry.dispose();
+    this.targetingLuxMesh.material.dispose();
+    this.targetingActiveRing.geometry.dispose();
+    this.targetingActiveRing.material.dispose();
+    this.targetingActiveArrow.geometry.dispose();
+    this.targetingActiveArrow.material.dispose();
     this.worldBackgroundRenderer.dispose();
     this.renderer?.forceContextLoss();
     this.renderer?.dispose();
@@ -1301,6 +1313,9 @@ export class RuntimeHost {
     this.activeController?.deactivate(this.controllerContext);
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
+    if (nextController === this.firstPersonController) {
+      this.clearRuntimeTargetingState();
+    }
     this.activeController = nextController;
     this.activeController.activate(this.controllerContext);
   }
@@ -4689,13 +4704,16 @@ export class RuntimeHost {
     const dt = Math.min((now - this.previousFrameTime) / 1000, 1 / 20);
     this.previousFrameTime = now;
     this.updatePauseInputState();
+    this.updateRuntimeTargetingInputState();
     const simulationDt = this.isRuntimePaused() ? 0 : dt;
     const cameraDt = dt;
     const previousCameraPose = this.captureCurrentCameraPose();
 
     this.updateRuntimeDialogueParticipants(cameraDt);
+    this.refreshRuntimeTargetingState();
     this.activeController?.update(simulationDt);
     const activeCameraRig = this.applyActiveCameraRig(cameraDt, previousCameraPose);
+    this.updateRuntimeTargetingVisuals(cameraDt);
 
     if (!this.isActiveExternalCameraSource() && activeCameraRig === null) {
       this.applyPlayerCameraEffects(simulationDt);
@@ -5339,6 +5357,243 @@ export class RuntimeHost {
     );
   }
 
+  private clearRuntimeTargetingState() {
+    this.runtimeTargetCandidates = [];
+    this.proposedRuntimeTarget = null;
+    this.activeRuntimeTargetReference = null;
+    this.previousTargetCycleInputActive = false;
+    this.targetingLuxInitialized = false;
+    this.targetingVisualGroup.visible = false;
+    this.targetingLuxGroup.visible = false;
+    this.targetingActiveGroup.visible = false;
+  }
+
+  private resolveActiveRuntimeTarget(): RuntimeResolvedTarget | null {
+    if (
+      this.runtimeScene === null ||
+      this.activeRuntimeTargetReference === null
+    ) {
+      return null;
+    }
+
+    return resolveRuntimeTargetReference(
+      this.runtimeScene,
+      this.activeRuntimeTargetReference
+    );
+  }
+
+  private refreshRuntimeTargetingState() {
+    if (
+      this.runtimeScene === null ||
+      this.currentPlayerControllerTelemetry === null ||
+      !this.sceneReady ||
+      this.activeController !== this.thirdPersonController
+    ) {
+      if (this.activeController === this.firstPersonController) {
+        this.clearRuntimeTargetingState();
+      } else {
+        this.runtimeTargetCandidates = [];
+        this.proposedRuntimeTarget = null;
+      }
+      return;
+    }
+
+    if (this.currentDialogue !== null) {
+      this.runtimeTargetCandidates = [];
+      this.proposedRuntimeTarget = null;
+      return;
+    }
+
+    this.camera.getWorldDirection(this.cameraForward);
+
+    const previousProposedId = this.proposedRuntimeTarget?.entityId ?? null;
+    this.runtimeTargetCandidates = resolveRuntimeTargetCandidates({
+      interactionOrigin: this.currentPlayerControllerTelemetry.eyePosition,
+      cameraPosition: {
+        x: this.camera.position.x,
+        y: this.camera.position.y,
+        z: this.camera.position.z
+      },
+      cameraForward: {
+        x: this.cameraForward.x,
+        y: this.cameraForward.y,
+        z: this.cameraForward.z
+      },
+      runtimeScene: this.runtimeScene,
+      previousProposedTargetEntityId: previousProposedId
+    });
+
+    if (
+      this.activeRuntimeTargetReference !== null &&
+      this.resolveActiveRuntimeTarget() === null
+    ) {
+      this.activeRuntimeTargetReference = null;
+    }
+
+    this.proposedRuntimeTarget = resolveStableRuntimeTargetProposal(
+      this.runtimeTargetCandidates,
+      previousProposedId
+    );
+  }
+
+  private activateOrCycleRuntimeTarget() {
+    if (
+      this.runtimeScene === null ||
+      !this.sceneReady ||
+      this.activeController !== this.thirdPersonController ||
+      this.currentDialogue !== null
+    ) {
+      if (this.activeController === this.firstPersonController) {
+        this.clearRuntimeTargetingState();
+      }
+      return;
+    }
+
+    if (this.activeRuntimeTargetReference === null) {
+      const nextTarget =
+        this.proposedRuntimeTarget ?? this.runtimeTargetCandidates[0] ?? null;
+
+      if (nextTarget !== null) {
+        this.activeRuntimeTargetReference = {
+          kind: nextTarget.kind,
+          entityId: nextTarget.entityId
+        };
+      }
+      return;
+    }
+
+    if (this.runtimeTargetCandidates.length === 0) {
+      return;
+    }
+
+    const activeEntityId = this.activeRuntimeTargetReference.entityId;
+    const activeIndex = this.runtimeTargetCandidates.findIndex(
+      (candidate) => candidate.entityId === activeEntityId
+    );
+    const nextIndex =
+      activeIndex < 0
+        ? 0
+        : (activeIndex + 1) % this.runtimeTargetCandidates.length;
+    const nextTarget = this.runtimeTargetCandidates[nextIndex]!;
+    this.activeRuntimeTargetReference = {
+      kind: nextTarget.kind,
+      entityId: nextTarget.entityId
+    };
+    this.proposedRuntimeTarget = nextTarget;
+  }
+
+  private clearActiveRuntimeTarget() {
+    this.activeRuntimeTargetReference = null;
+  }
+
+  private updateRuntimeTargetingInputState() {
+    if (this.runtimeScene === null || !this.sceneReady) {
+      this.previousTargetCycleInputActive = false;
+      return;
+    }
+
+    const targetInputActive = resolveDefaultTargetCycleInput() >= 0.5;
+
+    if (targetInputActive && !this.previousTargetCycleInputActive) {
+      this.activateOrCycleRuntimeTarget();
+    }
+
+    this.previousTargetCycleInputActive = targetInputActive;
+  }
+
+  private resolveThirdPersonTargetAssist() {
+    if (
+      this.runtimeScene === null ||
+      this.activeController !== this.thirdPersonController ||
+      this.currentDialogue !== null ||
+      this.resolveActiveRuntimeCameraRig() !== null ||
+      this.resolveDialogueAttentionNpc() !== null
+    ) {
+      return null;
+    }
+
+    const activeTarget = this.resolveActiveRuntimeTarget();
+
+    if (activeTarget !== null) {
+      return {
+        targetPosition: activeTarget.center,
+        strength: ACTIVE_TARGET_CAMERA_ASSIST_STRENGTH
+      };
+    }
+
+    if (this.proposedRuntimeTarget !== null) {
+      return {
+        targetPosition: this.proposedRuntimeTarget.center,
+        strength: PROPOSED_TARGET_CAMERA_ASSIST_STRENGTH
+      };
+    }
+
+    return null;
+  }
+
+  private updateRuntimeTargetingVisuals(dt: number) {
+    const activeTarget = this.resolveActiveRuntimeTarget();
+    const visualTarget = activeTarget ?? this.proposedRuntimeTarget;
+    const shouldShow =
+      visualTarget !== null &&
+      this.runtimeScene !== null &&
+      this.sceneReady &&
+      this.activeController === this.thirdPersonController &&
+      this.currentDialogue === null &&
+      !this.isActiveExternalCameraSource() &&
+      this.resolveActiveRuntimeCameraRig() === null &&
+      this.resolveDialogueAttentionNpc() === null;
+
+    if (!shouldShow || visualTarget === null) {
+      this.targetingVisualGroup.visible = false;
+      this.targetingLuxGroup.visible = false;
+      this.targetingActiveGroup.visible = false;
+      this.targetingLuxInitialized = false;
+      return;
+    }
+
+    const lift = clampScalar(visualTarget.range * 0.18, 0.25, 0.55);
+    const targetLuxPosition = {
+      x: visualTarget.center.x,
+      y: visualTarget.center.y + lift,
+      z: visualTarget.center.z
+    };
+
+    if (!this.targetingLuxInitialized) {
+      this.targetingLuxGroup.position.set(
+        targetLuxPosition.x,
+        targetLuxPosition.y,
+        targetLuxPosition.z
+      );
+      this.targetingLuxInitialized = true;
+    } else {
+      const alpha = 1 - Math.exp(-TARGETING_LUX_FOLLOW_RATE * Math.max(0, dt));
+      this.targetingLuxGroup.position.lerp(
+        new Vector3(
+          targetLuxPosition.x,
+          targetLuxPosition.y,
+          targetLuxPosition.z
+        ),
+        alpha
+      );
+    }
+
+    this.targetingVisualGroup.visible = true;
+    this.targetingLuxGroup.visible = true;
+    this.targetingActiveGroup.visible = activeTarget !== null;
+
+    if (activeTarget !== null) {
+      this.targetingActiveGroup.position.set(
+        activeTarget.center.x,
+        activeTarget.center.y,
+        activeTarget.center.z
+      );
+      const markerScale = clampScalar(activeTarget.range * 1.05, 0.85, 2.4);
+      this.targetingActiveGroup.scale.setScalar(markerScale);
+      this.targetingActiveGroup.lookAt(this.camera.position);
+    }
+  }
+
   private handleRuntimeClick = () => {
     if (
       !this.sceneReady ||
@@ -5395,11 +5650,7 @@ export class RuntimeHost {
   };
 
   private handleRuntimeKeyDown = (event: KeyboardEvent) => {
-    if (
-      this.runtimeScene === null ||
-      !this.sceneReady ||
-      event.code !== this.runtimeScene.playerInputBindings.keyboard.pauseTime
-    ) {
+    if (this.runtimeScene === null || !this.sceneReady) {
       return;
     }
 
@@ -5416,10 +5667,24 @@ export class RuntimeHost {
       return;
     }
 
-    this.pressedKeys.add(event.code);
-    event.preventDefault();
-    this.toggleManualPause();
-    this.previousPauseInputActive = true;
+    if (event.code === "Tab") {
+      event.preventDefault();
+      this.activateOrCycleRuntimeTarget();
+      this.previousTargetCycleInputActive = true;
+      return;
+    }
+
+    if (event.code === "Escape" && this.activeRuntimeTargetReference !== null) {
+      event.preventDefault();
+      this.clearActiveRuntimeTarget();
+      return;
+    }
+
+    if (event.code === this.runtimeScene.playerInputBindings.keyboard.pauseTime) {
+      event.preventDefault();
+      this.toggleManualPause();
+      this.previousPauseInputActive = true;
+    }
   };
 
   private handleRuntimeKeyUp = (event: KeyboardEvent) => {
@@ -5478,6 +5743,7 @@ export class RuntimeHost {
   private handleRuntimeBlur = () => {
     this.pressedKeys.clear();
     this.previousPauseInputActive = false;
+    this.previousTargetCycleInputActive = false;
     this.cameraRigLookDragging = false;
   };
 
