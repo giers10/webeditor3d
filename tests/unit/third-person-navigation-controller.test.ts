@@ -241,7 +241,7 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(targetContext);
   });
 
-  it("does not reuse the previous high orbit pitch when targeting starts", () => {
+  it("blends the previous high orbit pitch toward neutral when targeting starts", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();
     let targetAssistActive = false;
@@ -271,10 +271,14 @@ describe("ThirdPersonNavigationController", () => {
     const highOrbitCameraY = targetContext.camera.position.y;
 
     targetAssistActive = true;
-    controller.update(0);
+    controller.update(0.016);
+    const firstTargetFrameCameraY = targetContext.camera.position.y;
+    controller.update(1);
 
     expect(highOrbitCameraY).toBeGreaterThan(defaultCameraY + 2);
-    expect(targetContext.camera.position.y).toBeCloseTo(defaultCameraY, 4);
+    expect(firstTargetFrameCameraY).toBeGreaterThan(defaultCameraY + 1);
+    expect(firstTargetFrameCameraY).toBeLessThan(highOrbitCameraY);
+    expect(targetContext.camera.position.y).toBeCloseTo(defaultCameraY, 1);
 
     controller.deactivate(targetContext);
   });
