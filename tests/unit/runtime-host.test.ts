@@ -3112,6 +3112,23 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("places targeting visuals above the target focus at readable scale", () => {
+    const placement = resolveRuntimeTargetVisualPlacement({
+      center: { x: 1, y: 1.1, z: -2 },
+      range: 1.5
+    });
+
+    expect(placement.luxPosition).toMatchObject({
+      x: 1,
+      z: -2
+    });
+    expect(placement.luxPosition.y).toBeGreaterThan(1.8);
+    expect(placement.activeMarkerPosition.y).toBeGreaterThan(
+      placement.luxPosition.y
+    );
+    expect(placement.activeMarkerScale).toBeGreaterThan(1);
+  });
+
   it("clears runtime targeting when switching into first-person mode", () => {
     const host = new RuntimeHost({
       enableRendering: false
