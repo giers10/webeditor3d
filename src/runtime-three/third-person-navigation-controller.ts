@@ -38,6 +38,8 @@ const MAX_PITCH_RADIANS = Math.PI * 0.45;
 export const THIRD_PERSON_CAMERA_COLLISION_RADIUS = 0.2;
 const CAMERA_PIVOT_EYE_HEIGHT_FACTOR = 0.85;
 const TARGET_ASSIST_YAW_SPEED = 2.2;
+const TARGET_ASSIST_VERTICAL_LOOK_SPEED = 3.4;
+const TARGET_ASSIST_VERTICAL_LOOK_LIMIT = 1.25;
 const TARGET_LOOK_OFFSET_GAMEPAD_SPEED = 1.15;
 const TARGET_LOOK_OFFSET_POINTER_SENSITIVITY = 0.004;
 const TARGET_LOOK_OFFSET_RETURN_SPEED = 5.5;
@@ -156,6 +158,7 @@ export class ThirdPersonNavigationController implements NavigationController {
   private pitchRadians = DEFAULT_PITCH_RADIANS;
   private targetLookOffsetYawRadians = 0;
   private targetLookOffsetPitchRadians = 0;
+  private targetAssistLookOffsetY = 0;
   private cameraDistance = DEFAULT_CAMERA_DISTANCE;
   private verticalVelocity = 0;
   private grounded = false;
@@ -201,6 +204,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       this.pitchRadians = DEFAULT_PITCH_RADIANS;
       this.targetLookOffsetYawRadians = 0;
       this.targetLookOffsetPitchRadians = 0;
+      this.targetAssistLookOffsetY = 0;
       this.cameraDistance = DEFAULT_CAMERA_DISTANCE;
       this.verticalVelocity = 0;
       this.grounded = false;
@@ -276,6 +280,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.pitchRadians = DEFAULT_PITCH_RADIANS;
     this.targetLookOffsetYawRadians = 0;
     this.targetLookOffsetPitchRadians = 0;
+    this.targetAssistLookOffsetY = 0;
     this.cameraDistance = DEFAULT_CAMERA_DISTANCE;
     this.verticalVelocity = 0;
     this.grounded = false;
@@ -511,6 +516,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.pitchRadians = DEFAULT_PITCH_RADIANS;
     this.targetLookOffsetYawRadians = 0;
     this.targetLookOffsetPitchRadians = 0;
+    this.targetAssistLookOffsetY = 0;
     this.verticalVelocity = 0;
     this.grounded = false;
     this.jumpPressed = false;
