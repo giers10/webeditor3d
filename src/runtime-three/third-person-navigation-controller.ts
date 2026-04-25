@@ -17,12 +17,13 @@ import {
 } from "./player-locomotion";
 import { createPlayerControllerTelemetry } from "./player-controller-telemetry";
 import { smoothGroundedStairHeight } from "./stair-height-smoothing";
-import type { PlayerControllerTelemetry } from "./navigation-controller";
 import type {
   NavigationController,
   NavigationControllerDeactivateOptions,
+  PlayerControllerTelemetry,
   RuntimeControllerContext,
-  RuntimeLocomotionState
+  RuntimeLocomotionState,
+  RuntimeTargetLookInputResult
 } from "./navigation-controller";
 import type { RuntimePlayerMovement } from "./runtime-scene-build";
 
@@ -37,6 +38,12 @@ const MAX_PITCH_RADIANS = Math.PI * 0.45;
 export const THIRD_PERSON_CAMERA_COLLISION_RADIUS = 0.2;
 const CAMERA_PIVOT_EYE_HEIGHT_FACTOR = 0.85;
 const TARGET_ASSIST_YAW_SPEED = 2.2;
+const TARGET_LOOK_OFFSET_GAMEPAD_SPEED = 1.15;
+const TARGET_LOOK_OFFSET_POINTER_SENSITIVITY = 0.004;
+const TARGET_LOOK_OFFSET_RETURN_SPEED = 5.5;
+const TARGET_LOOK_OFFSET_YAW_LIMIT = 0.26;
+const TARGET_LOOK_OFFSET_PITCH_LIMIT = 0.16;
+const POINTER_TARGET_LOOK_INPUT_SCALE = 0.06;
 
 function clampPitch(pitchRadians: number): number {
   return Math.max(
@@ -68,6 +75,21 @@ function dampAngleRadians(
 
   const alpha = 1 - Math.exp(-strength * dt);
   return current + normalizeAngleRadians(target - current) * alpha;
+}
+
+function dampScalar(
+  current: number,
+  target: number,
+  strength: number,
+  dt: number
+): number {
+  if (dt <= 0 || strength <= 0) {
+    return current;
+  }
+
+  const alpha = 1 - Math.exp(-strength * dt);
+
+  return current + (target - current) * alpha;
 }
 
 function toEyePosition(feetPosition: Vec3, eyeHeight: number): Vec3 {
@@ -132,6 +154,8 @@ export class ThirdPersonNavigationController implements NavigationController {
   private yawRadians = 0;
   private cameraYawRadians = 0;
   private pitchRadians = DEFAULT_PITCH_RADIANS;
+  private targetLookOffsetYawRadians = 0;
+  private targetLookOffsetPitchRadians = 0;
   private cameraDistance = DEFAULT_CAMERA_DISTANCE;
   private verticalVelocity = 0;
   private grounded = false;
