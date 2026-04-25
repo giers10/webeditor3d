@@ -5545,6 +5545,49 @@ export class RuntimeHost {
     this.runtimeTargetSwitchInputHeld = false;
   }
 
+  private isRuntimeTargetVisibleFrom(
+    origin: { x: number; y: number; z: number },
+    target: { center: { x: number; y: number; z: number }; range: number }
+  ): boolean {
+    if (this.collisionWorld === null) {
+      return true;
+    }
+
+    return this.collisionWorld.isLineSegmentClear(origin, target.center, {
+      targetClearance: Math.min(
+        TARGETING_VISIBILITY_TARGET_CLEARANCE,
+        Math.max(0.15, target.range * 0.35)
+      )
+    });
+  }
+
+  private isRuntimeTargetCameraVisible(target: {
+    center: { x: number; y: number; z: number };
+    range: number;
+  }): boolean {
+    return this.isRuntimeTargetVisibleFrom(
+      {
+        x: this.camera.position.x,
+        y: this.camera.position.y,
+        z: this.camera.position.z
+      },
+      target
+    );
+  }
+
+  private isRuntimeTargetPlayerVisible(target: {
+    center: { x: number; y: number; z: number };
+    range: number;
+  }): boolean {
+    const playerEyePosition = this.currentPlayerControllerTelemetry?.eyePosition;
+
+    if (playerEyePosition === undefined) {
+      return false;
+    }
+
+    return this.isRuntimeTargetVisibleFrom(playerEyePosition, target);
+  }
+
   private refreshRuntimeTargetingState() {
     if (
       this.runtimeScene === null ||
