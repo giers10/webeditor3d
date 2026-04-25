@@ -5928,7 +5928,8 @@ export class RuntimeHost {
     const replacementTarget =
       this.resolveRuntimeTargetCandidateNearestScreenCenter({
         exclude: this.activeRuntimeTargetReference,
-        maxDistanceFromPlayer: TARGETING_AUTO_RETARGET_SAFE_DISTANCE
+        maxDistanceFromPlayer: TARGETING_AUTO_RETARGET_SAFE_DISTANCE,
+        requirePlayerVisibility: true
       });
 
     if (replacementTarget !== null) {
