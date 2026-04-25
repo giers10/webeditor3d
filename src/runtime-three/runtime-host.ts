@@ -1064,6 +1064,7 @@ export class RuntimeHost {
     this.activeDialogueAttentionState = null;
     this.dialogueParticipantState = null;
     this.cameraTransitionState = null;
+    this.resetRuntimeCameraCollisionSmoothing();
     this.suppressNextCameraSourceTransition = true;
     this.pressedKeys.clear();
     this.publishRuntimePauseState(true);
@@ -1304,6 +1305,7 @@ export class RuntimeHost {
     this.activeDialogueAttentionState = null;
     this.dialogueParticipantState = null;
     this.cameraTransitionState = null;
+    this.resetRuntimeCameraCollisionSmoothing();
     this.suppressNextCameraSourceTransition = false;
     this.pressedKeys.clear();
     this.publishRuntimePauseState(true);
@@ -2538,6 +2540,7 @@ export class RuntimeHost {
       this.cameraRigLookDragging = false;
       this.cameraRigLookYawRadians = 0;
       this.cameraRigLookPitchRadians = 0;
+      this.resetRuntimeCameraCollisionSmoothing();
     }
 
     let targetPose = this.resolveRuntimeCameraSourcePose(
