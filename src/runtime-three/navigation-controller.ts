@@ -165,6 +165,7 @@ export interface RuntimeControllerContext {
   handleRuntimeTargetLookInput?(
     input: RuntimeTargetLookInput
   ): RuntimeTargetLookInputResult;
+  handleRuntimeTargetLookBoundaryReached?(): boolean;
   isCameraDrivenExternally(): boolean;
   getCameraYawRadians(): number;
   isInputSuspended(): boolean;
