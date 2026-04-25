@@ -368,11 +368,11 @@ float auroraRayPattern(float x, float timeShift, float phase) {
   float ribbonFold =
     0.5 +
     0.5 *
-    sin(x * 24.0 + field * 8.0 + phase * 1.4 + timeShift * 0.66);
+    sin(x * 21.0 + field * 7.2 + phase * 1.4 + timeShift * 0.42);
   float filament =
     0.5 +
     0.5 *
-    sin(x * 58.0 + field * 10.0 + phase * 1.9 + timeShift * 1.05);
+    sin(x * 34.0 + field * 7.0 + phase * 1.9 + timeShift * 0.58);
   float gaps = smoothstep(
     0.18,
     0.92,
@@ -380,9 +380,9 @@ float auroraRayPattern(float x, float timeShift, float phase) {
   );
 
   return gaps *
-    (pow(slowFold, 2.2) * 0.58 +
-      pow(ribbonFold, 3.8) * 0.62 +
-      pow(filament, 11.0) * 1.45);
+    (pow(slowFold, 1.9) * 0.72 +
+      pow(ribbonFold, 3.1) * 0.48 +
+      pow(filament, 7.0) * 0.36);
 }
 
 mat3 rotationY(float radians) {
@@ -533,61 +533,67 @@ void main() {
   if (uAuroraVisibility > 0.001) {
     vec3 auroraDirection = normalize(rotationY(uAuroraRotationRadians) * direction);
     float auroraTime = uAuroraTimeHours * max(uAuroraSpeed, 0.0);
+    float planeDepth = max(auroraDirection.z, 0.12);
+    float planeX = auroraDirection.x / planeDepth;
+    float planeY = auroraDirection.y / planeDepth;
     float horizonFade = smoothstep(
       uHorizonHeight - 0.03,
       uHorizonHeight + 0.2,
       direction.y
     );
     float zenithFade = 1.0 - smoothstep(0.92, 1.0, direction.y);
-    float forwardMask = smoothstep(-0.42, 0.08, auroraDirection.z);
-    float auroraX = auroraDirection.x * 2.85;
-    float sideFalloff = 1.0 - smoothstep(2.15, 2.85, abs(auroraX));
+    float forwardMask = smoothstep(0.04, 0.3, auroraDirection.z);
+    float sideFalloff = 1.0 - smoothstep(1.22, 2.18, abs(planeX));
     float authoredHeight = clamp(uAuroraHeight, 0.0, 1.0);
     float authoredThickness = clamp(uAuroraThickness, 0.0, 1.0);
-    float lowerEdge = uHorizonHeight + 0.04;
-    float upperEdge = uHorizonHeight + mix(0.34, 0.92, authoredHeight);
-    float thicknessWidth = mix(0.1, 0.34, authoredThickness);
-    float verticalStart = smoothstep(lowerEdge, lowerEdge + thicknessWidth, direction.y);
+    float lowerEdge = uHorizonHeight * 0.18 + 0.04;
+    float upperEdge = lowerEdge + mix(0.62, 1.58, authoredHeight);
+    float thicknessWidth = mix(0.18, 0.52, authoredThickness);
+    float verticalStart = smoothstep(lowerEdge, lowerEdge + thicknessWidth, planeY);
     float verticalEnd =
       1.0 -
-      smoothstep(upperEdge - thicknessWidth * 0.45, upperEdge + thicknessWidth, direction.y);
+      smoothstep(upperEdge, upperEdge + thicknessWidth * 1.45, planeY);
     float verticalVeil = verticalStart * verticalEnd;
     float topDrape =
       1.0 -
       smoothstep(
         thicknessWidth * 0.25,
-        thicknessWidth * 2.8,
-        abs(direction.y - upperEdge)
+        thicknessWidth * 1.65,
+        abs(planeY - upperEdge)
       );
     float bottomGlow =
       1.0 -
       smoothstep(
         lowerEdge + thicknessWidth * 0.4,
         lowerEdge + thicknessWidth * 3.4,
-        direction.y
+        planeY
       );
-    float layerA = auroraRayPattern(auroraX, auroraTime, 0.0);
-    float layerB = auroraRayPattern(auroraX * 1.18 + 1.7, auroraTime * 1.22 + 9.0, 2.6);
-    float layerC = auroraRayPattern(auroraX * 0.76 - 2.4, auroraTime * 0.78 + 15.0, 5.4);
+    float layerA = auroraRayPattern(planeX * 1.2, auroraTime, 0.0);
+    float layerB = auroraRayPattern(planeX * 1.42 + 1.7, auroraTime * 0.72 + 9.0, 2.6);
+    float layerC = auroraRayPattern(planeX * 0.88 - 2.4, auroraTime * 0.48 + 15.0, 5.4);
     float rayField = layerA * 0.72 + layerB * 0.46 + layerC * 0.28;
+    float veilTurbulence =
+      0.76 +
+      0.24 *
+      fbm2(vec2(planeX * 0.7 + auroraTime * 0.018, planeY * 0.52 + 4.0));
     float softSkyBloom =
       verticalVeil *
-      fbm2(vec2(auroraX * 0.35 + auroraTime * 0.018, direction.y * 0.75 + 4.0));
+      fbm2(vec2(planeX * 0.3 + auroraTime * 0.012, planeY * 0.34 + 4.0));
     float auroraStrength =
-      (rayField * verticalVeil + topDrape * rayField * 0.22 + bottomGlow * layerA * 0.08 + softSkyBloom * 0.16) *
+      (rayField * verticalVeil * veilTurbulence + topDrape * rayField * 0.18 + bottomGlow * layerA * 0.08 + softSkyBloom * 0.18) *
       forwardMask *
       sideFalloff *
       horizonFade *
       zenithFade;
     float colorNoise = fbm2(
       vec2(
-        auroraX * 1.05 - auroraTime * 0.035,
-        direction.y * 2.1 + 0.45
+        planeX * 0.82 - auroraTime * 0.018,
+        planeY * 1.2 + 0.45
       )
     );
     float auroraColorMix =
       clamp(
-        smoothstep(lowerEdge + thicknessWidth * 0.7, upperEdge, direction.y) *
+        smoothstep(lowerEdge + thicknessWidth * 0.7, upperEdge, planeY) *
           0.72 +
           colorNoise * 0.34,
         0.0,
