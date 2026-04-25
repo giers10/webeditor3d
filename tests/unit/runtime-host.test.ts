@@ -522,7 +522,11 @@ describe("RuntimeHost", () => {
   it("resolves dialogue attention camera collision from the conversation midpoint", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const resolveThirdPersonCameraCollision = vi.fn(
-      (pivot: { x: number; y: number; z: number }, desiredCameraPosition: { x: number; y: number; z: number }) => ({
+      (
+        pivot: { x: number; y: number; z: number },
+        desiredCameraPosition: { x: number; y: number; z: number },
+        _radius: number
+      ) => ({
         x: pivot.x + (desiredCameraPosition.x - pivot.x) * 0.55,
         y: pivot.y + (desiredCameraPosition.y - pivot.y) * 0.55,
         z: pivot.z + (desiredCameraPosition.z - pivot.z) * 0.55
@@ -619,8 +623,15 @@ describe("RuntimeHost", () => {
     hostInternals.applyActiveCameraRig(0.175, gameplayPose);
 
     expect(resolveThirdPersonCameraCollision).toHaveBeenCalled();
-    const [pivot, desiredCameraPosition, radius] =
-      resolveThirdPersonCameraCollision.mock.calls.at(-1) ?? [];
+    const lastCollisionCall = resolveThirdPersonCameraCollision.mock.calls.at(-1);
+
+    expect(lastCollisionCall).toBeDefined();
+
+    const [pivot, desiredCameraPosition, radius] = lastCollisionCall as [
+      { x: number; y: number; z: number },
+      { x: number; y: number; z: number },
+      number
+    ];
     expect(pivot).toMatchObject({
       x: 1,
       z: 1
