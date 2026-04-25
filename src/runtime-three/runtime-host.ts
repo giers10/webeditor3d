@@ -333,6 +333,9 @@ const TARGETING_LUX_FLIGHT_RATE = 7.5;
 const TARGETING_LUX_RETURN_RATE = 8.5;
 const TARGETING_LUX_HOME_HEIGHT_FACTOR = 0.52;
 const TARGETING_LUX_HIDE_DISTANCE = 0.06;
+const TARGETING_LUX_EXTRA_TARGET_LIFT = 0.3;
+const TARGETING_LUX_SWAY_RATE = 2.2;
+const TARGETING_LUX_SWAY_DISTANCE = 0.22;
 const TARGETING_LUX_BOB_RATE = 4.2;
 const TARGETING_LUX_PULSE_RATE = 6.5;
 const TARGETING_DIRECTION_SWITCH_INPUT_THRESHOLD = 0.28;
@@ -412,8 +415,13 @@ export function resolveRuntimeTargetVisualPlacement(target: {
   center: { x: number; y: number; z: number };
   range: number;
 }) {
-  const luxLift = clampScalar(target.range * 0.42, 0.78, 1.35);
-  const activeMarkerLift = clampScalar(target.range * 0.62, 0.95, 1.7);
+  const luxLift =
+    clampScalar(target.range * 0.42, 0.78, 1.35) +
+    TARGETING_LUX_EXTRA_TARGET_LIFT;
+  const activeMarkerLift = Math.max(
+    clampScalar(target.range * 0.62, 0.95, 1.7),
+    luxLift + 0.2
+  );
   const activeMarkerScale = clampScalar(target.range * 0.82, 0.9, 2);
 
   return {
