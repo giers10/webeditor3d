@@ -104,6 +104,10 @@ function captureCameraPose(camera: PerspectiveCamera) {
   };
 }
 
+function resolveShortestAngleDeltaDegrees(fromDegrees: number, toDegrees: number) {
+  return ((toDegrees - fromDegrees + 540) % 360) - 180;
+}
+
 describe("RuntimeHost", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -643,6 +647,168 @@ describe("RuntimeHost", () => {
       y: pivot.y + (desiredCameraPosition.y - pivot.y) * 0.55,
       z: pivot.z + (desiredCameraPosition.z - pivot.z) * 0.55
     });
+
+    host.dispose();
+  });
+
+  it("stages dialogue participants with minimum spacing and restores npc yaw after dialogue", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const canOccupyPlayerShape = vi.fn(() => true);
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      canOccupyPlayerShape,
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld);
+
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-dialogue-spacing",
+      position: {
+        x: 1.9,
+        y: 0,
+        z: 2
+      },
+      yawDegrees: 0
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-dialogue-spacing",
+      position: {
+        x: 2,
+        y: 0,
+        z: 2
+      },
+      yawDegrees: 0,
+      dialogues: [
+        {
+          id: "dialogue-spacing",
+          title: "Spacing",
+          lines: [
+            {
+              id: "dialogue-spacing-line-1",
+              text: "Take a step back."
+            }
+          ]
+        }
+      ],
+      defaultDialogueId: "dialogue-spacing"
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Dialogue Spacing Scene" }),
+      entities: {
+        [playerStart.id]: playerStart,
+        [npc.id]: npc
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      collisionWorld: RapierCollisionWorld | null;
+      currentPlayerControllerTelemetry:
+        | {
+            feetPosition: { x: number; y: number; z: number };
+            yawDegrees: number;
+          }
+        | null;
+      dialogueParticipantState: { npcEntityId: string } | null;
+      runtimeScene: ReturnType<typeof buildRuntimeSceneFromDocument> | null;
+      activateDesiredNavigationController(): void;
+      updateRuntimeDialogueParticipants(dt: number): void;
+      createInteractionDispatcher(): {
+        startNpcDialogue(
+          npcEntityId: string,
+          dialogueId: string | null,
+          source?: {
+            kind: "interactionLink" | "npc" | "direct";
+            sourceEntityId: string | null;
+            linkId: string | null;
+            trigger: "enter" | "exit" | "click" | null;
+          }
+        ): void;
+      };
+    };
+    const dispatcher = hostInternals.createInteractionDispatcher();
+
+    hostInternals.sceneReady = true;
+    hostInternals.collisionWorld = {
+      dispose: vi.fn(),
+      canOccupyPlayerShape,
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld;
+    hostInternals.activateDesiredNavigationController();
+
+    expect(hostInternals.currentPlayerControllerTelemetry?.feetPosition).toEqual(
+      playerStart.position
+    );
+
+    dispatcher.startNpcDialogue(npc.id, null, {
+      kind: "npc",
+      sourceEntityId: npc.id,
+      linkId: null,
+      trigger: "click"
+    });
+
+    expect(hostInternals.dialogueParticipantState?.npcEntityId).toBe(npc.id);
+
+    hostInternals.updateRuntimeDialogueParticipants(0.05);
+    hostInternals.updateRuntimeDialogueParticipants(0.05);
+
+    const playerTelemetry = hostInternals.currentPlayerControllerTelemetry;
+    const runtimeNpc =
+      hostInternals.runtimeScene?.entities.npcs.find(
+        (candidate) => candidate.entityId === npc.id
+      ) ?? null;
+
+    expect(canOccupyPlayerShape).toHaveBeenCalled();
+    expect(playerTelemetry).not.toBeNull();
+    expect(runtimeNpc).not.toBeNull();
+
+    const playerFeetPosition = playerTelemetry?.feetPosition ?? {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+    const playerDistanceFromNpc = Math.hypot(
+      playerFeetPosition.x - npc.position.x,
+      playerFeetPosition.z - npc.position.z
+    );
+    const playerTargetYawDegrees =
+      (Math.atan2(npc.position.x - playerFeetPosition.x, npc.position.z - playerFeetPosition.z) *
+        180) /
+      Math.PI;
+
+    expect(playerDistanceFromNpc).toBeGreaterThanOrEqual(1.19);
+    expect(
+      Math.abs(
+        resolveShortestAngleDeltaDegrees(
+          playerTelemetry?.yawDegrees ?? 0,
+          playerTargetYawDegrees
+        )
+      )
+    ).toBeLessThan(35);
+    expect(
+      Math.abs(
+        resolveShortestAngleDeltaDegrees(runtimeNpc?.yawDegrees ?? 0, 0)
+      )
+    ).toBeGreaterThan(10);
+
+    host.closeRuntimeDialogue();
+    hostInternals.updateRuntimeDialogueParticipants(0.05);
+
+    expect(runtimeNpc?.yawDegrees).not.toBeCloseTo(0, 3);
+
+    for (let step = 0; step < 8; step += 1) {
+      hostInternals.updateRuntimeDialogueParticipants(0.05);
+    }
+
+    expect(runtimeNpc?.yawDegrees).toBeCloseTo(0, 1);
+    expect(hostInternals.dialogueParticipantState).toBeNull();
 
     host.dispose();
   });
