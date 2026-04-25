@@ -275,6 +275,7 @@ uniform float uStarDensity;
 uniform float uStarBrightness;
 uniform float uStarVisibility;
 uniform float uStarHorizonFadeOffset;
+uniform vec3 uStarRotationAxis;
 uniform float uStarRotationRadians;
 uniform float uCloudCoverage;
 uniform float uCloudDensity;
@@ -354,6 +355,19 @@ float fbm2(vec2 point) {
   return value;
 }
 
+float fbm3(vec3 point) {
+  float value = 0.0;
+  float amplitude = 0.5;
+
+  for (int octave = 0; octave < 4; octave++) {
+    value += noise3(point) * amplitude;
+    point = point * 2.11 + vec3(13.7, 8.3, 19.1);
+    amplitude *= 0.5;
+  }
+
+  return value;
+}
+
 float auroraRayPattern(float x, float timeShift, float phase) {
   float field = fbm2(
     vec2(
@@ -396,6 +410,16 @@ mat3 rotationY(float radians) {
   );
 }
 
+vec3 rotateAroundAxis(vec3 value, vec3 axis, float radians) {
+  vec3 normalizedAxis = normalize(axis);
+  float sine = sin(radians);
+  float cosine = cos(radians);
+
+  return value * cosine +
+    cross(normalizedAxis, value) * sine +
+    normalizedAxis * dot(normalizedAxis, value) * (1.0 - cosine);
+}
+
 float discMask(vec3 direction, vec3 lightDirection, float sizeDegrees, float featherScale) {
   float sizeRadians = radians(max(sizeDegrees, 0.01));
   float alignment = dot(direction, normalize(lightDirection));
@@ -414,14 +438,28 @@ float glowMask(vec3 direction, vec3 lightDirection, float sizeDegrees, float rad
   return smoothstep(outerCos, innerCos, alignment);
 }
 
-float starLayer(vec3 direction, float scale, float densityThreshold) {
+vec3 starTint(float seed) {
+  vec3 cool = vec3(0.58, 0.7, 1.0);
+  vec3 warm = vec3(1.0, 0.9, 0.64);
+  vec3 violet = vec3(0.92, 0.68, 1.0);
+  vec3 base = mix(cool, warm, smoothstep(0.18, 0.82, seed));
+
+  return mix(base, violet, smoothstep(0.84, 1.0, seed) * 0.46);
+}
+
+vec3 starLayer(vec3 direction, float scale, float densityThreshold, float radius) {
   vec3 scaledDirection = direction * scale;
   vec3 cell = floor(scaledDirection);
   vec3 local = fract(scaledDirection) - 0.5;
   float seed = hash13(cell);
-  float star = smoothstep(0.16, 0.0, length(local));
+  float distanceToCenter = length(local);
+  float star = smoothstep(radius, 0.0, distanceToCenter);
+  float core = smoothstep(radius * 0.34, 0.0, distanceToCenter);
+  float visible = step(densityThreshold, seed);
+  vec3 tint = starTint(hash13(cell + vec3(19.0, 7.0, 41.0)));
+  float sparkle = mix(0.48, 1.28, hash13(cell + 17.0));
 
-  return step(densityThreshold, seed) * star * mix(0.45, 1.0, hash13(cell + 17.0));
+  return visible * tint * (star * sparkle + core * 0.68);
 }
 
 vec2 projectCloudUv(
@@ -462,19 +500,79 @@ void main() {
   float sunAtmosphere = uSunVisible * sunHorizonFade * glowMask(direction, uSunDirection, uSunDiscSizeDegrees, 12.0);
   float moonAtmosphere = uMoonVisible * moonHorizonFade * glowMask(direction, uMoonDirection, uMoonDiscSizeDegrees, 10.0);
 
-  vec3 rotatedStarDirection = normalize(rotationY(uStarRotationRadians) * direction);
+  vec3 rotatedStarDirection =
+    normalize(rotateAroundAxis(direction, uStarRotationAxis, uStarRotationRadians));
   float starDensity = clamp(uStarDensity, 0.0, 2.0);
-  float starLayerA = starLayer(rotatedStarDirection, mix(110.0, 360.0, clamp(starDensity * 0.65, 0.0, 1.0)), mix(0.994, 0.9, clamp(starDensity, 0.0, 1.0)));
-  float starLayerB = starLayer(
-    normalize(rotationY(uStarRotationRadians + 1.618) * direction),
-    mix(220.0, 640.0, clamp(starDensity * 0.5, 0.0, 1.0)),
-    mix(0.9985, 0.96, clamp(starDensity * 0.8, 0.0, 1.0))
+  vec3 starLayerA = starLayer(
+    rotatedStarDirection,
+    mix(120.0, 380.0, clamp(starDensity * 0.64, 0.0, 1.0)),
+    mix(0.995, 0.91, clamp(starDensity, 0.0, 1.0)),
+    0.145
+  );
+  vec3 starLayerB = starLayer(
+    normalize(rotateAroundAxis(direction, uStarRotationAxis, uStarRotationRadians + 1.618)),
+    mix(230.0, 700.0, clamp(starDensity * 0.56, 0.0, 1.0)),
+    mix(0.999, 0.955, clamp(starDensity * 0.85, 0.0, 1.0)),
+    0.12
+  );
+  vec3 heroStars = starLayer(
+    normalize(rotateAroundAxis(direction, uStarRotationAxis, uStarRotationRadians - 0.93)),
+    mix(52.0, 130.0, clamp(starDensity * 0.7, 0.0, 1.0)),
+    mix(0.9992, 0.985, clamp(starDensity, 0.0, 1.0)),
+    0.19
   );
   float starTwinkle = noise3(rotatedStarDirection * 24.0 + vec3(uTwilightFactor * 17.0, uStarRotationRadians * 0.5, 9.0));
-  float stars = (starLayerA * 0.75 + starLayerB * 1.15) * mix(0.8, 1.18, starTwinkle);
+  vec3 stars = (starLayerA * 0.74 + starLayerB * 1.08 + heroStars * 1.65) *
+    mix(0.82, 1.2, starTwinkle);
   float starHorizonLine = uHorizonHeight + uStarHorizonFadeOffset;
   float starHorizonFade = smoothstep(starHorizonLine - 0.08, starHorizonLine + 0.12, direction.y);
-  skyColor += vec3(stars) * uStarBrightness * uStarVisibility * starHorizonFade;
+  vec3 galacticNormal = normalize(vec3(0.08, 0.46, 0.89));
+  float galacticLatitude = abs(dot(rotatedStarDirection, galacticNormal));
+  float galaxyWide = 1.0 - smoothstep(0.02, 0.38, galacticLatitude);
+  float galaxyCore = 1.0 - smoothstep(0.0, 0.13, galacticLatitude);
+  float galaxyNoise = fbm3(rotatedStarDirection * 5.2 + vec3(1.2, 6.1, 2.4));
+  float galaxyClumps = smoothstep(0.38, 0.82, galaxyNoise) * galaxyWide;
+  float dustLane =
+    smoothstep(
+      0.48,
+      0.78,
+      fbm3(rotatedStarDirection * 18.0 + vec3(11.0, 3.0, 7.0))
+    ) *
+    (1.0 - smoothstep(0.04, 0.2, galacticLatitude));
+  float galaxyBulge =
+    smoothstep(
+      0.74,
+      1.0,
+      dot(rotatedStarDirection, normalize(vec3(-0.42, 0.14, 0.9)))
+    ) *
+    galaxyWide;
+  float galaxy = max(galaxyCore * 0.38, galaxyClumps) + galaxyBulge * 0.62;
+  galaxy *= 1.0 - dustLane * 0.64;
+  vec3 galaxyColor = mix(
+    vec3(0.15, 0.34, 0.95),
+    vec3(1.0, 0.68, 0.95),
+    smoothstep(0.34, 0.86, galaxyNoise)
+  );
+  vec3 nebulaColor = mix(
+    vec3(0.08, 0.72, 1.0),
+    vec3(1.0, 0.28, 0.82),
+    fbm3(rotatedStarDirection * 3.0 + vec3(4.0, 9.0, 1.0))
+  );
+  float nebula =
+    galaxyWide *
+    pow(
+      smoothstep(
+        0.52,
+        0.92,
+        fbm3(rotatedStarDirection * 3.7 + vec3(8.0, 2.0, 13.0))
+      ),
+      2.2
+    );
+  vec3 nightLift = mix(vec3(0.01, 0.025, 0.08), vec3(0.04, 0.08, 0.2), skyMix);
+  skyColor += nightLift * uStarVisibility * starHorizonFade * 0.2;
+  skyColor += stars * uStarBrightness * uStarVisibility * starHorizonFade;
+  skyColor += galaxyColor * galaxy * uStarBrightness * uStarVisibility * starHorizonFade * 0.42;
+  skyColor += nebulaColor * nebula * uStarBrightness * uStarVisibility * starHorizonFade * 0.16;
 
   float cloudScale = max(uCloudScale, 0.01);
   float cloudDensity = clamp(uCloudDensity, 0.0, 2.0);
