@@ -6211,9 +6211,46 @@ export class RuntimeHost {
     return null;
   }
 
+  private resolveTargetingLuxHomePosition(): Vector3 | null {
+    const telemetry = this.currentPlayerControllerTelemetry;
+
+    if (telemetry === null) {
+      return null;
+    }
+
+    this.targetingLuxHomePosition.set(
+      lerpScalar(
+        telemetry.feetPosition.x,
+        telemetry.eyePosition.x,
+        TARGETING_LUX_HOME_HEIGHT_FACTOR
+      ),
+      lerpScalar(
+        telemetry.feetPosition.y,
+        telemetry.eyePosition.y,
+        TARGETING_LUX_HOME_HEIGHT_FACTOR
+      ),
+      lerpScalar(
+        telemetry.feetPosition.z,
+        telemetry.eyePosition.z,
+        TARGETING_LUX_HOME_HEIGHT_FACTOR
+      )
+    );
+
+    return this.targetingLuxHomePosition;
+  }
+
+  private hideRuntimeTargetingVisuals() {
+    this.targetingVisualGroup.visible = false;
+    this.targetingLuxGroup.visible = false;
+    this.targetingActiveGroup.visible = false;
+    this.targetingLuxInitialized = false;
+    this.targetingLuxFlightState = "hidden";
+  }
+
   private updateRuntimeTargetingVisuals(dt: number) {
     const activeTarget = this.resolveActiveRuntimeTarget();
     const visualTarget = activeTarget ?? this.proposedRuntimeTarget;
+    const luxHomePosition = this.resolveTargetingLuxHomePosition();
     const shouldShow =
       visualTarget !== null &&
       this.runtimeScene !== null &&
@@ -6223,43 +6260,89 @@ export class RuntimeHost {
       !this.isActiveExternalCameraSource() &&
       this.resolveActiveRuntimeCameraRig() === null &&
       this.resolveDialogueAttentionNpc() === null;
+    const dtSeconds = Math.max(0, dt);
 
     if (!shouldShow || visualTarget === null) {
-      this.targetingVisualGroup.visible = false;
-      this.targetingLuxGroup.visible = false;
-      this.targetingActiveGroup.visible = false;
-      this.targetingLuxInitialized = false;
+      if (
+        this.targetingLuxFlightState !== "hidden" &&
+        this.targetingLuxInitialized &&
+        luxHomePosition !== null
+      ) {
+        this.targetingLuxFlightState = "returning";
+        this.targetingVisualTime += dtSeconds;
+
+        const returnAlpha =
+          1 - Math.exp(-TARGETING_LUX_RETURN_RATE * dtSeconds);
+        this.targetingLuxGroup.position.lerp(luxHomePosition, returnAlpha);
+
+        if (
+          this.targetingLuxGroup.position.distanceTo(luxHomePosition) <=
+          TARGETING_LUX_HIDE_DISTANCE
+        ) {
+          this.hideRuntimeTargetingVisuals();
+          return;
+        }
+
+        const returnPulse =
+          0.9 +
+          Math.sin(this.targetingVisualTime * TARGETING_LUX_PULSE_RATE) * 0.08;
+        this.targetingLuxMesh.scale.setScalar(returnPulse);
+        this.targetingLuxGlowMesh.scale.setScalar(
+          0.9 + (returnPulse - 0.9) * 1.6
+        );
+        this.targetingLuxLight.intensity = 0.9;
+        this.targetingLuxLight.distance = 2.6;
+        this.targetingLuxGroup.lookAt(this.camera.position);
+        this.targetingVisualGroup.visible = true;
+        this.targetingLuxGroup.visible = true;
+        this.targetingActiveGroup.visible = false;
+        return;
+      }
+
+      this.hideRuntimeTargetingVisuals();
       return;
     }
 
-    this.targetingVisualTime += Math.max(0, dt);
+    this.targetingVisualTime += dtSeconds;
     const visualPlacement = resolveRuntimeTargetVisualPlacement(visualTarget);
     const bob = Math.sin(this.targetingVisualTime * TARGETING_LUX_BOB_RATE) * 0.08;
     const pulse =
       1 + Math.sin(this.targetingVisualTime * TARGETING_LUX_PULSE_RATE) * 0.12;
-    const targetLuxPosition = {
-      x: visualPlacement.luxPosition.x,
-      y: visualPlacement.luxPosition.y + bob,
-      z: visualPlacement.luxPosition.z
-    };
+    this.targetingLuxTargetPosition.set(
+      visualPlacement.luxPosition.x,
+      visualPlacement.luxPosition.y + bob,
+      visualPlacement.luxPosition.z
+    );
 
-    if (!this.targetingLuxInitialized) {
-      this.targetingLuxGroup.position.set(
-        targetLuxPosition.x,
-        targetLuxPosition.y,
-        targetLuxPosition.z
+    if (
+      !this.targetingLuxInitialized ||
+      this.targetingLuxFlightState === "hidden"
+    ) {
+      this.targetingLuxGroup.position.copy(
+        luxHomePosition ?? this.targetingLuxTargetPosition
       );
       this.targetingLuxInitialized = true;
-    } else {
-      const alpha = 1 - Math.exp(-TARGETING_LUX_FOLLOW_RATE * Math.max(0, dt));
-      this.targetingLuxGroup.position.lerp(
-        new Vector3(
-          targetLuxPosition.x,
-          targetLuxPosition.y,
-          targetLuxPosition.z
-        ),
-        alpha
+      this.targetingLuxFlightState = "outbound";
+    } else if (this.targetingLuxFlightState === "returning") {
+      this.targetingLuxFlightState = "outbound";
+    }
+
+    const alpha =
+      1 -
+      Math.exp(
+        -(this.targetingLuxFlightState === "outbound"
+          ? TARGETING_LUX_FLIGHT_RATE
+          : TARGETING_LUX_FOLLOW_RATE) * dtSeconds
       );
+    this.targetingLuxGroup.position.lerp(this.targetingLuxTargetPosition, alpha);
+
+    if (
+      this.targetingLuxFlightState === "outbound" &&
+      this.targetingLuxGroup.position.distanceTo(
+        this.targetingLuxTargetPosition
+      ) <= TARGETING_LUX_HIDE_DISTANCE
+    ) {
+      this.targetingLuxFlightState = "following";
     }
 
     this.targetingLuxMesh.scale.setScalar(pulse);
