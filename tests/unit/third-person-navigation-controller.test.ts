@@ -241,6 +241,52 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(targetContext);
   });
 
+  it("does not reuse the previous high orbit pitch when targeting starts", () => {
+    const { context } = createRuntimeControllerContext();
+    const controller = new ThirdPersonNavigationController();
+    let axes = [0, 0, 0, 1];
+    let targetAssistActive = false;
+    const getGamepads = vi.fn<() => Gamepad[]>(() => [
+      createMockGamepad({
+        axes
+      })
+    ]);
+    const targetContext = {
+      ...context,
+      resolveThirdPersonTargetAssist: () =>
+        targetAssistActive
+          ? {
+              targetPosition: {
+                x: 0,
+                y: 1,
+                z: 5
+              },
+              strength: 1
+            }
+          : null
+    };
+
+    Object.defineProperty(navigator, "getGamepads", {
+      configurable: true,
+      value: getGamepads
+    });
+
+    controller.activate(targetContext);
+    const defaultCameraY = targetContext.camera.position.y;
+
+    controller.update(1);
+    const highOrbitCameraY = targetContext.camera.position.y;
+
+    axes = [0, 0, 0, 0];
+    targetAssistActive = true;
+    controller.update(0);
+
+    expect(highOrbitCameraY).toBeGreaterThan(defaultCameraY + 2);
+    expect(targetContext.camera.position.y).toBeCloseTo(defaultCameraY, 4);
+
+    controller.deactivate(targetContext);
+  });
+
   it("fades vertical target assist when camera collision pushes the camera close", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();
