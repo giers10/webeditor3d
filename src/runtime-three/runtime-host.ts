@@ -180,7 +180,6 @@ import type {
   RuntimeBoxBrushInstance,
   RuntimeLocalLightCollection,
   RuntimeNavigationMode,
-  RuntimeNpc,
   RuntimeSceneDefinition,
   RuntimeTerrain,
   RuntimeTeleportTarget
