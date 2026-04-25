@@ -821,6 +821,7 @@ export class RuntimeHost {
     this.activeCameraSourceKey = null;
     this.activeRuntimeCameraRig = null;
     this.activeDialogueAttentionState = null;
+    this.dialogueParticipantState = null;
     this.cameraTransitionState = null;
     this.suppressNextCameraSourceTransition = true;
     this.pressedKeys.clear();
@@ -1055,6 +1056,7 @@ export class RuntimeHost {
     this.activeCameraSourceKey = null;
     this.activeRuntimeCameraRig = null;
     this.activeDialogueAttentionState = null;
+    this.dialogueParticipantState = null;
     this.cameraTransitionState = null;
     this.suppressNextCameraSourceTransition = false;
     this.pressedKeys.clear();
