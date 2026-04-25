@@ -175,6 +175,7 @@ import { resolveWaterContact } from "./water-volume-utils";
 import type {
   RuntimeBrushFace,
   RuntimeCameraRig,
+  RuntimeNpc,
   RuntimeNpcDefinition,
   RuntimeBoxBrushInstance,
   RuntimeLocalLightCollection,
