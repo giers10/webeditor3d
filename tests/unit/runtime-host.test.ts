@@ -3130,6 +3130,157 @@ describe("RuntimeHost", () => {
     expect(placement.activeMarkerScale).toBeGreaterThan(1);
   });
 
+  it("flies Lux out from the player center when a target is proposed", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      proposedRuntimeTarget: {
+        kind: "npc";
+        entityId: string;
+        prompt: string;
+        position: { x: number; y: number; z: number };
+        center: { x: number; y: number; z: number };
+        distance: number;
+        range: number;
+        viewDot: number;
+        score: number;
+      } | null;
+      targetingVisualGroup: { visible: boolean };
+      targetingLuxGroup: { position: Vector3; visible: boolean };
+      targetingLuxFlightState: string;
+      camera: PerspectiveCamera;
+      updateRuntimeTargetingVisuals(dt: number): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [],
+        interactables: [],
+        cameraRigs: []
+      }
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      feetPosition: { x: 0, y: 0, z: 0 },
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.proposedRuntimeTarget = {
+      kind: "npc",
+      entityId: "npc-target",
+      prompt: "Talk",
+      position: { x: 0, y: 0, z: 4 },
+      center: { x: 0, y: 1, z: 4 },
+      distance: 4,
+      range: 1.5,
+      viewDot: 1,
+      score: 1
+    };
+    hostInternals.camera.position.set(0, 1.6, -3);
+
+    hostInternals.updateRuntimeTargetingVisuals(0);
+
+    expect(hostInternals.targetingVisualGroup.visible).toBe(true);
+    expect(hostInternals.targetingLuxGroup.visible).toBe(true);
+    expect(hostInternals.targetingLuxFlightState).toBe("outbound");
+    expect(hostInternals.targetingLuxGroup.position.x).toBeCloseTo(0);
+    expect(hostInternals.targetingLuxGroup.position.y).toBeCloseTo(0.832);
+    expect(hostInternals.targetingLuxGroup.position.z).toBeCloseTo(0);
+
+    hostInternals.updateRuntimeTargetingVisuals(0.1);
+
+    expect(hostInternals.targetingLuxGroup.position.y).toBeGreaterThan(0.832);
+    expect(hostInternals.targetingLuxGroup.position.z).toBeGreaterThan(0);
+    expect(hostInternals.targetingLuxGroup.position.z).toBeLessThan(4);
+    host.dispose();
+  });
+
+  it("flies Lux back to the player before hiding when the proposal disappears", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      proposedRuntimeTarget: {
+        kind: "npc";
+        entityId: string;
+        prompt: string;
+        position: { x: number; y: number; z: number };
+        center: { x: number; y: number; z: number };
+        distance: number;
+        range: number;
+        viewDot: number;
+        score: number;
+      } | null;
+      targetingVisualGroup: { visible: boolean };
+      targetingLuxGroup: { position: Vector3; visible: boolean };
+      targetingLuxFlightState: string;
+      camera: PerspectiveCamera;
+      updateRuntimeTargetingVisuals(dt: number): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [],
+        interactables: [],
+        cameraRigs: []
+      }
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      feetPosition: { x: 0, y: 0, z: 0 },
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.proposedRuntimeTarget = {
+      kind: "npc",
+      entityId: "npc-target",
+      prompt: "Talk",
+      position: { x: 0, y: 0, z: 5 },
+      center: { x: 0, y: 1, z: 5 },
+      distance: 5,
+      range: 1.5,
+      viewDot: 1,
+      score: 1
+    };
+    hostInternals.camera.position.set(0, 1.6, -3);
+
+    hostInternals.updateRuntimeTargetingVisuals(0);
+    hostInternals.updateRuntimeTargetingVisuals(1);
+    const homePosition = new Vector3(0, 0.832, 0);
+    const distanceBeforeReturn =
+      hostInternals.targetingLuxGroup.position.distanceTo(homePosition);
+
+    hostInternals.proposedRuntimeTarget = null;
+    hostInternals.updateRuntimeTargetingVisuals(0.1);
+
+    expect(hostInternals.targetingVisualGroup.visible).toBe(true);
+    expect(hostInternals.targetingLuxGroup.visible).toBe(true);
+    expect(hostInternals.targetingLuxFlightState).toBe("returning");
+    expect(
+      hostInternals.targetingLuxGroup.position.distanceTo(homePosition)
+    ).toBeLessThan(distanceBeforeReturn);
+
+    for (let index = 0; index < 20; index += 1) {
+      hostInternals.updateRuntimeTargetingVisuals(0.1);
+    }
+
+    expect(hostInternals.targetingVisualGroup.visible).toBe(false);
+    expect(hostInternals.targetingLuxGroup.visible).toBe(false);
+    expect(hostInternals.targetingLuxFlightState).toBe("hidden");
+    host.dispose();
+  });
+
   it("uses Lux-only proposal feedback and consumes Escape when clearing an active target", () => {
     const host = new RuntimeHost({
       enableRendering: false
