@@ -1699,7 +1699,9 @@ export class RuntimeHost {
       previousSideSign:
         this.activeDialogueAttentionState?.npcEntityId === npc.entityId
           ? this.activeDialogueAttentionState.sideSign
-          : null
+          : null,
+      cameraVerticalFovRadians: (this.camera.fov * Math.PI) / 180,
+      cameraAspect: this.camera.aspect
     });
 
     this.activeDialogueAttentionState = {
