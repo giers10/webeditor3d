@@ -3832,6 +3832,177 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("filters Lux target candidates when the camera ray is occluded", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      collisionWorld: {
+        isLineSegmentClear(
+          start: { x: number; y: number; z: number },
+          end: { x: number; y: number; z: number }
+        ): boolean;
+      };
+      runtimeTargetCandidates: Array<{
+        kind: "npc";
+        entityId: string;
+      }>;
+      proposedRuntimeTarget: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      camera: PerspectiveCamera;
+      refreshRuntimeTargetingState(): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-visible",
+            visible: true,
+            position: { x: 0, y: 0, z: 6 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Visible",
+            defaultDialogueId: null,
+            dialogues: []
+          },
+          {
+            entityId: "npc-occluded",
+            visible: true,
+            position: { x: 0, y: 0, z: 8 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Occluded",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-visible", sourceEntityId: "npc-visible", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
+        { id: "link-occluded", sourceEntityId: "npc-occluded", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.collisionWorld = {
+      isLineSegmentClear: (_start, end) => end.z < 8
+    };
+    hostInternals.camera.position.set(0, 1.6, 0);
+    hostInternals.camera.lookAt(0, 0.9, 8);
+    hostInternals.camera.updateMatrixWorld();
+    hostInternals.camera.updateProjectionMatrix();
+
+    hostInternals.refreshRuntimeTargetingState();
+
+    expect(
+      hostInternals.runtimeTargetCandidates.some(
+        (candidate) => candidate.entityId === "npc-occluded"
+      )
+    ).toBe(false);
+    expect(hostInternals.proposedRuntimeTarget).toMatchObject({
+      kind: "npc",
+      entityId: "npc-visible"
+    });
+    host.dispose();
+  });
+
+  it("requires player-eye visibility for Lux proposal even when the camera can see the target", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      collisionWorld: {
+        isLineSegmentClear(
+          start: { x: number; y: number; z: number },
+          end: { x: number; y: number; z: number }
+        ): boolean;
+      };
+      runtimeTargetCandidates: Array<{
+        kind: "npc";
+        entityId: string;
+      }>;
+      proposedRuntimeTarget: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      camera: PerspectiveCamera;
+      refreshRuntimeTargetingState(): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-player-occluded",
+            visible: true,
+            position: { x: 0, y: 0, z: 7 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Player Occluded",
+            defaultDialogueId: null,
+            dialogues: []
+          },
+          {
+            entityId: "npc-player-visible",
+            visible: true,
+            position: { x: 0.8, y: 0, z: 8 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Player Visible",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-player-occluded", sourceEntityId: "npc-player-occluded", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
+        { id: "link-player-visible", sourceEntityId: "npc-player-visible", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.collisionWorld = {
+      isLineSegmentClear: (start, end) =>
+        start.x !== 0 || end.z !== 7
+    };
+    hostInternals.camera.position.set(1, 1.6, 0);
+    hostInternals.camera.lookAt(0, 0.9, 7);
+    hostInternals.camera.updateMatrixWorld();
+    hostInternals.camera.updateProjectionMatrix();
+
+    hostInternals.refreshRuntimeTargetingState();
+
+    expect(
+      hostInternals.runtimeTargetCandidates.some(
+        (candidate) => candidate.entityId === "npc-player-occluded"
+      )
+    ).toBe(true);
+    expect(hostInternals.proposedRuntimeTarget).toMatchObject({
+      kind: "npc",
+      entityId: "npc-player-visible"
+    });
+    host.dispose();
+  });
+
   it("clears runtime targeting when switching into first-person mode", () => {
     const host = new RuntimeHost({
       enableRendering: false
