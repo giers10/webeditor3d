@@ -505,6 +505,7 @@ export class RuntimeHost {
   private activeCameraRigOverrideEntityId: string | null = null;
   private activeCameraSourceKey: RuntimeCameraSourceKey | null = null;
   private activeRuntimeCameraRig: RuntimeCameraRig | null = null;
+  private activeDialogueAttentionState: RuntimeDialogueAttentionState | null = null;
   private cameraTransitionState: RuntimeCameraTransitionState | null = null;
   private suppressNextCameraSourceTransition = false;
   private cameraRigLookYawRadians = 0;
@@ -524,6 +525,7 @@ export class RuntimeHost {
   private baseCameraFov = 70;
   private manualPauseActive = false;
   private controlPauseActive = false;
+  private dialoguePauseActive = false;
   private previousPauseInputActive = false;
   private readonly pressedKeys = new Set<string>();
   private activeScheduledImpulseRoutineIds = new Set<string>();
