@@ -519,6 +519,122 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("resolves dialogue attention camera collision from the conversation midpoint", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const resolveThirdPersonCameraCollision = vi.fn(
+      (pivot: { x: number; y: number; z: number }, desiredCameraPosition: { x: number; y: number; z: number }) => ({
+        x: pivot.x + (desiredCameraPosition.x - pivot.x) * 0.55,
+        y: pivot.y + (desiredCameraPosition.y - pivot.y) * 0.55,
+        z: pivot.z + (desiredCameraPosition.z - pivot.z) * 0.55
+      })
+    );
+    vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision
+    } as unknown as RapierCollisionWorld);
+
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-dialogue-collision",
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      }
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-dialogue-collision",
+      position: {
+        x: 2,
+        y: 0,
+        z: 2
+      },
+      dialogues: [
+        {
+          id: "dialogue-collision",
+          title: "Collision",
+          lines: [
+            {
+              id: "dialogue-collision-line-1",
+              text: "Avoid the wall."
+            }
+          ]
+        }
+      ],
+      defaultDialogueId: "dialogue-collision"
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Dialogue Collision Scene" }),
+      entities: {
+        [playerStart.id]: playerStart,
+        [npc.id]: npc
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      camera: PerspectiveCamera;
+      collisionWorld: RapierCollisionWorld | null;
+      applyActiveCameraRig(
+        dt: number,
+        previousCameraPose?: {
+          position: Vector3;
+          lookTarget: Vector3;
+        }
+      ): { entityId: string } | null;
+      createInteractionDispatcher(): {
+        startNpcDialogue(
+          npcEntityId: string,
+          dialogueId: string | null,
+          source?: {
+            kind: "interactionLink" | "npc" | "direct";
+            sourceEntityId: string | null;
+            linkId: string | null;
+            trigger: "enter" | "exit" | "click" | null;
+          }
+        ): void;
+      };
+    };
+    const dispatcher = hostInternals.createInteractionDispatcher();
+
+    hostInternals.sceneReady = true;
+    hostInternals.collisionWorld = {
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision
+    } as unknown as RapierCollisionWorld;
+    hostInternals.camera.position.set(0, 2.6, 6);
+    hostInternals.camera.lookAt(0, 1.6, 0);
+
+    dispatcher.startNpcDialogue(npc.id, null, {
+      kind: "npc",
+      sourceEntityId: npc.id,
+      linkId: null,
+      trigger: "click"
+    });
+
+    const gameplayPose = captureCameraPose(hostInternals.camera);
+    hostInternals.applyActiveCameraRig(0.175, gameplayPose);
+
+    const [pivot, desiredCameraPosition, radius] =
+      resolveThirdPersonCameraCollision.mock.calls.at(-1) ?? [];
+    expect(pivot).toMatchObject({
+      x: 1,
+      z: 1
+    });
+    expect(pivot?.y).toBeCloseTo(1.36, 5);
+    expect(radius).toBe(0.2);
+    expect(hostInternals.camera.position).toMatchObject({
+      x: pivot.x + (desiredCameraPosition.x - pivot.x) * 0.55,
+      y: pivot.y + (desiredCameraPosition.y - pivot.y) * 0.55,
+      z: pivot.z + (desiredCameraPosition.z - pivot.z) * 0.55
+    });
+
+    host.dispose();
+  });
+
   it("keeps explicit camera rig overrides above dialogue attention", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
