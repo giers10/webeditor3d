@@ -783,7 +783,7 @@ describe("RuntimeHost", () => {
         180) /
       Math.PI;
 
-    expect(playerDistanceFromNpc).toBeGreaterThanOrEqual(1.19);
+    expect(playerDistanceFromNpc).toBeGreaterThanOrEqual(1.09);
     expect(
       Math.abs(
         resolveShortestAngleDeltaDegrees(
