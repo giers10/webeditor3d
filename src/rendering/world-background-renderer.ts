@@ -354,78 +354,35 @@ float fbm2(vec2 point) {
   return value;
 }
 
-float auroraRayPattern(vec2 uv, float timeShift, float phase) {
+float auroraRayPattern(float x, float timeShift, float phase) {
   float field = fbm2(
     vec2(
-      uv.x * 1.35 + phase + timeShift * 0.035,
-      uv.y * 0.55 - timeShift * 0.018
+      x * 0.55 + phase + timeShift * 0.03,
+      x * 0.12 - timeShift * 0.012
     )
   );
   float slowFold =
     0.5 +
     0.5 *
-    sin(uv.x * 10.5 + field * 8.0 + phase + timeShift * 0.45);
+    sin(x * 12.0 + field * 5.2 + phase + timeShift * 0.42);
   float ribbonFold =
     0.5 +
     0.5 *
-    sin(uv.x * 21.0 + field * 12.0 - uv.y * 2.1 + timeShift * 0.78);
+    sin(x * 24.0 + field * 8.0 + phase * 1.4 + timeShift * 0.66);
   float filament =
     0.5 +
     0.5 *
-    sin(uv.x * 68.0 + field * 18.0 - uv.y * 5.5 + phase * 1.7 + timeShift * 1.18);
+    sin(x * 58.0 + field * 10.0 + phase * 1.9 + timeShift * 1.05);
   float gaps = smoothstep(
     0.18,
     0.92,
-    fbm2(vec2(uv.x * 2.5 - timeShift * 0.035 + phase, uv.y * 0.72 + 6.0))
+    fbm2(vec2(x * 1.2 - timeShift * 0.025 + phase, x * 0.08 + 6.0))
   );
 
   return gaps *
     (pow(slowFold, 2.2) * 0.58 +
       pow(ribbonFold, 3.8) * 0.62 +
       pow(filament, 11.0) * 1.45);
-}
-
-float auroraCurtain(
-  vec2 uv,
-  float skyY,
-  float center,
-  float width,
-  float timeShift,
-  float phase
-) {
-  float wave = fbm2(
-    vec2(
-      uv.x * 1.2 + phase + timeShift * 0.026,
-      uv.y * 0.9 - timeShift * 0.014
-    )
-  );
-  float foldedCenter =
-    center +
-    (wave - 0.5) * width * 1.55 +
-    sin(uv.x * 2.6 + phase + timeShift * 0.16) * width * 0.4;
-  float distanceToCenter = abs(skyY - foldedCenter);
-  float core = 1.0 - smoothstep(width * 0.08, width * 0.72, distanceToCenter);
-  float velvetGlow =
-    1.0 -
-    smoothstep(width * 0.65, width * 4.4, distanceToCenter);
-  float lowerCurtain =
-    smoothstep(foldedCenter - width * 5.6, foldedCenter - width * 0.18, skyY);
-  float upperCurtain =
-    1.0 -
-    smoothstep(foldedCenter + width * 1.45, foldedCenter + width * 3.9, skyY);
-  float verticalVeil = lowerCurtain * upperCurtain;
-  float rayPattern = auroraRayPattern(uv, timeShift, phase);
-  float taper =
-    1.0 -
-    smoothstep(
-      foldedCenter + width * 0.2,
-      foldedCenter + width * 3.6,
-      skyY
-    );
-
-  return (core * 1.22 + verticalVeil * 0.48 + velvetGlow * 0.18) *
-    rayPattern *
-    mix(0.68, 1.0, taper);
 }
 
 mat3 rotationY(float radians) {
