@@ -20,6 +20,11 @@ import type {
 
 const DEFAULT_INTERACTABLE_TARGET_RADIUS = 0.75;
 const DEFAULT_NPC_DIALOGUE_TARGET_RADIUS = 1.5;
+const TARGETING_INTERACTABLE_REACH_MULTIPLIER = 3.5;
+const TARGETING_NPC_REACH_MULTIPLIER = 4.5;
+const TARGETING_MIN_INTERACTABLE_REACH = 5.5;
+const TARGETING_MIN_NPC_REACH = 7;
+const TARGETING_MIN_VIEW_DOT = 0.1;
 
 export interface RuntimeDialogueStartSource {
   kind: "interactionLink" | "npc" | "direct";
@@ -123,6 +128,10 @@ function dotVec3(left: Vec3, right: Vec3): number {
 
 function lengthSquaredVec3(vector: Vec3): number {
   return dotVec3(vector, vector);
+}
+
+function clampUnitInterval(value: number): number {
+  return Math.max(0, Math.min(1, value));
 }
 
 function distanceBetweenVec3(left: Vec3, right: Vec3): number {
@@ -462,13 +471,15 @@ interface RuntimeInteractionTargetSource {
   center: Vec3;
   distance: number;
   range: number;
+  acquisitionRange: number;
   bounds?: { min: Vec3; max: Vec3 };
   targetRadius?: number;
 }
 
 function collectRuntimeInteractionTargetSources(
   interactionOrigin: Vec3,
-  runtimeScene: RuntimeSceneDefinition
+  runtimeScene: RuntimeSceneDefinition,
+  options: { useTargetingReach?: boolean } = {}
 ): RuntimeInteractionTargetSource[] {
   const candidates: RuntimeInteractionTargetSource[] = [];
 
@@ -481,8 +492,14 @@ function collectRuntimeInteractionTargetSources(
     }
 
     const distance = distanceBetweenVec3(interactionOrigin, interactable.position);
+    const acquisitionRange = options.useTargetingReach
+      ? Math.max(
+          interactable.radius * TARGETING_INTERACTABLE_REACH_MULTIPLIER,
+          TARGETING_MIN_INTERACTABLE_REACH
+        )
+      : interactable.radius;
 
-    if (distance > interactable.radius) {
+    if (distance > acquisitionRange) {
       continue;
     }
 
@@ -494,6 +511,7 @@ function collectRuntimeInteractionTargetSources(
       center: interactable.position,
       distance,
       range: interactable.radius,
+      acquisitionRange,
       targetRadius: getInteractableTargetRadius(interactable)
     });
   }
@@ -511,8 +529,14 @@ function collectRuntimeInteractionTargetSources(
 
     const bounds = getNpcDialogueTargetBounds(npc);
     const distance = distanceToAxisAlignedBox(interactionOrigin, bounds);
+    const acquisitionRange = options.useTargetingReach
+      ? Math.max(
+          bounds.range * TARGETING_NPC_REACH_MULTIPLIER,
+          TARGETING_MIN_NPC_REACH
+        )
+      : bounds.range;
 
-    if (distance > bounds.range) {
+    if (distance > acquisitionRange) {
       continue;
     }
 
@@ -524,6 +548,7 @@ function collectRuntimeInteractionTargetSources(
       center: bounds.center,
       distance,
       range: bounds.range,
+      acquisitionRange,
       bounds
     });
   }
@@ -549,7 +574,8 @@ export function resolveRuntimeTargetCandidates(options: {
 
   for (const source of collectRuntimeInteractionTargetSources(
     options.interactionOrigin,
-    options.runtimeScene
+    options.runtimeScene,
+    { useTargetingReach: true }
   )) {
     const toTarget = subtractVec3(source.center, options.cameraPosition);
     const cameraDistanceSquared = lengthSquaredVec3(toTarget);
@@ -562,18 +588,21 @@ export function resolveRuntimeTargetCandidates(options: {
     const viewDirection = scaleVec3(toTarget, 1 / cameraDistance);
     const viewDot = dotVec3(viewDirection, normalizedViewDirection);
 
-    if (viewDot <= 0.05) {
+    if (viewDot <= TARGETING_MIN_VIEW_DOT) {
       continue;
     }
 
     const interactionDistanceScore =
       1 / (1 + source.distance / Math.max(source.range, 0.001));
+    const acquisitionDistanceScore =
+      1 - clampUnitInterval(source.distance / Math.max(source.acquisitionRange, 0.001));
     const cameraDistanceScore = 1 / (1 + cameraDistance * 0.12);
     const stabilityBonus = source.entityId === previousId ? 0.12 : 0;
     const score =
-      viewDot * 2 +
-      interactionDistanceScore * 0.6 +
-      cameraDistanceScore * 0.4 +
+      viewDot * 2.2 +
+      interactionDistanceScore * 0.45 +
+      acquisitionDistanceScore * 0.5 +
+      cameraDistanceScore * 0.25 +
       stabilityBonus;
 
     candidates.push({
