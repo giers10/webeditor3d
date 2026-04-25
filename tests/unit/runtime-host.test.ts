@@ -3129,6 +3129,74 @@ describe("RuntimeHost", () => {
     expect(placement.activeMarkerScale).toBeGreaterThan(1);
   });
 
+  it("uses Lux-only proposal feedback and consumes Escape when clearing an active target", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      proposedRuntimeTarget: {
+        kind: "npc" | "interactable";
+        entityId: string;
+        center: { x: number; y: number; z: number };
+      } | null;
+      activeRuntimeTargetReference: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      resolveThirdPersonTargetAssist(): unknown;
+      handleRuntimeKeyDown(event: KeyboardEvent): void;
+    };
+    const escapeEvent = {
+      code: "Escape",
+      defaultPrevented: false,
+      repeat: false,
+      altKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      target: null,
+      preventDefault: vi.fn(),
+      stopImmediatePropagation: vi.fn()
+    } as unknown as KeyboardEvent;
+
+    hostInternals.runtimeScene = {
+      playerInputBindings: {
+        keyboard: {
+          pauseTime: "KeyP"
+        }
+      },
+      entities: {
+        cameraRigs: [],
+        interactables: [],
+        npcs: []
+      },
+      interactionLinks: []
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.proposedRuntimeTarget = {
+      kind: "npc",
+      entityId: "npc-proposed",
+      center: { x: 0, y: 1, z: 3 }
+    };
+
+    expect(hostInternals.resolveThirdPersonTargetAssist()).toBeNull();
+
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+    hostInternals.handleRuntimeKeyDown(escapeEvent);
+
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    expect(escapeEvent.preventDefault).toHaveBeenCalledTimes(1);
+    expect(escapeEvent.stopImmediatePropagation).toHaveBeenCalledTimes(1);
+    host.dispose();
+  });
+
   it("clears runtime targeting when switching into first-person mode", () => {
     const host = new RuntimeHost({
       enableRendering: false

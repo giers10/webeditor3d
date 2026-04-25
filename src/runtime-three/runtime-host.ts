@@ -329,7 +329,9 @@ const DIALOGUE_PARTICIPANT_RESTORE_EPSILON_DEGREES = 0.5;
 const TARGETING_LUX_FOLLOW_RATE = 8;
 const TARGETING_LUX_BOB_RATE = 4.2;
 const TARGETING_LUX_PULSE_RATE = 6.5;
-const PROPOSED_TARGET_CAMERA_ASSIST_STRENGTH = 0.28;
+// Proposed-target camera nudging is intentionally disabled for now. Lux alone
+// should communicate proposal without moving the gameplay camera.
+// const PROPOSED_TARGET_CAMERA_ASSIST_STRENGTH = 0.28;
 const ACTIVE_TARGET_CAMERA_ASSIST_STRENGTH = 0.55;
 
 export function resolveRuntimeTargetVisualPlacement(target: {
@@ -5576,12 +5578,14 @@ export class RuntimeHost {
       };
     }
 
-    if (this.proposedRuntimeTarget !== null) {
-      return {
-        targetPosition: this.proposedRuntimeTarget.center,
-        strength: PROPOSED_TARGET_CAMERA_ASSIST_STRENGTH
-      };
-    }
+    // Keep this branch commented instead of deleted; proposed-target nudging may
+    // come back later after the Lux readability pass has settled.
+    // if (this.proposedRuntimeTarget !== null) {
+    //   return {
+    //     targetPosition: this.proposedRuntimeTarget.center,
+    //     strength: PROPOSED_TARGET_CAMERA_ASSIST_STRENGTH
+    //   };
+    // }
 
     return null;
   }
@@ -5739,6 +5743,7 @@ export class RuntimeHost {
 
     if (event.code === "Escape" && this.activeRuntimeTargetReference !== null) {
       event.preventDefault();
+      event.stopImmediatePropagation();
       this.clearActiveRuntimeTarget();
       return;
     }
