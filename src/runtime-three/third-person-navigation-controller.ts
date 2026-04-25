@@ -612,7 +612,11 @@ export class ThirdPersonNavigationController implements NavigationController {
       resolvedCameraPosition.y,
       resolvedCameraPosition.z
     );
-    this.lookAtVector.set(pivot.x, pivot.y, pivot.z);
+    this.lookAtVector.set(
+      pivot.x,
+      pivot.y + this.targetAssistLookOffsetY,
+      pivot.z
+    );
     this.context.camera.lookAt(this.lookAtVector);
   }
 
