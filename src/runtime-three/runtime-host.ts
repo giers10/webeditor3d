@@ -5869,7 +5869,6 @@ export class RuntimeHost {
       this.setActiveRuntimeTargetReference(null);
       return;
     }
-
   }
 
   private updateRuntimeTargetingInputState() {
