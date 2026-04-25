@@ -5733,7 +5733,7 @@ export class RuntimeHost {
     let bestCandidate: RuntimeTargetCandidate | null = null;
     let bestAlignment = TARGETING_SCREEN_SWITCH_MIN_ALIGNMENT;
     let bestScreenDistance = 0;
-    const inputX = input.horizontal / inputLength;
+    const inputX = -input.horizontal / inputLength;
     const inputY = input.vertical / inputLength;
 
     for (const candidate of this.runtimeTargetCandidates) {

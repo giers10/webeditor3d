@@ -167,6 +167,52 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(context);
   });
 
+  it("uses lock-on look input as a temporary offset that returns to center", () => {
+    const { context } = createRuntimeControllerContext();
+    const controller = new ThirdPersonNavigationController();
+    let axes = [0, 0, 1, 0];
+    const getGamepads = vi.fn<() => Gamepad[]>(() => [
+      createMockGamepad({
+        axes
+      })
+    ]);
+    const handleRuntimeTargetLookInput = vi.fn(() => ({
+      activeTargetLocked: true,
+      switchedTarget: false,
+      switchInputHeld: false
+    }));
+    const targetContext = {
+      ...context,
+      handleRuntimeTargetLookInput
+    };
+
+    Object.defineProperty(navigator, "getGamepads", {
+      configurable: true,
+      value: getGamepads
+    });
+
+    controller.activate(targetContext);
+
+    const initialCameraX = targetContext.camera.position.x;
+    controller.update(0.1);
+    const offsetCameraX = targetContext.camera.position.x;
+
+    axes = [0, 0, 0, 0];
+    controller.update(0.5);
+    const returnedCameraX = targetContext.camera.position.x;
+
+    expect(offsetCameraX).not.toBeCloseTo(initialCameraX);
+    expect(Math.abs(returnedCameraX - initialCameraX)).toBeLessThan(
+      Math.abs(offsetCameraX - initialCameraX)
+    );
+    expect(handleRuntimeTargetLookInput).toHaveBeenCalledWith({
+      horizontal: expect.any(Number),
+      vertical: 0
+    });
+
+    controller.deactivate(targetContext);
+  });
+
 
   it("uses the authored movement template speed for third-person motion telemetry", () => {
     const playerStart = createPlayerStartEntity({
