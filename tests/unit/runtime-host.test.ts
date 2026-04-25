@@ -3194,7 +3194,7 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
-  it("switches an active target once from horizontal look input while consuming camera control", () => {
+  it("switches an active target once from directional screen-space look input", () => {
     const host = new RuntimeHost({
       enableRendering: false
     });
@@ -3213,7 +3213,15 @@ describe("RuntimeHost", () => {
         kind: "npc";
         entityId: string;
       } | null;
-      handleRuntimeTargetLookInput(horizontalIntent: -1 | 0 | 1): boolean;
+      camera: PerspectiveCamera;
+      handleRuntimeTargetLookInput(input: {
+        horizontal: number;
+        vertical: number;
+      }): {
+        activeTargetLocked: boolean;
+        switchedTarget: boolean;
+        switchInputHeld: boolean;
+      };
       updateActiveRuntimeTargetLockState(): void;
     };
 
@@ -3270,13 +3278,36 @@ describe("RuntimeHost", () => {
       entityId: "npc-active"
     };
 
-    expect(hostInternals.handleRuntimeTargetLookInput(-1)).toBe(true);
+    hostInternals.camera.position.set(0, 1.6, 0);
+    hostInternals.camera.lookAt(0, 0.9, 5);
+    hostInternals.camera.updateMatrixWorld();
+    hostInternals.camera.updateProjectionMatrix();
+
+    expect(
+      hostInternals.handleRuntimeTargetLookInput({
+        horizontal: 1,
+        vertical: 0
+      })
+    ).toEqual({
+      activeTargetLocked: true,
+      switchedTarget: true,
+      switchInputHeld: true
+    });
 
     expect(hostInternals.activeRuntimeTargetReference).toEqual({
       kind: "npc",
       entityId: "npc-right"
     });
-    expect(hostInternals.handleRuntimeTargetLookInput(-1)).toBe(true);
+    expect(
+      hostInternals.handleRuntimeTargetLookInput({
+        horizontal: 1,
+        vertical: 0
+      })
+    ).toEqual({
+      activeTargetLocked: true,
+      switchedTarget: false,
+      switchInputHeld: true
+    });
     expect(hostInternals.activeRuntimeTargetReference).toEqual({
       kind: "npc",
       entityId: "npc-right"

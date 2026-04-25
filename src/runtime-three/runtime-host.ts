@@ -145,8 +145,8 @@ import type {
   RuntimeControllerContext,
   RuntimePlayerAudioHookState,
   RuntimePlayerVolumeState,
-  type RuntimeTargetLookInput,
-  type RuntimeTargetLookInputResult
+  RuntimeTargetLookInput,
+  RuntimeTargetLookInputResult
 } from "./navigation-controller";
 import { RapierCollisionWorld } from "./rapier-collision-world";
 import {
