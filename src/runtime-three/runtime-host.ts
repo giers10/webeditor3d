@@ -343,6 +343,8 @@ const TARGETING_ACTIVE_TARGET_RELEASE_DISTANCE =
   TARGETING_MAX_ACTIVE_TARGET_DISTANCE + 0.75;
 const TARGETING_AUTO_RETARGET_SAFE_DISTANCE =
   TARGETING_MAX_ACTIVE_TARGET_DISTANCE - 0.75;
+const TARGETING_VISIBILITY_TARGET_CLEARANCE = 0.45;
+const TARGETING_ACTIVE_OCCLUSION_GRACE_SECONDS = 0.35;
 // Proposed-target camera nudging is intentionally disabled for now. Lux alone
 // should communicate proposal without moving the gameplay camera.
 // const PROPOSED_TARGET_CAMERA_ASSIST_STRENGTH = 0.28;
@@ -733,6 +735,7 @@ export class RuntimeHost {
   private runtimeTargetCandidates: RuntimeTargetCandidate[] = [];
   private proposedRuntimeTarget: RuntimeTargetCandidate | null = null;
   private activeRuntimeTargetReference: RuntimeTargetReference | null = null;
+  private activeRuntimeTargetOcclusionSeconds = 0;
   private runtimeTargetSwitchInputHeld = false;
   private previousTargetCycleInputActive = false;
   private activeCameraRigOverrideEntityId: string | null = null;
@@ -5512,6 +5515,7 @@ export class RuntimeHost {
     this.runtimeTargetCandidates = [];
     this.proposedRuntimeTarget = null;
     this.activeRuntimeTargetReference = null;
+    this.activeRuntimeTargetOcclusionSeconds = 0;
     this.runtimeTargetSwitchInputHeld = false;
     this.previousTargetCycleInputActive = false;
     this.targetingLuxInitialized = false;
@@ -5537,6 +5541,7 @@ export class RuntimeHost {
 
   private setActiveRuntimeTargetReference(reference: RuntimeTargetReference | null) {
     this.activeRuntimeTargetReference = reference;
+    this.activeRuntimeTargetOcclusionSeconds = 0;
     this.runtimeTargetSwitchInputHeld = false;
   }
 
