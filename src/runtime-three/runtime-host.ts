@@ -606,6 +606,7 @@ export class RuntimeHost {
   private readonly cameraRigLookTarget = new Vector3();
   private readonly cameraRigDirection = new Vector3();
   private readonly cameraRigForward = new Vector3();
+  private readonly cameraCollisionDirection = new Vector3();
   private readonly volumeOffset = new Vector3();
   private readonly volumeInverseRotation = new Quaternion();
   private readonly fogLocalCameraPosition = new Vector3();
@@ -767,6 +768,7 @@ export class RuntimeHost {
   private cameraRigLookYawRadians = 0;
   private cameraRigLookPitchRadians = 0;
   private cameraRigLookDragging = false;
+  private smoothedRuntimeCameraCollisionDistance: number | null = null;
   private lastCameraRigPointerClientX = 0;
   private lastCameraRigPointerClientY = 0;
   private runtimeClockStateHandler:
