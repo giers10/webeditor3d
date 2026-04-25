@@ -327,21 +327,73 @@ export class ThirdPersonNavigationController implements NavigationController {
 
     const cameraDrivenExternally = this.context.isCameraDrivenExternally() === true;
     const lookInputActive = lookInput.horizontal !== 0 || lookInput.vertical !== 0;
-    let targetLookConsumed = false;
+    let targetLookResult: RuntimeTargetLookInputResult | null = null;
 
     if (!cameraDrivenExternally && lookInputActive) {
-      targetLookConsumed =
-        this.context.handleRuntimeTargetLookInput?.(
-          lookInput.horizontal > 0 ? 1 : lookInput.horizontal < 0 ? -1 : 0
-        ) ?? false;
+      targetLookResult =
+        this.context.handleRuntimeTargetLookInput?.({
+          horizontal: lookInput.horizontal,
+          vertical: lookInput.vertical
+        }) ?? null;
     } else if (!cameraDrivenExternally) {
-      this.context.handleRuntimeTargetLookInput?.(0);
+      targetLookResult =
+        this.context.handleRuntimeTargetLookInput?.({
+          horizontal: 0,
+          vertical: 0
+        }) ?? null;
     }
 
-    if (!cameraDrivenExternally && lookInputActive && !targetLookConsumed) {
+    if (
+      !cameraDrivenExternally &&
+      lookInputActive &&
+      targetLookResult?.activeTargetLocked === true
+    ) {
+      if (
+        targetLookResult.switchedTarget !== true &&
+        targetLookResult.switchInputHeld !== true
+      ) {
+        this.targetLookOffsetYawRadians = Math.max(
+          -TARGET_LOOK_OFFSET_YAW_LIMIT,
+          Math.min(
+            TARGET_LOOK_OFFSET_YAW_LIMIT,
+            this.targetLookOffsetYawRadians -
+              lookInput.horizontal * TARGET_LOOK_OFFSET_GAMEPAD_SPEED * dt
+          )
+        );
+        this.targetLookOffsetPitchRadians = Math.max(
+          -TARGET_LOOK_OFFSET_PITCH_LIMIT,
+          Math.min(
+            TARGET_LOOK_OFFSET_PITCH_LIMIT,
+            this.targetLookOffsetPitchRadians -
+              lookInput.vertical * TARGET_LOOK_OFFSET_GAMEPAD_SPEED * dt
+          )
+        );
+      }
+    } else if (!cameraDrivenExternally && lookInputActive) {
       this.cameraYawRadians -= lookInput.horizontal * GAMEPAD_LOOK_SPEED * dt;
       this.pitchRadians = clampPitch(
         this.pitchRadians - lookInput.vertical * GAMEPAD_LOOK_SPEED * dt
+      );
+    }
+
+    if (
+      cameraDrivenExternally ||
+      !lookInputActive ||
+      targetLookResult?.activeTargetLocked !== true ||
+      targetLookResult.switchedTarget === true ||
+      targetLookResult.switchInputHeld === true
+    ) {
+      this.targetLookOffsetYawRadians = dampScalar(
+        this.targetLookOffsetYawRadians,
+        0,
+        TARGET_LOOK_OFFSET_RETURN_SPEED,
+        dt
+      );
+      this.targetLookOffsetPitchRadians = dampScalar(
+        this.targetLookOffsetPitchRadians,
+        0,
+        TARGET_LOOK_OFFSET_RETURN_SPEED,
+        dt
       );
     }
 
