@@ -5627,7 +5627,7 @@ export class RuntimeHost {
       },
       runtimeScene: this.runtimeScene,
       previousProposedTargetEntityId: previousProposedId
-    });
+    }).filter((candidate) => this.isRuntimeTargetCameraVisible(candidate));
 
     if (
       this.activeRuntimeTargetReference !== null &&
@@ -5637,8 +5637,12 @@ export class RuntimeHost {
     }
 
     this.proposedRuntimeTarget =
-      this.resolveRuntimeTargetCandidateNearestScreenCenter() ??
-      this.runtimeTargetCandidates[0] ??
+      this.resolveRuntimeTargetCandidateNearestScreenCenter({
+        requirePlayerVisibility: true
+      }) ??
+      this.runtimeTargetCandidates.find((candidate) =>
+        this.isRuntimeTargetPlayerVisible(candidate)
+      ) ??
       null;
   }
 
