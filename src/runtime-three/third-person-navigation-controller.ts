@@ -419,6 +419,7 @@ export class ThirdPersonNavigationController implements NavigationController {
           targetAssist.targetPosition.x - this.feetPosition.x,
           targetAssist.targetPosition.z - this.feetPosition.z
         );
+        this.pitchRadians = DEFAULT_PITCH_RADIANS;
         this.cameraYawRadians = dampAngleRadians(
           this.cameraYawRadians,
           targetYaw,
