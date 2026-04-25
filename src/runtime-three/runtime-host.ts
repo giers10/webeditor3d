@@ -1552,6 +1552,12 @@ export class RuntimeHost {
     this.camera.lookAt(pose.lookTarget);
   }
 
+  private isActiveExternalCameraSource() {
+    return (
+      this.activeCameraSourceKey !== null && this.activeCameraSourceKey !== "gameplay"
+    );
+  }
+
   private resolveRuntimeCameraRigPose(
     rig: RuntimeCameraRig,
     dt: number
