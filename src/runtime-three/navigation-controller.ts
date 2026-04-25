@@ -61,6 +61,7 @@ export interface RuntimePlayerMovementHooks {
 export interface PlayerControllerTelemetry {
   feetPosition: Vec3;
   eyePosition: Vec3;
+  yawDegrees: number;
   grounded: boolean;
   locomotionState: RuntimeLocomotionState;
   movement: RuntimePlayerMovement;
