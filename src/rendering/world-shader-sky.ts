@@ -123,6 +123,8 @@ function quantizeNumberToBucket(value: number, step: number): number {
   return Math.round(value / step);
 }
 
+const AURORA_WORLD_ROTATION_RADIANS = 0;
+
 function parseHexColor(colorHex: string): { r: number; g: number; b: number } {
   return {
     r: Number.parseInt(colorHex.slice(1, 3), 16),
@@ -401,7 +403,7 @@ export function resolveWorldShaderSkyRenderState(
       speed: world.shaderSky.aurora.speed,
       primaryColorHex: world.shaderSky.aurora.primaryColorHex,
       secondaryColorHex: world.shaderSky.aurora.secondaryColorHex,
-      rotationRadians: skyRotationRadians + Math.PI * 0.5,
+      rotationRadians: AURORA_WORLD_ROTATION_RADIANS,
       timeHours: continuousHours
     }
   };
