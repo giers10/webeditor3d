@@ -300,11 +300,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     const cameraDrivenExternally = this.context.isCameraDrivenExternally() === true;
 
     if (!cameraDrivenExternally && (lookInput.horizontal !== 0 || lookInput.vertical !== 0)) {
-      const yawDeltaRadians = -lookInput.horizontal * GAMEPAD_LOOK_SPEED * dt;
-      this.cameraYawRadians += yawDeltaRadians;
-      if (yawDeltaRadians !== 0) {
-        this.context.reportThirdPersonCameraLookIntent?.(yawDeltaRadians);
-      }
+      this.cameraYawRadians -= lookInput.horizontal * GAMEPAD_LOOK_SPEED * dt;
       this.pitchRadians = clampPitch(
         this.pitchRadians - lookInput.vertical * GAMEPAD_LOOK_SPEED * dt
       );
@@ -574,11 +570,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.lastPointerClientX = event.clientX;
     this.lastPointerClientY = event.clientY;
 
-    const yawDeltaRadians = -deltaX * LOOK_SENSITIVITY;
-    this.cameraYawRadians += yawDeltaRadians;
-    if (yawDeltaRadians !== 0) {
-      this.context?.reportThirdPersonCameraLookIntent?.(yawDeltaRadians);
-    }
+    this.cameraYawRadians -= deltaX * LOOK_SENSITIVITY;
     this.pitchRadians = clampPitch(
       this.pitchRadians + deltaY * LOOK_SENSITIVITY
     );
