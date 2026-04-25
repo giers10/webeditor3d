@@ -1372,6 +1372,282 @@ export class RuntimeHost {
     };
   }
 
+  private resolveDialoguePlayerFeetPosition() {
+    if (this.runtimeScene === null) {
+      return null;
+    }
+
+    return (
+      this.currentPlayerControllerTelemetry?.feetPosition ??
+      this.runtimeScene.playerStart?.position ??
+      this.runtimeScene.spawn.position
+    );
+  }
+
+  private resolveDialoguePlayerYawDegrees() {
+    if (this.currentPlayerControllerTelemetry !== null) {
+      return this.currentPlayerControllerTelemetry.yawDegrees;
+    }
+
+    this.camera.getWorldDirection(this.cameraForward);
+    return (Math.atan2(this.cameraForward.x, this.cameraForward.z) * 180) / Math.PI;
+  }
+
+  private resolvePlayerShapeHorizontalRadius() {
+    if (this.runtimeScene === null) {
+      return 0;
+    }
+
+    const playerShape = this.runtimeScene.playerCollider;
+
+    switch (playerShape.mode) {
+      case "capsule":
+        return playerShape.radius;
+      case "box":
+        return Math.max(playerShape.size.x, playerShape.size.z) * 0.5;
+      case "none":
+        return 0;
+    }
+  }
+
+  private resolveNpcShapeHorizontalRadius(npc: RuntimeNpc) {
+    switch (npc.collider.mode) {
+      case "capsule":
+        return npc.collider.radius;
+      case "box":
+        return Math.max(npc.collider.size.x, npc.collider.size.z) * 0.5;
+      case "none":
+        return 0;
+    }
+  }
+
+  private resolveYawDegreesTowards(
+    from: { x: number; z: number },
+    to: { x: number; z: number }
+  ) {
+    return (Math.atan2(to.x - from.x, to.z - from.z) * 180) / Math.PI;
+  }
+
+  private resolveDialogueParticipantState(
+    npc: RuntimeNpc
+  ): RuntimeDialogueParticipantState | null {
+    if (this.runtimeScene === null) {
+      return null;
+    }
+
+    const playerFeetPosition = this.resolveDialoguePlayerFeetPosition();
+
+    if (playerFeetPosition === null) {
+      return null;
+    }
+
+    const currentPlayerYawDegrees = this.resolveDialoguePlayerYawDegrees();
+    const minimumCenterDistance =
+      this.resolvePlayerShapeHorizontalRadius() +
+      this.resolveNpcShapeHorizontalRadius(npc) +
+      DIALOGUE_PARTICIPANT_MIN_SURFACE_DISTANCE;
+    const offsetX = playerFeetPosition.x - npc.position.x;
+    const offsetZ = playerFeetPosition.z - npc.position.z;
+    const currentHorizontalDistance = Math.hypot(offsetX, offsetZ);
+    let directionX = offsetX;
+    let directionZ = offsetZ;
+
+    if (currentHorizontalDistance <= 1e-4) {
+      const fallbackYawRadians = (npc.yawDegrees * Math.PI) / 180;
+      directionX = -Math.sin(fallbackYawRadians);
+      directionZ = -Math.cos(fallbackYawRadians);
+    }
+
+    const directionLength = Math.hypot(directionX, directionZ);
+    const normalizedDirectionX =
+      directionLength <= 1e-4 ? 0 : directionX / directionLength;
+    const normalizedDirectionZ =
+      directionLength <= 1e-4 ? -1 : directionZ / directionLength;
+    const desiredHorizontalDistance = Math.max(
+      currentHorizontalDistance,
+      minimumCenterDistance
+    );
+    let targetFeetPosition = {
+      x: npc.position.x + normalizedDirectionX * desiredHorizontalDistance,
+      y: playerFeetPosition.y,
+      z: npc.position.z + normalizedDirectionZ * desiredHorizontalDistance
+    };
+
+    if (
+      currentHorizontalDistance < desiredHorizontalDistance - 1e-4 &&
+      this.collisionWorld !== null &&
+      this.runtimeScene.playerCollider.mode !== "none"
+    ) {
+      for (let step = 1; step <= 8; step += 1) {
+        const t = step / 8;
+        const candidate = {
+          x: playerFeetPosition.x + (targetFeetPosition.x - playerFeetPosition.x) * t,
+          y: playerFeetPosition.y,
+          z: playerFeetPosition.z + (targetFeetPosition.z - playerFeetPosition.z) * t
+        };
+
+        if (
+          this.collisionWorld.canOccupyPlayerShape(
+            candidate,
+            this.runtimeScene.playerCollider
+          )
+        ) {
+          targetFeetPosition = candidate;
+        } else {
+          break;
+        }
+      }
+    }
+
+    const playerTargetYawDegrees = this.resolveYawDegreesTowards(
+      {
+        x: targetFeetPosition.x,
+        z: targetFeetPosition.z
+      },
+      {
+        x: npc.position.x,
+        z: npc.position.z
+      }
+    );
+    const npcTargetYawDegrees = this.resolveYawDegreesTowards(
+      {
+        x: npc.position.x,
+        z: npc.position.z
+      },
+      {
+        x: targetFeetPosition.x,
+        z: targetFeetPosition.z
+      }
+    );
+
+    return {
+      npcEntityId: npc.entityId,
+      npcCurrentYawDegrees: npc.yawDegrees,
+      npcTargetYawDegrees,
+      npcRestoreYawDegrees: npc.yawDegrees,
+      playerTargetFeetPosition: targetFeetPosition,
+      playerCurrentYawDegrees: currentPlayerYawDegrees,
+      playerTargetYawDegrees
+    };
+  }
+
+  private syncNpcRenderGroupTransform(renderGroup: Group, npc: RuntimeNpc) {
+    renderGroup.visible = npc.visible;
+    renderGroup.position.set(npc.position.x, npc.position.y, npc.position.z);
+    const facingGroup = renderGroup.getObjectByName("npcFacingGroup");
+
+    if (facingGroup !== undefined) {
+      renderGroup.rotation.set(0, 0, 0);
+      facingGroup.rotation.set(0, (npc.yawDegrees * Math.PI) / 180, 0);
+      return;
+    }
+
+    renderGroup.rotation.set(0, (npc.yawDegrees * Math.PI) / 180, 0);
+  }
+
+  private setRuntimeNpcYawDegrees(entityId: string, yawDegrees: number) {
+    if (this.runtimeScene === null) {
+      return;
+    }
+
+    const npc =
+      this.runtimeScene.entities.npcs.find(
+        (candidate) => candidate.entityId === entityId
+      ) ?? null;
+
+    if (npc === null) {
+      return;
+    }
+
+    npc.yawDegrees = normalizeDegrees(yawDegrees);
+    const renderGroup = this.modelRenderObjects.get(entityId);
+
+    if (renderGroup !== undefined) {
+      this.syncNpcRenderGroupTransform(renderGroup, npc);
+    }
+  }
+
+  private updateRuntimeDialogueParticipants(dt: number) {
+    if (this.runtimeScene === null || this.dialogueParticipantState === null) {
+      return;
+    }
+
+    const state = this.dialogueParticipantState;
+    const dialogueActive =
+      this.currentDialogue !== null &&
+      this.currentDialogue.npcEntityId === state.npcEntityId;
+    const npc =
+      this.runtimeScene.entities.npcs.find(
+        (candidate) => candidate.entityId === state.npcEntityId
+      ) ?? null;
+
+    if (npc === null) {
+      this.dialogueParticipantState = null;
+      return;
+    }
+
+    if (dialogueActive) {
+      state.npcTargetYawDegrees = this.resolveYawDegreesTowards(
+        {
+          x: npc.position.x,
+          z: npc.position.z
+        },
+        {
+          x: state.playerTargetFeetPosition.x,
+          z: state.playerTargetFeetPosition.z
+        }
+      );
+      state.playerTargetYawDegrees = this.resolveYawDegreesTowards(
+        {
+          x: state.playerTargetFeetPosition.x,
+          z: state.playerTargetFeetPosition.z
+        },
+        {
+          x: npc.position.x,
+          z: npc.position.z
+        }
+      );
+      state.playerCurrentYawDegrees = dampAngleDegrees(
+        state.playerCurrentYawDegrees,
+        state.playerTargetYawDegrees,
+        DIALOGUE_PARTICIPANT_YAW_BLEND_RATE,
+        dt
+      );
+      state.npcCurrentYawDegrees = dampAngleDegrees(
+        state.npcCurrentYawDegrees,
+        state.npcTargetYawDegrees,
+        DIALOGUE_PARTICIPANT_YAW_BLEND_RATE,
+        dt
+      );
+      this.applyTeleportPlayerAction({
+        position: state.playerTargetFeetPosition,
+        yawDegrees: state.playerCurrentYawDegrees
+      });
+      this.setRuntimeNpcYawDegrees(state.npcEntityId, state.npcCurrentYawDegrees);
+      return;
+    }
+
+    state.npcCurrentYawDegrees = dampAngleDegrees(
+      state.npcCurrentYawDegrees,
+      state.npcRestoreYawDegrees,
+      DIALOGUE_PARTICIPANT_YAW_BLEND_RATE,
+      dt
+    );
+    this.setRuntimeNpcYawDegrees(state.npcEntityId, state.npcCurrentYawDegrees);
+
+    if (
+      Math.abs(
+        resolveShortestAngleDeltaDegrees(
+          state.npcCurrentYawDegrees,
+          state.npcRestoreYawDegrees
+        )
+      ) <= DIALOGUE_PARTICIPANT_RESTORE_EPSILON_DEGREES
+    ) {
+      this.setRuntimeNpcYawDegrees(state.npcEntityId, state.npcRestoreYawDegrees);
+      this.dialogueParticipantState = null;
+    }
+  }
+
   private resolveRuntimeCameraRigTargetPosition(rig: RuntimeCameraRig) {
     if (this.runtimeScene === null) {
       return null;
