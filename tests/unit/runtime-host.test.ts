@@ -3245,6 +3245,15 @@ describe("RuntimeHost", () => {
             name: "Right",
             defaultDialogueId: null,
             dialogues: []
+          },
+          {
+            entityId: "npc-above",
+            visible: true,
+            position: { x: 0, y: 2, z: 5 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Above",
+            defaultDialogueId: null,
+            dialogues: []
           }
         ],
         interactables: [],
@@ -3252,7 +3261,8 @@ describe("RuntimeHost", () => {
       },
       interactionLinks: [
         { id: "link-active", sourceEntityId: "npc-active", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
-        { id: "link-right", sourceEntityId: "npc-right", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        { id: "link-right", sourceEntityId: "npc-right", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
+        { id: "link-above", sourceEntityId: "npc-above", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
       ]
     } as never;
     hostInternals.activeController = hostInternals.thirdPersonController;
@@ -3271,6 +3281,12 @@ describe("RuntimeHost", () => {
         entityId: "npc-right",
         center: { x: 2, y: 0.9, z: 5 },
         score: 2.5
+      },
+      {
+        kind: "npc",
+        entityId: "npc-above",
+        center: { x: 0, y: 2.9, z: 5 },
+        score: 2.4
       }
     ];
     hostInternals.activeRuntimeTargetReference = {
@@ -3311,6 +3327,34 @@ describe("RuntimeHost", () => {
     expect(hostInternals.activeRuntimeTargetReference).toEqual({
       kind: "npc",
       entityId: "npc-right"
+    });
+    expect(
+      hostInternals.handleRuntimeTargetLookInput({
+        horizontal: 0,
+        vertical: 0
+      })
+    ).toEqual({
+      activeTargetLocked: true,
+      switchedTarget: false,
+      switchInputHeld: false
+    });
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+    expect(
+      hostInternals.handleRuntimeTargetLookInput({
+        horizontal: 0,
+        vertical: 1
+      })
+    ).toEqual({
+      activeTargetLocked: true,
+      switchedTarget: true,
+      switchInputHeld: true
+    });
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-above"
     });
     host.dispose();
   });
