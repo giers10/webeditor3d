@@ -631,7 +631,8 @@ export class RuntimeHost {
           radius
         ) ?? { ...desiredCameraPosition },
       isCameraDrivenExternally: () =>
-        this.resolveActiveRuntimeCameraRig() !== null,
+        this.resolveActiveRuntimeCameraRig() !== null ||
+        this.resolveDialogueAttentionNpc() !== null,
       getCameraYawRadians: () => {
         this.camera.getWorldDirection(this.cameraForward);
         return Math.atan2(this.cameraForward.x, this.cameraForward.z);
