@@ -3216,7 +3216,7 @@ describe("RuntimeHost", () => {
         kind: "npc";
         entityId: string;
       } | null;
-      reportThirdPersonCameraLookIntent(yawDeltaRadians: number): void;
+      camera: PerspectiveCamera;
       updateActiveRuntimeTargetLockState(): void;
     };
 
@@ -3273,7 +3273,8 @@ describe("RuntimeHost", () => {
       entityId: "npc-active"
     };
 
-    hostInternals.reportThirdPersonCameraLookIntent((15 * Math.PI) / 180);
+    hostInternals.camera.position.set(0, 1.6, 0);
+    hostInternals.camera.lookAt(2, 1.6, 5);
     hostInternals.updateActiveRuntimeTargetLockState();
 
     expect(hostInternals.activeRuntimeTargetReference).toEqual({
@@ -3302,7 +3303,7 @@ describe("RuntimeHost", () => {
         kind: "npc";
         entityId: string;
       } | null;
-      reportThirdPersonCameraLookIntent(yawDeltaRadians: number): void;
+      camera: PerspectiveCamera;
       updateActiveRuntimeTargetLockState(): void;
     };
 
@@ -3349,7 +3350,8 @@ describe("RuntimeHost", () => {
       entityId: "npc-active"
     };
 
-    hostInternals.reportThirdPersonCameraLookIntent((70 * Math.PI) / 180);
+    hostInternals.camera.position.set(0, 1.6, 0);
+    hostInternals.camera.lookAt(10, 1.6, 3);
     hostInternals.updateActiveRuntimeTargetLockState();
 
     expect(hostInternals.activeRuntimeTargetReference).toBeNull();
