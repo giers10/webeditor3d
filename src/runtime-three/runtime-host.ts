@@ -2180,8 +2180,68 @@ export class RuntimeHost {
     };
   }
 
+  private resetRuntimeCameraCollisionSmoothing() {
+    this.smoothedRuntimeCameraCollisionDistance = null;
+  }
+
+  private smoothRuntimeCameraCollisionPosition(
+    pivot: { x: number; y: number; z: number },
+    desiredPosition: Vector3,
+    resolvedPosition: { x: number; y: number; z: number },
+    dt: number
+  ): Vector3 {
+    this.cameraCollisionDirection.set(
+      desiredPosition.x - pivot.x,
+      desiredPosition.y - pivot.y,
+      desiredPosition.z - pivot.z
+    );
+
+    const desiredDistance = this.cameraCollisionDirection.length();
+
+    if (desiredDistance <= CAMERA_COLLISION_DISTANCE_EPSILON) {
+      this.resetRuntimeCameraCollisionSmoothing();
+      return new Vector3(
+        resolvedPosition.x,
+        resolvedPosition.y,
+        resolvedPosition.z
+      );
+    }
+
+    const resolvedDistance = Math.hypot(
+      resolvedPosition.x - pivot.x,
+      resolvedPosition.y - pivot.y,
+      resolvedPosition.z - pivot.z
+    );
+    const previousDistance = this.smoothedRuntimeCameraCollisionDistance;
+    const nextDistance =
+      previousDistance === null ||
+      dt <= 0 ||
+      resolvedDistance < previousDistance
+        ? resolvedDistance
+        : dampScalar(
+            previousDistance,
+            resolvedDistance,
+            CAMERA_COLLISION_RECOVERY_SPEED,
+            dt
+          );
+    const clampedDistance = Math.min(
+      Math.max(0, nextDistance),
+      Math.min(resolvedDistance, desiredDistance)
+    );
+
+    this.smoothedRuntimeCameraCollisionDistance = clampedDistance;
+    this.cameraCollisionDirection.normalize().multiplyScalar(clampedDistance);
+
+    return new Vector3(
+      pivot.x + this.cameraCollisionDirection.x,
+      pivot.y + this.cameraCollisionDirection.y,
+      pivot.z + this.cameraCollisionDirection.z
+    );
+  }
+
   private resolveCollisionAdjustedCameraPose(
-    pose: RuntimeCameraPose
+    pose: RuntimeCameraPose,
+    dt = 0
   ): RuntimeCameraPose {
     if (
       pose.collisionPivot === undefined ||
@@ -2189,6 +2249,7 @@ export class RuntimeHost {
       pose.collisionRadius === undefined ||
       pose.collisionRadius === null
     ) {
+      this.resetRuntimeCameraCollisionSmoothing();
       return pose;
     }
 
@@ -2207,21 +2268,23 @@ export class RuntimeHost {
     );
 
     if (resolvedPosition === undefined) {
+      this.resetRuntimeCameraCollisionSmoothing();
       return pose;
     }
 
     return {
       ...pose,
-      position: new Vector3(
-        resolvedPosition.x,
-        resolvedPosition.y,
-        resolvedPosition.z
+      position: this.smoothRuntimeCameraCollisionPosition(
+        pose.collisionPivot,
+        pose.position,
+        resolvedPosition,
+        dt
       )
     };
   }
 
-  private applyCameraPose(pose: RuntimeCameraPose) {
-    const resolvedPose = this.resolveCollisionAdjustedCameraPose(pose);
+  private applyCameraPose(pose: RuntimeCameraPose, dt = 0) {
+    const resolvedPose = this.resolveCollisionAdjustedCameraPose(pose, dt);
 
     this.camera.position.copy(resolvedPose.position);
     this.camera.lookAt(resolvedPose.lookTarget);
