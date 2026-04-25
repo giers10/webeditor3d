@@ -34,7 +34,7 @@ const MAX_CAMERA_DISTANCE = 7;
 const DEFAULT_PITCH_RADIANS = 0.35;
 const MIN_PITCH_RADIANS = -0.2;
 const MAX_PITCH_RADIANS = Math.PI * 0.45;
-const CAMERA_COLLISION_RADIUS = 0.2;
+export const THIRD_PERSON_CAMERA_COLLISION_RADIUS = 0.2;
 const CAMERA_PIVOT_EYE_HEIGHT_FACTOR = 0.85;
 
 function clampPitch(pitchRadians: number): number {
@@ -434,7 +434,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       this.context.resolveThirdPersonCameraCollision(
         pivot,
         desiredCameraPosition,
-        CAMERA_COLLISION_RADIUS
+        THIRD_PERSON_CAMERA_COLLISION_RADIUS
       );
 
     this.context.camera.position.set(
