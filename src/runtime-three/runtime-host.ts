@@ -886,6 +886,8 @@ export class RuntimeHost {
         this.resolveThirdPersonTargetAssist(),
       handleRuntimeTargetLookInput: (input) =>
         this.handleRuntimeTargetLookInput(input),
+      handleRuntimeTargetLookBoundaryReached: () =>
+        this.retargetOrClearActiveRuntimeTarget(),
       isCameraDrivenExternally: () =>
         this.resolveActiveRuntimeCameraRig() !== null ||
         this.resolveDialogueAttentionNpc() !== null,
@@ -5851,6 +5853,30 @@ export class RuntimeHost {
     return bestCandidate;
   }
 
+  private retargetOrClearActiveRuntimeTarget(): boolean {
+    if (this.activeRuntimeTargetReference === null) {
+      return false;
+    }
+
+    const replacementTarget =
+      this.resolveRuntimeTargetCandidateNearestScreenCenter({
+        exclude: this.activeRuntimeTargetReference,
+        maxDistanceFromPlayer: TARGETING_AUTO_RETARGET_SAFE_DISTANCE
+      });
+
+    if (replacementTarget !== null) {
+      this.setActiveRuntimeTargetReference({
+        kind: replacementTarget.kind,
+        entityId: replacementTarget.entityId
+      });
+      this.proposedRuntimeTarget = replacementTarget;
+      return true;
+    }
+
+    this.setActiveRuntimeTargetReference(null);
+    return false;
+  }
+
   private updateActiveRuntimeTargetLockState() {
     if (
       this.activeRuntimeTargetReference === null ||
@@ -5873,22 +5899,7 @@ export class RuntimeHost {
         activeTarget.center
       ) > TARGETING_ACTIVE_TARGET_RELEASE_DISTANCE
     ) {
-      const replacementTarget =
-        this.resolveRuntimeTargetCandidateNearestScreenCenter({
-          exclude: this.activeRuntimeTargetReference,
-          maxDistanceFromPlayer: TARGETING_AUTO_RETARGET_SAFE_DISTANCE
-        });
-
-      if (replacementTarget !== null) {
-        this.setActiveRuntimeTargetReference({
-          kind: replacementTarget.kind,
-          entityId: replacementTarget.entityId
-        });
-        this.proposedRuntimeTarget = replacementTarget;
-        return;
-      }
-
-      this.setActiveRuntimeTargetReference(null);
+      this.retargetOrClearActiveRuntimeTarget();
       return;
     }
   }
