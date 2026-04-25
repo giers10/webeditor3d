@@ -5945,7 +5945,7 @@ export class RuntimeHost {
     return false;
   }
 
-  private updateActiveRuntimeTargetLockState() {
+  private updateActiveRuntimeTargetLockState(dt = 0) {
     if (
       this.activeRuntimeTargetReference === null ||
       this.currentPlayerControllerTelemetry === null ||
@@ -5959,6 +5959,20 @@ export class RuntimeHost {
     if (activeTarget === null) {
       this.setActiveRuntimeTargetReference(null);
       return;
+    }
+
+    if (this.isRuntimeTargetCameraVisible(activeTarget)) {
+      this.activeRuntimeTargetOcclusionSeconds = 0;
+    } else {
+      this.activeRuntimeTargetOcclusionSeconds += Math.max(0, dt);
+
+      if (
+        this.activeRuntimeTargetOcclusionSeconds >=
+        TARGETING_ACTIVE_OCCLUSION_GRACE_SECONDS
+      ) {
+        this.setActiveRuntimeTargetReference(null);
+        return;
+      }
     }
 
     if (
