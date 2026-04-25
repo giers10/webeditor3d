@@ -771,12 +771,14 @@ export class RuntimeHost {
     this.setRuntimeDialogue(null);
     this.manualPauseActive = false;
     this.controlPauseActive = false;
+    this.dialoguePauseActive = false;
     this.previousPauseInputActive = false;
     this.cameraRigLookDragging = false;
     this.cameraRigLookYawRadians = 0;
     this.cameraRigLookPitchRadians = 0;
     this.activeCameraSourceKey = null;
     this.activeRuntimeCameraRig = null;
+    this.activeDialogueAttentionState = null;
     this.cameraTransitionState = null;
     this.suppressNextCameraSourceTransition = true;
     this.pressedKeys.clear();
