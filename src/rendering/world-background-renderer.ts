@@ -539,66 +539,55 @@ void main() {
       direction.y
     );
     float zenithFade = 1.0 - smoothstep(0.92, 1.0, direction.y);
-    float forwardMask = smoothstep(-0.36, 0.18, auroraDirection.z);
-    float auroraX = auroraDirection.x;
-    float sideFalloff = 1.0 - smoothstep(0.72, 1.0, abs(auroraX));
-    vec2 auroraUv = vec2(
-      auroraX * 2.7,
-      direction.y * 1.16 + auroraDirection.z * 0.22
-    );
+    float forwardMask = smoothstep(-0.42, 0.08, auroraDirection.z);
+    float auroraX = auroraDirection.x * 2.85;
+    float sideFalloff = 1.0 - smoothstep(2.15, 2.85, abs(auroraX));
     float authoredHeight = clamp(uAuroraHeight, 0.0, 1.0);
     float authoredThickness = clamp(uAuroraThickness, 0.0, 1.0);
-    float baseCenter = uHorizonHeight + mix(0.18, 0.78, authoredHeight);
-    float baseWidth = mix(0.045, 0.18, authoredThickness);
-    float layerA = auroraCurtain(
-      auroraUv,
-      direction.y,
-      baseCenter,
-      baseWidth,
-      auroraTime,
-      0.0
-    );
-    float layerB = auroraCurtain(
-      auroraUv * vec2(1.18, 0.86) + vec2(0.9, 0.2),
-      direction.y,
-      baseCenter + baseWidth * 1.35,
-      baseWidth * 0.76,
-      auroraTime * 1.24 + 8.0,
-      2.7
-    );
-    float layerC = auroraCurtain(
-      auroraUv * vec2(0.82, 1.12) + vec2(-1.6, 0.6),
-      direction.y,
-      baseCenter - baseWidth * 1.05,
-      baseWidth * 1.36,
-      auroraTime * 0.78 + 15.0,
-      5.1
-    );
-    float sweepingGlow =
+    float lowerEdge = uHorizonHeight + 0.04;
+    float upperEdge = uHorizonHeight + mix(0.34, 0.92, authoredHeight);
+    float thicknessWidth = mix(0.1, 0.34, authoredThickness);
+    float verticalStart = smoothstep(lowerEdge, lowerEdge + thicknessWidth, direction.y);
+    float verticalEnd =
+      1.0 -
+      smoothstep(upperEdge - thicknessWidth * 0.45, upperEdge + thicknessWidth, direction.y);
+    float verticalVeil = verticalStart * verticalEnd;
+    float topDrape =
       1.0 -
       smoothstep(
-        baseWidth * 2.2,
-        baseWidth * 9.0,
-        abs(direction.y - baseCenter)
+        thicknessWidth * 0.25,
+        thicknessWidth * 2.8,
+        abs(direction.y - upperEdge)
       );
+    float bottomGlow =
+      1.0 -
+      smoothstep(
+        lowerEdge + thicknessWidth * 0.4,
+        lowerEdge + thicknessWidth * 3.4,
+        direction.y
+      );
+    float layerA = auroraRayPattern(auroraX, auroraTime, 0.0);
+    float layerB = auroraRayPattern(auroraX * 1.18 + 1.7, auroraTime * 1.22 + 9.0, 2.6);
+    float layerC = auroraRayPattern(auroraX * 0.76 - 2.4, auroraTime * 0.78 + 15.0, 5.4);
+    float rayField = layerA * 0.72 + layerB * 0.46 + layerC * 0.28;
     float softSkyBloom =
-      sweepingGlow *
-      fbm2(vec2(auroraUv.x * 0.8 + auroraTime * 0.02, auroraUv.y * 0.5 + 4.0));
+      verticalVeil *
+      fbm2(vec2(auroraX * 0.35 + auroraTime * 0.018, direction.y * 0.75 + 4.0));
     float auroraStrength =
-      (layerA * 0.95 + layerB * 0.62 + layerC * 0.42 + softSkyBloom * 0.22) *
+      (rayField * verticalVeil + topDrape * rayField * 0.22 + bottomGlow * layerA * 0.08 + softSkyBloom * 0.16) *
       forwardMask *
       sideFalloff *
       horizonFade *
       zenithFade;
     float colorNoise = fbm2(
       vec2(
-        auroraUv.x * 2.4 - auroraTime * 0.05,
-        direction.y * 2.1 + auroraUv.y * 0.45
+        auroraX * 1.05 - auroraTime * 0.035,
+        direction.y * 2.1 + 0.45
       )
     );
     float auroraColorMix =
       clamp(
-        smoothstep(baseCenter - baseWidth * 0.4, baseCenter + baseWidth * 4.4, direction.y) *
+        smoothstep(lowerEdge + thicknessWidth * 0.7, upperEdge, direction.y) *
           0.72 +
           colorNoise * 0.34,
         0.0,
@@ -613,7 +602,7 @@ void main() {
     float cloudOcclusion = 1.0 - clamp(clouds * 0.58, 0.0, 0.72);
     float auroraEnergy = uAuroraVisibility * uAuroraIntensity * cloudOcclusion;
     skyColor += auroraColor * auroraStrength * auroraEnergy * 0.72;
-    skyColor += innerFire * (layerA + layerB * 0.5) * auroraEnergy * 0.16;
+    skyColor += innerFire * rayField * verticalVeil * auroraEnergy * 0.16;
     skyColor += auroraColor * softSkyBloom * auroraEnergy * 0.18;
   }
 
