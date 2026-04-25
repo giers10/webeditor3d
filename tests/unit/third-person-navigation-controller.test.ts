@@ -217,6 +217,7 @@ describe("ThirdPersonNavigationController", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();
     const controllerInternals = controller as unknown as {
+      cameraYawRadians: number;
       targetLookOffsetYawRadians: number;
     };
     const getGamepads = vi.fn<() => Gamepad[]>(() => [
@@ -244,9 +245,8 @@ describe("ThirdPersonNavigationController", () => {
     controller.update(1);
 
     expect(handleRuntimeTargetLookBoundaryReached).toHaveBeenCalledTimes(1);
-    expect(Math.abs(controllerInternals.targetLookOffsetYawRadians)).toBeGreaterThan(
-      0.7
-    );
+    expect(controllerInternals.cameraYawRadians).toBeLessThan(-0.7);
+    expect(controllerInternals.targetLookOffsetYawRadians).toBe(0);
 
     controller.deactivate(targetContext);
   });
