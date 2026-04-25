@@ -614,6 +614,19 @@ export class ThirdPersonNavigationController implements NavigationController {
         desiredCameraPosition,
         THIRD_PERSON_CAMERA_COLLISION_RADIUS
       );
+    const resolvedCameraDistance = Math.hypot(
+      resolvedCameraPosition.x - pivot.x,
+      resolvedCameraPosition.y - pivot.y,
+      resolvedCameraPosition.z - pivot.z
+    );
+    const collisionDistanceRatio =
+      resolvedCameraDistance / Math.max(this.cameraDistance, Number.EPSILON);
+    const targetAssistVerticalCollisionScale = smoothStep01(
+      (collisionDistanceRatio -
+        TARGET_ASSIST_VERTICAL_COLLISION_FADE_START_RATIO) /
+        (TARGET_ASSIST_VERTICAL_COLLISION_FADE_END_RATIO -
+          TARGET_ASSIST_VERTICAL_COLLISION_FADE_START_RATIO)
+    );
 
     this.context.camera.position.set(
       resolvedCameraPosition.x,
@@ -622,7 +635,8 @@ export class ThirdPersonNavigationController implements NavigationController {
     );
     this.lookAtVector.set(
       pivot.x,
-      pivot.y + this.targetAssistLookOffsetY,
+      pivot.y +
+        this.targetAssistLookOffsetY * targetAssistVerticalCollisionScale,
       pivot.z
     );
     this.context.camera.lookAt(this.lookAtVector);
