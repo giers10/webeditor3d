@@ -1,4 +1,5 @@
 import {
+  AdditiveBlending,
   AmbientLight,
   AnimationClip,
   AnimationMixer,
@@ -326,8 +327,33 @@ const DIALOGUE_PARTICIPANT_PUSHBACK_DURATION_SECONDS = 0.3;
 const DIALOGUE_PARTICIPANT_YAW_BLEND_RATE = 8;
 const DIALOGUE_PARTICIPANT_RESTORE_EPSILON_DEGREES = 0.5;
 const TARGETING_LUX_FOLLOW_RATE = 8;
+const TARGETING_LUX_BOB_RATE = 4.2;
+const TARGETING_LUX_PULSE_RATE = 6.5;
 const PROPOSED_TARGET_CAMERA_ASSIST_STRENGTH = 0.28;
 const ACTIVE_TARGET_CAMERA_ASSIST_STRENGTH = 0.55;
+
+export function resolveRuntimeTargetVisualPlacement(target: {
+  center: { x: number; y: number; z: number };
+  range: number;
+}) {
+  const luxLift = clampScalar(target.range * 0.42, 0.78, 1.35);
+  const activeMarkerLift = clampScalar(target.range * 0.62, 0.95, 1.7);
+  const activeMarkerScale = clampScalar(target.range * 0.82, 0.9, 2);
+
+  return {
+    luxPosition: {
+      x: target.center.x,
+      y: target.center.y + luxLift,
+      z: target.center.z
+    },
+    activeMarkerPosition: {
+      x: target.center.x,
+      y: target.center.y + activeMarkerLift,
+      z: target.center.z
+    },
+    activeMarkerScale
+  };
+}
 
 function dampScalar(current: number, target: number, rate: number, dt: number) {
   return current + (target - current) * Math.min(1, dt * rate);
@@ -477,30 +503,49 @@ export class RuntimeHost {
   private readonly targetingLuxGroup = new Group();
   private readonly targetingActiveGroup = new Group();
   private readonly targetingLuxMesh = new Mesh(
-    new SphereGeometry(0.065, 16, 8),
+    new SphereGeometry(0.13, 24, 12),
     new MeshBasicMaterial({
       color: 0x8df7ff,
+      depthTest: false,
+      depthWrite: false,
       transparent: true,
       opacity: 0.95
     })
   );
+  private readonly targetingLuxGlowMesh = new Mesh(
+    new SphereGeometry(0.34, 24, 12),
+    new MeshBasicMaterial({
+      blending: AdditiveBlending,
+      color: 0x8df7ff,
+      depthTest: false,
+      depthWrite: false,
+      transparent: true,
+      opacity: 0.28
+    })
+  );
+  private readonly targetingLuxLight = new PointLight(0x8df7ff, 1.25, 3.2, 2);
   private readonly targetingActiveRing = new Mesh(
-    new TorusGeometry(0.42, 0.018, 8, 36),
+    new TorusGeometry(0.52, 0.026, 8, 48),
     new MeshBasicMaterial({
       color: 0xfff2a2,
+      depthTest: false,
+      depthWrite: false,
       transparent: true,
       opacity: 0.95
     })
   );
   private readonly targetingActiveArrow = new Mesh(
-    new ConeGeometry(0.12, 0.24, 12),
+    new ConeGeometry(0.16, 0.32, 16),
     new MeshBasicMaterial({
       color: 0xfff2a2,
+      depthTest: false,
+      depthWrite: false,
       transparent: true,
       opacity: 0.95
     })
   );
   private targetingLuxInitialized = false;
+  private targetingVisualTime = 0;
   private readonly firstPersonController =
     new FirstPersonNavigationController();
   private readonly thirdPersonController =
@@ -644,8 +689,15 @@ export class RuntimeHost {
     this.scene.add(this.brushGroup);
     this.scene.add(this.terrainGroup);
     this.scene.add(this.modelGroup);
+    this.targetingLuxMesh.renderOrder = 10000;
+    this.targetingLuxGlowMesh.renderOrder = 9999;
+    this.targetingLuxLight.castShadow = false;
+    this.targetingLuxGroup.add(this.targetingLuxGlowMesh);
     this.targetingLuxGroup.add(this.targetingLuxMesh);
-    this.targetingActiveArrow.position.y = 0.58;
+    this.targetingLuxGroup.add(this.targetingLuxLight);
+    this.targetingActiveRing.renderOrder = 10001;
+    this.targetingActiveArrow.renderOrder = 10002;
+    this.targetingActiveArrow.position.y = 0.68;
     this.targetingActiveArrow.rotation.x = Math.PI;
     this.targetingActiveGroup.add(this.targetingActiveRing);
     this.targetingActiveGroup.add(this.targetingActiveArrow);
@@ -1152,6 +1204,8 @@ export class RuntimeHost {
     this.shaderSkyEnvironmentCache?.dispose();
     this.targetingLuxMesh.geometry.dispose();
     this.targetingLuxMesh.material.dispose();
+    this.targetingLuxGlowMesh.geometry.dispose();
+    this.targetingLuxGlowMesh.material.dispose();
     this.targetingActiveRing.geometry.dispose();
     this.targetingActiveRing.material.dispose();
     this.targetingActiveArrow.geometry.dispose();
@@ -5363,6 +5417,7 @@ export class RuntimeHost {
     this.activeRuntimeTargetReference = null;
     this.previousTargetCycleInputActive = false;
     this.targetingLuxInitialized = false;
+    this.targetingVisualTime = 0;
     this.targetingVisualGroup.visible = false;
     this.targetingLuxGroup.visible = false;
     this.targetingActiveGroup.visible = false;
@@ -5552,11 +5607,15 @@ export class RuntimeHost {
       return;
     }
 
-    const lift = clampScalar(visualTarget.range * 0.18, 0.25, 0.55);
+    this.targetingVisualTime += Math.max(0, dt);
+    const visualPlacement = resolveRuntimeTargetVisualPlacement(visualTarget);
+    const bob = Math.sin(this.targetingVisualTime * TARGETING_LUX_BOB_RATE) * 0.08;
+    const pulse =
+      1 + Math.sin(this.targetingVisualTime * TARGETING_LUX_PULSE_RATE) * 0.12;
     const targetLuxPosition = {
-      x: visualTarget.center.x,
-      y: visualTarget.center.y + lift,
-      z: visualTarget.center.z
+      x: visualPlacement.luxPosition.x,
+      y: visualPlacement.luxPosition.y + bob,
+      z: visualPlacement.luxPosition.z
     };
 
     if (!this.targetingLuxInitialized) {
@@ -5578,18 +5637,22 @@ export class RuntimeHost {
       );
     }
 
+    this.targetingLuxMesh.scale.setScalar(pulse);
+    this.targetingLuxGlowMesh.scale.setScalar(1.05 + (pulse - 1) * 1.8);
+    this.targetingLuxLight.intensity = activeTarget === null ? 1.15 : 1.45;
+    this.targetingLuxLight.distance = activeTarget === null ? 3 : 3.6;
+    this.targetingLuxGroup.lookAt(this.camera.position);
     this.targetingVisualGroup.visible = true;
     this.targetingLuxGroup.visible = true;
     this.targetingActiveGroup.visible = activeTarget !== null;
 
     if (activeTarget !== null) {
       this.targetingActiveGroup.position.set(
-        activeTarget.center.x,
-        activeTarget.center.y,
-        activeTarget.center.z
+        visualPlacement.activeMarkerPosition.x,
+        visualPlacement.activeMarkerPosition.y,
+        visualPlacement.activeMarkerPosition.z
       );
-      const markerScale = clampScalar(activeTarget.range * 1.05, 0.85, 2.4);
-      this.targetingActiveGroup.scale.setScalar(markerScale);
+      this.targetingActiveGroup.scale.setScalar(visualPlacement.activeMarkerScale);
       this.targetingActiveGroup.lookAt(this.camera.position);
     }
   }

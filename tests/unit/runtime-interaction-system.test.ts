@@ -146,6 +146,48 @@ describe("runtime interaction targeting", () => {
     ).toBe("previous");
   });
 
+  it("proposes farther in-view targets without broadening click prompt range", () => {
+    const distantNpc = createNpc({
+      entityId: "npc-distant",
+      name: "Far Guard",
+      position: { x: 0, y: 0, z: 6.2 }
+    });
+    const distantInteractable = createInteractable({
+      entityId: "interactable-distant",
+      position: { x: 1.2, y: 1, z: 4.5 },
+      radius: 1,
+      prompt: "Use"
+    });
+    const scene = createRuntimeSceneFixture({
+      npcs: [distantNpc],
+      interactables: [distantInteractable],
+      links: [
+        createClickLink(distantNpc.entityId),
+        createClickLink(distantInteractable.entityId)
+      ]
+    });
+    const candidates = resolveRuntimeTargetCandidates({
+      interactionOrigin: { x: 0, y: 1, z: 0 },
+      cameraPosition: { x: 0, y: 1.6, z: -1 },
+      cameraForward: { x: 0, y: 0, z: 1 },
+      runtimeScene: scene
+    });
+    const system = new RuntimeInteractionSystem();
+
+    expect(candidates.map((candidate) => candidate.entityId)).toEqual([
+      "interactable-distant",
+      "npc-distant"
+    ]);
+    expect(
+      system.resolveClickInteractionPrompt(
+        { x: 0, y: 1, z: 0 },
+        { x: 0, y: 1.6, z: -1 },
+        { x: 0, y: 0, z: 1 },
+        scene
+      )
+    ).toBeNull();
+  });
+
   it("keeps click prompt resolution coherent with the shared target sources", () => {
     const npc = createNpc({
       entityId: "npc-talk",
