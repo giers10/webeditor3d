@@ -622,6 +622,7 @@ export class RuntimeHost {
   private readonly targetingActiveGroup = new Group();
   private readonly targetingLuxTargetPosition = new Vector3();
   private readonly targetingLuxHomePosition = new Vector3();
+  private readonly targetingLuxSwayDirection = new Vector3();
   private readonly targetingLuxMesh = new Mesh(
     new PlaneGeometry(0.32, 0.32),
     createTargetingLuxCoreMaterial()
