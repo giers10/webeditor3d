@@ -1279,6 +1279,55 @@ export class RuntimeHost {
     return null;
   }
 
+  private resolveDialogueAttentionNpc() {
+    if (this.runtimeScene === null || this.currentDialogue === null) {
+      return null;
+    }
+
+    return (
+      this.runtimeScene.entities.npcs.find(
+        (candidate) => candidate.entityId === this.currentDialogue?.npcEntityId
+      ) ?? null
+    );
+  }
+
+  private resolveDialogueAttentionPlayerFocusPoint() {
+    if (this.runtimeScene === null) {
+      return null;
+    }
+
+    const eyePosition =
+      this.currentPlayerControllerTelemetry?.eyePosition ?? {
+        x: this.runtimeScene.spawn.position.x,
+        y:
+          this.runtimeScene.spawn.position.y +
+          this.runtimeScene.playerCollider.eyeHeight,
+        z: this.runtimeScene.spawn.position.z
+      };
+    const feetPosition =
+      this.currentPlayerControllerTelemetry?.feetPosition ??
+      this.runtimeScene.spawn.position;
+
+    return {
+      x: feetPosition.x + (eyePosition.x - feetPosition.x) * 0.5,
+      y:
+        feetPosition.y +
+        (eyePosition.y - feetPosition.y) *
+          DIALOGUE_ATTENTION_PLAYER_FOCUS_HEIGHT_FACTOR,
+      z: feetPosition.z + (eyePosition.z - feetPosition.z) * 0.5
+    };
+  }
+
+  private resolveDialogueAttentionNpcFocusPoint(npc: RuntimeNpc) {
+    return {
+      x: npc.position.x,
+      y:
+        npc.position.y +
+        npc.collider.eyeHeight * DIALOGUE_ATTENTION_NPC_FOCUS_HEIGHT_FACTOR,
+      z: npc.position.z
+    };
+  }
+
   private resolveRuntimeCameraRigTargetPosition(rig: RuntimeCameraRig) {
     if (this.runtimeScene === null) {
       return null;
