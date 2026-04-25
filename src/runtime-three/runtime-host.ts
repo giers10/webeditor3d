@@ -5503,7 +5503,7 @@ export class RuntimeHost {
     this.runtimeTargetCandidates = [];
     this.proposedRuntimeTarget = null;
     this.activeRuntimeTargetReference = null;
-    this.runtimeTargetLookInputHeldDirection = null;
+    this.runtimeTargetSwitchInputHeld = false;
     this.previousTargetCycleInputActive = false;
     this.targetingLuxInitialized = false;
     this.targetingVisualTime = 0;
@@ -5528,7 +5528,7 @@ export class RuntimeHost {
 
   private setActiveRuntimeTargetReference(reference: RuntimeTargetReference | null) {
     this.activeRuntimeTargetReference = reference;
-    this.runtimeTargetLookInputHeldDirection = null;
+    this.runtimeTargetSwitchInputHeld = false;
   }
 
   private refreshRuntimeTargetingState() {
