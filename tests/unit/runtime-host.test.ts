@@ -618,6 +618,7 @@ describe("RuntimeHost", () => {
     const gameplayPose = captureCameraPose(hostInternals.camera);
     hostInternals.applyActiveCameraRig(0.175, gameplayPose);
 
+    expect(resolveThirdPersonCameraCollision).toHaveBeenCalled();
     const [pivot, desiredCameraPosition, radius] =
       resolveThirdPersonCameraCollision.mock.calls.at(-1) ?? [];
     expect(pivot).toMatchObject({
