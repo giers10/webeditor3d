@@ -529,8 +529,7 @@ describe("RuntimeHost", () => {
     const resolveThirdPersonCameraCollision = vi.fn(
       (
         pivot: { x: number; y: number; z: number },
-        desiredCameraPosition: { x: number; y: number; z: number },
-        _radius: number
+        desiredCameraPosition: { x: number; y: number; z: number }
       ) => ({
         x: pivot.x + (desiredCameraPosition.x - pivot.x) * 0.55,
         y: pivot.y + (desiredCameraPosition.y - pivot.y) * 0.55,
