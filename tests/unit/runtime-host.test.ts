@@ -3548,6 +3548,99 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("does not auto-retarget between close border targets inside the distance hysteresis", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      runtimeTargetCandidates: Array<{
+        kind: "npc";
+        entityId: string;
+        prompt: string;
+        position: { x: number; y: number; z: number };
+        center: { x: number; y: number; z: number };
+        distance: number;
+        range: number;
+        viewDot: number;
+        score: number;
+      }>;
+      activeRuntimeTargetReference: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      camera: PerspectiveCamera;
+      updateActiveRuntimeTargetLockState(): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-border-a",
+            visible: true,
+            position: { x: 0, y: 0, z: 15.5 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Border A",
+            defaultDialogueId: null,
+            dialogues: []
+          },
+          {
+            entityId: "npc-border-b",
+            visible: true,
+            position: { x: 0.3, y: 0, z: 15.2 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Border B",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-border-a", sourceEntityId: "npc-border-a", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
+        { id: "link-border-b", sourceEntityId: "npc-border-b", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-border-a"
+    };
+    hostInternals.runtimeTargetCandidates = [
+      {
+        kind: "npc",
+        entityId: "npc-border-b",
+        prompt: "Talk",
+        position: { x: 0.3, y: 0, z: 15.2 },
+        center: { x: 0.3, y: 0.9, z: 15.2 },
+        distance: 14.9,
+        range: 1.5,
+        viewDot: 1,
+        score: 2
+      }
+    ];
+    hostInternals.camera.position.set(0, 1.6, 0);
+    hostInternals.camera.lookAt(0, 0.9, 15.5);
+    hostInternals.camera.updateMatrixWorld();
+    hostInternals.camera.updateProjectionMatrix();
+
+    hostInternals.updateActiveRuntimeTargetLockState();
+
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-border-a"
+    });
+    host.dispose();
+  });
+
   it("clears an active target when the player moves too far away without an on-screen fallback", () => {
     const host = new RuntimeHost({
       enableRendering: false
