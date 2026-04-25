@@ -6315,12 +6315,22 @@ export class RuntimeHost {
     this.targetingVisualTime += dtSeconds;
     const visualPlacement = resolveRuntimeTargetVisualPlacement(visualTarget);
     const bob = Math.sin(this.targetingVisualTime * TARGETING_LUX_BOB_RATE) * 0.08;
+    const sway =
+      Math.sin(this.targetingVisualTime * TARGETING_LUX_SWAY_RATE) *
+      TARGETING_LUX_SWAY_DISTANCE;
     const pulse =
       1 + Math.sin(this.targetingVisualTime * TARGETING_LUX_PULSE_RATE) * 0.12;
+    this.targetingLuxSwayDirection
+      .setFromMatrixColumn(this.camera.matrixWorld, 0)
+      .normalize();
     this.targetingLuxTargetPosition.set(
       visualPlacement.luxPosition.x,
       visualPlacement.luxPosition.y + bob,
       visualPlacement.luxPosition.z
+    );
+    this.targetingLuxTargetPosition.addScaledVector(
+      this.targetingLuxSwayDirection,
+      sway
     );
 
     if (
