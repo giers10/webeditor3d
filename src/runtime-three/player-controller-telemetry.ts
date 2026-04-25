@@ -110,6 +110,7 @@ export function resolveRuntimePlayerMovementHooks(options: {
 export function createPlayerControllerTelemetry(options: {
   feetPosition: PlayerControllerTelemetry["feetPosition"];
   eyePosition: PlayerControllerTelemetry["eyePosition"];
+  yawDegrees: number;
   grounded: boolean;
   locomotionState: RuntimeLocomotionState;
   movement: PlayerControllerTelemetry["movement"];
@@ -135,6 +136,7 @@ export function createPlayerControllerTelemetry(options: {
   return {
     feetPosition: options.feetPosition,
     eyePosition: options.eyePosition,
+    yawDegrees: options.yawDegrees,
     grounded: options.grounded,
     locomotionState: options.locomotionState,
     movement: options.movement,
