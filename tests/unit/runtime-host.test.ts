@@ -3123,7 +3123,7 @@ describe("RuntimeHost", () => {
       x: 1,
       z: -2
     });
-    expect(placement.luxPosition.y).toBeGreaterThan(1.8);
+    expect(placement.luxPosition.y).toBeCloseTo(2.18);
     expect(placement.activeMarkerPosition.y).toBeGreaterThan(
       placement.luxPosition.y
     );
@@ -3195,6 +3195,7 @@ describe("RuntimeHost", () => {
 
     hostInternals.updateRuntimeTargetingVisuals(0.1);
 
+    expect(hostInternals.targetingLuxGroup.position.x).toBeGreaterThan(0.005);
     expect(hostInternals.targetingLuxGroup.position.y).toBeGreaterThan(0.832);
     expect(hostInternals.targetingLuxGroup.position.z).toBeGreaterThan(0);
     expect(hostInternals.targetingLuxGroup.position.z).toBeLessThan(4);
