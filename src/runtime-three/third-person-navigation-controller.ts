@@ -46,8 +46,8 @@ const TARGET_ASSIST_VERTICAL_COLLISION_FADE_END_RATIO = 0.72;
 const TARGET_LOOK_OFFSET_GAMEPAD_SPEED = 1.15;
 const TARGET_LOOK_OFFSET_POINTER_SENSITIVITY = 0.004;
 const TARGET_LOOK_OFFSET_RETURN_SPEED = 5.5;
-const TARGET_LOOK_OFFSET_YAW_LIMIT = 0.26;
-const TARGET_LOOK_OFFSET_PITCH_LIMIT = 0.16;
+const TARGET_LOOK_OFFSET_YAW_LIMIT = 0.75;
+const TARGET_LOOK_OFFSET_PITCH_LIMIT = 0.42;
 const POINTER_TARGET_LOOK_INPUT_SCALE = 0.06;
 
 function clampPitch(pitchRadians: number): number {
@@ -590,6 +590,29 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.inFogVolume = false;
     this.updateCameraTransform();
     this.publishTelemetry();
+  }
+
+  private applyTargetLookOffsetDelta(yawDelta: number, pitchDelta: number) {
+    const nextYaw = this.targetLookOffsetYawRadians + yawDelta;
+    const nextPitch = this.targetLookOffsetPitchRadians + pitchDelta;
+    const clampedYaw = Math.max(
+      -TARGET_LOOK_OFFSET_YAW_LIMIT,
+      Math.min(TARGET_LOOK_OFFSET_YAW_LIMIT, nextYaw)
+    );
+    const clampedPitch = Math.max(
+      -TARGET_LOOK_OFFSET_PITCH_LIMIT,
+      Math.min(TARGET_LOOK_OFFSET_PITCH_LIMIT, nextPitch)
+    );
+    const boundaryReached = clampedYaw !== nextYaw || clampedPitch !== nextPitch;
+
+    this.targetLookOffsetYawRadians = clampedYaw;
+    this.targetLookOffsetPitchRadians = clampedPitch;
+
+    if (boundaryReached) {
+      this.context?.handleRuntimeTargetLookBoundaryReached?.();
+      this.targetLookOffsetYawRadians = 0;
+      this.targetLookOffsetPitchRadians = 0;
+    }
   }
 
   private updateCameraTransform() {
