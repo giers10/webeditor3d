@@ -308,6 +308,12 @@ export function resolvePlayerStartPauseInput(
     .pauseTime;
 }
 
+export function resolveDefaultTargetCycleInput(
+  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+): number {
+  return readGamepadActionBindingStrength(gamepads, "rightStickPress");
+}
+
 export function resolvePlayerStartLookInput(
   bindings: PlayerStartInputBindings,
   gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
