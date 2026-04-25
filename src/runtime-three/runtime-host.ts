@@ -804,12 +804,10 @@ export class RuntimeHost {
     this.targetingLuxGroup.add(this.targetingLuxGlowMesh);
     this.targetingLuxGroup.add(this.targetingLuxMesh);
     this.targetingLuxGroup.add(this.targetingLuxLight);
-    this.targetingActiveRing.renderOrder = 10001;
-    this.targetingActiveArrow.renderOrder = 10002;
-    this.targetingActiveArrow.position.y = 0.68;
-    this.targetingActiveArrow.rotation.x = Math.PI;
-    this.targetingActiveGroup.add(this.targetingActiveRing);
-    this.targetingActiveGroup.add(this.targetingActiveArrow);
+    this.targetingActiveArrows.forEach((arrow, index) => {
+      arrow.renderOrder = 10001 + index;
+      this.targetingActiveGroup.add(arrow);
+    });
     this.targetingVisualGroup.add(this.targetingLuxGroup);
     this.targetingVisualGroup.add(this.targetingActiveGroup);
     this.targetingVisualGroup.visible = false;
