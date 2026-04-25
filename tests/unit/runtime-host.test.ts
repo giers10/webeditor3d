@@ -3197,6 +3197,216 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("switches an active target toward the user's horizontal camera look intent", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      runtimeTargetCandidates: Array<{
+        kind: "npc";
+        entityId: string;
+        center: { x: number; y: number; z: number };
+        score: number;
+      }>;
+      activeRuntimeTargetReference: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      reportThirdPersonCameraLookIntent(yawDeltaRadians: number): void;
+      updateActiveRuntimeTargetLockState(): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-active",
+            visible: true,
+            position: { x: 0, y: 0, z: 5 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Active",
+            defaultDialogueId: null,
+            dialogues: []
+          },
+          {
+            entityId: "npc-right",
+            visible: true,
+            position: { x: 2, y: 0, z: 5 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Right",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-active", sourceEntityId: "npc-active", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
+        { id: "link-right", sourceEntityId: "npc-right", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.runtimeTargetCandidates = [
+      {
+        kind: "npc",
+        entityId: "npc-active",
+        center: { x: 0, y: 0.9, z: 5 },
+        score: 3
+      },
+      {
+        kind: "npc",
+        entityId: "npc-right",
+        center: { x: 2, y: 0.9, z: 5 },
+        score: 2.5
+      }
+    ];
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+
+    hostInternals.reportThirdPersonCameraLookIntent((15 * Math.PI) / 180);
+    hostInternals.updateActiveRuntimeTargetLockState();
+
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-right"
+    });
+    host.dispose();
+  });
+
+  it("clears an active target after a large horizontal camera turn when another target is available", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      runtimeTargetCandidates: Array<{
+        kind: "npc";
+        entityId: string;
+        center: { x: number; y: number; z: number };
+        score: number;
+      }>;
+      activeRuntimeTargetReference: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      reportThirdPersonCameraLookIntent(yawDeltaRadians: number): void;
+      updateActiveRuntimeTargetLockState(): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-active",
+            visible: true,
+            position: { x: 0, y: 0, z: 5 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Active",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-active", sourceEntityId: "npc-active", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.runtimeTargetCandidates = [
+      {
+        kind: "npc",
+        entityId: "npc-active",
+        center: { x: 0, y: 0.9, z: 5 },
+        score: 3
+      },
+      {
+        kind: "npc",
+        entityId: "npc-other",
+        center: { x: -2, y: 0.9, z: 5 },
+        score: 2.5
+      }
+    ];
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+
+    hostInternals.reportThirdPersonCameraLookIntent((70 * Math.PI) / 180);
+    hostInternals.updateActiveRuntimeTargetLockState();
+
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    host.dispose();
+  });
+
+  it("clears an active target when the player moves too far away", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      activeRuntimeTargetReference: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      updateActiveRuntimeTargetLockState(): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-far",
+            visible: true,
+            position: { x: 0, y: 0, z: 40 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Far",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-far", sourceEntityId: "npc-far", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-far"
+    };
+
+    hostInternals.updateActiveRuntimeTargetLockState();
+
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    host.dispose();
+  });
+
   it("clears runtime targeting when switching into first-person mode", () => {
     const host = new RuntimeHost({
       enableRendering: false
