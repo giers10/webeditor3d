@@ -5546,23 +5546,78 @@ export class RuntimeHost {
     this.runtimeTargetSwitchInputHeld = false;
   }
 
+  private resolveRuntimeTargetVisibilityClearance(target: {
+    kind?: string;
+    entityId?: string;
+    range: number;
+  }): number {
+    if (this.runtimeScene !== null && target.kind === "npc") {
+      const npc =
+        this.runtimeScene.entities.npcs.find(
+          (candidate) => candidate.entityId === target.entityId
+        ) ?? null;
+
+      if (npc !== null) {
+        switch (npc.collider.mode) {
+          case "capsule":
+            return (
+              Math.max(npc.collider.radius, npc.collider.height * 0.5) +
+              TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING
+            );
+          case "box":
+            return (
+              Math.hypot(
+                npc.collider.size.x,
+                npc.collider.size.y,
+                npc.collider.size.z
+              ) *
+                0.5 +
+              TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING
+            );
+          case "none":
+            return 0.9 + TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
+        }
+      }
+    }
+
+    if (this.runtimeScene !== null && target.kind === "interactable") {
+      const interactable =
+        this.runtimeScene.entities.interactables.find(
+          (candidate) => candidate.entityId === target.entityId
+        ) ?? null;
+
+      if (interactable !== null) {
+        return clampScalar(interactable.radius * 0.5, 0.25, 0.9);
+      }
+    }
+
+    return Math.max(
+      TARGETING_VISIBILITY_TARGET_CLEARANCE,
+      clampScalar(target.range * 0.5, 0.25, 0.9)
+    );
+  }
+
   private isRuntimeTargetVisibleFrom(
     origin: { x: number; y: number; z: number },
-    target: { center: { x: number; y: number; z: number }; range: number }
+    target: {
+      kind?: string;
+      entityId?: string;
+      center: { x: number; y: number; z: number };
+      range: number;
+    }
   ): boolean {
     if (this.collisionWorld === null) {
       return true;
     }
 
     return this.collisionWorld.isLineSegmentClear(origin, target.center, {
-      targetClearance: Math.min(
-        TARGETING_VISIBILITY_TARGET_CLEARANCE,
-        Math.max(0.15, target.range * 0.35)
-      )
+      targetClearance: this.resolveRuntimeTargetVisibilityClearance(target)
     });
   }
 
   private isRuntimeTargetCameraVisible(target: {
+    kind?: string;
+    entityId?: string;
     center: { x: number; y: number; z: number };
     range: number;
   }): boolean {
@@ -5577,6 +5632,8 @@ export class RuntimeHost {
   }
 
   private isRuntimeTargetPlayerVisible(target: {
+    kind?: string;
+    entityId?: string;
     center: { x: number; y: number; z: number };
     range: number;
   }): boolean {
