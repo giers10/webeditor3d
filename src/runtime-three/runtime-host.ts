@@ -5452,13 +5452,7 @@ export class RuntimeHost {
   }
 
   private setActiveRuntimeTargetReference(reference: RuntimeTargetReference | null) {
-    const previousEntityId = this.activeRuntimeTargetReference?.entityId ?? null;
-    const nextEntityId = reference?.entityId ?? null;
     this.activeRuntimeTargetReference = reference;
-
-    if (previousEntityId !== nextEntityId) {
-      return;
-    }
   }
 
   private refreshRuntimeTargetingState() {
@@ -5565,21 +5559,10 @@ export class RuntimeHost {
     this.setActiveRuntimeTargetReference(null);
   }
 
-  private reportThirdPersonCameraLookIntent(yawDeltaRadians: number) {
-    if (
-      this.activeRuntimeTargetReference === null ||
-      !Number.isFinite(yawDeltaRadians) ||
-      Math.abs(yawDeltaRadians) <= Number.EPSILON
-    ) {
-      return;
-    }
-
-    this.runtimeTargetLookYawDeltaRadians += yawDeltaRadians;
-  }
-
   private resolveRuntimeTargetCandidateOnLookSide(
     activeTarget: RuntimeResolvedTarget,
-    lookSide: -1 | 1
+    lookSide: -1 | 1,
+    cameraDirection: { x: number; z: number }
   ): RuntimeTargetCandidate | null {
     const origin = this.currentPlayerControllerTelemetry?.eyePosition ?? null;
 
@@ -5598,7 +5581,7 @@ export class RuntimeHost {
     }
 
     let bestCandidate: RuntimeTargetCandidate | null = null;
-    let bestAngle = Number.POSITIVE_INFINITY;
+    let bestCameraAngle = Number.POSITIVE_INFINITY;
     const activeX = activeDirection.x / activeLength;
     const activeZ = activeDirection.z / activeLength;
 
@@ -5631,15 +5614,21 @@ export class RuntimeHost {
         continue;
       }
 
-      const absAngle = Math.abs(signedAngle);
+      const cameraAngle = Math.acos(
+        clampScalar(
+          candidateX * cameraDirection.x + candidateZ * cameraDirection.z,
+          -1,
+          1
+        )
+      );
 
       if (
         bestCandidate === null ||
-        absAngle < bestAngle ||
-        (absAngle === bestAngle && candidate.score > bestCandidate.score)
+        cameraAngle < bestCameraAngle ||
+        (cameraAngle === bestCameraAngle && candidate.score > bestCandidate.score)
       ) {
         bestCandidate = candidate;
-        bestAngle = absAngle;
+        bestCameraAngle = cameraAngle;
       }
     }
 
@@ -5652,7 +5641,6 @@ export class RuntimeHost {
       this.currentPlayerControllerTelemetry === null ||
       this.activeController !== this.thirdPersonController
     ) {
-      this.runtimeTargetLookYawDeltaRadians = 0;
       return;
     }
 
@@ -5676,36 +5664,62 @@ export class RuntimeHost {
     const otherTargetsAvailable = this.runtimeTargetCandidates.some(
       (candidate) => candidate.entityId !== activeTarget.entityId
     );
-    const yawDelta = this.runtimeTargetLookYawDeltaRadians;
-    const absYawDelta = Math.abs(yawDelta);
+    const origin = this.currentPlayerControllerTelemetry.eyePosition;
+    const activeDirection = {
+      x: activeTarget.center.x - origin.x,
+      z: activeTarget.center.z - origin.z
+    };
+    const activeLength = Math.hypot(activeDirection.x, activeDirection.z);
+
+    if (activeLength <= Number.EPSILON) {
+      return;
+    }
+
+    this.camera.getWorldDirection(this.cameraForward);
+    const cameraLength = Math.hypot(this.cameraForward.x, this.cameraForward.z);
+
+    if (cameraLength <= Number.EPSILON) {
+      return;
+    }
+
+    const activeX = activeDirection.x / activeLength;
+    const activeZ = activeDirection.z / activeLength;
+    const cameraDirection = {
+      x: this.cameraForward.x / cameraLength,
+      z: this.cameraForward.z / cameraLength
+    };
+    const cameraAngleFromTarget = Math.atan2(
+      activeZ * cameraDirection.x - activeX * cameraDirection.z,
+      activeX * cameraDirection.x + activeZ * cameraDirection.z
+    );
+    const absCameraAngleFromTarget = Math.abs(cameraAngleFromTarget);
+
+    if (absCameraAngleFromTarget < TARGETING_SIDE_SWITCH_YAW_THRESHOLD_RADIANS) {
+      return;
+    }
+
+    const lookSide = cameraAngleFromTarget > 0 ? 1 : -1;
+    const sideTarget = this.resolveRuntimeTargetCandidateOnLookSide(
+      activeTarget,
+      lookSide,
+      cameraDirection
+    );
+
+    if (sideTarget !== null) {
+      this.setActiveRuntimeTargetReference({
+        kind: sideTarget.kind,
+        entityId: sideTarget.entityId
+      });
+      this.proposedRuntimeTarget = sideTarget;
+      return;
+    }
 
     if (
       otherTargetsAvailable &&
-      absYawDelta >= TARGETING_CANCEL_YAW_THRESHOLD_RADIANS
+      absCameraAngleFromTarget >= TARGETING_CANCEL_YAW_THRESHOLD_RADIANS
     ) {
       this.setActiveRuntimeTargetReference(null);
-      return;
     }
-
-    if (absYawDelta < TARGETING_SIDE_SWITCH_YAW_THRESHOLD_RADIANS) {
-      return;
-    }
-
-    const lookSide = yawDelta > 0 ? 1 : -1;
-    const sideTarget = this.resolveRuntimeTargetCandidateOnLookSide(
-      activeTarget,
-      lookSide
-    );
-
-    if (sideTarget === null) {
-      return;
-    }
-
-    this.setActiveRuntimeTargetReference({
-      kind: sideTarget.kind,
-      entityId: sideTarget.entityId
-    });
-    this.proposedRuntimeTarget = sideTarget;
   }
 
   private updateRuntimeTargetingInputState() {
