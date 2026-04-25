@@ -275,6 +275,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.coyoteTimeRemainingMs = 0;
     this.jumpHoldRemainingMs = 0;
     this.previousTelemetry = null;
+    this.smoothedCameraCollisionDistance = null;
     ctx.setRuntimeMessage(null);
     ctx.setPlayerControllerTelemetry(null);
     this.context = null;
