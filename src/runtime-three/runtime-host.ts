@@ -886,8 +886,10 @@ export class RuntimeHost {
         this.resolveThirdPersonTargetAssist(),
       handleRuntimeTargetLookInput: (input) =>
         this.handleRuntimeTargetLookInput(input),
-      handleRuntimeTargetLookBoundaryReached: () =>
-        this.retargetOrClearActiveRuntimeTarget(),
+      handleRuntimeTargetLookBoundaryReached: () => {
+        this.clearActiveRuntimeTarget();
+        return false;
+      },
       isCameraDrivenExternally: () =>
         this.resolveActiveRuntimeCameraRig() !== null ||
         this.resolveDialogueAttentionNpc() !== null,
