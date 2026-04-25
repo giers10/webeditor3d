@@ -598,6 +598,61 @@ export function resolveRuntimeTargetCandidates(options: {
   return candidates;
 }
 
+export function resolveRuntimeTargetReference(
+  runtimeScene: RuntimeSceneDefinition,
+  reference: RuntimeTargetReference
+): RuntimeResolvedTarget | null {
+  switch (reference.kind) {
+    case "interactable": {
+      const interactable =
+        runtimeScene.entities.interactables.find(
+          (candidate) => candidate.entityId === reference.entityId
+        ) ?? null;
+
+      if (
+        interactable === null ||
+        !interactable.interactionEnabled ||
+        !hasTriggerLinks(runtimeScene, interactable.entityId, "click")
+      ) {
+        return null;
+      }
+
+      return {
+        kind: "interactable",
+        entityId: interactable.entityId,
+        prompt: interactable.prompt,
+        position: interactable.position,
+        center: interactable.position,
+        range: interactable.radius
+      };
+    }
+    case "npc": {
+      const npc =
+        runtimeScene.entities.npcs.find(
+          (candidate) => candidate.entityId === reference.entityId
+        ) ?? null;
+
+      if (
+        npc === null ||
+        !npc.visible ||
+        !hasTriggerLinks(runtimeScene, npc.entityId, "click")
+      ) {
+        return null;
+      }
+
+      const bounds = getNpcDialogueTargetBounds(npc);
+      return {
+        kind: "npc",
+        entityId: npc.entityId,
+        prompt: getNpcDialoguePrompt(npc, true),
+        position: npc.position,
+        center: bounds.center,
+        range: bounds.range
+      };
+    }
+  }
+}
+
 export function resolveStableRuntimeTargetProposal(
   candidates: RuntimeTargetCandidate[],
   previousProposedTargetEntityId: string | null,
