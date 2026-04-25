@@ -404,6 +404,16 @@ interface RuntimeDialogueAttentionState {
   sideSign: DialogueAttentionSideSign;
 }
 
+interface RuntimeDialogueParticipantState {
+  npcEntityId: string;
+  npcCurrentYawDegrees: number;
+  npcTargetYawDegrees: number;
+  npcRestoreYawDegrees: number;
+  playerTargetFeetPosition: RuntimeTeleportTarget["position"];
+  playerCurrentYawDegrees: number;
+  playerTargetYawDegrees: number;
+}
+
 type RuntimeResolvedCameraSource =
   | {
       kind: "gameplay";
