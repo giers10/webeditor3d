@@ -576,91 +576,94 @@ void main() {
   if (uAuroraVisibility > 0.001) {
     vec3 auroraDirection = normalize(rotationY(uAuroraRotationRadians) * direction);
     float auroraTime = uAuroraTimeHours * max(uAuroraSpeed, 0.0);
-    float hemisphereMask = smoothstep(-0.24, 0.42, auroraDirection.z);
-    vec2 auroraUv = vec2(
-      auroraDirection.x * 2.2 + auroraDirection.z * 0.35,
-      auroraDirection.z * 1.28
-    );
-    float arcNoise = fbm2(
-      auroraUv * 0.72 + vec2(auroraTime * 0.06, -auroraTime * 0.025)
-    );
-    float arcCenter =
-      uHorizonHeight +
-      mix(0.16, 0.82, clamp(uAuroraHeight, 0.0, 1.0)) +
-      (arcNoise - 0.5) * mix(0.1, 0.34, clamp(uAuroraThickness, 0.0, 1.0));
-    float curtainThickness = mix(0.09, 0.34, clamp(uAuroraThickness, 0.0, 1.0));
-    float curtainMask =
-      1.0 -
-      smoothstep(
-        curtainThickness,
-        curtainThickness + 0.1,
-        abs(direction.y - arcCenter)
-      );
     float horizonFade = smoothstep(
-      uHorizonHeight - 0.02,
-      uHorizonHeight + 0.14,
+      uHorizonHeight - 0.03,
+      uHorizonHeight + 0.2,
       direction.y
     );
-    float topFade =
+    float zenithFade = 1.0 - smoothstep(0.92, 1.0, direction.y);
+    float forwardMask = smoothstep(-0.36, 0.18, auroraDirection.z);
+    float sideFalloff =
       1.0 -
       smoothstep(
-        arcCenter + curtainThickness * 1.45,
-        arcCenter + curtainThickness * 2.3,
-        direction.y
+        1.18,
+        2.05,
+        abs(atan(auroraDirection.x, max(auroraDirection.z, 0.08)))
       );
-    float sway = fbm2(
-      vec2(
-        auroraUv.x * 3.5 - auroraTime * 0.22,
-        auroraUv.y * 1.4 + auroraTime * 0.04
-      )
+    float auroraAzimuth = atan(auroraDirection.x, max(auroraDirection.z, 0.08));
+    vec2 auroraUv = vec2(
+      auroraAzimuth * 1.15 + auroraDirection.x * 0.28,
+      auroraDirection.z * 1.4 + direction.y * 0.18
     );
-    float sweep = fbm2(
-      vec2(
-        auroraUv.x * 6.4 + auroraTime * 0.15,
-        auroraUv.y * 2.8 - auroraTime * 0.03
-      )
+    float authoredHeight = clamp(uAuroraHeight, 0.0, 1.0);
+    float authoredThickness = clamp(uAuroraThickness, 0.0, 1.0);
+    float baseCenter = uHorizonHeight + mix(0.18, 0.78, authoredHeight);
+    float baseWidth = mix(0.045, 0.18, authoredThickness);
+    float layerA = auroraCurtain(
+      auroraUv,
+      direction.y,
+      baseCenter,
+      baseWidth,
+      auroraTime,
+      0.0
     );
-    float filamentPattern = auroraFilamentPattern(
-      vec2(auroraUv.x * 1.8, direction.y * 6.0 + auroraUv.y * 2.0),
-      auroraTime * 1.7
+    float layerB = auroraCurtain(
+      auroraUv * vec2(1.18, 0.86) + vec2(0.9, 0.2),
+      direction.y,
+      baseCenter + baseWidth * 1.35,
+      baseWidth * 0.76,
+      auroraTime * 1.24 + 8.0,
+      2.7
     );
-    float skirt =
+    float layerC = auroraCurtain(
+      auroraUv * vec2(0.82, 1.12) + vec2(-1.6, 0.6),
+      direction.y,
+      baseCenter - baseWidth * 1.05,
+      baseWidth * 1.36,
+      auroraTime * 0.78 + 15.0,
+      5.1
+    );
+    float sweepingGlow =
       1.0 -
       smoothstep(
-        arcCenter - curtainThickness * 1.8,
-        arcCenter - curtainThickness * 0.2,
-        direction.y
+        baseWidth * 2.2,
+        baseWidth * 9.0,
+        abs(direction.y - baseCenter)
       );
+    float softSkyBloom =
+      sweepingGlow *
+      fbm2(vec2(auroraUv.x * 0.8 + auroraTime * 0.02, auroraUv.y * 0.5 + 4.0));
     float auroraStrength =
-      curtainMask *
-      hemisphereMask *
+      (layerA * 0.95 + layerB * 0.62 + layerC * 0.42 + softSkyBloom * 0.22) *
+      forwardMask *
+      sideFalloff *
       horizonFade *
-      topFade *
-      (0.42 + sway * 0.78) *
-      mix(0.55, 1.25, filamentPattern) *
-      mix(0.76, 1.0, sweep) *
-      mix(0.62, 1.0, skirt);
-    float auroraGlow =
-      hemisphereMask *
-      horizonFade *
-      (1.0 -
-        smoothstep(
-          curtainThickness * 1.6,
-          curtainThickness * 3.0,
-          abs(direction.y - arcCenter)
-        )) *
-      (0.16 + sway * 0.32);
-    float auroraColorMix = clamp(0.18 + filamentPattern * 0.46 + sweep * 0.5, 0.0, 1.0);
+      zenithFade;
+    float colorNoise = fbm2(
+      vec2(
+        auroraUv.x * 2.4 - auroraTime * 0.05,
+        direction.y * 2.1 + auroraUv.y * 0.45
+      )
+    );
+    float auroraColorMix =
+      clamp(
+        smoothstep(baseCenter - baseWidth * 0.4, baseCenter + baseWidth * 4.4, direction.y) *
+          0.72 +
+          colorNoise * 0.34,
+        0.0,
+        1.0
+      );
     vec3 auroraColor = mix(
       uAuroraPrimaryColor,
       uAuroraSecondaryColor,
       auroraColorMix
     );
-    auroraColor += vec3(0.82, 1.0, 0.9) * filamentPattern * 0.07;
-    skyColor +=
-      auroraColor *
-      (auroraStrength * uAuroraVisibility * uAuroraIntensity +
-        auroraGlow * uAuroraVisibility * uAuroraIntensity * 0.4);
+    vec3 innerFire = mix(vec3(0.78, 1.0, 0.82), uAuroraPrimaryColor, 0.5);
+    float cloudOcclusion = 1.0 - clamp(clouds * 0.58, 0.0, 0.72);
+    float auroraEnergy = uAuroraVisibility * uAuroraIntensity * cloudOcclusion;
+    skyColor += auroraColor * auroraStrength * auroraEnergy * 0.72;
+    skyColor += innerFire * (layerA + layerB * 0.5) * auroraEnergy * 0.16;
+    skyColor += auroraColor * softSkyBloom * auroraEnergy * 0.18;
   }
 
   skyColor +=
