@@ -5854,12 +5854,14 @@ export class RuntimeHost {
     options: {
       exclude?: RuntimeTargetReference | null;
       maxDistanceFromPlayer?: number;
+      requirePlayerVisibility?: boolean;
     } = {}
   ): RuntimeTargetCandidate | null {
     const exclude = options.exclude ?? null;
     const maxDistanceFromPlayer = options.maxDistanceFromPlayer ?? null;
+    const requirePlayerVisibility = options.requirePlayerVisibility ?? false;
     const playerEyePosition =
-      maxDistanceFromPlayer === null
+      maxDistanceFromPlayer === null && !requirePlayerVisibility
         ? null
         : this.currentPlayerControllerTelemetry?.eyePosition ?? null;
     let bestCandidate: RuntimeTargetCandidate | null = null;
@@ -5879,6 +5881,14 @@ export class RuntimeHost {
         playerEyePosition !== null &&
         distanceBetweenPoints(playerEyePosition, candidate.center) >
           maxDistanceFromPlayer
+      ) {
+        continue;
+      }
+
+      if (
+        requirePlayerVisibility &&
+        (playerEyePosition === null ||
+          !this.isRuntimeTargetVisibleFrom(playerEyePosition, candidate))
       ) {
         continue;
       }
