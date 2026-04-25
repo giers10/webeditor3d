@@ -3041,4 +3041,215 @@ describe("RuntimeHost", () => {
 
     host.dispose();
   });
+
+  it("activates the proposed runtime target and cycles visible target candidates", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      runtimeTargetCandidates: Array<{
+        kind: "npc" | "interactable";
+        entityId: string;
+      }>;
+      proposedRuntimeTarget: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      activeRuntimeTargetReference: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      activateOrCycleRuntimeTarget(): void;
+      clearActiveRuntimeTarget(): void;
+    };
+    const firstTarget = {
+      kind: "npc" as const,
+      entityId: "npc-one",
+      prompt: "Talk",
+      position: { x: 0, y: 0, z: 2 },
+      center: { x: 0, y: 1, z: 2 },
+      distance: 0,
+      range: 2,
+      viewDot: 1,
+      score: 3
+    };
+    const secondTarget = {
+      ...firstTarget,
+      kind: "interactable" as const,
+      entityId: "switch-two",
+      prompt: "Use",
+      score: 2.5
+    };
+
+    hostInternals.runtimeScene = {} as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.runtimeTargetCandidates = [firstTarget, secondTarget];
+    hostInternals.proposedRuntimeTarget = firstTarget;
+
+    hostInternals.activateOrCycleRuntimeTarget();
+
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-one"
+    });
+
+    hostInternals.activateOrCycleRuntimeTarget();
+
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "interactable",
+      entityId: "switch-two"
+    });
+
+    hostInternals.clearActiveRuntimeTarget();
+
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    host.dispose();
+  });
+
+  it("clears runtime targeting when switching into first-person mode", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      activeRuntimeTargetReference: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      proposedRuntimeTarget: unknown;
+      runtimeTargetCandidates: unknown[];
+    };
+
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-one"
+    };
+    hostInternals.proposedRuntimeTarget = {
+      kind: "npc",
+      entityId: "npc-one"
+    };
+    hostInternals.runtimeTargetCandidates = [{}];
+
+    host.setNavigationMode("firstPerson");
+
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    expect(hostInternals.proposedRuntimeTarget).toBeNull();
+    expect(hostInternals.runtimeTargetCandidates).toEqual([]);
+    host.dispose();
+  });
+
+  it("invalidates an active runtime target when it is no longer targetable", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      activeRuntimeTargetReference: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      camera: PerspectiveCamera;
+      refreshRuntimeTargetingState(): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        interactables: [
+          {
+            entityId: "switch-one",
+            position: { x: 0, y: 1, z: 2 },
+            radius: 3,
+            prompt: "Use",
+            interactionEnabled: false
+          }
+        ],
+        npcs: [],
+        playerStarts: [],
+        sceneEntries: [],
+        cameraRigs: [],
+        soundEmitters: [],
+        triggerVolumes: [],
+        teleportTargets: []
+      },
+      interactionLinks: [
+        {
+          id: "link-switch-one",
+          sourceEntityId: "switch-one",
+          trigger: "click",
+          action: {
+            type: "runSequence",
+            sequenceId: "noop"
+          }
+        }
+      ]
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "interactable",
+      entityId: "switch-one"
+    };
+    hostInternals.camera.position.set(0, 1.6, -2);
+    hostInternals.camera.lookAt(0, 1, 2);
+
+    hostInternals.refreshRuntimeTargetingState();
+
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    host.dispose();
+  });
+
+  it("does not provide gameplay target camera assist while a camera rig is active", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      activeRuntimeTargetReference: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      resolveThirdPersonTargetAssist(): unknown;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        cameraRigs: [
+          {
+            entityId: "camera-rig-default",
+            defaultActive: true,
+            priority: 1
+          }
+        ],
+        interactables: [],
+        npcs: [],
+        playerStarts: [],
+        sceneEntries: [],
+        soundEmitters: [],
+        triggerVolumes: [],
+        teleportTargets: []
+      },
+      interactionLinks: []
+    } as never;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "interactable",
+      entityId: "switch-one"
+    };
+
+    expect(hostInternals.resolveThirdPersonTargetAssist()).toBeNull();
+    host.dispose();
+  });
 });
