@@ -4003,6 +4003,72 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("keeps an occluded active target through a short camera visibility grace", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      collisionWorld: {
+        isLineSegmentClear(): boolean;
+      };
+      activeRuntimeTargetReference: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      camera: PerspectiveCamera;
+      updateActiveRuntimeTargetLockState(dt?: number): void;
+    };
+
+    hostInternals.runtimeScene = {
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-occluded-active",
+            visible: true,
+            position: { x: 0, y: 0, z: 6 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Occluded Active",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-occluded-active", sourceEntityId: "npc-occluded-active", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.collisionWorld = {
+      isLineSegmentClear: () => false
+    };
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-occluded-active"
+    };
+    hostInternals.camera.position.set(0, 1.6, 0);
+
+    hostInternals.updateActiveRuntimeTargetLockState(0.2);
+
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-occluded-active"
+    });
+
+    hostInternals.updateActiveRuntimeTargetLockState(0.2);
+
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    host.dispose();
+  });
+
   it("clears runtime targeting when switching into first-person mode", () => {
     const host = new RuntimeHost({
       enableRendering: false
