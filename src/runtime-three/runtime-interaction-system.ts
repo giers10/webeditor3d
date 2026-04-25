@@ -20,10 +20,7 @@ import type {
 
 const DEFAULT_INTERACTABLE_TARGET_RADIUS = 0.75;
 const DEFAULT_NPC_DIALOGUE_TARGET_RADIUS = 1.5;
-const TARGETING_INTERACTABLE_REACH_MULTIPLIER = 3.5;
-const TARGETING_NPC_REACH_MULTIPLIER = 4.5;
-const TARGETING_MIN_INTERACTABLE_REACH = 5.5;
-const TARGETING_MIN_NPC_REACH = 7;
+const TARGETING_ACQUISITION_REACH = 15;
 const TARGETING_MIN_VIEW_DOT = 0.1;
 
 export interface RuntimeDialogueStartSource {
@@ -493,10 +490,7 @@ function collectRuntimeInteractionTargetSources(
 
     const distance = distanceBetweenVec3(interactionOrigin, interactable.position);
     const acquisitionRange = options.useTargetingReach
-      ? Math.max(
-          interactable.radius * TARGETING_INTERACTABLE_REACH_MULTIPLIER,
-          TARGETING_MIN_INTERACTABLE_REACH
-        )
+      ? TARGETING_ACQUISITION_REACH
       : interactable.radius;
 
     if (distance > acquisitionRange) {
@@ -530,10 +524,7 @@ function collectRuntimeInteractionTargetSources(
     const bounds = getNpcDialogueTargetBounds(npc);
     const distance = distanceToAxisAlignedBox(interactionOrigin, bounds);
     const acquisitionRange = options.useTargetingReach
-      ? Math.max(
-          bounds.range * TARGETING_NPC_REACH_MULTIPLIER,
-          TARGETING_MIN_NPC_REACH
-        )
+      ? TARGETING_ACQUISITION_REACH
       : bounds.range;
 
     if (distance > acquisitionRange) {
