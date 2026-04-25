@@ -1609,14 +1609,114 @@ export class RuntimeHost {
   }
 
   private createRuntimeCameraSourceKey(
-    rig: RuntimeCameraRig | null
+    source: RuntimeResolvedCameraSource
   ): RuntimeCameraSourceKey {
-    return rig === null ? "gameplay" : `rig:${rig.entityId}`;
+    switch (source.kind) {
+      case "gameplay":
+        return "gameplay";
+      case "rig":
+        return `rig:${source.rig.entityId}`;
+      case "dialogue":
+        return `dialogue:${source.state.npcEntityId}`;
+    }
+  }
+
+  private resolveDialogueAttentionCameraPose(
+    referenceCameraPose: RuntimeCameraPose
+  ): RuntimeCameraPose | null {
+    const npc = this.resolveDialogueAttentionNpc();
+    const playerFocusPoint = this.resolveDialogueAttentionPlayerFocusPoint();
+
+    if (npc === null || playerFocusPoint === null) {
+      return null;
+    }
+
+    const solution = resolveDialogueAttentionCameraSolution({
+      playerFocusPoint,
+      npcFocusPoint: this.resolveDialogueAttentionNpcFocusPoint(npc),
+      referenceCameraPosition: {
+        x: referenceCameraPose.position.x,
+        y: referenceCameraPose.position.y,
+        z: referenceCameraPose.position.z
+      },
+      referenceLookTarget: {
+        x: referenceCameraPose.lookTarget.x,
+        y: referenceCameraPose.lookTarget.y,
+        z: referenceCameraPose.lookTarget.z
+      },
+      previousSideSign:
+        this.activeDialogueAttentionState?.npcEntityId === npc.entityId
+          ? this.activeDialogueAttentionState.sideSign
+          : null
+    });
+
+    this.activeDialogueAttentionState = {
+      npcEntityId: npc.entityId,
+      sideSign: solution.sideSign
+    };
+
+    return {
+      position: new Vector3(
+        solution.position.x,
+        solution.position.y,
+        solution.position.z
+      ),
+      lookTarget: new Vector3(
+        solution.lookTarget.x,
+        solution.lookTarget.y,
+        solution.lookTarget.z
+      )
+    };
+  }
+
+  private resolveActiveRuntimeCameraSource(): RuntimeResolvedCameraSource {
+    const nextRig = this.resolveActiveRuntimeCameraRig();
+
+    if (nextRig !== null) {
+      return {
+        kind: "rig",
+        rig: nextRig
+      };
+    }
+
+    const dialogueNpc = this.resolveDialogueAttentionNpc();
+
+    if (dialogueNpc !== null) {
+      return {
+        kind: "dialogue",
+        state:
+          this.activeDialogueAttentionState?.npcEntityId === dialogueNpc.entityId
+            ? this.activeDialogueAttentionState
+            : {
+                npcEntityId: dialogueNpc.entityId,
+                sideSign: 1
+              }
+      };
+    }
+
+    return {
+      kind: "gameplay"
+    };
+  }
+
+  private resolveRuntimeCameraSourcePose(
+    source: RuntimeResolvedCameraSource,
+    dt: number,
+    referenceCameraPose: RuntimeCameraPose
+  ): RuntimeCameraPose | null {
+    switch (source.kind) {
+      case "gameplay":
+        return this.captureCurrentCameraPose();
+      case "rig":
+        return this.resolveRuntimeCameraRigPose(source.rig, dt);
+      case "dialogue":
+        return this.resolveDialogueAttentionCameraPose(referenceCameraPose);
+    }
   }
 
   private resolveRuntimeCameraTransitionSettings(
-    previousRig: RuntimeCameraRig | null,
-    nextRig: RuntimeCameraRig | null
+    previousSource: RuntimeResolvedCameraSource,
+    nextSource: RuntimeResolvedCameraSource
   ) {
     if (this.suppressNextCameraSourceTransition) {
       return {
@@ -1625,26 +1725,55 @@ export class RuntimeHost {
       };
     }
 
-    const transitionRig = nextRig ?? previousRig;
+    const transitionRig =
+      nextSource.kind === "rig"
+        ? nextSource.rig
+        : previousSource.kind === "rig"
+          ? previousSource.rig
+          : null;
 
-    return transitionRig === null
-      ? {
-          mode: "cut" as const,
-          durationSeconds: 0
-        }
-      : {
-          mode: transitionRig.transitionMode,
-          durationSeconds: transitionRig.transitionDurationSeconds
-        };
+    if (transitionRig !== null) {
+      return {
+        mode: transitionRig.transitionMode,
+        durationSeconds: transitionRig.transitionDurationSeconds
+      };
+    }
+
+    if (previousSource.kind === "dialogue" || nextSource.kind === "dialogue") {
+      return {
+        mode: "blend" as const,
+        durationSeconds: DIALOGUE_ATTENTION_CAMERA_TRANSITION_DURATION_SECONDS
+      };
+    }
+
+    return {
+      mode: "cut" as const,
+      durationSeconds: 0
+    };
   }
 
   private applyActiveCameraRig(
     dt: number,
     previousCameraPose: RuntimeCameraPose = this.captureCurrentCameraPose()
   ) {
-    const previousRig = this.activeRuntimeCameraRig;
-    let nextRig = this.resolveActiveRuntimeCameraRig();
-    let nextSourceKey = this.createRuntimeCameraSourceKey(nextRig);
+    const previousSource: RuntimeResolvedCameraSource =
+      this.activeRuntimeCameraRig !== null
+        ? {
+            kind: "rig",
+            rig: this.activeRuntimeCameraRig
+          }
+        : this.activeCameraSourceKey !== null &&
+            this.activeCameraSourceKey.startsWith("dialogue:") &&
+            this.activeDialogueAttentionState !== null
+          ? {
+              kind: "dialogue",
+              state: this.activeDialogueAttentionState
+            }
+          : {
+              kind: "gameplay"
+            };
+    let nextSource = this.resolveActiveRuntimeCameraSource();
+    let nextSourceKey = this.createRuntimeCameraSourceKey(nextSource);
     let sourceChanged = this.activeCameraSourceKey !== nextSourceKey;
 
     if (sourceChanged) {
@@ -1653,11 +1782,16 @@ export class RuntimeHost {
       this.cameraRigLookPitchRadians = 0;
     }
 
-    let targetPose =
-      nextRig === null ? null : this.resolveRuntimeCameraRigPose(nextRig, dt);
+    let targetPose = this.resolveRuntimeCameraSourcePose(
+      nextSource,
+      dt,
+      previousCameraPose
+    );
 
     if (targetPose === null) {
-      nextRig = null;
+      nextSource = {
+        kind: "gameplay"
+      };
       nextSourceKey = "gameplay";
       sourceChanged = this.activeCameraSourceKey !== nextSourceKey;
       this.cameraRigLookDragging = false;
@@ -1678,8 +1812,8 @@ export class RuntimeHost {
 
     if (sourceChanged) {
       const transitionSettings = this.resolveRuntimeCameraTransitionSettings(
-        previousRig,
-        nextRig
+        previousSource,
+        nextSource
       );
 
       if (
@@ -1707,7 +1841,8 @@ export class RuntimeHost {
       this.suppressNextCameraSourceTransition = false;
     }
 
-    this.activeRuntimeCameraRig = nextRig;
+    this.activeRuntimeCameraRig =
+      nextSource.kind === "rig" ? nextSource.rig : null;
 
     if (
       this.cameraTransitionState !== null &&
@@ -1746,11 +1881,11 @@ export class RuntimeHost {
       this.applyCameraPose(targetPose);
     }
 
-    if (nextRig !== null) {
+    if (nextSource.kind !== "gameplay") {
       this.syncCameraRigTelemetryHooks();
     }
 
-    return nextRig;
+    return this.activeRuntimeCameraRig;
   }
 
   private async finalizeSceneLoad(
