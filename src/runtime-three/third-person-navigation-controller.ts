@@ -36,6 +36,7 @@ const MIN_PITCH_RADIANS = -0.2;
 const MAX_PITCH_RADIANS = Math.PI * 0.45;
 export const THIRD_PERSON_CAMERA_COLLISION_RADIUS = 0.2;
 const CAMERA_PIVOT_EYE_HEIGHT_FACTOR = 0.85;
+const TARGET_ASSIST_YAW_SPEED = 2.2;
 
 function clampPitch(pitchRadians: number): number {
   return Math.max(
@@ -49,6 +50,24 @@ function clampCameraDistance(distance: number): number {
     MIN_CAMERA_DISTANCE,
     Math.min(MAX_CAMERA_DISTANCE, distance)
   );
+}
+
+function normalizeAngleRadians(angle: number): number {
+  return Math.atan2(Math.sin(angle), Math.cos(angle));
+}
+
+function dampAngleRadians(
+  current: number,
+  target: number,
+  strength: number,
+  dt: number
+): number {
+  if (dt <= 0 || strength <= 0) {
+    return current;
+  }
+
+  const alpha = 1 - Math.exp(-strength * dt);
+  return current + normalizeAngleRadians(target - current) * alpha;
 }
 
 function toEyePosition(feetPosition: Vec3, eyeHeight: number): Vec3 {
@@ -278,18 +297,35 @@ export class ThirdPersonNavigationController implements NavigationController {
       runtimeScene.playerInputBindings
     );
 
-    if (
-      this.context.isCameraDrivenExternally() !== true &&
-      (lookInput.horizontal !== 0 || lookInput.vertical !== 0)
-    ) {
+    const cameraDrivenExternally = this.context.isCameraDrivenExternally() === true;
+
+    if (!cameraDrivenExternally && (lookInput.horizontal !== 0 || lookInput.vertical !== 0)) {
       this.cameraYawRadians -= lookInput.horizontal * GAMEPAD_LOOK_SPEED * dt;
       this.pitchRadians = clampPitch(
         this.pitchRadians - lookInput.vertical * GAMEPAD_LOOK_SPEED * dt
       );
     }
 
+    if (!cameraDrivenExternally) {
+      const targetAssist =
+        this.context.resolveThirdPersonTargetAssist?.() ?? null;
+
+      if (targetAssist !== null) {
+        const targetYaw = Math.atan2(
+          targetAssist.targetPosition.x - this.feetPosition.x,
+          targetAssist.targetPosition.z - this.feetPosition.z
+        );
+        this.cameraYawRadians = dampAngleRadians(
+          this.cameraYawRadians,
+          targetYaw,
+          TARGET_ASSIST_YAW_SPEED * targetAssist.strength,
+          dt
+        );
+      }
+    }
+
     const movementYawRadians =
-      this.context.isCameraDrivenExternally() === true
+      cameraDrivenExternally
         ? this.context.getCameraYawRadians()
         : this.cameraYawRadians;
 
