@@ -244,7 +244,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     ctx.setRuntimeMessage(
       "Third Person active. Drag to orbit the camera, use the right stick for gamepad camera look, move with your authored bindings, and scroll to zoom."
     );
-    this.updateCameraTransform();
+    this.updateCameraTransform(0);
     this.publishTelemetry();
   }
 
@@ -502,7 +502,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     );
 
     if (locomotionStep === null) {
-      this.updateCameraTransform();
+      this.updateCameraTransform(dt);
       this.publishTelemetry();
       return;
     }
@@ -541,7 +541,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       );
     }
 
-    this.updateCameraTransform();
+    this.updateCameraTransform(dt);
     this.publishTelemetry();
   }
 
@@ -582,7 +582,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.jumpHoldRemainingMs = 0;
     this.inWaterVolume = false;
     this.inFogVolume = false;
-    this.updateCameraTransform();
+    this.updateCameraTransform(0);
     this.publishTelemetry();
   }
 
