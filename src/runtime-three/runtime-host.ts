@@ -1319,10 +1319,8 @@ export class RuntimeHost {
     this.targetingLuxMesh.material.dispose();
     this.targetingLuxGlowMesh.geometry.dispose();
     this.targetingLuxGlowMesh.material.dispose();
-    this.targetingActiveRing.geometry.dispose();
-    this.targetingActiveRing.material.dispose();
-    this.targetingActiveArrow.geometry.dispose();
-    this.targetingActiveArrow.material.dispose();
+    this.targetingActiveArrowGeometry.dispose();
+    this.targetingActiveArrowMaterial.dispose();
     this.worldBackgroundRenderer.dispose();
     this.renderer?.forceContextLoss();
     this.renderer?.dispose();
