@@ -312,6 +312,9 @@ const CAMERA_RIG_GAMEPAD_LOOK_SPEED = 2.2;
 const DIALOGUE_ATTENTION_CAMERA_TRANSITION_DURATION_SECONDS = 0.35;
 const DIALOGUE_ATTENTION_PLAYER_FOCUS_HEIGHT_FACTOR = 0.82;
 const DIALOGUE_ATTENTION_NPC_FOCUS_HEIGHT_FACTOR = 0.88;
+const DIALOGUE_PARTICIPANT_MIN_SURFACE_DISTANCE = 0.5;
+const DIALOGUE_PARTICIPANT_YAW_BLEND_RATE = 8;
+const DIALOGUE_PARTICIPANT_RESTORE_EPSILON_DEGREES = 0.5;
 
 function dampScalar(current: number, target: number, rate: number, dt: number) {
   return current + (target - current) * Math.min(1, dt * rate);
@@ -319,6 +322,29 @@ function dampScalar(current: number, target: number, rate: number, dt: number) {
 
 function clampScalar(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
+}
+
+function normalizeDegrees(value: number) {
+  const wrapped = ((value + 180) % 360 + 360) % 360 - 180;
+
+  return wrapped === -180 ? 180 : wrapped;
+}
+
+function resolveShortestAngleDeltaDegrees(fromDegrees: number, toDegrees: number) {
+  return normalizeDegrees(toDegrees - fromDegrees);
+}
+
+function dampAngleDegrees(
+  currentDegrees: number,
+  targetDegrees: number,
+  rate: number,
+  dt: number
+) {
+  return normalizeDegrees(
+    currentDegrees +
+      resolveShortestAngleDeltaDegrees(currentDegrees, targetDegrees) *
+        Math.min(1, dt * rate)
+  );
 }
 
 function isNonNull<T>(value: T | null): value is T {
