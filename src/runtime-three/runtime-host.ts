@@ -5665,7 +5665,10 @@ export class RuntimeHost {
     }
 
     const nextTarget =
-      this.proposedRuntimeTarget ?? this.runtimeTargetCandidates[0] ?? null;
+      this.proposedRuntimeTarget ??
+      this.resolveRuntimeTargetCandidateNearestScreenCenter({
+        requirePlayerVisibility: true
+      });
 
     if (nextTarget !== null) {
       this.setActiveRuntimeTargetReference({
