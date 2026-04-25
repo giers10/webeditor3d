@@ -1467,11 +1467,12 @@ export class RuntimeHost {
       currentHorizontalDistance,
       minimumCenterDistance
     );
-    let targetFeetPosition = {
+    const desiredFeetPosition = {
       x: npc.position.x + normalizedDirectionX * desiredHorizontalDistance,
       y: playerFeetPosition.y,
       z: npc.position.z + normalizedDirectionZ * desiredHorizontalDistance
     };
+    let targetFeetPosition = desiredFeetPosition;
 
     if (
       currentHorizontalDistance < desiredHorizontalDistance - 1e-4 &&
@@ -1481,9 +1482,9 @@ export class RuntimeHost {
       for (let step = 1; step <= 8; step += 1) {
         const t = step / 8;
         const candidate = {
-          x: playerFeetPosition.x + (targetFeetPosition.x - playerFeetPosition.x) * t,
+          x: playerFeetPosition.x + (desiredFeetPosition.x - playerFeetPosition.x) * t,
           y: playerFeetPosition.y,
-          z: playerFeetPosition.z + (targetFeetPosition.z - playerFeetPosition.z) * t
+          z: playerFeetPosition.z + (desiredFeetPosition.z - playerFeetPosition.z) * t
         };
 
         if (
