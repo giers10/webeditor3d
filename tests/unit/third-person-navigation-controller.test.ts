@@ -213,6 +213,38 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(targetContext);
   });
 
+  it("requests target retarget or clear when lock-on manual look reaches its boundary", () => {
+    const { context } = createRuntimeControllerContext();
+    const controller = new ThirdPersonNavigationController();
+    const getGamepads = vi.fn<() => Gamepad[]>(() => [
+      createMockGamepad({
+        axes: [0, 0, 1, 0]
+      })
+    ]);
+    const handleRuntimeTargetLookBoundaryReached = vi.fn(() => false);
+    const targetContext = {
+      ...context,
+      handleRuntimeTargetLookInput: vi.fn(() => ({
+        activeTargetLocked: true,
+        switchedTarget: false,
+        switchInputHeld: false
+      })),
+      handleRuntimeTargetLookBoundaryReached
+    };
+
+    Object.defineProperty(navigator, "getGamepads", {
+      configurable: true,
+      value: getGamepads
+    });
+
+    controller.activate(targetContext);
+    controller.update(1);
+
+    expect(handleRuntimeTargetLookBoundaryReached).toHaveBeenCalledTimes(1);
+
+    controller.deactivate(targetContext);
+  });
+
   it("uses third-person target assist to adjust vertical camera aim", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();
