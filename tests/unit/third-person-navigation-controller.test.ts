@@ -238,6 +238,65 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(context);
   });
 
+  it("allows the third-person camera to pitch low enough for floor collision to pull it inward", () => {
+    const { context } = createRuntimeControllerContext();
+    const controller = new ThirdPersonNavigationController();
+    const controllerInternals = controller as unknown as {
+      pitchRadians: number;
+    };
+    const floorHeight = 0.2;
+    let latestPivot: Vec3 | null = null;
+    let latestDesiredCameraPosition: Vec3 | null = null;
+    const distanceBetween = (left: Vec3, right: Vec3) =>
+      Math.hypot(left.x - right.x, left.y - right.y, left.z - right.z);
+
+    context.resolveThirdPersonCameraCollision = vi.fn(
+      (pivot: Vec3, desiredCameraPosition: Vec3) => {
+        latestPivot = { ...pivot };
+        latestDesiredCameraPosition = { ...desiredCameraPosition };
+
+        if (desiredCameraPosition.y >= floorHeight) {
+          return { ...desiredCameraPosition };
+        }
+
+        const t =
+          (pivot.y - floorHeight) /
+          Math.max(pivot.y - desiredCameraPosition.y, 1e-6);
+
+        return {
+          x: pivot.x + (desiredCameraPosition.x - pivot.x) * t,
+          y: floorHeight,
+          z: pivot.z + (desiredCameraPosition.z - pivot.z) * t
+        };
+      }
+    );
+
+    controller.activate(context);
+    controllerInternals.pitchRadians = -1.2;
+    controller.update(0);
+
+    expect(latestDesiredCameraPosition).not.toBeNull();
+    expect(latestDesiredCameraPosition?.y ?? 0).toBeLessThan(floorHeight);
+    expect(context.camera.position.y).toBeCloseTo(floorHeight);
+    expect(
+      distanceBetween(
+        {
+          x: context.camera.position.x,
+          y: context.camera.position.y,
+          z: context.camera.position.z
+        },
+        latestPivot ?? { x: 0, y: 0, z: 0 }
+      )
+    ).toBeLessThan(
+      distanceBetween(
+        latestDesiredCameraPosition ?? { x: 0, y: 0, z: 0 },
+        latestPivot ?? { x: 0, y: 0, z: 0 }
+      )
+    );
+
+    controller.deactivate(context);
+  });
+
   it("uses lock-on look input as a temporary offset that returns to center", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();
