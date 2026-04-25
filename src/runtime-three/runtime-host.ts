@@ -344,6 +344,7 @@ const TARGETING_ACTIVE_TARGET_RELEASE_DISTANCE =
 const TARGETING_AUTO_RETARGET_SAFE_DISTANCE =
   TARGETING_MAX_ACTIVE_TARGET_DISTANCE - 0.75;
 const TARGETING_VISIBILITY_TARGET_CLEARANCE = 0.45;
+const TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING = 0.08;
 const TARGETING_ACTIVE_OCCLUSION_GRACE_SECONDS = 0.35;
 // Proposed-target camera nudging is intentionally disabled for now. Lux alone
 // should communicate proposal without moving the gameplay camera.
