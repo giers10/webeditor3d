@@ -1,4 +1,4 @@
-import { Box3, Group, Mesh, type AnimationClip, type Material, type Object3D, type Texture } from "three";
+import { Box3, Cache, Group, Mesh, type AnimationClip, type Material, type Object3D, type Texture } from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
