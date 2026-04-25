@@ -3270,13 +3270,13 @@ describe("RuntimeHost", () => {
       entityId: "npc-active"
     };
 
-    expect(hostInternals.handleRuntimeTargetLookInput(1)).toBe(true);
+    expect(hostInternals.handleRuntimeTargetLookInput(-1)).toBe(true);
 
     expect(hostInternals.activeRuntimeTargetReference).toEqual({
       kind: "npc",
       entityId: "npc-right"
     });
-    expect(hostInternals.handleRuntimeTargetLookInput(1)).toBe(true);
+    expect(hostInternals.handleRuntimeTargetLookInput(-1)).toBe(true);
     expect(hostInternals.activeRuntimeTargetReference).toEqual({
       kind: "npc",
       entityId: "npc-right"
