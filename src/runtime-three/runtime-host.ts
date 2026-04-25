@@ -4172,15 +4172,13 @@ export class RuntimeHost {
     this.previousFrameTime = now;
     this.updatePauseInputState();
     const simulationDt = this.isRuntimePaused() ? 0 : dt;
+    const cameraDt = dt;
     const previousCameraPose = this.captureCurrentCameraPose();
 
     this.activeController?.update(simulationDt);
-    const activeCameraRig = this.applyActiveCameraRig(
-      simulationDt,
-      previousCameraPose
-    );
+    const activeCameraRig = this.applyActiveCameraRig(cameraDt, previousCameraPose);
 
-    if (activeCameraRig === null) {
+    if (!this.isActiveExternalCameraSource() && activeCameraRig === null) {
       this.applyPlayerCameraEffects(simulationDt);
     } else {
       this.resetPlayerCameraEffects();
