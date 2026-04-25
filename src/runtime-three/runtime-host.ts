@@ -5961,6 +5961,16 @@ export class RuntimeHost {
       return;
     }
 
+    if (
+      distanceBetweenPoints(
+        this.currentPlayerControllerTelemetry.eyePosition,
+        activeTarget.center
+      ) > TARGETING_ACTIVE_TARGET_RELEASE_DISTANCE
+    ) {
+      this.retargetOrClearActiveRuntimeTarget();
+      return;
+    }
+
     if (this.isRuntimeTargetCameraVisible(activeTarget)) {
       this.activeRuntimeTargetOcclusionSeconds = 0;
     } else {
@@ -5973,16 +5983,6 @@ export class RuntimeHost {
         this.setActiveRuntimeTargetReference(null);
         return;
       }
-    }
-
-    if (
-      distanceBetweenPoints(
-        this.currentPlayerControllerTelemetry.eyePosition,
-        activeTarget.center
-      ) > TARGETING_ACTIVE_TARGET_RELEASE_DISTANCE
-    ) {
-      this.retargetOrClearActiveRuntimeTarget();
-      return;
     }
   }
 
