@@ -798,6 +798,11 @@ export class RuntimeHost {
   constructor(options: { enableRendering?: boolean } = {}) {
     const enableRendering = options.enableRendering ?? true;
 
+    enableCameraRendererRenderCategories(this.camera);
+    enableCameraRendererRenderCategories(this.waterReflectionCamera);
+    enableObjectForAllRendererRenderCategories(this.ambientLight);
+    enableObjectForAllRendererRenderCategories(this.sunLight);
+    enableObjectForAllRendererRenderCategories(this.moonLight);
     this.scene.add(this.ambientLight);
     this.scene.add(this.sunLight);
     this.scene.add(this.sunLight.target);
@@ -814,10 +819,13 @@ export class RuntimeHost {
     this.targetingLuxGroup.add(this.targetingLuxGlowMesh);
     this.targetingLuxGroup.add(this.targetingLuxMesh);
     this.targetingLuxGroup.add(this.targetingLuxLight);
+    applyRendererRenderCategory(this.targetingLuxGroup, "overlay");
+    enableObjectForAllRendererRenderCategories(this.targetingLuxLight);
     this.targetingActiveArrows.forEach((arrow, index) => {
       arrow.renderOrder = 10001 + index;
       this.targetingActiveGroup.add(arrow);
     });
+    applyRendererRenderCategory(this.targetingActiveGroup, "overlay");
     this.targetingVisualGroup.add(this.targetingLuxGroup);
     this.targetingVisualGroup.add(this.targetingActiveGroup);
     this.targetingVisualGroup.visible = false;
