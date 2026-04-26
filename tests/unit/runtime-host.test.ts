@@ -4138,7 +4138,7 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
-  it("biases Lux proposal focus slightly below screen center", () => {
+  it("biases Lux proposal focus slightly above screen center", () => {
     const host = new RuntimeHost({
       enableRendering: false
     });
@@ -4194,7 +4194,7 @@ describe("RuntimeHost", () => {
       hostInternals.resolveRuntimeTargetCandidateNearestScreenCenter()
     ).toMatchObject({
       kind: "npc",
-      entityId: "npc-below-center"
+      entityId: "npc-above-center"
     });
     host.dispose();
   });
