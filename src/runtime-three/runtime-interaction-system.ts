@@ -823,11 +823,14 @@ export class RuntimeInteractionSystem {
 
     const resolvePromptForRay = (
       rayDirection: Vec3
-    ): RuntimeInteractionPrompt | null => {
+    ): { prompt: RuntimeInteractionPrompt | null; hitDistance: number } => {
       const normalizedViewDirection = normalizeVec3(rayDirection);
 
       if (normalizedViewDirection === null) {
-        return null;
+        return {
+          prompt: null,
+          hitDistance: Number.POSITIVE_INFINITY
+        };
       }
 
       let bestPrompt: RuntimeInteractionPrompt | null = null;
@@ -867,24 +870,41 @@ export class RuntimeInteractionSystem {
         bestHitDistance = next.hitDistance;
       }
 
-      return bestPrompt;
+      return {
+        prompt: bestPrompt,
+        hitDistance: bestHitDistance
+      };
     };
 
     const centerPrompt = resolvePromptForRay(rayDirections[0]!);
 
-    if (centerPrompt !== null) {
-      return centerPrompt;
+    if (centerPrompt.prompt !== null) {
+      return centerPrompt.prompt;
     }
 
-    for (let index = 1; index < rayDirections.length; index += 1) {
-      const prompt = resolvePromptForRay(rayDirections[index]!);
+    let bestSidePrompt: RuntimeInteractionPrompt | null = null;
+    let bestSideHitDistance = Number.POSITIVE_INFINITY;
 
-      if (prompt !== null) {
-        return prompt;
+    for (let index = 1; index < rayDirections.length; index += 1) {
+      const sidePrompt = resolvePromptForRay(rayDirections[index]!);
+
+      if (
+        sidePrompt.prompt !== null &&
+        (sidePrompt.hitDistance < bestSideHitDistance ||
+          (sidePrompt.hitDistance === bestSideHitDistance &&
+            (bestSidePrompt === null ||
+              sidePrompt.prompt.distance < bestSidePrompt.distance ||
+              (sidePrompt.prompt.distance === bestSidePrompt.distance &&
+                sidePrompt.prompt.sourceEntityId.localeCompare(
+                  bestSidePrompt.sourceEntityId
+                ) < 0))))
+      ) {
+        bestSidePrompt = sidePrompt.prompt;
+        bestSideHitDistance = sidePrompt.hitDistance;
       }
     }
 
-    return null;
+    return bestSidePrompt;
   }
 
   dispatchClickInteraction(
