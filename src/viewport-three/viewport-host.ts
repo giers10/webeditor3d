@@ -5700,46 +5700,107 @@ export class ViewportHost {
         continue;
       }
 
-      const line = new Line(
-        this.createPathLineGeometry(path),
-        new LineBasicMaterial({
-          color: isPathSelected(selection, path.id)
-            ? PATH_SELECTED_COLOR
-            : PATH_COLOR
-        })
-      );
-      line.userData.pathId = path.id;
-
-      const pointMeshes = path.points.map((point) => {
-        const mesh = new Mesh(
-          new SphereGeometry(PATH_POINT_RADIUS, 12, 12),
-          new MeshBasicMaterial({
-            color: isPathSelected(selection, path.id)
-              ? PATH_POINT_SELECTED_COLOR
-              : PATH_POINT_COLOR
-          })
-        );
-
-        mesh.position.set(point.position.x, point.position.y, point.position.z);
-        mesh.userData.pathId = path.id;
-        mesh.userData.pathPointId = point.id;
-        this.pathGroup.add(mesh);
-
-        return {
-          pointId: point.id,
-          mesh
-        };
-      });
-
-      this.pathGroup.add(line);
-      this.pathRenderObjects.set(path.id, {
-        line,
-        pointMeshes
-      });
+      const renderObjects = this.createPathRenderObjects(path, selection);
+      this.pathGroup.add(renderObjects.line);
+      for (const pointMesh of renderObjects.pointMeshes) {
+        this.pathGroup.add(pointMesh.mesh);
+      }
+      this.pathRenderObjects.set(path.id, renderObjects);
     }
 
     applyRendererRenderCategory(this.pathGroup, "overlay");
     this.refreshPathPresentation();
+  }
+
+  private createPathRenderObjects(
+    path: ScenePath,
+    selection: EditorSelection
+  ): PathRenderObjects {
+    const line = new Line(
+      this.createPathLineGeometry(path),
+      new LineBasicMaterial({
+        color: isPathSelected(selection, path.id)
+          ? PATH_SELECTED_COLOR
+          : PATH_COLOR
+      })
+    );
+    line.userData.pathId = path.id;
+
+    const pointMeshes = path.points.map((point) => {
+      const mesh = new Mesh(
+        new SphereGeometry(PATH_POINT_RADIUS, 12, 12),
+        new MeshBasicMaterial({
+          color: isPathSelected(selection, path.id)
+            ? PATH_POINT_SELECTED_COLOR
+            : PATH_POINT_COLOR
+        })
+      );
+
+      mesh.position.set(point.position.x, point.position.y, point.position.z);
+      mesh.userData.pathId = path.id;
+      mesh.userData.pathPointId = point.id;
+
+      return {
+        pointId: point.id,
+        mesh
+      };
+    });
+
+    return {
+      line,
+      pointMeshes
+    };
+  }
+
+  private disposePathRenderObjects(renderObjects: PathRenderObjects) {
+    this.pathGroup.remove(renderObjects.line);
+    renderObjects.line.geometry.dispose();
+    renderObjects.line.material.dispose();
+
+    for (const pointMesh of renderObjects.pointMeshes) {
+      this.pathGroup.remove(pointMesh.mesh);
+      pointMesh.mesh.geometry.dispose();
+      pointMesh.mesh.material.dispose();
+    }
+  }
+
+  private syncPathRenderObjectForId(pathId: string) {
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    const path = this.currentDocument.paths[pathId];
+    const existingRenderObjects = this.pathRenderObjects.get(pathId);
+    const shouldRender =
+      path !== undefined &&
+      path.enabled &&
+      (path.visible || this.isSelectedRailCameraRigPathPreviewed(pathId));
+
+    if (!shouldRender) {
+      if (existingRenderObjects !== undefined) {
+        this.disposePathRenderObjects(existingRenderObjects);
+        this.pathRenderObjects.delete(pathId);
+      }
+      return;
+    }
+
+    if (existingRenderObjects === undefined) {
+      const renderObjects = this.createPathRenderObjects(
+        path,
+        this.currentSelection
+      );
+      this.pathGroup.add(renderObjects.line);
+      for (const pointMesh of renderObjects.pointMeshes) {
+        this.pathGroup.add(pointMesh.mesh);
+      }
+      this.pathRenderObjects.set(pathId, renderObjects);
+      applyRendererRenderCategory(this.pathGroup, "overlay");
+      this.refreshPathPresentationForId(pathId);
+      return;
+    }
+
+    this.updatePathRenderObjectState(path);
+    this.refreshPathPresentationForId(pathId);
   }
 
   private updatePathRenderObjectState(path: ScenePath) {
