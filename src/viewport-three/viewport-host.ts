@@ -5435,6 +5435,7 @@ export class ViewportHost {
       const brushSelected = isBrushSelected(selection, brush.id);
 
       this.configureFogVolumeMesh(mesh, materials);
+      applyRendererRenderCategoryFromMaterial(mesh);
 
       mesh.userData.brushId = brush.id;
       mesh.castShadow = false;
@@ -5447,6 +5448,7 @@ export class ViewportHost {
         })
       );
       edges.visible = this.displayMode !== "wireframe";
+      applyRendererRenderCategory(edges, "overlay");
 
       const edgeHelpers = getBrushEdgeIds(brush).map((edgeId) =>
         this.createEdgeHelper(brush, edgeId)
@@ -7654,6 +7656,7 @@ export class ViewportHost {
           renderObjects.mesh,
           renderObjects.mesh.material
         );
+        applyRendererRenderCategoryFromMaterial(renderObjects.mesh);
 
         this.disposeUniqueMaterials(previousMaterials);
 
