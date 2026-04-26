@@ -7,6 +7,7 @@ import {
   type ActiveTransformSession,
   type TransformSessionState
 } from "../../src/core/transform-session";
+import type { EditorSelection } from "../../src/core/selection";
 import type { ArmedTerrainBrushState } from "../../src/core/terrain-brush";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
