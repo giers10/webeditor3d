@@ -1571,14 +1571,114 @@ export class ViewportHost {
     this.cameraStateChangeHandler?.(this.createCameraStateSnapshot());
   }
 
+  private clampPerspectiveCameraRadius(radius: number) {
+    return Math.min(MAX_CAMERA_DISTANCE, Math.max(MIN_CAMERA_DISTANCE, radius));
+  }
+
+  private clampOrthographicCameraZoom(zoom: number) {
+    return Math.min(
+      MAX_ORTHOGRAPHIC_ZOOM,
+      Math.max(MIN_ORTHOGRAPHIC_ZOOM, zoom)
+    );
+  }
+
+  private cancelSmoothZoom() {
+    this.targetPerspectiveCameraRadius = null;
+    this.targetOrthographicCameraZoom = null;
+  }
+
+  private finishSmoothZoom() {
+    if (this.targetPerspectiveCameraRadius !== null) {
+      this.cameraSpherical.radius = this.targetPerspectiveCameraRadius;
+      this.targetPerspectiveCameraRadius = null;
+    }
+
+    if (this.targetOrthographicCameraZoom !== null) {
+      this.orthographicCamera.zoom = this.targetOrthographicCameraZoom;
+      this.targetOrthographicCameraZoom = null;
+    }
+  }
+
+  private stepSmoothZoomValue(
+    currentValue: number,
+    targetValue: number,
+    response: number
+  ): { value: number; done: boolean } {
+    if (currentValue === targetValue) {
+      return {
+        value: targetValue,
+        done: true
+      };
+    }
+
+    const nextValue = currentValue + (targetValue - currentValue) * response;
+    const snapDistance =
+      Math.max(1, Math.abs(targetValue)) * SMOOTH_ZOOM_SNAP_EPSILON;
+
+    if (Math.abs(targetValue - nextValue) <= snapDistance) {
+      return {
+        value: targetValue,
+        done: true
+      };
+    }
+
+    return {
+      value: nextValue,
+      done: false
+    };
+  }
+
+  private getSmoothZoomFrameResponse(dt: number) {
+    if (dt <= 0) {
+      return 1;
+    }
+
+    return Math.min(1, 1 - Math.exp(-SMOOTH_ZOOM_RESPONSE * dt));
+  }
+
+  private updateSmoothZoom(dt: number) {
+    const response = this.getSmoothZoomFrameResponse(dt);
+
+    if (
+      this.viewMode === "perspective" &&
+      this.targetPerspectiveCameraRadius !== null
+    ) {
+      const nextRadius = this.stepSmoothZoomValue(
+        this.cameraSpherical.radius,
+        this.targetPerspectiveCameraRadius,
+        response
+      );
+      this.cameraSpherical.radius = nextRadius.value;
+      if (nextRadius.done) {
+        this.targetPerspectiveCameraRadius = null;
+      }
+      this.applyPerspectiveCameraPose();
+    }
+
+    if (
+      isOrthographicViewportViewMode(this.viewMode) &&
+      this.targetOrthographicCameraZoom !== null
+    ) {
+      const nextZoom = this.stepSmoothZoomValue(
+        this.orthographicCamera.zoom,
+        this.targetOrthographicCameraZoom,
+        response
+      );
+      this.orthographicCamera.zoom = nextZoom.value;
+      if (nextZoom.done) {
+        this.targetOrthographicCameraZoom = null;
+      }
+      this.applyOrthographicCameraPose();
+    }
+  }
+
   private updatePerspectiveCameraSphericalFromPose() {
     this.cameraOffset
       .copy(this.perspectiveCamera.position)
       .sub(this.cameraTarget);
     this.cameraSpherical.setFromVector3(this.cameraOffset);
-    this.cameraSpherical.radius = Math.min(
-      MAX_CAMERA_DISTANCE,
-      Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius)
+    this.cameraSpherical.radius = this.clampPerspectiveCameraRadius(
+      this.cameraSpherical.radius
     );
     this.cameraSpherical.phi = Math.min(
       MAX_POLAR_ANGLE,
@@ -1610,9 +1710,8 @@ export class ViewportHost {
   }
 
   private applyPerspectiveCameraPose() {
-    this.cameraSpherical.radius = Math.min(
-      MAX_CAMERA_DISTANCE,
-      Math.max(MIN_CAMERA_DISTANCE, this.cameraSpherical.radius)
+    this.cameraSpherical.radius = this.clampPerspectiveCameraRadius(
+      this.cameraSpherical.radius
     );
     this.cameraSpherical.phi = Math.min(
       MAX_POLAR_ANGLE,
@@ -1650,9 +1749,8 @@ export class ViewportHost {
         definition.cameraDirection.z * ORTHOGRAPHIC_CAMERA_DISTANCE
     );
     this.orthographicCamera.lookAt(this.cameraTarget);
-    this.orthographicCamera.zoom = Math.min(
-      MAX_ORTHOGRAPHIC_ZOOM,
-      Math.max(MIN_ORTHOGRAPHIC_ZOOM, this.orthographicCamera.zoom)
+    this.orthographicCamera.zoom = this.clampOrthographicCameraZoom(
+      this.orthographicCamera.zoom
     );
     this.orthographicCamera.updateProjectionMatrix();
   }
