@@ -9,6 +9,7 @@ import type { ProjectAssetRecord } from "./project-assets";
 const MODEL_PLACEHOLDER_COLOR = 0x89b6ff;
 const MODEL_SELECTION_COLOR = 0xf7d2aa;
 const MODEL_PREVIEW_SHELL_OPACITY = 0.5;
+const MODEL_SELECTION_SHELL_KEY = "modelInstanceSelectionShell";
 
 export type ModelInstanceRenderMode = "normal" | "wireframe";
 
@@ -155,6 +156,44 @@ function disposeMeshResources(object: Group | Mesh, disposeTextures: boolean, se
   }
 }
 
+function disposeMeshOnly(mesh: Mesh) {
+  const seenTextures = new Set<Texture>();
+  disposeMeshResources(mesh, false, seenTextures);
+}
+
+export function syncModelInstanceSelectionShell(
+  group: Group,
+  asset: ProjectAssetRecord | undefined,
+  selected: boolean
+) {
+  const existingShells = group.children.filter(
+    (child): child is Mesh =>
+      child instanceof Mesh &&
+      child.userData[MODEL_SELECTION_SHELL_KEY] === true
+  );
+
+  for (const shell of existingShells) {
+    group.remove(shell);
+    disposeMeshOnly(shell);
+  }
+
+  if (!selected) {
+    return;
+  }
+
+  const bounds = getLocalModelBounds(asset);
+  const selectionShell = createWireframeBox(
+    bounds.size,
+    MODEL_SELECTION_COLOR,
+    0.8
+  );
+  selectionShell.position.set(bounds.center.x, bounds.center.y, bounds.center.z);
+  selectionShell.userData.shadowIgnored = true;
+  selectionShell.userData.nonPickable = true;
+  selectionShell.userData[MODEL_SELECTION_SHELL_KEY] = true;
+  group.add(selectionShell);
+}
+
 export function createModelInstanceRenderGroup(
   modelInstance: ModelInstance,
   asset: ProjectAssetRecord | undefined,
@@ -199,13 +238,7 @@ export function createModelInstanceRenderGroup(
     group.add(previewShell);
   }
 
-  if (selected) {
-    const selectionShell = createWireframeBox(bounds.size, MODEL_SELECTION_COLOR, 0.8);
-    selectionShell.position.set(bounds.center.x, bounds.center.y, bounds.center.z);
-    selectionShell.userData.shadowIgnored = true;
-    selectionShell.userData.nonPickable = true;
-    group.add(selectionShell);
-  }
+  syncModelInstanceSelectionShell(group, asset, selected);
 
   return group;
 }
