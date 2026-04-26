@@ -6048,6 +6048,23 @@ export class ViewportHost {
   ) {
     this.clearModelInstances();
 
+    const displayedModelInstances = this.getDisplayedModelInstances(document);
+
+    for (const modelInstance of displayedModelInstances) {
+      if (!modelInstance.enabled || !modelInstance.visible) {
+        continue;
+      }
+
+      this.addModelInstanceRenderGroup(
+        modelInstance,
+        isModelInstanceSelected(selection, modelInstance.id)
+      );
+    }
+
+    this.applyShadowState();
+  }
+
+  private getDisplayedModelInstances(document: SceneDocument): ModelInstance[] {
     const runtimeModelInstances =
       this.currentSimulationScene?.modelInstances ?? null;
     const authoredModelInstancesById = new Map(
@@ -6079,49 +6096,91 @@ export class ViewportHost {
           animationAutoplay: runtimeModelInstance.animationAutoplay
         });
       }) ?? getModelInstances(document.modelInstances);
+  }
 
-    for (const modelInstance of displayedModelInstances) {
-      if (!modelInstance.enabled || !modelInstance.visible) {
-        continue;
-      }
-
-      const selected = isModelInstanceSelected(selection, modelInstance.id);
-      const asset = this.projectAssets[modelInstance.assetId];
-      const loadedAsset = this.loadedModelAssets[modelInstance.assetId];
-      const renderGroup = createModelInstanceRenderGroup(
-        modelInstance,
-        asset,
-        loadedAsset,
-        selected,
-        undefined,
-        this.displayMode === "wireframe" ? "wireframe" : "normal"
-      );
-      applyRendererRenderCategoryFromMaterial(renderGroup);
-
-      if (asset?.kind === "model" && modelInstance.collision.visible) {
-        try {
-          const generatedCollider = buildGeneratedModelCollider(
-            modelInstance,
-            asset,
-            loadedAsset
-          );
-
-          if (generatedCollider !== null) {
-            const colliderDebugGroup =
-              createModelColliderDebugGroup(generatedCollider);
-            applyRendererRenderCategory(colliderDebugGroup, "overlay");
-            renderGroup.add(colliderDebugGroup);
-          }
-        } catch {
-          // Validation surfaces unsupported collider modes; the viewport keeps rendering the model.
-        }
-      }
-
-      this.modelGroup.add(renderGroup);
-      this.modelRenderObjects.set(modelInstance.id, renderGroup);
+  private getDisplayedModelInstanceById(
+    modelInstanceId: string
+  ): ModelInstance | null {
+    if (this.currentDocument === null) {
+      return null;
     }
 
-    this.applyShadowState();
+    return (
+      this.getDisplayedModelInstances(this.currentDocument).find(
+        (modelInstance) => modelInstance.id === modelInstanceId
+      ) ?? null
+    );
+  }
+
+  private addModelInstanceRenderGroup(
+    modelInstance: ModelInstance,
+    selected: boolean
+  ) {
+    const asset = this.projectAssets[modelInstance.assetId];
+    const loadedAsset = this.loadedModelAssets[modelInstance.assetId];
+    const renderGroup = createModelInstanceRenderGroup(
+      modelInstance,
+      asset,
+      loadedAsset,
+      selected,
+      undefined,
+      this.displayMode === "wireframe" ? "wireframe" : "normal"
+    );
+    applyRendererRenderCategoryFromMaterial(renderGroup);
+
+    if (asset?.kind === "model" && modelInstance.collision.visible) {
+      try {
+        const generatedCollider = buildGeneratedModelCollider(
+          modelInstance,
+          asset,
+          loadedAsset
+        );
+
+        if (generatedCollider !== null) {
+          const colliderDebugGroup =
+            createModelColliderDebugGroup(generatedCollider);
+          applyRendererRenderCategory(colliderDebugGroup, "overlay");
+          renderGroup.add(colliderDebugGroup);
+        }
+      } catch {
+        // Validation surfaces unsupported collider modes; the viewport keeps rendering the model.
+      }
+    }
+
+    this.modelGroup.add(renderGroup);
+    this.modelRenderObjects.set(modelInstance.id, renderGroup);
+  }
+
+  private refreshModelInstanceSelectionPresentationForId(
+    modelInstanceId: string
+  ) {
+    const renderGroup = this.modelRenderObjects.get(modelInstanceId);
+
+    if (renderGroup === undefined) {
+      return;
+    }
+
+    const modelInstance = this.getDisplayedModelInstanceById(modelInstanceId);
+
+    if (modelInstance === null) {
+      return;
+    }
+
+    syncModelInstanceSelectionShell(
+      renderGroup,
+      this.projectAssets[modelInstance.assetId],
+      isModelInstanceSelected(this.currentSelection, modelInstanceId)
+    );
+    applyRendererRenderCategoryFromMaterial(renderGroup);
+    applyAdvancedRenderingRenderableShadowFlags(
+      renderGroup,
+      this.currentWorld !== null &&
+        (this.currentSimulationScene?.world ?? this.currentWorld)
+          .advancedRendering.enabled &&
+        (this.currentSimulationScene?.world ?? this.currentWorld)
+          .advancedRendering.shadows.enabled &&
+        this.displayMode === "normal"
+    );
   }
 
   private createEntityRenderObjects(
