@@ -497,12 +497,15 @@ function smoothStep01(value: number) {
 }
 
 function normalizeDegrees(value: number) {
-  const wrapped = ((value + 180) % 360 + 360) % 360 - 180;
+  const wrapped = ((((value + 180) % 360) + 360) % 360) - 180;
 
   return wrapped === -180 ? 180 : wrapped;
 }
 
-function resolveShortestAngleDeltaDegrees(fromDegrees: number, toDegrees: number) {
+function resolveShortestAngleDeltaDegrees(
+  fromDegrees: number,
+  toDegrees: number
+) {
   return normalizeDegrees(toDegrees - fromDegrees);
 }
 
@@ -602,7 +605,11 @@ type RuntimeResolvedCameraSource =
       state: RuntimeDialogueAttentionState;
     };
 
-type TargetingLuxFlightState = "hidden" | "outbound" | "following" | "returning";
+type TargetingLuxFlightState =
+  | "hidden"
+  | "outbound"
+  | "following"
+  | "returning";
 
 export class RuntimeHost {
   private readonly scene = new Scene();
@@ -635,7 +642,11 @@ export class RuntimeHost {
   private readonly targetingActiveCameraUp = new Vector3();
   private readonly targetingActiveArrowDirection = new Vector3();
   private readonly targetingActiveArrowLocalTipAxis = new Vector3(0, 1, 0);
-  private readonly targetingActiveArrowGeometry = new ConeGeometry(0.16, 0.38, 16);
+  private readonly targetingActiveArrowGeometry = new ConeGeometry(
+    0.16,
+    0.38,
+    16
+  );
   private readonly targetingActiveArrowMaterial = new MeshBasicMaterial({
     color: 0xfff2a2,
     depthTest: false,
@@ -648,7 +659,11 @@ export class RuntimeHost {
     MeshBasicMaterial
   >[] = Array.from(
     { length: TARGETING_ACTIVE_ARROW_COUNT },
-    () => new Mesh(this.targetingActiveArrowGeometry, this.targetingActiveArrowMaterial)
+    () =>
+      new Mesh(
+        this.targetingActiveArrowGeometry,
+        this.targetingActiveArrowMaterial
+      )
   );
   private readonly targetingLuxMesh = new Mesh(
     new PlaneGeometry(0.32, 0.32),
@@ -767,8 +782,10 @@ export class RuntimeHost {
   private activeCameraRigOverrideEntityId: string | null = null;
   private activeCameraSourceKey: RuntimeCameraSourceKey | null = null;
   private activeRuntimeCameraRig: RuntimeCameraRig | null = null;
-  private activeDialogueAttentionState: RuntimeDialogueAttentionState | null = null;
-  private dialogueParticipantState: RuntimeDialogueParticipantState | null = null;
+  private activeDialogueAttentionState: RuntimeDialogueAttentionState | null =
+    null;
+  private dialogueParticipantState: RuntimeDialogueParticipantState | null =
+    null;
   private cameraTransitionState: RuntimeCameraTransitionState | null = null;
   private suppressNextCameraSourceTransition = false;
   private cameraRigLookYawRadians = 0;
@@ -1611,14 +1628,13 @@ export class RuntimeHost {
       return null;
     }
 
-    const eyePosition =
-      this.currentPlayerControllerTelemetry?.eyePosition ?? {
-        x: this.runtimeScene.spawn.position.x,
-        y:
-          this.runtimeScene.spawn.position.y +
-          this.runtimeScene.playerCollider.eyeHeight,
-        z: this.runtimeScene.spawn.position.z
-      };
+    const eyePosition = this.currentPlayerControllerTelemetry?.eyePosition ?? {
+      x: this.runtimeScene.spawn.position.x,
+      y:
+        this.runtimeScene.spawn.position.y +
+        this.runtimeScene.playerCollider.eyeHeight,
+      z: this.runtimeScene.spawn.position.z
+    };
     const feetPosition =
       this.currentPlayerControllerTelemetry?.feetPosition ??
       this.runtimeScene.spawn.position;
@@ -1661,7 +1677,9 @@ export class RuntimeHost {
     }
 
     this.camera.getWorldDirection(this.cameraForward);
-    return (Math.atan2(this.cameraForward.x, this.cameraForward.z) * 180) / Math.PI;
+    return (
+      (Math.atan2(this.cameraForward.x, this.cameraForward.z) * 180) / Math.PI
+    );
   }
 
   private resolvePlayerShapeHorizontalRadius() {
@@ -1798,9 +1816,13 @@ export class RuntimeHost {
       for (let step = 1; step <= 8; step += 1) {
         const t = step / 8;
         const candidate = {
-          x: playerFeetPosition.x + (desiredFeetPosition.x - playerFeetPosition.x) * t,
+          x:
+            playerFeetPosition.x +
+            (desiredFeetPosition.x - playerFeetPosition.x) * t,
           y: playerFeetPosition.y,
-          z: playerFeetPosition.z + (desiredFeetPosition.z - playerFeetPosition.z) * t
+          z:
+            playerFeetPosition.z +
+            (desiredFeetPosition.z - playerFeetPosition.z) * t
         };
 
         if (
@@ -1953,7 +1975,10 @@ export class RuntimeHost {
         position: playerFeetPosition,
         yawDegrees: state.playerCurrentYawDegrees
       });
-      this.setRuntimeNpcYawDegrees(state.npcEntityId, state.npcCurrentYawDegrees);
+      this.setRuntimeNpcYawDegrees(
+        state.npcEntityId,
+        state.npcCurrentYawDegrees
+      );
       return;
     }
 
@@ -1973,7 +1998,10 @@ export class RuntimeHost {
         )
       ) <= DIALOGUE_PARTICIPANT_RESTORE_EPSILON_DEGREES
     ) {
-      this.setRuntimeNpcYawDegrees(state.npcEntityId, state.npcRestoreYawDegrees);
+      this.setRuntimeNpcYawDegrees(
+        state.npcEntityId,
+        state.npcRestoreYawDegrees
+      );
       this.dialogueParticipantState = null;
     }
   }
@@ -2044,10 +2072,14 @@ export class RuntimeHost {
             railEndProgress: rig.railEndProgress
           });
 
-          return sampleResolvedScenePathPosition(path, mappedProgress.railProgress);
+          return sampleResolvedScenePathPosition(
+            path,
+            mappedProgress.railProgress
+          );
         }
 
-        return resolveNearestPointOnResolvedScenePath(path, targetPosition).position;
+        return resolveNearestPointOnResolvedScenePath(path, targetPosition)
+          .position;
       }
     }
   }
@@ -2269,19 +2301,20 @@ export class RuntimeHost {
       return pose;
     }
 
-    const resolvedPosition = this.collisionWorld?.resolveThirdPersonCameraCollision(
-      {
-        x: pose.collisionPivot.x,
-        y: pose.collisionPivot.y,
-        z: pose.collisionPivot.z
-      },
-      {
-        x: pose.position.x,
-        y: pose.position.y,
-        z: pose.position.z
-      },
-      pose.collisionRadius
-    );
+    const resolvedPosition =
+      this.collisionWorld?.resolveThirdPersonCameraCollision(
+        {
+          x: pose.collisionPivot.x,
+          y: pose.collisionPivot.y,
+          z: pose.collisionPivot.z
+        },
+        {
+          x: pose.position.x,
+          y: pose.position.y,
+          z: pose.position.z
+        },
+        pose.collisionRadius
+      );
 
     if (resolvedPosition === undefined) {
       this.resetRuntimeCameraCollisionSmoothing();
@@ -2308,7 +2341,8 @@ export class RuntimeHost {
 
   private isActiveExternalCameraSource() {
     return (
-      this.activeCameraSourceKey !== null && this.activeCameraSourceKey !== "gameplay"
+      this.activeCameraSourceKey !== null &&
+      this.activeCameraSourceKey !== "gameplay"
     );
   }
 
@@ -2459,7 +2493,8 @@ export class RuntimeHost {
       return {
         kind: "dialogue",
         state:
-          this.activeDialogueAttentionState?.npcEntityId === dialogueNpc.entityId
+          this.activeDialogueAttentionState?.npcEntityId ===
+          dialogueNpc.entityId
             ? this.activeDialogueAttentionState
             : {
                 npcEntityId: dialogueNpc.entityId,
@@ -4376,22 +4411,21 @@ export class RuntimeHost {
       y: this.camera.position.y,
       z: this.camera.position.z
     });
-    const fogTelemetry =
-      this.isActiveExternalCameraSource()
-        ? {
-            cameraSubmerged:
-              cameraVolumeState.inWater &&
-              cameraVolumeState.waterSurfaceHeight !== null &&
-              this.camera.position.y < cameraVolumeState.waterSurfaceHeight,
-            eyePosition: {
-              x: this.camera.position.x,
-              y: this.camera.position.y,
-              z: this.camera.position.z
-            }
+    const fogTelemetry = this.isActiveExternalCameraSource()
+      ? {
+          cameraSubmerged:
+            cameraVolumeState.inWater &&
+            cameraVolumeState.waterSurfaceHeight !== null &&
+            this.camera.position.y < cameraVolumeState.waterSurfaceHeight,
+          eyePosition: {
+            x: this.camera.position.x,
+            y: this.camera.position.y,
+            z: this.camera.position.z
           }
-        : this.activeController === this.firstPersonController
-          ? this.currentPlayerControllerTelemetry
-          : null;
+        }
+      : this.activeController === this.firstPersonController
+        ? this.currentPlayerControllerTelemetry
+        : null;
     const fogState = resolveUnderwaterFogState(this.runtimeScene, fogTelemetry);
 
     if (fogState === null) {
@@ -4974,7 +5008,10 @@ export class RuntimeHost {
     this.activeController?.update(simulationDt);
     this.refreshRuntimeTargetingState();
     this.updateActiveRuntimeTargetLockState(cameraDt);
-    const activeCameraRig = this.applyActiveCameraRig(cameraDt, previousCameraPose);
+    const activeCameraRig = this.applyActiveCameraRig(
+      cameraDt,
+      previousCameraPose
+    );
     this.updateRuntimeTargetingVisuals(cameraDt);
 
     if (!this.isActiveExternalCameraSource() && activeCameraRig === null) {
@@ -5648,7 +5685,9 @@ export class RuntimeHost {
     );
   }
 
-  private setActiveRuntimeTargetReference(reference: RuntimeTargetReference | null) {
+  private setActiveRuntimeTargetReference(
+    reference: RuntimeTargetReference | null
+  ) {
     this.activeRuntimeTargetReference = reference;
     this.activeRuntimeTargetOcclusionSeconds = 0;
     this.runtimeTargetSwitchInputHeld = false;
@@ -5669,8 +5708,10 @@ export class RuntimeHost {
         switch (npc.collider.mode) {
           case "capsule":
             return (
-              Math.max(npc.collider.radius, TARGETING_VISIBILITY_TARGET_CLEARANCE) +
-              TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING
+              Math.max(
+                npc.collider.radius,
+                TARGETING_VISIBILITY_TARGET_CLEARANCE
+              ) + TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING
             );
           case "box":
             return (
@@ -5682,8 +5723,7 @@ export class RuntimeHost {
                 ) * 0.25,
                 0.35,
                 0.75
-              ) +
-              TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING
+              ) + TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING
             );
           case "none":
             return 0.9 + TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
@@ -5717,7 +5757,8 @@ export class RuntimeHost {
     point: { x: number; y: number; z: number };
     targetClearance: number;
   }> {
-    const targetClearance = this.resolveRuntimeTargetVisibilityClearance(target);
+    const targetClearance =
+      this.resolveRuntimeTargetVisibilityClearance(target);
 
     if (this.runtimeScene !== null && target.kind === "npc") {
       const npc =
@@ -5730,10 +5771,8 @@ export class RuntimeHost {
           case "capsule": {
             const collider = npc.collider;
             const sampleClearance =
-              Math.max(
-                collider.radius,
-                TARGETING_VISIBILITY_TARGET_CLEARANCE
-              ) + TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
+              Math.max(collider.radius, TARGETING_VISIBILITY_TARGET_CLEARANCE) +
+              TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
             const yAt = (factor: number) =>
               npc.position.y + collider.height * factor;
 
@@ -5757,11 +5796,8 @@ export class RuntimeHost {
             const collider = npc.collider;
             const sampleClearance =
               clampScalar(
-                Math.max(
-                  collider.size.x,
-                  collider.size.y,
-                  collider.size.z
-                ) * 0.25,
+                Math.max(collider.size.x, collider.size.y, collider.size.z) *
+                  0.25,
                 0.35,
                 0.75
               ) + TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
@@ -5855,7 +5891,8 @@ export class RuntimeHost {
     center: { x: number; y: number; z: number };
     range: number;
   }): boolean {
-    const playerEyePosition = this.currentPlayerControllerTelemetry?.eyePosition;
+    const playerEyePosition =
+      this.currentPlayerControllerTelemetry?.eyePosition;
 
     if (playerEyePosition === undefined) {
       return false;
@@ -6034,7 +6071,9 @@ export class RuntimeHost {
     y: number;
     z: number;
   }) {
-    const projected = new Vector3(point.x, point.y, point.z).project(this.camera);
+    const projected = new Vector3(point.x, point.y, point.z).project(
+      this.camera
+    );
 
     if (
       !Number.isFinite(projected.x) ||
@@ -6139,7 +6178,7 @@ export class RuntimeHost {
     const playerEyePosition =
       maxDistanceFromPlayer === null && !requirePlayerVisibility
         ? null
-        : this.currentPlayerControllerTelemetry?.eyePosition ?? null;
+        : (this.currentPlayerControllerTelemetry?.eyePosition ?? null);
     let bestCandidate: RuntimeTargetCandidate | null = null;
     let bestScreenDistanceSquared = Number.POSITIVE_INFINITY;
 
@@ -6169,7 +6208,9 @@ export class RuntimeHost {
         continue;
       }
 
-      const screenPoint = this.resolveRuntimeTargetScreenPoint(candidate.center);
+      const screenPoint = this.resolveRuntimeTargetScreenPoint(
+        candidate.center
+      );
 
       if (
         screenPoint === null ||
@@ -6354,7 +6395,9 @@ export class RuntimeHost {
       visualPlacement.activeMarkerPosition.z
     );
     this.targetingActiveGroup.quaternion.identity();
-    this.targetingActiveGroup.scale.setScalar(visualPlacement.activeMarkerScale);
+    this.targetingActiveGroup.scale.setScalar(
+      visualPlacement.activeMarkerScale
+    );
     this.targetingActiveCameraRight
       .setFromMatrixColumn(this.camera.matrixWorld, 0)
       .normalize();
@@ -6377,7 +6420,9 @@ export class RuntimeHost {
           this.targetingActiveCameraUp,
           Math.sin(angle) * localRadius
         );
-      this.targetingActiveArrowDirection.copy(arrow.position).multiplyScalar(-1);
+      this.targetingActiveArrowDirection
+        .copy(arrow.position)
+        .multiplyScalar(-1);
 
       if (this.targetingActiveArrowDirection.lengthSq() > Number.EPSILON) {
         this.targetingActiveArrowDirection.normalize();
@@ -6447,7 +6492,8 @@ export class RuntimeHost {
 
     this.targetingVisualTime += dtSeconds;
     const visualPlacement = resolveRuntimeTargetVisualPlacement(visualTarget);
-    const bob = Math.sin(this.targetingVisualTime * TARGETING_LUX_BOB_RATE) * 0.08;
+    const bob =
+      Math.sin(this.targetingVisualTime * TARGETING_LUX_BOB_RATE) * 0.08;
     const sway =
       Math.sin(this.targetingVisualTime * TARGETING_LUX_SWAY_RATE) *
       TARGETING_LUX_SWAY_DISTANCE;
@@ -6486,7 +6532,10 @@ export class RuntimeHost {
           ? TARGETING_LUX_FLIGHT_RATE
           : TARGETING_LUX_FOLLOW_RATE) * dtSeconds
       );
-    this.targetingLuxGroup.position.lerp(this.targetingLuxTargetPosition, alpha);
+    this.targetingLuxGroup.position.lerp(
+      this.targetingLuxTargetPosition,
+      alpha
+    );
 
     if (
       this.targetingLuxFlightState === "outbound" &&
@@ -6598,7 +6647,9 @@ export class RuntimeHost {
       return;
     }
 
-    if (event.code === this.runtimeScene.playerInputBindings.keyboard.pauseTime) {
+    if (
+      event.code === this.runtimeScene.playerInputBindings.keyboard.pauseTime
+    ) {
       event.preventDefault();
       this.toggleManualPause();
       this.previousPauseInputActive = true;

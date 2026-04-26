@@ -14,7 +14,10 @@ const postprocessingState = vi.hoisted(() => ({
   composerOptions: [] as Array<Record<string, unknown>>,
   composerPasses: [] as unknown[],
   normalPassTextures: [] as unknown[],
-  ssaoCalls: [] as Array<{ normalBuffer: unknown; options: Record<string, unknown> }>
+  ssaoCalls: [] as Array<{
+    normalBuffer: unknown;
+    options: Record<string, unknown>;
+  }>
 }));
 
 vi.mock("postprocessing", () => {
@@ -71,7 +74,10 @@ vi.mock("postprocessing", () => {
   class MockEffectPass extends MockPass {
     readonly effects: unknown[];
 
-    constructor(readonly camera: unknown, ...effects: unknown[]) {
+    constructor(
+      readonly camera: unknown,
+      ...effects: unknown[]
+    ) {
       super("EffectPass");
       this.effects = effects;
     }
@@ -88,7 +94,11 @@ vi.mock("postprocessing", () => {
   }
 
   class MockSSAOEffect {
-    constructor(_camera: unknown, normalBuffer: unknown, options: Record<string, unknown>) {
+    constructor(
+      _camera: unknown,
+      normalBuffer: unknown,
+      options: Record<string, unknown>
+    ) {
       postprocessingState.ssaoCalls.push({ normalBuffer, options });
     }
   }
@@ -240,7 +250,11 @@ describe("createAdvancedRenderingComposer", () => {
     );
 
     expect(postprocessingState.normalPassTextures).toHaveLength(1);
-    expect(postprocessingState.composerPasses.map((pass) => (pass as { name: string }).name)).toEqual([
+    expect(
+      postprocessingState.composerPasses.map(
+        (pass) => (pass as { name: string }).name
+      )
+    ).toEqual([
       "RenderPass",
       "NormalPass",
       "EffectPass",
@@ -298,7 +312,10 @@ describe("createAdvancedRenderingComposer", () => {
         resolutionScale: 0.75
       }
     });
-    expect(postprocessingState.ssaoCalls[1].options.radius).toBeCloseTo(0.07, 6);
+    expect(postprocessingState.ssaoCalls[1].options.radius).toBeCloseTo(
+      0.07,
+      6
+    );
   });
 });
 

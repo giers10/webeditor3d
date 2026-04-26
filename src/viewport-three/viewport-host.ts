@@ -4861,7 +4861,10 @@ export class ViewportHost {
   }
 
   private isSelectedRailCameraRigPathPreviewed(pathId: string): boolean {
-    if (this.currentDocument === null || this.currentSelection.kind !== "entities") {
+    if (
+      this.currentDocument === null ||
+      this.currentSelection.kind !== "entities"
+    ) {
       return false;
     }
 

@@ -96,8 +96,17 @@ class RenderLayerPass extends RenderPass {
     deltaTime?: number,
     stencilTest?: boolean
   ) {
-    renderWithCameraLayerMask(this.renderLayerCamera, this.renderLayerMask, () =>
-      super.render(renderer, inputBuffer, outputBuffer, deltaTime, stencilTest)
+    renderWithCameraLayerMask(
+      this.renderLayerCamera,
+      this.renderLayerMask,
+      () =>
+        super.render(
+          renderer,
+          inputBuffer,
+          outputBuffer,
+          deltaTime,
+          stencilTest
+        )
     );
   }
 }
@@ -119,8 +128,17 @@ class RenderLayerNormalPass extends NormalPass {
     deltaTime?: number,
     stencilTest?: boolean
   ) {
-    renderWithCameraLayerMask(this.renderLayerCamera, this.renderLayerMask, () =>
-      super.render(renderer, inputBuffer, outputBuffer, deltaTime, stencilTest)
+    renderWithCameraLayerMask(
+      this.renderLayerCamera,
+      this.renderLayerMask,
+      () =>
+        super.render(
+          renderer,
+          inputBuffer,
+          outputBuffer,
+          deltaTime,
+          stencilTest
+        )
     );
   }
 }
@@ -156,7 +174,9 @@ export interface ResolvedBoxVolumeRenderPaths {
   water: BoxVolumeRenderPath;
 }
 
-export function resolveBoxVolumeRenderPaths(settings: AdvancedRenderingSettings): ResolvedBoxVolumeRenderPaths {
+export function resolveBoxVolumeRenderPaths(
+  settings: AdvancedRenderingSettings
+): ResolvedBoxVolumeRenderPaths {
   if (!settings.enabled) {
     return {
       fog: "performance",
@@ -170,7 +190,9 @@ export function resolveBoxVolumeRenderPaths(settings: AdvancedRenderingSettings)
   };
 }
 
-export function getAdvancedRenderingShadowMapType(shadowType: AdvancedRenderingShadowType) {
+export function getAdvancedRenderingShadowMapType(
+  shadowType: AdvancedRenderingShadowType
+) {
   switch (shadowType) {
     case "basic":
       return BasicShadowMap;
@@ -181,7 +203,9 @@ export function getAdvancedRenderingShadowMapType(shadowType: AdvancedRenderingS
   }
 }
 
-export function getAdvancedRenderingToneMappingMode(mode: AdvancedRenderingToneMappingMode): ToneMappingMode {
+export function getAdvancedRenderingToneMappingMode(
+  mode: AdvancedRenderingToneMappingMode
+): ToneMappingMode {
   switch (mode) {
     case "none":
       return ToneMappingMode.LINEAR;
@@ -196,15 +220,23 @@ export function getAdvancedRenderingToneMappingMode(mode: AdvancedRenderingToneM
   }
 }
 
-export function configureAdvancedRenderingRenderer(renderer: WebGLRenderer, settings: AdvancedRenderingSettings) {
+export function configureAdvancedRenderingRenderer(
+  renderer: WebGLRenderer,
+  settings: AdvancedRenderingSettings
+) {
   renderer.shadowMap.enabled = settings.enabled && settings.shadows.enabled;
-  renderer.shadowMap.type = getAdvancedRenderingShadowMapType(settings.shadows.type);
+  renderer.shadowMap.type = getAdvancedRenderingShadowMapType(
+    settings.shadows.type
+  );
   renderer.toneMapping = NoToneMapping;
   renderer.toneMappingExposure = settings.toneMapping.exposure;
 }
 
 function clampAmbientOcclusionEffectRadius(radius: number) {
-  return Math.min(Math.max(radius, MIN_AMBIENT_OCCLUSION_EFFECT_RADIUS), MAX_AMBIENT_OCCLUSION_EFFECT_RADIUS);
+  return Math.min(
+    Math.max(radius, MIN_AMBIENT_OCCLUSION_EFFECT_RADIUS),
+    MAX_AMBIENT_OCCLUSION_EFFECT_RADIUS
+  );
 }
 
 function getAmbientOcclusionSampleCount(samples: number) {
@@ -224,7 +256,9 @@ export function createAdvancedRenderingComposer(
     depthBuffer: true,
     stencilBuffer: false,
     multisampling: 0,
-    frameBufferType: renderer.capabilities.isWebGL2 ? HalfFloatType : UnsignedByteType
+    frameBufferType: renderer.capabilities.isWebGL2
+      ? HalfFloatType
+      : UnsignedByteType
   });
   const mainRenderLayerMask = settings.ambientOcclusion.enabled
     ? AO_WORLD_RENDER_LAYER_MASK
@@ -243,7 +277,9 @@ export function createAdvancedRenderingComposer(
     );
   }
 
-  const effects: Array<BloomEffect | DepthOfFieldEffect | ToneMappingEffect | SMAAEffect> = [];
+  const effects: Array<
+    BloomEffect | DepthOfFieldEffect | ToneMappingEffect | SMAAEffect
+  > = [];
 
   if (settings.ambientOcclusion.enabled) {
     // postprocessing's internal depth-downsampling path writes zero normals unless
@@ -255,8 +291,12 @@ export function createAdvancedRenderingComposer(
     );
     composer.addPass(normalPass);
 
-    const ambientOcclusionRadius = clampAmbientOcclusionEffectRadius(settings.ambientOcclusion.radius);
-    const ambientOcclusionSamples = getAmbientOcclusionSampleCount(settings.ambientOcclusion.samples);
+    const ambientOcclusionRadius = clampAmbientOcclusionEffectRadius(
+      settings.ambientOcclusion.radius
+    );
+    const ambientOcclusionSamples = getAmbientOcclusionSampleCount(
+      settings.ambientOcclusion.samples
+    );
     const detailAmbientOcclusionRadius = Math.max(
       ambientOcclusionRadius * DETAIL_AMBIENT_OCCLUSION_RADIUS_SCALE,
       MIN_AMBIENT_OCCLUSION_EFFECT_RADIUS
@@ -271,7 +311,9 @@ export function createAdvancedRenderingComposer(
           resolutionScale: COARSE_AMBIENT_OCCLUSION_RESOLUTION_SCALE,
           samples: ambientOcclusionSamples,
           radius: ambientOcclusionRadius,
-          intensity: settings.ambientOcclusion.intensity * COARSE_AMBIENT_OCCLUSION_INTENSITY_SCALE
+          intensity:
+            settings.ambientOcclusion.intensity *
+            COARSE_AMBIENT_OCCLUSION_INTENSITY_SCALE
         }),
         new SSAOEffect(camera, normalPass.texture, {
           depthAwareUpsampling: true,
@@ -279,7 +321,9 @@ export function createAdvancedRenderingComposer(
           resolutionScale: DETAIL_AMBIENT_OCCLUSION_RESOLUTION_SCALE,
           samples: ambientOcclusionSamples,
           radius: detailAmbientOcclusionRadius,
-          intensity: settings.ambientOcclusion.intensity * DETAIL_AMBIENT_OCCLUSION_INTENSITY_SCALE
+          intensity:
+            settings.ambientOcclusion.intensity *
+            DETAIL_AMBIENT_OCCLUSION_INTENSITY_SCALE
         })
       )
     );
@@ -336,7 +380,10 @@ export function createAdvancedRenderingComposer(
   return composer;
 }
 
-export function applyAdvancedRenderingRenderableShadowFlags(root: Object3D, enabled: boolean) {
+export function applyAdvancedRenderingRenderableShadowFlags(
+  root: Object3D,
+  enabled: boolean
+) {
   root.traverse((object) => {
     if ((object as Mesh).isMesh === true) {
       const mesh = object as Mesh;
