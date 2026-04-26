@@ -522,6 +522,56 @@ function collectAffectedSelectionIds(
   return affectedIds;
 }
 
+function createTransformPreviewTargetIds(): TransformPreviewTargetIds {
+  return {
+    brushIds: new Set<string>(),
+    pathIds: new Set<string>(),
+    entityIds: new Set<string>(),
+    modelInstanceIds: new Set<string>()
+  };
+}
+
+function collectTransformPreviewTargetIds(
+  transformSession: ActiveTransformSession
+): TransformPreviewTargetIds {
+  const targetIds = createTransformPreviewTargetIds();
+
+  switch (transformSession.target.kind) {
+    case "brush":
+    case "brushFace":
+    case "brushEdge":
+    case "brushVertex":
+      targetIds.brushIds.add(transformSession.target.brushId);
+      break;
+    case "brushes":
+      for (const item of transformSession.target.items) {
+        targetIds.brushIds.add(item.brushId);
+      }
+      break;
+    case "pathPoint":
+      targetIds.pathIds.add(transformSession.target.pathId);
+      break;
+    case "entity":
+      targetIds.entityIds.add(transformSession.target.entityId);
+      break;
+    case "entities":
+      for (const item of transformSession.target.items) {
+        targetIds.entityIds.add(item.entityId);
+      }
+      break;
+    case "modelInstance":
+      targetIds.modelInstanceIds.add(transformSession.target.modelInstanceId);
+      break;
+    case "modelInstances":
+      for (const item of transformSession.target.items) {
+        targetIds.modelInstanceIds.add(item.modelInstanceId);
+      }
+      break;
+  }
+
+  return targetIds;
+}
+
 interface CachedMaterialTexture {
   signature: string;
   textureSet: StarterMaterialTextureSet;
