@@ -6184,21 +6184,15 @@ export class ViewportHost {
       return;
     }
 
-    syncModelInstanceSelectionShell(
+    const selectionShell = syncModelInstanceSelectionShell(
       renderGroup,
       this.projectAssets[modelInstance.assetId],
       isModelInstanceSelected(this.currentSelection, modelInstanceId)
     );
-    applyRendererRenderCategoryFromMaterial(renderGroup);
-    applyAdvancedRenderingRenderableShadowFlags(
-      renderGroup,
-      this.currentWorld !== null &&
-        (this.currentSimulationScene?.world ?? this.currentWorld)
-          .advancedRendering.enabled &&
-        (this.currentSimulationScene?.world ?? this.currentWorld)
-          .advancedRendering.shadows.enabled &&
-        this.displayMode === "normal"
-    );
+
+    if (selectionShell !== null) {
+      applyRendererRenderCategoryFromMaterial(selectionShell);
+    }
   }
 
   private createEntityRenderObjects(
