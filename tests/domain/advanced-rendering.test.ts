@@ -69,8 +69,11 @@ vi.mock("postprocessing", () => {
   }
 
   class MockEffectPass extends MockPass {
-    constructor(readonly camera: unknown, ...readonly effects: unknown[]) {
+    readonly effects: unknown[];
+
+    constructor(readonly camera: unknown, ...effects: unknown[]) {
       super("EffectPass");
+      this.effects = effects;
     }
   }
 
@@ -138,6 +141,15 @@ import {
   resolveBoxVolumeRenderPaths
 } from "../../src/rendering/advanced-rendering";
 import {
+  ALL_RENDER_LAYER_MASK,
+  AO_WORLD_RENDER_LAYER_MASK,
+  OVERLAY_RENDER_LAYER_MASK,
+  POST_AO_TRANSPARENT_RENDER_LAYER_MASK,
+  applyRendererRenderCategory,
+  applyRendererRenderCategoryFromMaterial,
+  enableCameraRendererRenderCategories
+} from "../../src/rendering/render-layers";
+import {
   applyWhiteboxBevelToMaterial,
   shouldApplyWhiteboxBevel
 } from "../../src/rendering/whitebox-bevel-material";
@@ -196,6 +208,10 @@ describe("createAdvancedRenderingComposer", () => {
       depthBuffer: true,
       frameBufferType: UnsignedByteType
     });
+    expect(
+      (postprocessingState.composerPasses[0] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(ALL_RENDER_LAYER_MASK);
     expect(postprocessingState.ssaoCalls).toHaveLength(0);
   });
 
@@ -224,6 +240,42 @@ describe("createAdvancedRenderingComposer", () => {
     );
 
     expect(postprocessingState.normalPassTextures).toHaveLength(1);
+    expect(postprocessingState.composerPasses.map((pass) => (pass as { name: string }).name)).toEqual([
+      "RenderPass",
+      "NormalPass",
+      "EffectPass",
+      "ShaderPass",
+      "RenderPass",
+      "RenderPass",
+      "EffectPass"
+    ]);
+    expect(
+      (postprocessingState.composerPasses[0] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(AO_WORLD_RENDER_LAYER_MASK);
+    expect(
+      (postprocessingState.composerPasses[1] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(AO_WORLD_RENDER_LAYER_MASK);
+    expect(
+      (postprocessingState.composerPasses[4] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(POST_AO_TRANSPARENT_RENDER_LAYER_MASK);
+    expect(
+      (postprocessingState.composerPasses[5] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(OVERLAY_RENDER_LAYER_MASK);
+    expect(
+      postprocessingState.composerPasses[4] as {
+        clear?: boolean;
+        ignoreBackground?: boolean;
+        skipShadowMapUpdate?: boolean;
+      }
+    ).toMatchObject({
+      clear: false,
+      ignoreBackground: true,
+      skipShadowMapUpdate: true
+    });
     expect(postprocessingState.ssaoCalls).toHaveLength(2);
     expect(postprocessingState.ssaoCalls[0]).toMatchObject({
       normalBuffer: postprocessingState.normalPassTextures[0],
@@ -283,6 +335,55 @@ describe("whitebox bevel materials", () => {
     expect(shader.fragmentShader).toContain("varying vec2 vWhiteboxFaceUv;");
     expect(shader.fragmentShader).toContain("whiteboxBevelMask");
     expect(material.customProgramCacheKey?.()).toContain("whitebox-bevel:");
+  });
+});
+
+describe("renderer render layers", () => {
+  it("enables all renderer categories on cameras used by direct rendering", () => {
+    const camera = new PerspectiveCamera();
+
+    enableCameraRendererRenderCategories(camera);
+
+    expect(camera.layers.mask).toBe(ALL_RENDER_LAYER_MASK);
+  });
+
+  it("categorizes opaque renderables separately from transparent effects", () => {
+    const group = new Group();
+    const opaqueMesh = new Mesh(
+      new BoxGeometry(1, 1, 1),
+      new MeshStandardMaterial()
+    );
+    const transparentMesh = new Mesh(
+      new BoxGeometry(1, 1, 1),
+      new MeshBasicMaterial({
+        transparent: true,
+        opacity: 0.35
+      })
+    );
+
+    group.add(opaqueMesh);
+    group.add(transparentMesh);
+
+    applyRendererRenderCategoryFromMaterial(group);
+
+    expect(opaqueMesh.layers.mask).toBe(AO_WORLD_RENDER_LAYER_MASK);
+    expect(transparentMesh.layers.mask).toBe(
+      POST_AO_TRANSPARENT_RENDER_LAYER_MASK
+    );
+  });
+
+  it("marks helper subtrees as overlay-only renderables", () => {
+    const helperGroup = new Group();
+    const helperMesh = new Mesh(
+      new BoxGeometry(1, 1, 1),
+      new MeshBasicMaterial()
+    );
+
+    helperGroup.add(helperMesh);
+    applyRendererRenderCategory(helperGroup, "overlay");
+
+    expect(helperGroup.layers.mask).toBe(OVERLAY_RENDER_LAYER_MASK);
+    expect(helperMesh.layers.mask).toBe(OVERLAY_RENDER_LAYER_MASK);
   });
 });
 
