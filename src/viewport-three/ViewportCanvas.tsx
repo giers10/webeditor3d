@@ -197,12 +197,12 @@ export function ViewportCanvas({
   }, [whiteboxSelectionMode]);
 
   useLayoutEffect(() => {
-    hostRef.current?.updateDocument(
-      sceneDocument,
-      selection,
-      activeSelectionId
-    );
-  }, [sceneDocument, selection, activeSelectionId]);
+    hostRef.current?.updateSelection(selection, activeSelectionId);
+  }, [selection, activeSelectionId]);
+
+  useLayoutEffect(() => {
+    hostRef.current?.updateDocument(sceneDocument);
+  }, [sceneDocument]);
 
   useLayoutEffect(() => {
     hostRef.current?.setViewMode(viewMode);
