@@ -297,6 +297,7 @@ import {
   DEFAULT_PLAYER_START_CAPSULE_HEIGHT,
   DEFAULT_PLAYER_START_CAPSULE_RADIUS,
   DEFAULT_PLAYER_START_EYE_HEIGHT,
+  DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
   DEFAULT_PLAYER_START_NAVIGATION_MODE,
   PLAYER_START_MOVEMENT_TEMPLATE_KINDS,
   DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID,
@@ -2730,6 +2731,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
   const [playerStartNavigationModeDraft, setPlayerStartNavigationModeDraft] =
     useState<PlayerStartNavigationMode>(DEFAULT_PLAYER_START_NAVIGATION_MODE);
+  const [playerStartInteractionReachDraft, setPlayerStartInteractionReachDraft] =
+    useState(String(DEFAULT_PLAYER_START_INTERACTION_REACH_METERS));
   const [
     playerStartMovementTemplateDraft,
     setPlayerStartMovementTemplateDraft
@@ -3782,6 +3785,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       case "playerStart":
         setPlayerStartYawDraft(String(selectedEntity.yawDegrees));
         setPlayerStartNavigationModeDraft(selectedEntity.navigationMode);
+        setPlayerStartInteractionReachDraft(
+          String(selectedEntity.interactionReachMeters)
+        );
         setPlayerStartMovementTemplateDraft(
           clonePlayerStartMovementTemplate(selectedEntity.movementTemplate)
         );

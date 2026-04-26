@@ -5648,15 +5648,48 @@ export class RuntimeHost {
             z: this.camera.position.z
           }
         : interactionOrigin;
+    const interactionReachMeters =
+      this.runtimeScene.playerStart?.interactionReachMeters ??
+      DEFAULT_PLAYER_START_INTERACTION_REACH_METERS;
+    const centerDirection = new Vector3(
+      this.cameraForward.x,
+      this.cameraForward.y,
+      this.cameraForward.z
+    ).normalize();
+    const leftDirection = centerDirection
+      .clone()
+      .applyAxisAngle(
+        new Vector3(0, 1, 0),
+        INTERACTION_PROMPT_SIDE_RAY_ANGLE_RADIANS
+      );
+    const rightDirection = centerDirection
+      .clone()
+      .applyAxisAngle(
+        new Vector3(0, 1, 0),
+        -INTERACTION_PROMPT_SIDE_RAY_ANGLE_RADIANS
+      );
 
     return this.interactionSystem.resolveClickInteractionPrompt(
       interactionOrigin,
       rayOrigin,
-      {
-        x: this.cameraForward.x,
-        y: this.cameraForward.y,
-        z: this.cameraForward.z
-      },
+      [
+        {
+          x: centerDirection.x,
+          y: centerDirection.y,
+          z: centerDirection.z
+        },
+        {
+          x: leftDirection.x,
+          y: leftDirection.y,
+          z: leftDirection.z
+        },
+        {
+          x: rightDirection.x,
+          y: rightDirection.y,
+          z: rightDirection.z
+        }
+      ],
+      interactionReachMeters,
       this.runtimeScene
     );
   }
