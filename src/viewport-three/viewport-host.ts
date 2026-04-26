@@ -779,6 +779,9 @@ export class ViewportHost {
   private transformSessionChangeHandler:
     | ((transformSession: TransformSessionState) => void)
     | null = null;
+  private transformPreviewChangeHandler:
+    | ((transformSession: ActiveTransformSession) => void)
+    | null = null;
   private transformCommitHandler:
     | ((transformSession: ActiveTransformSession) => void)
     | null = null;
@@ -794,6 +797,8 @@ export class ViewportHost {
   private currentTerrainBrushState: ArmedTerrainBrushState | null = null;
   private terrainBrushHover: TerrainBrushHit | null = null;
   private activeTerrainBrushStroke: ActiveTerrainBrushStroke | null = null;
+  private currentTransformPreviewTargetIds: TransformPreviewTargetIds | null =
+    null;
   private creationPreviewTargetKey: string | null = null;
   private creationPreviewObject: Group | null = null;
   private currentTransformSession: TransformSessionState =
@@ -1135,6 +1140,12 @@ export class ViewportHost {
     handler: ((transformSession: TransformSessionState) => void) | null
   ) {
     this.transformSessionChangeHandler = handler;
+  }
+
+  setTransformPreviewChangeHandler(
+    handler: ((transformSession: ActiveTransformSession) => void) | null
+  ) {
+    this.transformPreviewChangeHandler = handler;
   }
 
   setTransformCommitHandler(
