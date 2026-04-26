@@ -3162,6 +3162,7 @@ export class RuntimeHost {
     group.visible = pointLight.enabled;
     light.position.set(0, 0, 0);
     group.add(light);
+    enableObjectForAllRendererRenderCategories(group);
 
     return {
       group,
@@ -3204,6 +3205,7 @@ export class RuntimeHost {
       group.add(light);
       lights.push(light);
     }
+    enableObjectForAllRendererRenderCategories(group);
 
     return {
       group,
@@ -3244,6 +3246,7 @@ export class RuntimeHost {
     light.target.position.set(0, 1, 0);
     group.add(light);
     group.add(light.target);
+    enableObjectForAllRendererRenderCategories(group);
 
     return {
       group,
