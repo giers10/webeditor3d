@@ -29,6 +29,7 @@ import {
   createCameraRigPlayerTargetRef,
   createCameraRigWorldPointTargetRef,
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
+  DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
   createNpcAlwaysPresence,
   createNpcEntity,
@@ -3298,6 +3299,11 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
     navigationMode: readPlayerStartNavigationMode(
       value.navigationMode,
       `${label}.navigationMode`
+    ),
+    interactionReachMeters: readOptionalPositiveFiniteNumber(
+      value.interactionReachMeters,
+      `${label}.interactionReachMeters`,
+      DEFAULT_PLAYER_START_INTERACTION_REACH_METERS
     ),
     movementTemplate: readPlayerStartMovementTemplate(
       value.movementTemplate,
