@@ -165,7 +165,7 @@ export function syncModelInstanceSelectionShell(
   group: Group,
   asset: ProjectAssetRecord | undefined,
   selected: boolean
-) {
+): Mesh | null {
   const existingShells = group.children.filter(
     (child): child is Mesh =>
       child instanceof Mesh &&
@@ -178,7 +178,7 @@ export function syncModelInstanceSelectionShell(
   }
 
   if (!selected) {
-    return;
+    return null;
   }
 
   const bounds = getLocalModelBounds(asset);
@@ -192,6 +192,7 @@ export function syncModelInstanceSelectionShell(
   selectionShell.userData.nonPickable = true;
   selectionShell.userData[MODEL_SELECTION_SHELL_KEY] = true;
   group.add(selectionShell);
+  return selectionShell;
 }
 
 export function createModelInstanceRenderGroup(
