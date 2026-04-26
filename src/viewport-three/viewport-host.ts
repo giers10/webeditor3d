@@ -9369,7 +9369,7 @@ export class ViewportHost {
       this.currentTransformSession = nextSession;
       this.applyTransformPreview();
       this.syncTransformGizmo();
-      this.transformSessionChangeHandler?.(nextSession);
+      this.transformPreviewChangeHandler?.(nextSession);
       return;
     }
 
@@ -9501,7 +9501,7 @@ export class ViewportHost {
     this.currentTransformSession = nextSession;
     this.applyTransformPreview();
     this.syncTransformGizmo();
-    this.transformSessionChangeHandler?.(nextSession);
+    this.transformPreviewChangeHandler?.(nextSession);
   };
 
   private handleWheel = (event: WheelEvent) => {
