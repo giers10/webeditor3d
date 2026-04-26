@@ -1557,11 +1557,13 @@ export class ViewportHost {
         z: this.cameraTarget.z
       },
       perspectiveOrbit: {
-        radius: this.cameraSpherical.radius,
+        radius:
+          this.targetPerspectiveCameraRadius ?? this.cameraSpherical.radius,
         theta: this.cameraSpherical.theta,
         phi: this.cameraSpherical.phi
       },
-      orthographicZoom: this.orthographicCamera.zoom
+      orthographicZoom:
+        this.targetOrthographicCameraZoom ?? this.orthographicCamera.zoom
     };
   }
 
