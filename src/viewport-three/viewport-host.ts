@@ -8515,50 +8515,55 @@ export class ViewportHost {
     }
 
     for (const path of Object.values(this.currentDocument.paths)) {
-      const renderObjects = this.pathRenderObjects.get(path.id);
+      this.refreshPathPresentationForId(path.id);
+    }
+  }
 
-      if (renderObjects === undefined) {
-        continue;
-      }
+  private refreshPathPresentationForId(pathId: string) {
+    if (this.currentDocument === null) {
+      return;
+    }
 
-      const selected = isPathSelected(this.currentSelection, path.id);
-      const hovered = isPathSelected(this.hoveredSelection, path.id);
+    const path = this.currentDocument.paths[pathId];
+    const renderObjects = this.pathRenderObjects.get(pathId);
 
-      renderObjects.line.material.color.setHex(
-        selected
-          ? PATH_SELECTED_COLOR
-          : hovered
-            ? PATH_HOVERED_COLOR
-            : PATH_COLOR
+    if (path === undefined || renderObjects === undefined) {
+      return;
+    }
+
+    const selected = isPathSelected(this.currentSelection, path.id);
+    const hovered = isPathSelected(this.hoveredSelection, path.id);
+
+    renderObjects.line.material.color.setHex(
+      selected ? PATH_SELECTED_COLOR : hovered ? PATH_HOVERED_COLOR : PATH_COLOR
+    );
+
+    for (const pointMesh of renderObjects.pointMeshes) {
+      const pointSelected = isPathPointSelected(
+        this.currentSelection,
+        path.id,
+        pointMesh.pointId
+      );
+      const pointHovered = isPathPointSelected(
+        this.hoveredSelection,
+        path.id,
+        pointMesh.pointId
       );
 
-      for (const pointMesh of renderObjects.pointMeshes) {
-        const pointSelected = isPathPointSelected(
-          this.currentSelection,
-          path.id,
-          pointMesh.pointId
-        );
-        const pointHovered = isPathPointSelected(
-          this.hoveredSelection,
-          path.id,
-          pointMesh.pointId
-        );
-
-        pointMesh.mesh.material.color.setHex(
-          pointSelected
-            ? PATH_POINT_SELECTED_COLOR
-            : pointHovered || selected
-              ? PATH_POINT_HOVERED_COLOR
-              : PATH_POINT_COLOR
-        );
-        pointMesh.mesh.scale.setScalar(
-          pointSelected
-            ? PATH_POINT_SELECTED_SCALE
-            : pointHovered
-              ? PATH_POINT_HOVERED_SCALE
-              : 1
-        );
-      }
+      pointMesh.mesh.material.color.setHex(
+        pointSelected
+          ? PATH_POINT_SELECTED_COLOR
+          : pointHovered || selected
+            ? PATH_POINT_HOVERED_COLOR
+            : PATH_POINT_COLOR
+      );
+      pointMesh.mesh.scale.setScalar(
+        pointSelected
+          ? PATH_POINT_SELECTED_SCALE
+          : pointHovered
+            ? PATH_POINT_HOVERED_SCALE
+            : 1
+      );
     }
   }
 
