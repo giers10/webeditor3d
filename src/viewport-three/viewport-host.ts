@@ -6966,30 +6966,56 @@ export class ViewportHost {
     this.whiteboxHoverLabelChangeHandler?.(label);
   }
 
-  private refreshSelectionPresentation() {
+  private refreshSelectionPresentation(affectedIds: AffectedSelectionIds) {
     if (this.currentDocument === null) {
       return;
     }
 
-    this.refreshBrushPresentation();
-    this.refreshTerrainPresentation();
-    this.rebuildPaths(this.currentDocument, this.currentSelection);
-    this.rebuildEntityMarkers(this.currentDocument, this.currentSelection);
-    this.rebuildModelInstances(this.currentDocument, this.currentSelection);
+    this.refreshBrushPresentationForIds(affectedIds.brushIds);
+
+    for (const terrainId of affectedIds.terrainIds) {
+      this.refreshTerrainPresentationForId(terrainId);
+    }
+
+    for (const pathId of affectedIds.pathIds) {
+      this.syncPathRenderObjectForId(pathId);
+    }
+
+    for (const entityId of affectedIds.entityIds) {
+      this.rebuildEntityMarkerForId(entityId);
+    }
+
+    for (const modelInstanceId of affectedIds.modelInstanceIds) {
+      this.refreshModelInstanceSelectionPresentationForId(modelInstanceId);
+    }
+
     this.applyTransformPreview();
     this.syncTransformGizmo();
     this.syncTerrainBrushPreview();
   }
 
   private setHoveredSelection(selection: EditorSelection) {
-    if (areEditorSelectionsEqual(this.hoveredSelection, selection)) {
+    const previousSelection = this.hoveredSelection;
+
+    if (areEditorSelectionsEqual(previousSelection, selection)) {
       return;
     }
 
     this.hoveredSelection = selection;
-    this.refreshBrushPresentation();
-    this.refreshTerrainPresentation();
-    this.refreshPathPresentation();
+    const affectedIds = collectAffectedSelectionIds(
+      previousSelection,
+      selection
+    );
+    this.refreshBrushPresentationForIds(affectedIds.brushIds);
+
+    for (const terrainId of affectedIds.terrainIds) {
+      this.refreshTerrainPresentationForId(terrainId);
+    }
+
+    for (const pathId of affectedIds.pathIds) {
+      this.refreshPathPresentationForId(pathId);
+    }
+
     this.emitWhiteboxHoverLabelChange();
   }
 
