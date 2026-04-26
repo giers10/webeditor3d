@@ -5928,17 +5928,7 @@ export class ViewportHost {
     selection: EditorSelection
   ) {
     this.clearEntityMarkers();
-    const runtimeNpcDefinitionsByEntityId = new Map(
-      (this.currentSimulationScene?.npcDefinitions ?? []).map((npc) => [
-        npc.entityId,
-        npc
-      ])
-    );
-    const runtimeInteractablesByEntityId = new Map(
-      (this.currentSimulationScene?.entities.interactables ?? []).map(
-        (interactable) => [interactable.entityId, interactable]
-      )
-    );
+
     for (const entity of getEntityInstances(document.entities)) {
       if (!entity.enabled || !entity.visible) {
         continue;
@@ -5946,46 +5936,13 @@ export class ViewportHost {
 
       const selected =
         selection.kind === "entities" && selection.ids.includes(entity.id);
-      let renderObjects: EntityRenderObjects | null = null;
+      const renderObjects = this.createDisplayedEntityRenderObjects(
+        entity,
+        selected
+      );
 
-      switch (entity.kind) {
-        case "npc": {
-          const runtimeNpc = runtimeNpcDefinitionsByEntityId.get(entity.id);
-
-          if (runtimeNpc !== undefined) {
-            if (!runtimeNpc.active || !runtimeNpc.visible) {
-              continue;
-            }
-
-            renderObjects = this.createNpcRenderObjects(
-              {
-                ...entity,
-                position: runtimeNpc.position,
-                yawDegrees: runtimeNpc.yawDegrees
-              },
-              selected
-            );
-            break;
-          }
-
-          renderObjects = this.createEntityRenderObjects(entity, selected);
-          break;
-        }
-        case "interactable": {
-          const runtimeInteractable =
-            runtimeInteractablesByEntityId.get(entity.id) ?? null;
-          renderObjects = this.createInteractableRenderObjects(
-            entity.id,
-            entity.position,
-            entity.radius,
-            selected,
-            runtimeInteractable?.interactionEnabled ?? entity.interactionEnabled
-          );
-          break;
-        }
-        default:
-          renderObjects = this.createEntityRenderObjects(entity, selected);
-          break;
+      if (renderObjects === null) {
+        continue;
       }
 
       if (this.displayMode === "wireframe") {
@@ -5998,6 +5955,91 @@ export class ViewportHost {
     }
 
     this.applyShadowState();
+  }
+
+  private createDisplayedEntityRenderObjects(
+    entity: EntityInstance,
+    selected: boolean
+  ): EntityRenderObjects | null {
+    switch (entity.kind) {
+      case "npc": {
+        const runtimeNpc =
+          this.currentSimulationScene?.npcDefinitions.find(
+            (npc) => npc.entityId === entity.id
+          ) ?? null;
+
+        if (runtimeNpc !== null) {
+          if (!runtimeNpc.active || !runtimeNpc.visible) {
+            return null;
+          }
+
+          return this.createNpcRenderObjects(
+            {
+              ...entity,
+              position: runtimeNpc.position,
+              yawDegrees: runtimeNpc.yawDegrees
+            },
+            selected
+          );
+        }
+
+        return this.createEntityRenderObjects(entity, selected);
+      }
+      case "interactable": {
+        const runtimeInteractable =
+          this.currentSimulationScene?.entities.interactables.find(
+            (interactable) => interactable.entityId === entity.id
+          ) ?? null;
+        return this.createInteractableRenderObjects(
+          entity.id,
+          entity.position,
+          entity.radius,
+          selected,
+          runtimeInteractable?.interactionEnabled ?? entity.interactionEnabled
+        );
+      }
+      default:
+        return this.createEntityRenderObjects(entity, selected);
+    }
+  }
+
+  private rebuildEntityMarkerForId(entityId: string) {
+    const previousRenderObjects = this.entityRenderObjects.get(entityId);
+
+    if (previousRenderObjects !== undefined) {
+      this.entityGroup.remove(previousRenderObjects.group);
+      this.disposeEntityRenderObjects(previousRenderObjects);
+      this.entityRenderObjects.delete(entityId);
+    }
+
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    const entity = this.currentDocument.entities[entityId];
+
+    if (entity === undefined || !entity.enabled || !entity.visible) {
+      return;
+    }
+
+    const renderObjects = this.createDisplayedEntityRenderObjects(
+      entity,
+      this.currentSelection.kind === "entities" &&
+        this.currentSelection.ids.includes(entityId)
+    );
+
+    if (renderObjects === null) {
+      return;
+    }
+
+    if (this.displayMode === "wireframe") {
+      this.applyWireframePresentation(renderObjects.group);
+    }
+
+    applyRendererRenderCategory(renderObjects.group, "overlay");
+    this.entityGroup.add(renderObjects.group);
+    this.entityRenderObjects.set(entityId, renderObjects);
+    applyAdvancedRenderingRenderableShadowFlags(renderObjects.group, false);
   }
 
   private rebuildModelInstances(
