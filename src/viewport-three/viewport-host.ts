@@ -350,6 +350,13 @@ interface AffectedSelectionIds {
   modelInstanceIds: Set<string>;
 }
 
+interface TransformPreviewTargetIds {
+  brushIds: Set<string>;
+  pathIds: Set<string>;
+  entityIds: Set<string>;
+  modelInstanceIds: Set<string>;
+}
+
 interface ViewportWaterSurfaceBinding {
   brush: BoxBrush;
   reflectionTextureUniform: { value: unknown } | null;
