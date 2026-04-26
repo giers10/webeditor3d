@@ -179,6 +179,7 @@ export class ThirdPersonNavigationController implements NavigationController {
   private inWaterVolume = false;
   private inFogVolume = false;
   private dragging = false;
+  private pointerLookInputPending = false;
   private lastPointerClientX = 0;
   private lastPointerClientY = 0;
   private initializedFromSpawn = false;
@@ -276,6 +277,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.jumpHoldRemainingMs = 0;
     this.previousTelemetry = null;
     this.smoothedCameraCollisionDistance = null;
+    this.pointerLookInputPending = false;
     ctx.setRuntimeMessage(null);
     ctx.setPlayerControllerTelemetry(null);
     this.context = null;
@@ -310,6 +312,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.inWaterVolume = false;
     this.inFogVolume = false;
     this.dragging = false;
+    this.pointerLookInputPending = false;
     this.lastPointerClientX = 0;
     this.lastPointerClientY = 0;
     this.initializedFromSpawn = false;
@@ -346,6 +349,9 @@ export class ThirdPersonNavigationController implements NavigationController {
 
     const cameraDrivenExternally = this.context.isCameraDrivenExternally() === true;
     const lookInputActive = lookInput.horizontal !== 0 || lookInput.vertical !== 0;
+    const manualLookInputActive =
+      lookInputActive || this.pointerLookInputPending;
+    this.pointerLookInputPending = false;
     let targetLookResult: RuntimeTargetLookInputResult | null = null;
 
     if (!cameraDrivenExternally && lookInputActive) {
@@ -385,7 +391,7 @@ export class ThirdPersonNavigationController implements NavigationController {
 
     if (
       cameraDrivenExternally ||
-      !lookInputActive ||
+      !manualLookInputActive ||
       targetLookResult?.activeTargetLocked !== true ||
       targetLookResult.switchedTarget === true ||
       targetLookResult.switchInputHeld === true
@@ -404,7 +410,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       );
     }
 
-    if (!cameraDrivenExternally) {
+    if (!cameraDrivenExternally && !manualLookInputActive) {
       const targetAssist =
         this.context.resolveThirdPersonTargetAssist?.() ?? null;
 
@@ -449,7 +455,7 @@ export class ThirdPersonNavigationController implements NavigationController {
           dt
         );
       }
-    } else {
+    } else if (cameraDrivenExternally) {
       this.targetAssistLookOffsetY = dampScalar(
         this.targetAssistLookOffsetY,
         0,
@@ -816,6 +822,12 @@ export class ThirdPersonNavigationController implements NavigationController {
     const deltaY = event.clientY - this.lastPointerClientY;
     this.lastPointerClientX = event.clientX;
     this.lastPointerClientY = event.clientY;
+
+    if (deltaX === 0 && deltaY === 0) {
+      return;
+    }
+
+    this.pointerLookInputPending = true;
 
     const targetLookResult =
       this.context?.handleRuntimeTargetLookInput?.({

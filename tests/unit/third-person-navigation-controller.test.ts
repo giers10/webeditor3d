@@ -454,6 +454,60 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(targetContext);
   });
 
+  it("pauses third-person target assist while the camera is actively moved with pointer drag", () => {
+    const { context } = createRuntimeControllerContext();
+    const controller = new ThirdPersonNavigationController();
+    const controllerInternals = controller as unknown as {
+      cameraYawRadians: number;
+      pitchRadians: number;
+      targetAssistLookOffsetY: number;
+    };
+    const targetContext = {
+      ...context,
+      resolveThirdPersonTargetAssist: () => ({
+        targetPosition: {
+          x: 0,
+          y: 4,
+          z: 5
+        },
+        strength: 1
+      }),
+      handleRuntimeTargetLookInput: vi.fn(() => ({
+        activeTargetLocked: true,
+        switchedTarget: false,
+        switchInputHeld: false
+      }))
+    };
+
+    controller.activate(targetContext);
+    controllerInternals.cameraYawRadians = 1.1;
+    controllerInternals.pitchRadians = 1.1;
+    controllerInternals.targetAssistLookOffsetY = 0;
+
+    targetContext.domElement.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        button: 0,
+        clientX: 0,
+        clientY: 0
+      })
+    );
+    window.dispatchEvent(
+      new PointerEvent("pointermove", {
+        clientX: 30,
+        clientY: 12
+      })
+    );
+
+    controller.update(0.016);
+
+    expect(controllerInternals.cameraYawRadians).toBeCloseTo(1.1, 5);
+    expect(controllerInternals.pitchRadians).toBeCloseTo(1.1, 5);
+    expect(controllerInternals.targetAssistLookOffsetY).toBeCloseTo(0, 5);
+
+    window.dispatchEvent(new PointerEvent("pointerup"));
+    controller.deactivate(targetContext);
+  });
+
   it("fades vertical target assist when camera collision pushes the camera close", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();
