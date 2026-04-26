@@ -7760,113 +7760,167 @@ export class ViewportHost {
 
     try {
       for (const brush of Object.values(this.currentDocument.brushes)) {
-        const renderObjects = this.brushRenderObjects.get(brush.id);
-
-        if (renderObjects === undefined) {
-          continue;
-        }
-
-        const brushSelected = isBrushSelected(this.currentSelection, brush.id);
-        const brushHovered =
-          this.hoveredSelection.kind === "brushes" &&
-          this.hoveredSelection.ids.includes(brush.id);
-        renderObjects.edges.material.color.setHex(
-          brushSelected
-            ? BRUSH_SELECTED_EDGE_COLOR
-            : brushHovered && this.whiteboxSelectionMode === "object"
-              ? BRUSH_HOVERED_EDGE_COLOR
-              : BRUSH_EDGE_COLOR
-        );
-
-        const previousMaterials = renderObjects.mesh.material;
-        const contactPatches =
-          brush.kind === "box" && brush.volume.mode === "water"
-            ? this.collectViewportWaterContactPatches(
-                this.currentDocument,
-                brush
-              )
-            : [];
-        renderObjects.mesh.material =
-          this.createFogMaterialSet(brush, volumeRenderPaths) ??
-          renderObjects.faceIdsInOrder.map((faceId) =>
-            this.createFaceMaterial(
-              brush,
-              faceId,
-              this.currentDocument?.materials[
-                brush.faces[faceId].materialId ?? ""
-              ],
-              this.getFaceHighlightState(brush.id, faceId),
-              volumeRenderPaths,
-              contactPatches
-            )
-          );
-        this.configureFogVolumeMesh(
-          renderObjects.mesh,
-          renderObjects.mesh.material
-        );
-        applyRendererRenderCategoryFromMaterial(renderObjects.mesh);
-
-        this.disposeUniqueMaterials(previousMaterials);
-
-        const hoveredEdgeId =
-          this.hoveredSelection.kind === "brushEdge" &&
-          this.hoveredSelection.brushId === brush.id
-            ? this.hoveredSelection.edgeId
-            : null;
-        const hoveredVertexId =
-          this.hoveredSelection.kind === "brushVertex" &&
-          this.hoveredSelection.brushId === brush.id
-            ? this.hoveredSelection.vertexId
-            : null;
-
-        for (const edgeHelper of renderObjects.edgeHelpers) {
-          const selected = isBrushEdgeSelected(
-            this.currentSelection,
-            brush.id,
-            edgeHelper.id
-          );
-          const hovered = hoveredEdgeId === edgeHelper.id;
-
-          edgeHelper.line.visible = this.whiteboxSelectionMode === "edge";
-          edgeHelper.line.material.color.setHex(
-            selected
-              ? WHITEBOX_COMPONENT_SELECTED_COLOR
-              : hovered
-                ? WHITEBOX_COMPONENT_HOVERED_COLOR
-                : WHITEBOX_COMPONENT_COLOR
-          );
-          edgeHelper.line.material.opacity = selected
-            ? WHITEBOX_COMPONENT_SELECTED_OPACITY
-            : hovered
-              ? WHITEBOX_COMPONENT_HOVERED_OPACITY
-              : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
-        }
-
-        for (const vertexHelper of renderObjects.vertexHelpers) {
-          const selected = isBrushVertexSelected(
-            this.currentSelection,
-            brush.id,
-            vertexHelper.id
-          );
-          const hovered = hoveredVertexId === vertexHelper.id;
-
-          vertexHelper.mesh.visible = this.whiteboxSelectionMode === "vertex";
-          vertexHelper.mesh.material.color.setHex(
-            selected
-              ? WHITEBOX_COMPONENT_SELECTED_COLOR
-              : hovered
-                ? WHITEBOX_COMPONENT_HOVERED_COLOR
-                : WHITEBOX_COMPONENT_COLOR
-          );
-          vertexHelper.mesh.material.opacity = selected
-            ? WHITEBOX_COMPONENT_SELECTED_OPACITY
-            : hovered
-              ? WHITEBOX_COMPONENT_HOVERED_OPACITY
-              : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
-        }
+        this.refreshBrushPresentationForId(brush.id, volumeRenderPaths);
       }
     } finally {
       this.disposePreservedViewportWaterReflectionTargets();
+    }
+  }
+
+  private refreshBrushPresentationForIds(brushIds: ReadonlySet<string>) {
+    if (this.currentDocument === null || brushIds.size === 0) {
+      return;
+    }
+
+    const volumeRenderPaths = resolveBoxVolumeRenderPaths(
+      this.currentDocument.world.advancedRendering
+    );
+
+    for (const brushId of brushIds) {
+      const brush = this.currentDocument.brushes[brushId];
+
+      if (
+        brush !== undefined &&
+        this.shouldUseGlobalBrushPresentationRefresh(brush, volumeRenderPaths)
+      ) {
+        this.refreshBrushPresentation();
+        return;
+      }
+    }
+
+    for (const brushId of brushIds) {
+      this.refreshBrushPresentationForId(brushId, volumeRenderPaths);
+    }
+  }
+
+  private shouldUseGlobalBrushPresentationRefresh(
+    brush: Brush,
+    volumeRenderPaths: {
+      fog: "performance" | "quality";
+      water: "performance" | "quality";
+    }
+  ) {
+    if (brush.kind === "box" && brush.volume.mode === "water") {
+      return true;
+    }
+
+    return (
+      brush.volume.mode === "fog" &&
+      this.displayMode !== "wireframe" &&
+      this.displayMode !== "authoring" &&
+      volumeRenderPaths.fog === "quality"
+    );
+  }
+
+  private refreshBrushPresentationForId(
+    brushId: string,
+    volumeRenderPaths: {
+      fog: "performance" | "quality";
+      water: "performance" | "quality";
+    }
+  ) {
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    const brush = this.currentDocument.brushes[brushId];
+    const renderObjects = this.brushRenderObjects.get(brushId);
+
+    if (brush === undefined || renderObjects === undefined) {
+      return;
+    }
+
+    const brushSelected = isBrushSelected(this.currentSelection, brush.id);
+    const brushHovered =
+      this.hoveredSelection.kind === "brushes" &&
+      this.hoveredSelection.ids.includes(brush.id);
+    renderObjects.edges.material.color.setHex(
+      brushSelected
+        ? BRUSH_SELECTED_EDGE_COLOR
+        : brushHovered && this.whiteboxSelectionMode === "object"
+          ? BRUSH_HOVERED_EDGE_COLOR
+          : BRUSH_EDGE_COLOR
+    );
+
+    const previousMaterials = renderObjects.mesh.material;
+    const contactPatches =
+      brush.kind === "box" && brush.volume.mode === "water"
+        ? this.collectViewportWaterContactPatches(this.currentDocument, brush)
+        : [];
+    renderObjects.mesh.material =
+      this.createFogMaterialSet(brush, volumeRenderPaths) ??
+      renderObjects.faceIdsInOrder.map((faceId) =>
+        this.createFaceMaterial(
+          brush,
+          faceId,
+          this.currentDocument?.materials[
+            brush.faces[faceId].materialId ?? ""
+          ],
+          this.getFaceHighlightState(brush.id, faceId),
+          volumeRenderPaths,
+          contactPatches
+        )
+      );
+    this.configureFogVolumeMesh(renderObjects.mesh, renderObjects.mesh.material);
+    applyRendererRenderCategoryFromMaterial(renderObjects.mesh);
+
+    this.disposeUniqueMaterials(previousMaterials);
+
+    const hoveredEdgeId =
+      this.hoveredSelection.kind === "brushEdge" &&
+      this.hoveredSelection.brushId === brush.id
+        ? this.hoveredSelection.edgeId
+        : null;
+    const hoveredVertexId =
+      this.hoveredSelection.kind === "brushVertex" &&
+      this.hoveredSelection.brushId === brush.id
+        ? this.hoveredSelection.vertexId
+        : null;
+
+    for (const edgeHelper of renderObjects.edgeHelpers) {
+      const selected = isBrushEdgeSelected(
+        this.currentSelection,
+        brush.id,
+        edgeHelper.id
+      );
+      const hovered = hoveredEdgeId === edgeHelper.id;
+
+      edgeHelper.line.visible = this.whiteboxSelectionMode === "edge";
+      edgeHelper.line.material.color.setHex(
+        selected
+          ? WHITEBOX_COMPONENT_SELECTED_COLOR
+          : hovered
+            ? WHITEBOX_COMPONENT_HOVERED_COLOR
+            : WHITEBOX_COMPONENT_COLOR
+      );
+      edgeHelper.line.material.opacity = selected
+        ? WHITEBOX_COMPONENT_SELECTED_OPACITY
+        : hovered
+          ? WHITEBOX_COMPONENT_HOVERED_OPACITY
+          : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
+    }
+
+    for (const vertexHelper of renderObjects.vertexHelpers) {
+      const selected = isBrushVertexSelected(
+        this.currentSelection,
+        brush.id,
+        vertexHelper.id
+      );
+      const hovered = hoveredVertexId === vertexHelper.id;
+
+      vertexHelper.mesh.visible = this.whiteboxSelectionMode === "vertex";
+      vertexHelper.mesh.material.color.setHex(
+        selected
+          ? WHITEBOX_COMPONENT_SELECTED_COLOR
+          : hovered
+            ? WHITEBOX_COMPONENT_HOVERED_COLOR
+            : WHITEBOX_COMPONENT_COLOR
+      );
+      vertexHelper.mesh.material.opacity = selected
+        ? WHITEBOX_COMPONENT_SELECTED_OPACITY
+        : hovered
+          ? WHITEBOX_COMPONENT_HOVERED_OPACITY
+          : WHITEBOX_COMPONENT_DEFAULT_OPACITY;
     }
   }
 
