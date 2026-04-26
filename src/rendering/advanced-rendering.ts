@@ -25,7 +25,6 @@ import {
   EffectComposer,
   EffectPass,
   NormalPass,
-  Pass,
   RenderPass,
   ShaderPass,
   SMAAEffect,
@@ -348,25 +347,6 @@ export function applyAdvancedRenderingRenderableShadowFlags(root: Object3D, enab
       mesh.castShadow = shadowEligible;
       mesh.receiveShadow = shadowEligible;
     }
-  });
-}
-
-function isRenderableMaterialEligibleForShadows(
-  material: Material | Material[]
-) {
-  const materials = Array.isArray(material) ? material : [material];
-
-  return materials.every((candidate) => {
-    const shadowMaterial = candidate as Material & {
-      opacity?: number;
-      transparent?: boolean;
-      visible?: boolean;
-    };
-    const opacity = shadowMaterial.opacity ?? 1;
-
-    return shadowMaterial.visible !== false &&
-      shadowMaterial.transparent !== true &&
-      opacity >= 0.999;
   });
 }
 
