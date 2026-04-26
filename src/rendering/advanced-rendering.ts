@@ -8,21 +8,26 @@ import {
   PCFSoftShadowMap,
   PointLight,
   SpotLight,
+  type Camera,
   type Object3D,
   type Material,
   type PerspectiveCamera,
   type Scene,
+  type WebGLRenderTarget,
   type WebGLRenderer,
   UnsignedByteType
 } from "three";
 
 import {
   BloomEffect,
+  CopyMaterial,
   DepthOfFieldEffect,
   EffectComposer,
   EffectPass,
   NormalPass,
+  Pass,
   RenderPass,
+  ShaderPass,
   SMAAEffect,
   SMAAPreset,
   SSAOEffect,
@@ -36,6 +41,13 @@ import type {
   AdvancedRenderingShadowType,
   AdvancedRenderingToneMappingMode
 } from "../document/world-settings";
+import {
+  ALL_RENDER_LAYER_MASK,
+  AO_WORLD_RENDER_LAYER_MASK,
+  OVERLAY_RENDER_LAYER_MASK,
+  POST_AO_TRANSPARENT_RENDER_LAYER_MASK,
+  isMaterialEligibleForAmbientOcclusion
+} from "./render-layers";
 
 const AMBIENT_OCCLUSION_LUMINANCE_INFLUENCE = 0.15;
 const MIN_AMBIENT_OCCLUSION_EFFECT_RADIUS = 0.02;
@@ -46,6 +58,99 @@ const DETAIL_AMBIENT_OCCLUSION_RESOLUTION_SCALE = 0.75;
 const DETAIL_AMBIENT_OCCLUSION_RADIUS_SCALE = 0.35;
 const COARSE_AMBIENT_OCCLUSION_INTENSITY_SCALE = 0.45;
 const DETAIL_AMBIENT_OCCLUSION_INTENSITY_SCALE = 0.35;
+
+function renderWithCameraLayerMask(
+  camera: Camera,
+  layerMask: number,
+  render: () => void
+) {
+  const previousLayerMask = camera.layers.mask;
+
+  camera.layers.mask = layerMask;
+
+  try {
+    render();
+  } finally {
+    camera.layers.mask = previousLayerMask;
+  }
+}
+
+class RenderLayerPass extends RenderPass {
+  readonly renderLayerMask: number;
+  private readonly renderLayerCamera: Camera;
+
+  constructor(
+    scene: Scene,
+    camera: Camera,
+    renderLayerMask: number,
+    overrideMaterial: Material | null = null
+  ) {
+    super(scene, camera, overrideMaterial);
+    this.renderLayerCamera = camera;
+    this.renderLayerMask = renderLayerMask;
+  }
+
+  override render(
+    renderer: WebGLRenderer,
+    inputBuffer: WebGLRenderTarget | null,
+    outputBuffer: WebGLRenderTarget | null,
+    deltaTime?: number,
+    stencilTest?: boolean
+  ) {
+    renderWithCameraLayerMask(this.renderLayerCamera, this.renderLayerMask, () =>
+      super.render(renderer, inputBuffer, outputBuffer, deltaTime, stencilTest)
+    );
+  }
+}
+
+class RenderLayerNormalPass extends NormalPass {
+  readonly renderLayerMask: number;
+  private readonly renderLayerCamera: Camera;
+
+  constructor(scene: Scene, camera: Camera, renderLayerMask: number) {
+    super(scene, camera);
+    this.renderLayerCamera = camera;
+    this.renderLayerMask = renderLayerMask;
+  }
+
+  override render(
+    renderer: WebGLRenderer,
+    inputBuffer: WebGLRenderTarget | null,
+    outputBuffer: WebGLRenderTarget | null,
+    deltaTime?: number,
+    stencilTest?: boolean
+  ) {
+    renderWithCameraLayerMask(this.renderLayerCamera, this.renderLayerMask, () =>
+      super.render(renderer, inputBuffer, outputBuffer, deltaTime, stencilTest)
+    );
+  }
+}
+
+function createMainRenderPass(
+  scene: Scene,
+  camera: Camera,
+  layerMask: number,
+  clear: boolean
+) {
+  const pass = new RenderLayerPass(scene, camera, layerMask);
+  pass.clear = clear;
+
+  return pass;
+}
+
+function createPostAmbientOcclusionRenderPass(
+  scene: Scene,
+  camera: Camera,
+  layerMask: number
+) {
+  const pass = new RenderLayerPass(scene, camera, layerMask);
+
+  pass.clear = false;
+  pass.ignoreBackground = true;
+  pass.skipShadowMapUpdate = true;
+
+  return pass;
+}
 
 export interface ResolvedBoxVolumeRenderPaths {
   fog: BoxVolumeRenderPath;
@@ -122,14 +227,21 @@ export function createAdvancedRenderingComposer(
     multisampling: 0,
     frameBufferType: renderer.capabilities.isWebGL2 ? HalfFloatType : UnsignedByteType
   });
+  const mainRenderLayerMask = settings.ambientOcclusion.enabled
+    ? AO_WORLD_RENDER_LAYER_MASK
+    : ALL_RENDER_LAYER_MASK;
 
   if (backgroundScene !== null) {
-    composer.addPass(new RenderPass(backgroundScene, camera));
-    const mainRenderPass = new RenderPass(scene, camera);
-    mainRenderPass.clear = false;
-    composer.addPass(mainRenderPass);
+    composer.addPass(
+      createMainRenderPass(backgroundScene, camera, mainRenderLayerMask, true)
+    );
+    composer.addPass(
+      createMainRenderPass(scene, camera, mainRenderLayerMask, false)
+    );
   } else {
-    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(
+      createMainRenderPass(scene, camera, mainRenderLayerMask, true)
+    );
   }
 
   const effects: Array<BloomEffect | DepthOfFieldEffect | ToneMappingEffect | SMAAEffect> = [];
@@ -137,7 +249,11 @@ export function createAdvancedRenderingComposer(
   if (settings.ambientOcclusion.enabled) {
     // postprocessing's internal depth-downsampling path writes zero normals unless
     // a real normal buffer is supplied, which turns SSAO into speckled noise.
-    const normalPass = new NormalPass(scene, camera);
+    const normalPass = new RenderLayerNormalPass(
+      scene,
+      camera,
+      AO_WORLD_RENDER_LAYER_MASK
+    );
     composer.addPass(normalPass);
 
     const ambientOcclusionRadius = clampAmbientOcclusionEffectRadius(settings.ambientOcclusion.radius);
@@ -166,6 +282,21 @@ export function createAdvancedRenderingComposer(
           radius: detailAmbientOcclusionRadius,
           intensity: settings.ambientOcclusion.intensity * DETAIL_AMBIENT_OCCLUSION_INTENSITY_SCALE
         })
+      )
+    );
+    composer.addPass(new ShaderPass(new CopyMaterial()));
+    composer.addPass(
+      createPostAmbientOcclusionRenderPass(
+        scene,
+        camera,
+        POST_AO_TRANSPARENT_RENDER_LAYER_MASK
+      )
+    );
+    composer.addPass(
+      createPostAmbientOcclusionRenderPass(
+        scene,
+        camera,
+        OVERLAY_RENDER_LAYER_MASK
       )
     );
   }
@@ -213,7 +344,7 @@ export function applyAdvancedRenderingRenderableShadowFlags(root: Object3D, enab
       const shadowEligible =
         enabled &&
         object.userData.shadowIgnored !== true &&
-        isRenderableMaterialEligibleForShadows(mesh.material);
+        isMaterialEligibleForAmbientOcclusion(mesh.material);
       mesh.castShadow = shadowEligible;
       mesh.receiveShadow = shadowEligible;
     }
