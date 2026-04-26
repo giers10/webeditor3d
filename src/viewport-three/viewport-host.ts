@@ -8612,15 +8612,7 @@ export class ViewportHost {
 
   private clearPaths() {
     for (const renderObjects of this.pathRenderObjects.values()) {
-      this.pathGroup.remove(renderObjects.line);
-      renderObjects.line.geometry.dispose();
-      renderObjects.line.material.dispose();
-
-      for (const pointMesh of renderObjects.pointMeshes) {
-        this.pathGroup.remove(pointMesh.mesh);
-        pointMesh.mesh.geometry.dispose();
-        pointMesh.mesh.material.dispose();
-      }
+      this.disposePathRenderObjects(renderObjects);
     }
 
     this.pathRenderObjects.clear();
