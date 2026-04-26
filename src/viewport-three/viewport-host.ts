@@ -5561,6 +5561,7 @@ export class ViewportHost {
       mesh.userData.terrainId = displayedTerrain.id;
       mesh.castShadow = false;
       mesh.receiveShadow = true;
+      applyRendererRenderCategory(mesh, "ao-world");
       this.terrainGroup.add(mesh);
       this.terrainRenderObjects.set(displayedTerrain.id, {
         mesh
