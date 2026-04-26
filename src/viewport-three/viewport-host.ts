@@ -1188,6 +1188,7 @@ export class ViewportHost {
     this.cameraSpherical.theta = cameraState.perspectiveOrbit.theta;
     this.cameraSpherical.phi = cameraState.perspectiveOrbit.phi;
     this.orthographicCamera.zoom = cameraState.orthographicZoom;
+    this.cancelSmoothZoom();
     this.applyViewModePose();
   }
 
@@ -1367,6 +1368,7 @@ export class ViewportHost {
       return;
     }
 
+    this.finishSmoothZoom();
     this.viewMode = viewMode;
     this.lastClickPointer = null;
     this.lastClickSelectionKey = null;
@@ -1402,6 +1404,7 @@ export class ViewportHost {
       return;
     }
 
+    this.cancelSmoothZoom();
     this.cameraTarget.set(
       focusTarget.center.x,
       focusTarget.center.y,
