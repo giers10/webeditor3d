@@ -476,7 +476,10 @@ interface RuntimeInteractionTargetSource {
 function collectRuntimeInteractionTargetSources(
   interactionOrigin: Vec3,
   runtimeScene: RuntimeSceneDefinition,
-  options: { useTargetingReach?: boolean } = {}
+  options: {
+    useTargetingReach?: boolean;
+    interactionReachMeters?: number;
+  } = {}
 ): RuntimeInteractionTargetSource[] {
   const candidates: RuntimeInteractionTargetSource[] = [];
 
@@ -491,7 +494,7 @@ function collectRuntimeInteractionTargetSources(
     const distance = distanceBetweenVec3(interactionOrigin, interactable.position);
     const acquisitionRange = options.useTargetingReach
       ? TARGETING_ACQUISITION_REACH
-      : interactable.radius;
+      : options.interactionReachMeters ?? interactable.radius;
 
     if (distance > acquisitionRange) {
       continue;
@@ -525,7 +528,7 @@ function collectRuntimeInteractionTargetSources(
     const distance = distanceToAxisAlignedBox(interactionOrigin, bounds);
     const acquisitionRange = options.useTargetingReach
       ? TARGETING_ACQUISITION_REACH
-      : bounds.range;
+      : options.interactionReachMeters ?? bounds.range;
 
     if (distance > acquisitionRange) {
       continue;
@@ -801,56 +804,87 @@ export class RuntimeInteractionSystem {
   resolveClickInteractionPrompt(
     interactionOrigin: Vec3,
     rayOrigin: Vec3,
-    rayDirection: Vec3,
+    rayDirections: readonly Vec3[],
+    interactionReachMeters: number,
     runtimeScene: RuntimeSceneDefinition
   ): RuntimeInteractionPrompt | null {
-    const normalizedViewDirection = normalizeVec3(rayDirection);
+    if (rayDirections.length === 0) {
+      return null;
+    }
+    const promptCandidates = collectRuntimeInteractionTargetSources(
+      interactionOrigin,
+      runtimeScene,
+      { interactionReachMeters }
+    );
 
-    if (normalizedViewDirection === null) {
+    if (promptCandidates.length === 0) {
       return null;
     }
 
-    let bestPrompt: RuntimeInteractionPrompt | null = null;
-    let bestHitDistance = Number.POSITIVE_INFINITY;
+    const resolvePromptForRay = (
+      rayDirection: Vec3
+    ): RuntimeInteractionPrompt | null => {
+      const normalizedViewDirection = normalizeVec3(rayDirection);
 
-    for (const candidate of collectRuntimeInteractionTargetSources(
-      interactionOrigin,
-      runtimeScene
-    )) {
-      const hitDistance =
-        candidate.kind === "interactable"
-          ? raySphereHitDistance(
-              rayOrigin,
-              normalizedViewDirection,
-              candidate.center,
-              candidate.targetRadius ?? DEFAULT_INTERACTABLE_TARGET_RADIUS
-            )
-          : candidate.bounds
-            ? rayAxisAlignedBoxHitDistance(
-                rayOrigin,
-                normalizedViewDirection,
-                candidate.bounds
-              )
-            : null;
-
-      if (hitDistance === null) {
-        continue;
+      if (normalizedViewDirection === null) {
+        return null;
       }
 
-      const next = updateBestPrompt(
-        bestPrompt,
-        bestHitDistance,
-        candidate.entityId,
-        candidate.prompt,
-        candidate.distance,
-        candidate.range,
-        hitDistance
-      );
-      bestPrompt = next.prompt;
-      bestHitDistance = next.hitDistance;
+      let bestPrompt: RuntimeInteractionPrompt | null = null;
+      let bestHitDistance = Number.POSITIVE_INFINITY;
+
+      for (const candidate of promptCandidates) {
+        const hitDistance =
+          candidate.kind === "interactable"
+            ? raySphereHitDistance(
+                rayOrigin,
+                normalizedViewDirection,
+                candidate.center,
+                candidate.targetRadius ?? DEFAULT_INTERACTABLE_TARGET_RADIUS
+              )
+            : candidate.bounds
+              ? rayAxisAlignedBoxHitDistance(
+                  rayOrigin,
+                  normalizedViewDirection,
+                  candidate.bounds
+                )
+              : null;
+
+        if (hitDistance === null) {
+          continue;
+        }
+
+        const next = updateBestPrompt(
+          bestPrompt,
+          bestHitDistance,
+          candidate.entityId,
+          candidate.prompt,
+          candidate.distance,
+          interactionReachMeters,
+          hitDistance
+        );
+        bestPrompt = next.prompt;
+        bestHitDistance = next.hitDistance;
+      }
+
+      return bestPrompt;
+    };
+
+    const centerPrompt = resolvePromptForRay(rayDirections[0]!);
+
+    if (centerPrompt !== null) {
+      return centerPrompt;
     }
 
-    return bestPrompt;
+    for (let index = 1; index < rayDirections.length; index += 1) {
+      const prompt = resolvePromptForRay(rayDirections[index]!);
+
+      if (prompt !== null) {
+        return prompt;
+      }
+    }
+
+    return null;
   }
 
   dispatchClickInteraction(
