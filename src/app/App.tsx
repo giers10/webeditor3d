@@ -8879,12 +8879,17 @@ export function App({ store, initialStatusMessage }: AppProps) {
         overrides.colliderMode ?? playerStartColliderModeDraft;
       const inputBindings =
         overrides.inputBindings ?? playerStartInputBindingsDraft;
+      const interactionReachMeters = readPositiveNumberDraft(
+        playerStartInteractionReachDraft,
+        "Player Start interaction reach"
+      );
       const nextEntity = createPlayerStartEntity({
         id: selectedPlayerStart.id,
         name: selectedPlayerStart.name,
         position: snappedPosition,
         yawDegrees,
         navigationMode,
+        interactionReachMeters,
         movementTemplate,
         inputBindings,
         collider: {
@@ -20609,6 +20614,45 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               </option>
                             ))}
                           </select>
+                        </label>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Interaction</div>
+                        <label className="form-field">
+                          <span className="label">Reach (m)</span>
+                          <input
+                            data-testid="player-start-interaction-reach"
+                            className="text-input"
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            value={playerStartInteractionReachDraft}
+                            onChange={(event) =>
+                              setPlayerStartInteractionReachDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() => applyPlayerStartChange()}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyPlayerStartChange
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyPlayerStartChange
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyPlayerStartChange
+                              )
+                            }
+                          />
                         </label>
                       </div>
 
