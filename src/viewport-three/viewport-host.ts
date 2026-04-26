@@ -5170,12 +5170,18 @@ export class ViewportHost {
     );
   }
 
-  private resetRenderObjectTransformsFromDocument() {
+  private resetTransformPreviewTargets(targetIds: TransformPreviewTargetIds) {
     if (this.currentDocument === null) {
       return;
     }
 
-    for (const brush of Object.values(this.currentDocument.brushes)) {
+    for (const brushId of targetIds.brushIds) {
+      const brush = this.currentDocument.brushes[brushId];
+
+      if (brush === undefined) {
+        continue;
+      }
+
       this.updateBrushRenderObjectGeometry(brush);
       this.applyBrushRenderObjectTransform(
         brush.id,
@@ -5184,28 +5190,51 @@ export class ViewportHost {
       );
     }
 
-    for (const entity of getEntityInstances(this.currentDocument.entities)) {
+    for (const entityId of targetIds.entityIds) {
+      const entity = this.currentDocument.entities[entityId];
+
+      if (entity === undefined) {
+        continue;
+      }
+
       this.applyEntityRenderObjectTransform(entity);
       this.applyLocalLightRenderObjectTransform(entity);
     }
 
-    for (const modelInstance of getModelInstances(
-      this.currentDocument.modelInstances
-    )) {
+    for (const modelInstanceId of targetIds.modelInstanceIds) {
+      const modelInstance = this.currentDocument.modelInstances[modelInstanceId];
+
+      if (modelInstance === undefined) {
+        continue;
+      }
+
       this.applyModelInstanceRenderObjectTransform(modelInstance);
     }
 
-    for (const path of getScenePaths(this.currentDocument.paths)) {
+    for (const pathId of targetIds.pathIds) {
+      const path = this.currentDocument.paths[pathId];
+
+      if (path === undefined) {
+        continue;
+      }
+
       this.updatePathRenderObjectState(path);
     }
   }
 
   private applyTransformPreview() {
-    this.resetRenderObjectTransformsFromDocument();
+    if (this.currentTransformPreviewTargetIds !== null) {
+      this.resetTransformPreviewTargets(this.currentTransformPreviewTargetIds);
+      this.currentTransformPreviewTargetIds = null;
+    }
 
     if (this.currentTransformSession.kind !== "active") {
       return;
     }
+
+    const nextPreviewTargetIds = collectTransformPreviewTargetIds(
+      this.currentTransformSession
+    );
 
     switch (this.currentTransformSession.target.kind) {
       case "brush":
@@ -5485,6 +5514,8 @@ export class ViewportHost {
         }
         break;
     }
+
+    this.currentTransformPreviewTargetIds = nextPreviewTargetIds;
   }
 
   private rebuildLocalLights(document: SceneDocument) {
