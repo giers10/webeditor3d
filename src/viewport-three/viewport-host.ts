@@ -2386,6 +2386,7 @@ export class ViewportHost {
     object.traverse((child) => {
       child.renderOrder = GIZMO_RENDER_ORDER;
     });
+    applyRendererRenderCategory(object, "overlay");
 
     return object;
   }
@@ -6175,6 +6176,7 @@ export class ViewportHost {
     light.target.position.set(0, 1, 0);
     group.add(light);
     group.add(light.target);
+    enableObjectForAllRendererRenderCategories(group);
 
     return {
       group,
@@ -6228,6 +6230,7 @@ export class ViewportHost {
       group.add(light);
       lights.push(light);
     }
+    enableObjectForAllRendererRenderCategories(group);
 
     return {
       group,
@@ -6251,6 +6254,7 @@ export class ViewportHost {
     group.position.set(entity.position.x, entity.position.y, entity.position.z);
     light.position.set(0, 0, 0);
     group.add(light);
+    enableObjectForAllRendererRenderCategories(group);
 
     return {
       group,
