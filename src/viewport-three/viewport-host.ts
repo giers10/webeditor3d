@@ -1282,7 +1282,7 @@ export class ViewportHost {
     this.syncTransformGizmo();
 
     if (rebuiltPreviewFromPointer) {
-      this.transformSessionChangeHandler?.(this.currentTransformSession);
+      this.transformPreviewChangeHandler?.(this.currentTransformSession);
     }
   }
 
