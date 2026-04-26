@@ -765,6 +765,62 @@ describe("transform foundation integration", () => {
     );
   });
 
+  it("commits the latest local transform preview with Enter", async () => {
+    const { store, brush, viewportHost } = await renderTransformFixtureApp();
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Brush Transform Fixture$/ })
+      );
+    });
+
+    fireEvent.keyDown(window, {
+      key: "g",
+      code: "KeyG"
+    });
+
+    const previewSession = {
+      ...getLatestTransformSession(store),
+      preview: {
+        kind: "brush" as const,
+        center: {
+          x: 9,
+          y: brush.center.y,
+          z: brush.center.z
+        },
+        rotationDegrees: {
+          ...brush.rotationDegrees
+        },
+        size: {
+          ...brush.size
+        },
+        geometry: createBoxBrush({ size: brush.size }).geometry
+      }
+    };
+
+    emitTransformPreview(viewportHost, previewSession);
+
+    expect(getLatestTransformSession(store).preview).not.toMatchObject({
+      center: {
+        x: 9
+      }
+    });
+
+    fireEvent.keyDown(window, {
+      key: "Enter",
+      code: "Enter"
+    });
+
+    expect(store.getState().viewportTransientState.transformSession).toEqual({
+      kind: "none"
+    });
+    expect(store.getState().document.brushes[brush.id].center).toEqual({
+      x: 9,
+      y: brush.center.y,
+      z: brush.center.z
+    });
+  });
+
   it("moves a model instance through the shared transform controller", async () => {
     const { store, modelInstance, viewportHost } =
       await renderTransformFixtureApp();
