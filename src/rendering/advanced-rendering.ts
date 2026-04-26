@@ -82,7 +82,7 @@ class RenderLayerPass extends RenderPass {
     scene: Scene,
     camera: Camera,
     renderLayerMask: number,
-    overrideMaterial: Material | null = null
+    overrideMaterial?: Material
   ) {
     super(scene, camera, overrideMaterial);
     this.renderLayerCamera = camera;
