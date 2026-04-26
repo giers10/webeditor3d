@@ -693,6 +693,20 @@ export class ViewportHost {
   private lastClickSelectionKey: string | null = null;
 
   constructor() {
+    enableCameraRendererRenderCategories(this.perspectiveCamera);
+    enableCameraRendererRenderCategories(this.orthographicCamera);
+    enableCameraRendererRenderCategories(this.waterReflectionCamera);
+    this.raycaster.layers.mask = ALL_RENDER_LAYER_MASK;
+    enableObjectForAllRendererRenderCategories(this.ambientLight);
+    enableObjectForAllRendererRenderCategories(this.sunLight);
+    enableObjectForAllRendererRenderCategories(this.moonLight);
+    applyRendererRenderCategory(this.axesHelper, "overlay");
+    for (const gridHelper of Object.values(this.gridHelpers)) {
+      applyRendererRenderCategory(gridHelper, "overlay");
+    }
+    applyRendererRenderCategory(this.boxCreatePreviewMesh, "overlay");
+    applyRendererRenderCategory(this.boxCreatePreviewEdges, "overlay");
+
     this.perspectiveCamera.position.set(10, 9, 10);
     this.perspectiveCamera.lookAt(this.cameraTarget);
     this.updatePerspectiveCameraSphericalFromPose();
@@ -737,11 +751,13 @@ export class ViewportHost {
     this.terrainBrushPreviewCenter.renderOrder = 2;
     this.terrainBrushPreviewGroup.add(this.terrainBrushPreviewLine);
     this.terrainBrushPreviewGroup.add(this.terrainBrushPreviewCenter);
+    applyRendererRenderCategory(this.terrainBrushPreviewGroup, "overlay");
     this.scene.add(this.terrainBrushPreviewGroup);
     this.scene.add(this.pathGroup);
     this.scene.add(this.entityGroup);
     this.scene.add(this.modelGroup);
     this.transformGizmoGroup.visible = false;
+    applyRendererRenderCategory(this.transformGizmoGroup, "overlay");
     this.scene.add(this.transformGizmoGroup);
     this.boxCreatePreviewMesh.visible = false;
     this.boxCreatePreviewEdges.visible = false;
