@@ -1429,7 +1429,8 @@ export class ViewportHost {
         )
       );
 
-      this.cameraSpherical.radius = fitDistance;
+      this.cameraSpherical.radius =
+        this.clampPerspectiveCameraRadius(fitDistance);
       this.cameraSpherical.makeSafe();
       this.applyPerspectiveCameraPose();
       this.emitCameraStateChange();
@@ -1444,10 +1445,8 @@ export class ViewportHost {
     const fitZoom =
       Math.min(visibleWidth, ORTHOGRAPHIC_FRUSTUM_HEIGHT) / fitSize;
 
-    this.orthographicCamera.zoom = Math.min(
-      MAX_ORTHOGRAPHIC_ZOOM,
-      Math.max(MIN_ORTHOGRAPHIC_ZOOM, fitZoom)
-    );
+    this.orthographicCamera.zoom =
+      this.clampOrthographicCameraZoom(fitZoom);
     this.applyOrthographicCameraPose();
     this.emitCameraStateChange();
   }
@@ -10272,14 +10271,15 @@ export class ViewportHost {
     }
 
     this.animationFrame = window.requestAnimationFrame(this.render);
-    this.updateGridPositioning();
-    this.updateTransformGizmoPose();
     const now = performance.now();
     const dt =
       this.previousFrameTime === 0
         ? 0
         : Math.min((now - this.previousFrameTime) / 1000, 1 / 20);
     this.previousFrameTime = now;
+    this.updateSmoothZoom(dt);
+    this.updateGridPositioning();
+    this.updateTransformGizmoPose();
     this.volumeTime += dt;
 
     for (const uniform of this.volumeAnimatedUniforms) {
