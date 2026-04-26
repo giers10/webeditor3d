@@ -574,6 +574,7 @@ describe("validateSceneDocument", () => {
           },
           yawDegrees: Number.NaN,
           navigationMode: "invalidMode" as unknown as "firstPerson",
+          interactionReachMeters: Number.NaN,
           movementTemplate: {
             kind: "invalidTemplate",
             moveSpeed: 0,
@@ -644,6 +645,9 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-navigation-mode"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-interaction-reach"
         }),
         expect.objectContaining({
           code: "invalid-player-start-movement-template-kind"
