@@ -2648,6 +2648,20 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (
+    !isFiniteNumber(entity.interactionReachMeters) ||
+    entity.interactionReachMeters <= 0
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-interaction-reach",
+        "Player Start interaction reach must remain a finite number greater than zero.",
+        `${path}.interactionReachMeters`
+      )
+    );
+  }
+
   if (!isPlayerStartMovementTemplateKind(entity.movementTemplate?.kind)) {
     diagnostics.push(
       createDiagnostic(
