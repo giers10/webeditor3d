@@ -7566,6 +7566,7 @@ export class ViewportHost {
 
     line.userData.brushId = brush.id;
     line.userData.brushEdgeId = edgeId;
+    applyRendererRenderCategory(line, "overlay");
 
     return {
       id: edgeId,
@@ -7591,6 +7592,7 @@ export class ViewportHost {
     mesh.position.set(position.x, position.y, position.z);
     mesh.userData.brushId = brush.id;
     mesh.userData.brushVertexId = vertexId;
+    applyRendererRenderCategory(mesh, "overlay");
 
     return {
       id: vertexId,
