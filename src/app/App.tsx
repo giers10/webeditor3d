@@ -107,8 +107,7 @@ import {
   type ActiveTransformSession,
   type TransformAxis,
   type TransformOperation,
-  type TransformSessionSource,
-  type TransformSessionState
+  type TransformSessionSource
 } from "../core/transform-session";
 import type { Vec2, Vec3 } from "../core/vector";
 import {
