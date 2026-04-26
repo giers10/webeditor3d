@@ -125,6 +125,12 @@ import {
   shouldApplyWhiteboxBevel
 } from "../rendering/whitebox-bevel-material";
 import {
+  applyRendererRenderCategory,
+  applyRendererRenderCategoryFromMaterial,
+  enableCameraRendererRenderCategories,
+  enableObjectForAllRendererRenderCategories
+} from "../rendering/render-layers";
+import {
   areAdvancedRenderingSettingsEqual,
   cloneAdvancedRenderingSettings,
   type AdvancedRenderingSettings

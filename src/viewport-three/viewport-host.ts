@@ -9671,6 +9671,7 @@ export class ViewportHost {
     this.clearCreationPreviewObject();
 
     const creationPreviewObject = this.createCreationPreviewObject(toolPreview);
+    applyRendererRenderCategory(creationPreviewObject, "overlay");
     creationPreviewObject.visible = toolPreview.center !== null;
     this.scene.add(creationPreviewObject);
     this.creationPreviewObject = creationPreviewObject;
