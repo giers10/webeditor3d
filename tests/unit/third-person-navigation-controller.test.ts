@@ -113,6 +113,10 @@ function createRuntimeControllerContext(
 describe("ThirdPersonNavigationController", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    Object.defineProperty(navigator, "getGamepads", {
+      configurable: true,
+      value: undefined
+    });
   });
 
   it("uses authored keyboard bindings instead of hardcoded WASD movement", () => {
@@ -461,6 +465,9 @@ describe("ThirdPersonNavigationController", () => {
       cameraYawRadians: number;
       pitchRadians: number;
       targetAssistLookOffsetY: number;
+      handlePointerDown(event: PointerEvent): void;
+      handlePointerMove(event: PointerEvent): void;
+      handlePointerUp(): void;
     };
     const targetContext = {
       ...context,
@@ -484,19 +491,15 @@ describe("ThirdPersonNavigationController", () => {
     controllerInternals.pitchRadians = 1.1;
     controllerInternals.targetAssistLookOffsetY = 0;
 
-    targetContext.domElement.dispatchEvent(
-      new PointerEvent("pointerdown", {
-        button: 0,
-        clientX: 0,
-        clientY: 0
-      })
-    );
-    window.dispatchEvent(
-      new PointerEvent("pointermove", {
-        clientX: 30,
-        clientY: 12
-      })
-    );
+    controllerInternals.handlePointerDown({
+      button: 0,
+      clientX: 0,
+      clientY: 0
+    } as PointerEvent);
+    controllerInternals.handlePointerMove({
+      clientX: 30,
+      clientY: 12
+    } as PointerEvent);
 
     controller.update(0.016);
 
@@ -504,7 +507,7 @@ describe("ThirdPersonNavigationController", () => {
     expect(controllerInternals.pitchRadians).toBeCloseTo(1.1, 5);
     expect(controllerInternals.targetAssistLookOffsetY).toBeCloseTo(0, 5);
 
-    window.dispatchEvent(new PointerEvent("pointerup"));
+    controllerInternals.handlePointerUp();
     controller.deactivate(targetContext);
   });
 
