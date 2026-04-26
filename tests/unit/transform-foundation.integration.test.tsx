@@ -305,12 +305,12 @@ function emitTransformPreview(
   viewportHost: ReturnType<typeof getTopLeftViewportHost>,
   transformSession: ActiveTransformSession
 ) {
-  const handler = viewportHost.setTransformSessionChangeHandler.mock.calls.at(
+  const handler = viewportHost.setTransformPreviewChangeHandler.mock.calls.at(
     -1
-  )?.[0] as ((transformSession: TransformSessionState) => void) | undefined;
+  )?.[0] as ((transformSession: ActiveTransformSession) => void) | undefined;
 
   if (handler === undefined) {
-    throw new Error("Transform session change handler was not registered.");
+    throw new Error("Transform preview change handler was not registered.");
   }
 
   act(() => {
