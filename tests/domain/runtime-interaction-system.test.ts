@@ -559,6 +559,7 @@ describe("RuntimeInteractionSystem", () => {
           y: 0,
           z: 1
         },
+        2,
         runtimeScene
       )
     ).toEqual({
@@ -585,6 +586,7 @@ describe("RuntimeInteractionSystem", () => {
           y: 0,
           z: 0
         },
+        2,
         runtimeScene
       )
     ).toBeNull();
@@ -620,6 +622,7 @@ describe("RuntimeInteractionSystem", () => {
           y: 0,
           z: 1
         },
+        2,
         runtimeScene
       )
     ).toEqual({
@@ -877,6 +880,7 @@ describe("RuntimeInteractionSystem", () => {
         y: 0,
         z: 1
       },
+      2,
       runtimeScene
     );
 
@@ -1189,6 +1193,7 @@ describe("RuntimeInteractionSystem", () => {
         y: 0,
         z: 1
       },
+      2,
       runtimeScene
     );
 
@@ -1253,6 +1258,7 @@ describe("RuntimeInteractionSystem", () => {
           y: 0,
           z: 1
         },
+        2,
         runtimeScene
       )
     ).toBeNull();
@@ -1304,6 +1310,7 @@ describe("RuntimeInteractionSystem", () => {
           y: 0,
           z: 1
         },
+        2,
         runtimeScene
       )
     ).toEqual({
