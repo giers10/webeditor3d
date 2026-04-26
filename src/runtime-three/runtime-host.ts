@@ -3871,6 +3871,7 @@ export class RuntimeHost {
       );
       mesh.visible = brush.visible;
       this.configureFogVolumeMesh(mesh, materials);
+      applyRendererRenderCategoryFromMaterial(mesh);
       this.brushGroup.add(mesh);
       this.brushMeshes.set(brush.id, mesh);
     }
@@ -3900,6 +3901,7 @@ export class RuntimeHost {
       mesh.visible = terrain.visible;
       mesh.castShadow = false;
       mesh.receiveShadow = true;
+      applyRendererRenderCategory(mesh, "ao-world");
       this.terrainGroup.add(mesh);
       this.terrainMeshes.set(terrain.id, mesh);
     }
