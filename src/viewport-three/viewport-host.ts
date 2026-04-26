@@ -6073,7 +6073,7 @@ export class ViewportHost {
         modelInstance
       ])
     );
-    const displayedModelInstances =
+    return (
       runtimeModelInstances?.map((runtimeModelInstance) => {
         const authoredModelInstance = authoredModelInstancesById.get(
           runtimeModelInstance.instanceId
@@ -6095,7 +6095,8 @@ export class ViewportHost {
           animationClipName: runtimeModelInstance.animationClipName,
           animationAutoplay: runtimeModelInstance.animationAutoplay
         });
-      }) ?? getModelInstances(document.modelInstances);
+      }) ?? getModelInstances(document.modelInstances)
+    );
   }
 
   private getDisplayedModelInstanceById(
