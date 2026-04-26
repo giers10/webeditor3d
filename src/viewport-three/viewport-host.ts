@@ -4977,6 +4977,23 @@ export class ViewportHost {
     );
   }
 
+  private addCameraRigRailPreviewPathIds(
+    affectedIds: AffectedSelectionIds,
+    selection: EditorSelection
+  ) {
+    if (this.currentDocument === null || selection.kind !== "entities") {
+      return;
+    }
+
+    for (const entityId of selection.ids) {
+      const entity = this.currentDocument.entities[entityId];
+
+      if (entity?.kind === "cameraRig" && entity.rigType === "rail") {
+        affectedIds.pathIds.add(entity.pathId);
+      }
+    }
+  }
+
   private applyEntityRenderObjectTransform(entity: EntityInstance) {
     const renderObjects = this.entityRenderObjects.get(entity.id);
 
