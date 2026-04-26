@@ -5640,6 +5640,7 @@ export class ViewportHost {
       });
     }
 
+    applyRendererRenderCategory(this.pathGroup, "overlay");
     this.refreshPathPresentation();
   }
 
@@ -5832,6 +5833,7 @@ export class ViewportHost {
         this.applyWireframePresentation(renderObjects.group);
       }
 
+      applyRendererRenderCategory(renderObjects.group, "overlay");
       this.entityGroup.add(renderObjects.group);
       this.entityRenderObjects.set(entity.id, renderObjects);
     }
@@ -5903,13 +5905,17 @@ export class ViewportHost {
           );
 
           if (generatedCollider !== null) {
-            renderGroup.add(createModelColliderDebugGroup(generatedCollider));
+            const colliderDebugGroup =
+              createModelColliderDebugGroup(generatedCollider);
+            applyRendererRenderCategory(colliderDebugGroup, "overlay");
+            renderGroup.add(colliderDebugGroup);
           }
         } catch {
           // Validation surfaces unsupported collider modes; the viewport keeps rendering the model.
         }
       }
 
+      applyRendererRenderCategoryFromMaterial(renderGroup);
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(modelInstance.id, renderGroup);
     }
