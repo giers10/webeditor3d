@@ -18,6 +18,7 @@ import {
   DEFAULT_PLAYER_START_CAPSULE_RADIUS,
   DEFAULT_PLAYER_START_CROUCH_SETTINGS,
   DEFAULT_PLAYER_START_EYE_HEIGHT,
+  DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
   DEFAULT_PLAYER_START_JUMP_SETTINGS,
   DEFAULT_PLAYER_START_MOVE_SPEED,
   DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
@@ -49,6 +50,7 @@ describe("entity registry defaults", () => {
       position: { x: 0, y: 0, z: 0 },
       yawDegrees: 0,
       navigationMode: "firstPerson",
+      interactionReachMeters: DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
       movementTemplate: {
         kind: "default",
         moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,

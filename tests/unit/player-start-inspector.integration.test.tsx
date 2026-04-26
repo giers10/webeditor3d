@@ -250,6 +250,56 @@ describe("Player Start inspector", () => {
     });
   });
 
+  it("persists the authored interaction reach for a selected Player Start", async () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-interaction-reach",
+      name: "Interaction Reach"
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Player Start Reach Scene" }),
+        entities: {
+          [playerStart.id]: playerStart
+        }
+      }
+    });
+
+    render(<App store={store} />);
+
+    await waitFor(() => {
+      expect(viewportHostInstances.length).toBeGreaterThan(0);
+    });
+
+    act(() => {
+      store.setSelection({
+        kind: "entities",
+        ids: [playerStart.id]
+      });
+    });
+
+    const reachInput = await screen.findByTestId(
+      "player-start-interaction-reach"
+    );
+
+    expect(reachInput).toHaveValue(1.5);
+
+    act(() => {
+      fireEvent.change(reachInput, {
+        target: {
+          value: "3.2"
+        }
+      });
+      fireEvent.blur(reachInput);
+    });
+
+    await waitFor(() => {
+      expect(store.getState().document.entities[playerStart.id]).toMatchObject({
+        kind: "playerStart",
+        interactionReachMeters: 3.2
+      });
+    });
+  });
+
   it("shows authored jump, sprint, and crouch bindings for a selected Player Start", async () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-locomotion-bindings",
