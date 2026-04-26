@@ -1489,6 +1489,7 @@ export class ViewportHost {
     this.creationCommitHandler = null;
     this.cameraStateChangeHandler = null;
     this.transformSessionChangeHandler = null;
+    this.transformPreviewChangeHandler = null;
     this.transformCommitHandler = null;
     this.transformCancelHandler = null;
     this.currentTransformSession = createInactiveTransformSession();
