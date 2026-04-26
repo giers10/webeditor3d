@@ -252,6 +252,87 @@ describe("ViewportCanvas", () => {
     });
   });
 
+  it("syncs selection without resyncing the viewport document", async () => {
+    const brush = createBoxBrush({
+      id: "selection-sync-brush"
+    });
+    const sceneDocument = {
+      ...createEmptySceneDocument(),
+      brushes: {
+        [brush.id]: brush
+      }
+    };
+    const cameraState = createDefaultViewportPanelCameraState();
+    const renderCanvas = (
+      selection: EditorSelection,
+      activeSelectionId: string | null
+    ) => (
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationScene={null}
+        editorSimulationClock={null}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={selection}
+        activeSelectionId={activeSelectionId}
+        terrainBrushState={null}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={cameraState}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+      />
+    );
+
+    const { rerender } = render(renderCanvas({ kind: "none" }, null));
+
+    await waitFor(() => {
+      expect(viewportHostInstances).toHaveLength(1);
+      expect(viewportHostInstances[0].updateDocument).toHaveBeenCalledWith(
+        sceneDocument
+      );
+    });
+
+    const viewportHost = viewportHostInstances[0];
+    expect(viewportHost.updateDocument.mock.calls[0]).toHaveLength(1);
+    viewportHost.updateDocument.mockClear();
+    viewportHost.updateSelection.mockClear();
+
+    const selectedBrush: EditorSelection = {
+      kind: "brushes",
+      ids: [brush.id]
+    };
+    rerender(renderCanvas(selectedBrush, brush.id));
+
+    await waitFor(() => {
+      expect(viewportHost.updateSelection).toHaveBeenCalledWith(
+        selectedBrush,
+        brush.id
+      );
+    });
+    expect(viewportHost.updateDocument).not.toHaveBeenCalled();
+  });
+
   it("pushes editor simulation scene state into the viewport host", async () => {
     const sceneDocument = createEmptySceneDocument();
     const editorSimulationScene = buildRuntimeSceneFromDocument(sceneDocument);
