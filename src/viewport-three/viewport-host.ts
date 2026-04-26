@@ -796,6 +796,8 @@ export class ViewportHost {
   private viewMode: ViewportViewMode = "perspective";
   private displayMode: ViewportDisplayMode = "normal";
   private panelId: ViewportPanelId = "topLeft";
+  private targetPerspectiveCameraRadius: number | null = null;
+  private targetOrthographicCameraZoom: number | null = null;
   private creationPreview: CreationViewportToolPreview | null = null;
   private currentTerrainBrushState: ArmedTerrainBrushState | null = null;
   private terrainBrushHover: TerrainBrushHit | null = null;
