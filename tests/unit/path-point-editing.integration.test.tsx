@@ -32,6 +32,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setCreationPreviewChangeHandler: ReturnType<typeof vi.fn>;
     setCreationCommitHandler: ReturnType<typeof vi.fn>;
     setTransformSessionChangeHandler: ReturnType<typeof vi.fn>;
+    setTransformPreviewChangeHandler: ReturnType<typeof vi.fn>;
     setTransformCommitHandler: ReturnType<typeof vi.fn>;
     setTransformCancelHandler: ReturnType<typeof vi.fn>;
     setWhiteboxHoverLabelChangeHandler: ReturnType<typeof vi.fn>;
@@ -65,6 +66,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setCreationPreviewChangeHandler = vi.fn();
     setCreationCommitHandler = vi.fn();
     setTransformSessionChangeHandler = vi.fn();
+    setTransformPreviewChangeHandler = vi.fn();
     setTransformCommitHandler = vi.fn();
     setTransformCancelHandler = vi.fn();
     setWhiteboxHoverLabelChangeHandler = vi.fn();

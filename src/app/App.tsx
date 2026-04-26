@@ -4601,7 +4601,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
         if (event.key === "Enter") {
           event.preventDefault();
-          commitTransformSession(transformSession);
+          const latestTransformSession =
+            latestActiveTransformSessionRef.current;
+          commitTransformSession(
+            latestTransformSession?.id === transformSession.id
+              ? latestTransformSession
+              : transformSession
+          );
           return;
         }
 
@@ -14239,7 +14245,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onWhiteboxSnapStepDraftChange={setWhiteboxSnapStepDraft}
                   onWhiteboxSnapStepBlur={handleWhiteboxSnapStepBlur}
                   onTransformSessionChange={(nextTransformSession) => {
+                    latestActiveTransformSessionRef.current =
+                      nextTransformSession.kind === "active"
+                        ? nextTransformSession
+                        : null;
                     store.setTransformSession(nextTransformSession);
+                  }}
+                  onTransformPreviewChange={(nextTransformSession) => {
+                    latestActiveTransformSessionRef.current =
+                      nextTransformSession;
                   }}
                   onTransformCommit={commitTransformSession}
                   onTransformCancel={() => cancelTransformSession()}

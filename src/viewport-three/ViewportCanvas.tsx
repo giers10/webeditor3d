@@ -73,7 +73,7 @@ interface ViewportCanvasProps {
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
   onTransformSessionChange(transformSession: TransformSessionState): void;
-  onTransformPreviewChange(transformSession: ActiveTransformSession): void;
+  onTransformPreviewChange?(transformSession: ActiveTransformSession): void;
   onTransformCommit(transformSession: ActiveTransformSession): void;
   onTransformCancel(): void;
 }
@@ -110,7 +110,7 @@ export function ViewportCanvas({
   onCameraStateChange,
   onToolPreviewChange,
   onTransformSessionChange,
-  onTransformPreviewChange,
+  onTransformPreviewChange = () => undefined,
   onTransformCommit,
   onTransformCancel
 }: ViewportCanvasProps) {
