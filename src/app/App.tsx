@@ -2201,6 +2201,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const activePanelId = editorState.activeViewportPanelId;
   const viewportToolPreview = editorState.viewportTransientState.toolPreview;
   const transformSession = editorState.viewportTransientState.transformSession;
+  const latestActiveTransformSessionRef = useRef<ActiveTransformSession | null>(
+    null
+  );
   const entityList = getEntityInstances(editorState.document.entities);
   const entityDisplayList = getSortedEntityDisplayLabels(
     editorState.document.entities,
