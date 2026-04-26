@@ -886,26 +886,46 @@ export class ViewportHost {
     this.rebuildModelInstances(this.currentDocument, this.currentSelection);
   }
 
-  updateDocument(
-    document: SceneDocument,
-    selection: EditorSelection,
-    activeSelectionId: string | null
-  ) {
+  updateSelection(selection: EditorSelection, activeSelectionId: string | null) {
+    const selectionChanged = !areEditorSelectionsEqual(
+      this.currentSelection,
+      selection
+    );
+    const activeSelectionChanged =
+      this.currentActiveSelectionId !== activeSelectionId;
+
+    this.currentSelection = selection;
+    this.currentActiveSelectionId = activeSelectionId;
+
+    if (!selectionChanged && !activeSelectionChanged) {
+      return;
+    }
+
+    this.activeTerrainBrushStroke = null;
+    this.setHoveredSelection({
+      kind: "none"
+    });
+    this.refreshSelectionPresentation();
+  }
+
+  updateDocument(document: SceneDocument) {
     this.activeTerrainBrushStroke = null;
     this.currentDocument = document;
     this.viewportSceneBounds = resolveViewportDocumentBounds(document);
-    this.currentSelection = selection;
-    this.currentActiveSelectionId = activeSelectionId;
     this.setHoveredSelection({
       kind: "none"
     });
     this.rebuildLocalLights(document);
     this.rebuildLightVolumes(document);
-    this.rebuildBrushMeshes(document, selection);
-    this.rebuildTerrains(document, selection, activeSelectionId);
-    this.rebuildPaths(document, selection);
-    this.rebuildEntityMarkers(document, selection);
-    this.rebuildModelInstances(document, selection);
+    this.rebuildBrushMeshes(document, this.currentSelection);
+    this.rebuildTerrains(
+      document,
+      this.currentSelection,
+      this.currentActiveSelectionId
+    );
+    this.rebuildPaths(document, this.currentSelection);
+    this.rebuildEntityMarkers(document, this.currentSelection);
+    this.rebuildModelInstances(document, this.currentSelection);
     this.applyTransformPreview();
     this.syncTransformGizmo();
     this.syncTerrainBrushPreview();
@@ -1216,11 +1236,7 @@ export class ViewportHost {
     this.applyWorld();
 
     if (this.currentDocument !== null) {
-      this.updateDocument(
-        this.currentDocument,
-        this.currentSelection,
-        this.currentActiveSelectionId
-      );
+      this.updateDocument(this.currentDocument);
     }
   }
 
