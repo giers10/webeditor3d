@@ -10,8 +10,7 @@ import {
   type ModelAssetRecord
 } from "../../src/assets/project-assets";
 import type {
-  ActiveTransformSession,
-  TransformSessionState
+  ActiveTransformSession
 } from "../../src/core/transform-session";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
