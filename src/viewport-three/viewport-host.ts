@@ -9619,26 +9619,38 @@ export class ViewportHost {
     event.preventDefault();
 
     if (this.viewMode === "perspective") {
-      this.cameraSpherical.radius = Math.min(
-        MAX_CAMERA_DISTANCE,
-        Math.max(
-          MIN_CAMERA_DISTANCE,
-          this.cameraSpherical.radius * Math.exp(event.deltaY * ZOOM_SPEED)
-        )
+      this.targetPerspectiveCameraRadius = this.clampPerspectiveCameraRadius(
+        (this.targetPerspectiveCameraRadius ?? this.cameraSpherical.radius) *
+          Math.exp(event.deltaY * ZOOM_SPEED)
       );
+      const nextRadius = this.stepSmoothZoomValue(
+        this.cameraSpherical.radius,
+        this.targetPerspectiveCameraRadius,
+        SMOOTH_ZOOM_IMMEDIATE_RESPONSE
+      );
+      this.cameraSpherical.radius = nextRadius.value;
+      if (nextRadius.done) {
+        this.targetPerspectiveCameraRadius = null;
+      }
       this.applyPerspectiveCameraPose();
       this.emitCameraStateChange();
       return;
     }
 
-    this.orthographicCamera.zoom = Math.min(
-      MAX_ORTHOGRAPHIC_ZOOM,
-      Math.max(
-        MIN_ORTHOGRAPHIC_ZOOM,
-        this.orthographicCamera.zoom * Math.exp(-event.deltaY * ZOOM_SPEED)
-      )
+    this.targetOrthographicCameraZoom = this.clampOrthographicCameraZoom(
+      (this.targetOrthographicCameraZoom ?? this.orthographicCamera.zoom) *
+        Math.exp(-event.deltaY * ZOOM_SPEED)
     );
-    this.orthographicCamera.updateProjectionMatrix();
+    const nextZoom = this.stepSmoothZoomValue(
+      this.orthographicCamera.zoom,
+      this.targetOrthographicCameraZoom,
+      SMOOTH_ZOOM_IMMEDIATE_RESPONSE
+    );
+    this.orthographicCamera.zoom = nextZoom.value;
+    if (nextZoom.done) {
+      this.targetOrthographicCameraZoom = null;
+    }
+    this.applyOrthographicCameraPose();
     this.emitCameraStateChange();
   };
 
