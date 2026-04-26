@@ -1281,7 +1281,10 @@ export class ViewportHost {
     this.applyTransformPreview();
     this.syncTransformGizmo();
 
-    if (rebuiltPreviewFromPointer) {
+    if (
+      rebuiltPreviewFromPointer &&
+      this.currentTransformSession.kind === "active"
+    ) {
       this.transformPreviewChangeHandler?.(this.currentTransformSession);
     }
   }
