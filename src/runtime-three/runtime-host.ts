@@ -354,6 +354,7 @@ const TARGETING_SCREEN_SWITCH_MAX_ABS_X = 1.35;
 const TARGETING_SCREEN_SWITCH_MAX_ABS_Y = 1.25;
 const TARGETING_SCREEN_PROPOSAL_MAX_ABS_X = 1;
 const TARGETING_SCREEN_PROPOSAL_MAX_ABS_Y = 1;
+const TARGETING_SCREEN_PROPOSAL_FOCUS_Y = -0.2;
 const TARGETING_MAX_ACTIVE_TARGET_DISTANCE = 15;
 const TARGETING_ACTIVE_TARGET_RELEASE_DISTANCE =
   TARGETING_MAX_ACTIVE_TARGET_DISTANCE + 0.75;
@@ -6221,7 +6222,9 @@ export class RuntimeHost {
       }
 
       const screenDistanceSquared =
-        screenPoint.x * screenPoint.x + screenPoint.y * screenPoint.y;
+        screenPoint.x * screenPoint.x +
+        (screenPoint.y - TARGETING_SCREEN_PROPOSAL_FOCUS_Y) *
+          (screenPoint.y - TARGETING_SCREEN_PROPOSAL_FOCUS_Y);
 
       if (
         bestCandidate === null ||
