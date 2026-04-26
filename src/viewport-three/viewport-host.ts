@@ -242,6 +242,13 @@ import {
   shouldApplyWhiteboxBevel
 } from "../rendering/whitebox-bevel-material";
 import {
+  ALL_RENDER_LAYER_MASK,
+  applyRendererRenderCategory,
+  applyRendererRenderCategoryFromMaterial,
+  enableCameraRendererRenderCategories,
+  enableObjectForAllRendererRenderCategories
+} from "../rendering/render-layers";
+import {
   collectWaterContactPatches,
   createWaterMaterial
 } from "../rendering/water-material";
