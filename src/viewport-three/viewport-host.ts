@@ -7930,19 +7930,26 @@ export class ViewportHost {
     }
 
     for (const terrain of Object.values(this.currentDocument.terrains)) {
-      const renderObjects = this.terrainRenderObjects.get(terrain.id);
-
-      if (renderObjects === undefined) {
-        continue;
-      }
-
-      const displayedTerrain =
-        this.getDisplayedTerrainState(terrain.id) ?? terrain;
-      const previousMaterial = renderObjects.mesh.material;
-      renderObjects.mesh.material =
-        this.createTerrainMaterial(displayedTerrain);
-      previousMaterial.dispose();
+      this.refreshTerrainPresentationForId(terrain.id);
     }
+  }
+
+  private refreshTerrainPresentationForId(terrainId: string) {
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    const terrain = this.currentDocument.terrains[terrainId];
+    const renderObjects = this.terrainRenderObjects.get(terrainId);
+
+    if (terrain === undefined || renderObjects === undefined) {
+      return;
+    }
+
+    const displayedTerrain = this.getDisplayedTerrainState(terrainId) ?? terrain;
+    const previousMaterial = renderObjects.mesh.material;
+    renderObjects.mesh.material = this.createTerrainMaterial(displayedTerrain);
+    previousMaterial.dispose();
   }
 
   private getDisplayedTerrainState(terrainId: string): Terrain | null {
