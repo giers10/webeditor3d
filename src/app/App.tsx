@@ -6821,14 +6821,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
       store.setActiveViewportPanel(transformSourcePanelId);
     }
 
-    store.setTransformSession(
-      createTransformSession({
-        source,
-        sourcePanelId: transformSourcePanelId,
-        operation,
-        target: transformTarget
-      })
-    );
+    const nextTransformSession = createTransformSession({
+      source,
+      sourcePanelId: transformSourcePanelId,
+      operation,
+      target: transformTarget
+    });
+    latestActiveTransformSessionRef.current = nextTransformSession;
+    store.setTransformSession(nextTransformSession);
     setStatusMessage(
       `${getTransformOperationLabel(operation)} ${getTransformTargetLabel(transformTarget).toLowerCase()} in ${getViewportPanelLabel(
         transformSourcePanelId
@@ -6843,6 +6843,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       return;
     }
 
+    latestActiveTransformSessionRef.current = null;
     store.clearTransformSession();
     setStatusMessage(status);
   };
@@ -6851,12 +6852,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     activeTransformSession: ActiveTransformSession
   ) => {
     if (!doesTransformSessionChangeTarget(activeTransformSession)) {
+      latestActiveTransformSessionRef.current = null;
       store.clearTransformSession();
       setStatusMessage("No transform change was committed.");
       return;
     }
 
     try {
+      latestActiveTransformSessionRef.current = null;
       store.clearTransformSession();
       store.executeCommand(
         createCommitTransformSessionCommand(
@@ -6868,6 +6871,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         `${getTransformOperationPastTense(activeTransformSession.operation)} ${getTransformTargetLabel(activeTransformSession.target).toLowerCase()}.`
       );
     } catch (error) {
+      latestActiveTransformSessionRef.current = null;
       store.clearTransformSession();
       setStatusMessage(getErrorMessage(error));
     }
