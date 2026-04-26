@@ -4138,6 +4138,67 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("biases Lux proposal focus slightly below screen center", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeTargetCandidates: Array<{
+        kind: "npc";
+        entityId: string;
+        prompt: string;
+        position: { x: number; y: number; z: number };
+        center: { x: number; y: number; z: number };
+        distance: number;
+        range: number;
+        viewDot: number;
+        score: number;
+      }>;
+      camera: PerspectiveCamera;
+      resolveRuntimeTargetCandidateNearestScreenCenter(): {
+        kind: "npc";
+        entityId: string;
+      } | null;
+    };
+
+    hostInternals.runtimeTargetCandidates = [
+      {
+        kind: "npc",
+        entityId: "npc-above-center",
+        prompt: "Talk",
+        position: { x: 0, y: 0.98, z: 8 },
+        center: { x: 0, y: 1.88, z: 8 },
+        distance: 8,
+        range: 1.5,
+        viewDot: 1,
+        score: 1
+      },
+      {
+        kind: "npc",
+        entityId: "npc-below-center",
+        prompt: "Talk",
+        position: { x: 0, y: -0.14, z: 8 },
+        center: { x: 0, y: 0.76, z: 8 },
+        distance: 8,
+        range: 1.5,
+        viewDot: 1,
+        score: 1
+      }
+    ];
+    hostInternals.camera.position.set(0, 1.6, 0);
+    hostInternals.camera.lookAt(0, 1.6, 8);
+    hostInternals.camera.updateMatrixWorld();
+    hostInternals.camera.updateProjectionMatrix();
+
+    expect(
+      hostInternals.resolveRuntimeTargetCandidateNearestScreenCenter()
+    ).toMatchObject({
+      kind: "npc",
+      entityId: "npc-below-center"
+    });
+    host.dispose();
+  });
+
   it("filters Lux target candidates when the camera ray is occluded", () => {
     const host = new RuntimeHost({
       enableRendering: false
