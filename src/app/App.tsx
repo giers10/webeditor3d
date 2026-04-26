@@ -3256,6 +3256,20 @@ export function App({ store, initialStatusMessage }: AppProps) {
     whiteboxSnapStep
   );
 
+  useEffect(() => {
+    if (transformSession.kind === "none") {
+      latestActiveTransformSessionRef.current = null;
+      return;
+    }
+
+    if (
+      latestActiveTransformSessionRef.current === null ||
+      latestActiveTransformSessionRef.current.id !== transformSession.id
+    ) {
+      latestActiveTransformSessionRef.current = transformSession;
+    }
+  }, [transformSession]);
+
   const clampSchedulePaneHeight = (nextHeight: number) => {
     const editorMainRegionHeight =
       editorMainRegionRef.current?.clientHeight ??
