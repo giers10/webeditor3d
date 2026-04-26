@@ -46,6 +46,7 @@ export interface PlayerStartEntity extends PositionedEntity {
   kind: "playerStart";
   yawDegrees: number;
   navigationMode: PlayerStartNavigationMode;
+  interactionReachMeters: number;
   movementTemplate: PlayerStartMovementTemplate;
   inputBindings: PlayerStartInputBindings;
   collider: PlayerStartColliderSettings;
@@ -552,6 +553,7 @@ export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode = "caps
 export const DEFAULT_PLAYER_START_EYE_HEIGHT = 1.6;
 export const DEFAULT_PLAYER_START_CAPSULE_RADIUS = 0.3;
 export const DEFAULT_PLAYER_START_CAPSULE_HEIGHT = 1.8;
+export const DEFAULT_PLAYER_START_INTERACTION_REACH_METERS = 1.5;
 export const DEFAULT_PLAYER_START_BOX_SIZE: Vec3 = {
   x: 0.6,
   y: 1.8,
@@ -1837,7 +1839,14 @@ export function createPlayerStartEntity(
   overrides: Partial<
     Pick<
       PlayerStartEntity,
-      "id" | "name" | "visible" | "enabled" | "position" | "yawDegrees" | "navigationMode"
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "position"
+      | "yawDegrees"
+      | "navigationMode"
+      | "interactionReachMeters"
     >
   > & {
     movementTemplate?: PlayerStartMovementTemplateOverrides;
@@ -1849,6 +1858,9 @@ export function createPlayerStartEntity(
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_PLAYER_START_YAW_DEGREES;
   const navigationMode =
     overrides.navigationMode ?? DEFAULT_PLAYER_START_NAVIGATION_MODE;
+  const interactionReachMeters =
+    overrides.interactionReachMeters ??
+    DEFAULT_PLAYER_START_INTERACTION_REACH_METERS;
   const movementTemplate = createPlayerStartMovementTemplate(
     overrides.movementTemplate
   );
@@ -1867,6 +1879,11 @@ export function createPlayerStartEntity(
     );
   }
 
+  assertPositiveFiniteNumber(
+    interactionReachMeters,
+    "Player Start interaction reach"
+  );
+
   return {
     id: overrides.id ?? createOpaqueId("entity-player-start"),
     kind: "playerStart",
@@ -1876,6 +1893,7 @@ export function createPlayerStartEntity(
     position,
     yawDegrees: normalizeYawDegrees(yawDegrees),
     navigationMode,
+    interactionReachMeters,
     movementTemplate,
     inputBindings,
     collider
@@ -2476,6 +2494,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
         areVec3Equal(left.position, typedRight.position) &&
         left.yawDegrees === typedRight.yawDegrees &&
         left.navigationMode === typedRight.navigationMode &&
+        left.interactionReachMeters === typedRight.interactionReachMeters &&
         arePlayerStartMovementTemplatesEqual(
           left.movementTemplate,
           typedRight.movementTemplate
