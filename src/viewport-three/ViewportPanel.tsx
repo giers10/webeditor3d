@@ -101,6 +101,7 @@ interface ViewportPanelProps {
   onWhiteboxSnapStepDraftChange(value: string): void;
   onWhiteboxSnapStepBlur(): void;
   onTransformSessionChange(transformSession: TransformSessionState): void;
+  onTransformPreviewChange(transformSession: ActiveTransformSession): void;
   onTransformCommit(transformSession: ActiveTransformSession): void;
   onTransformCancel(): void;
   onSelectionChange(selection: EditorSelection): void;
@@ -171,6 +172,7 @@ export function ViewportPanel({
   onWhiteboxSnapStepDraftChange,
   onWhiteboxSnapStepBlur,
   onTransformSessionChange,
+  onTransformPreviewChange,
   onTransformCommit,
   onTransformCancel,
   onSelectionChange
@@ -223,6 +225,7 @@ export function ViewportPanel({
         onCameraStateChange={onCameraStateChange}
         onToolPreviewChange={onToolPreviewChange}
         onTransformSessionChange={onTransformSessionChange}
+        onTransformPreviewChange={onTransformPreviewChange}
         onTransformCommit={onTransformCommit}
         onTransformCancel={onTransformCancel}
       />
