@@ -5895,6 +5895,7 @@ export class ViewportHost {
         undefined,
         this.displayMode === "wireframe" ? "wireframe" : "normal"
       );
+      applyRendererRenderCategoryFromMaterial(renderGroup);
 
       if (asset?.kind === "model" && modelInstance.collision.visible) {
         try {
@@ -5915,7 +5916,6 @@ export class ViewportHost {
         }
       }
 
-      applyRendererRenderCategoryFromMaterial(renderGroup);
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(modelInstance.id, renderGroup);
     }
