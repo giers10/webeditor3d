@@ -1630,7 +1630,7 @@ export class ViewportHost {
 
   private getSmoothZoomFrameResponse(dt: number) {
     if (dt <= 0) {
-      return 1;
+      return SMOOTH_ZOOM_IMMEDIATE_RESPONSE;
     }
 
     return Math.min(1, 1 - Math.exp(-SMOOTH_ZOOM_RESPONSE * dt));
