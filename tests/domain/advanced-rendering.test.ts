@@ -2,6 +2,7 @@ import {
   BoxGeometry,
   Group,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
   Scene,
@@ -17,6 +18,15 @@ const postprocessingState = vi.hoisted(() => ({
 }));
 
 vi.mock("postprocessing", () => {
+  class MockPass {
+    name: string;
+    needsSwap = true;
+
+    constructor(name = "Pass") {
+      this.name = name;
+    }
+  }
+
   class MockEffectComposer {
     constructor(_renderer: unknown, options: Record<string, unknown>) {
       postprocessingState.composerOptions.push(options);
@@ -27,24 +37,51 @@ vi.mock("postprocessing", () => {
     }
   }
 
-  class MockRenderPass {
-    constructor(_scene: unknown, _camera: unknown) {}
+  class MockRenderPass extends MockPass {
+    clear = true;
+    ignoreBackground = false;
+    skipShadowMapUpdate = false;
+
+    constructor(
+      readonly scene: unknown,
+      readonly camera: unknown,
+      readonly overrideMaterial: unknown = null
+    ) {
+      super("RenderPass");
+    }
+
+    render() {}
   }
 
-  class MockNormalPass {
+  class MockNormalPass extends MockPass {
     texture: Record<string, unknown>;
 
     constructor(_scene: unknown, _camera: unknown) {
+      super("NormalPass");
       this.texture = {
         kind: "normal-pass-texture",
         index: postprocessingState.normalPassTextures.length
       };
       postprocessingState.normalPassTextures.push(this.texture);
     }
+
+    render() {}
   }
 
-  class MockEffectPass {
-    constructor(_camera: unknown, ..._effects: unknown[]) {}
+  class MockEffectPass extends MockPass {
+    constructor(readonly camera: unknown, ...readonly effects: unknown[]) {
+      super("EffectPass");
+    }
+  }
+
+  class MockCopyMaterial {
+    kind = "copy-material";
+  }
+
+  class MockShaderPass extends MockPass {
+    constructor(readonly material: unknown) {
+      super("ShaderPass");
+    }
   }
 
   class MockSSAOEffect {
@@ -71,11 +108,14 @@ vi.mock("postprocessing", () => {
 
   return {
     BloomEffect: MockBloomEffect,
+    CopyMaterial: MockCopyMaterial,
     DepthOfFieldEffect: MockDepthOfFieldEffect,
     EffectComposer: MockEffectComposer,
     EffectPass: MockEffectPass,
     NormalPass: MockNormalPass,
+    Pass: MockPass,
     RenderPass: MockRenderPass,
+    ShaderPass: MockShaderPass,
     SMAAEffect: MockSMAAEffect,
     SMAAPreset: {
       MEDIUM: "medium"
