@@ -83,7 +83,8 @@ import type { ToolMode } from "../core/tool-mode";
 import type { Vec3 } from "../core/vector";
 import {
   createModelInstanceRenderGroup,
-  disposeModelInstance
+  disposeModelInstance,
+  syncModelInstanceSelectionShell
 } from "../assets/model-instance-rendering";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
@@ -341,6 +342,14 @@ interface ActiveTerrainBrushStroke {
   toolState: ArmedTerrainBrushState;
 }
 
+interface AffectedSelectionIds {
+  brushIds: Set<string>;
+  terrainIds: Set<string>;
+  pathIds: Set<string>;
+  entityIds: Set<string>;
+  modelInstanceIds: Set<string>;
+}
+
 interface ViewportWaterSurfaceBinding {
   brush: BoxBrush;
   reflectionTextureUniform: { value: unknown } | null;
@@ -442,6 +451,69 @@ const MIN_BOX_SIZE_COMPONENT = 0.01;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 const VIEWPORT_GRID_VISUAL_SIZE = 400;
 const VIEWPORT_GRID_VISUAL_DIVISIONS = 400;
+
+function createAffectedSelectionIds(): AffectedSelectionIds {
+  return {
+    brushIds: new Set<string>(),
+    terrainIds: new Set<string>(),
+    pathIds: new Set<string>(),
+    entityIds: new Set<string>(),
+    modelInstanceIds: new Set<string>()
+  };
+}
+
+function addSelectionAffectedIds(
+  affectedIds: AffectedSelectionIds,
+  selection: EditorSelection
+) {
+  switch (selection.kind) {
+    case "none":
+      return;
+    case "brushes":
+      for (const brushId of selection.ids) {
+        affectedIds.brushIds.add(brushId);
+      }
+      return;
+    case "brushFace":
+    case "brushEdge":
+    case "brushVertex":
+      affectedIds.brushIds.add(selection.brushId);
+      return;
+    case "terrains":
+      for (const terrainId of selection.ids) {
+        affectedIds.terrainIds.add(terrainId);
+      }
+      return;
+    case "paths":
+      for (const pathId of selection.ids) {
+        affectedIds.pathIds.add(pathId);
+      }
+      return;
+    case "pathPoint":
+      affectedIds.pathIds.add(selection.pathId);
+      return;
+    case "entities":
+      for (const entityId of selection.ids) {
+        affectedIds.entityIds.add(entityId);
+      }
+      return;
+    case "modelInstances":
+      for (const modelInstanceId of selection.ids) {
+        affectedIds.modelInstanceIds.add(modelInstanceId);
+      }
+      return;
+  }
+}
+
+function collectAffectedSelectionIds(
+  previousSelection: EditorSelection,
+  nextSelection: EditorSelection
+): AffectedSelectionIds {
+  const affectedIds = createAffectedSelectionIds();
+  addSelectionAffectedIds(affectedIds, previousSelection);
+  addSelectionAffectedIds(affectedIds, nextSelection);
+  return affectedIds;
+}
 
 interface CachedMaterialTexture {
   signature: string;
@@ -887,12 +959,17 @@ export class ViewportHost {
   }
 
   updateSelection(selection: EditorSelection, activeSelectionId: string | null) {
+    const previousSelection = this.currentSelection;
     const selectionChanged = !areEditorSelectionsEqual(
-      this.currentSelection,
+      previousSelection,
       selection
     );
     const activeSelectionChanged =
       this.currentActiveSelectionId !== activeSelectionId;
+    const affectedIds = collectAffectedSelectionIds(
+      previousSelection,
+      selection
+    );
 
     this.currentSelection = selection;
     this.currentActiveSelectionId = activeSelectionId;
@@ -905,7 +982,9 @@ export class ViewportHost {
     this.setHoveredSelection({
       kind: "none"
     });
-    this.refreshSelectionPresentation();
+    this.addCameraRigRailPreviewPathIds(affectedIds, previousSelection);
+    this.addCameraRigRailPreviewPathIds(affectedIds, selection);
+    this.refreshSelectionPresentation(affectedIds);
   }
 
   updateDocument(document: SceneDocument) {
