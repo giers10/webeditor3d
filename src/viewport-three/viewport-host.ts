@@ -6887,6 +6887,21 @@ export class ViewportHost {
     this.whiteboxHoverLabelChangeHandler?.(label);
   }
 
+  private refreshSelectionPresentation() {
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    this.refreshBrushPresentation();
+    this.refreshTerrainPresentation();
+    this.rebuildPaths(this.currentDocument, this.currentSelection);
+    this.rebuildEntityMarkers(this.currentDocument, this.currentSelection);
+    this.rebuildModelInstances(this.currentDocument, this.currentSelection);
+    this.applyTransformPreview();
+    this.syncTransformGizmo();
+    this.syncTerrainBrushPreview();
+  }
+
   private setHoveredSelection(selection: EditorSelection) {
     if (areEditorSelectionsEqual(this.hoveredSelection, selection)) {
       return;

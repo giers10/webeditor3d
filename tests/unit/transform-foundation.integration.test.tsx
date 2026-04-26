@@ -29,6 +29,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     updateSimulation: ReturnType<typeof vi.fn>;
     updateAssets: ReturnType<typeof vi.fn>;
     updateDocument: ReturnType<typeof vi.fn>;
+    updateSelection: ReturnType<typeof vi.fn>;
     setViewMode: ReturnType<typeof vi.fn>;
     setDisplayMode: ReturnType<typeof vi.fn>;
     setCameraState: ReturnType<typeof vi.fn>;
@@ -61,6 +62,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     updateSimulation = vi.fn();
     updateAssets = vi.fn();
     updateDocument = vi.fn();
+    updateSelection = vi.fn();
     setViewMode = vi.fn();
     setDisplayMode = vi.fn();
     setCameraState = vi.fn();
