@@ -84,6 +84,10 @@ function createRuntimeSceneFixture(options: {
 }
 
 describe("runtime interaction targeting", () => {
+  const centerRay = { x: 0, y: 0, z: 1 };
+  const leftRay = { x: -0.3, y: 0, z: 1 };
+  const rightRay = { x: 0.3, y: 0, z: 1 };
+
   it("orders visible NPC and interactable targets by view and distance score", () => {
     const centerNpc = createNpc({
       entityId: "npc-center",
@@ -181,10 +185,100 @@ describe("runtime interaction targeting", () => {
       system.resolveClickInteractionPrompt(
         { x: 0, y: 1, z: 0 },
         { x: 0, y: 1.6, z: -1 },
-        { x: 0, y: 0, z: 1 },
+        [centerRay],
+        1.5,
         scene
       )
     ).toBeNull();
+  });
+
+  it("prefers the center ray over side-ray hits when both are valid", () => {
+    const centerNpc = createNpc({
+      entityId: "npc-center",
+      name: "Center",
+      position: { x: 0, y: 0, z: 3 }
+    });
+    const sideNpc = createNpc({
+      entityId: "npc-side",
+      name: "Side",
+      position: { x: 0.9, y: 0, z: 3 }
+    });
+    const scene = createRuntimeSceneFixture({
+      npcs: [centerNpc, sideNpc],
+      links: [createClickLink(centerNpc.entityId), createClickLink(sideNpc.entityId)]
+    });
+    const system = new RuntimeInteractionSystem();
+
+    const prompt = system.resolveClickInteractionPrompt(
+      { x: 0, y: 1, z: 0 },
+      { x: 0, y: 1, z: 0 },
+      [centerRay, leftRay, rightRay],
+      3,
+      scene
+    );
+
+    expect(prompt?.sourceEntityId).toBe(centerNpc.entityId);
+  });
+
+  it("falls back to the nearest side-ray hit when the center ray misses", () => {
+    const leftNpc = createNpc({
+      entityId: "npc-left",
+      name: "Left",
+      position: { x: -0.9, y: 0, z: 2.4 }
+    });
+    const rightNpc = createNpc({
+      entityId: "npc-right",
+      name: "Right",
+      position: { x: 0.9, y: 0, z: 3.4 }
+    });
+    const scene = createRuntimeSceneFixture({
+      npcs: [leftNpc, rightNpc],
+      links: [createClickLink(leftNpc.entityId), createClickLink(rightNpc.entityId)]
+    });
+    const system = new RuntimeInteractionSystem();
+
+    const prompt = system.resolveClickInteractionPrompt(
+      { x: 0, y: 1, z: 0 },
+      { x: 0, y: 1, z: 0 },
+      [centerRay, leftRay, rightRay],
+      4,
+      scene
+    );
+
+    expect(prompt?.sourceEntityId).toBe(leftNpc.entityId);
+  });
+
+  it("uses the authored interaction reach to extend prompt distance", () => {
+    const npc = createNpc({
+      entityId: "npc-reach",
+      name: "Reach",
+      position: { x: 0, y: 0, z: 2.2 }
+    });
+    const scene = createRuntimeSceneFixture({
+      npcs: [npc],
+      links: [createClickLink(npc.entityId)]
+    });
+    const system = new RuntimeInteractionSystem();
+
+    expect(
+      system.resolveClickInteractionPrompt(
+        { x: 0, y: 1, z: 0 },
+        { x: 0, y: 1, z: 0 },
+        [centerRay],
+        1.5,
+        scene
+      )
+    ).toBeNull();
+
+    expect(
+      system.resolveClickInteractionPrompt(
+        { x: 0, y: 1, z: 0 },
+        { x: 0, y: 1, z: 0 },
+        [centerRay],
+        2.5,
+        scene
+      )?.sourceEntityId
+    ).toBe(npc.entityId);
   });
 
   it("keeps click prompt resolution coherent with the shared target sources", () => {
@@ -202,7 +296,8 @@ describe("runtime interaction targeting", () => {
     const prompt = system.resolveClickInteractionPrompt(
       { x: 0, y: 1, z: 2.5 },
       { x: 0, y: 1, z: 0 },
-      { x: 0, y: 0, z: 1 },
+      [centerRay],
+      1.5,
       scene
     );
 
