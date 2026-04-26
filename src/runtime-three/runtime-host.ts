@@ -135,7 +135,10 @@ import {
   cloneAdvancedRenderingSettings,
   type AdvancedRenderingSettings
 } from "../document/world-settings";
-import { getNpcColliderHeight } from "../entities/entity-instances";
+import {
+  DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
+  getNpcColliderHeight
+} from "../entities/entity-instances";
 import type { InteractionLink } from "../interactions/interaction-links";
 import type {
   ImpulseSequenceStep,
@@ -355,6 +358,7 @@ const TARGETING_SCREEN_SWITCH_MAX_ABS_Y = 1.25;
 const TARGETING_SCREEN_PROPOSAL_MAX_ABS_X = 1;
 const TARGETING_SCREEN_PROPOSAL_MAX_ABS_Y = 1;
 const TARGETING_SCREEN_PROPOSAL_FOCUS_Y = 0.2;
+const INTERACTION_PROMPT_SIDE_RAY_ANGLE_RADIANS = (12 * Math.PI) / 180;
 const TARGETING_MAX_ACTIVE_TARGET_DISTANCE = 15;
 const TARGETING_ACTIVE_TARGET_RELEASE_DISTANCE =
   TARGETING_MAX_ACTIVE_TARGET_DISTANCE + 0.75;
