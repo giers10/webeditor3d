@@ -4110,6 +4110,7 @@ export class RuntimeHost {
         false
       );
       renderGroup.visible = modelInstance.visible;
+      applyRendererRenderCategoryFromMaterial(renderGroup);
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(modelInstance.instanceId, renderGroup);
 
@@ -4181,6 +4182,7 @@ export class RuntimeHost {
               false
             );
       renderGroup.visible = npc.visible && npc.active;
+      applyRendererRenderCategoryFromMaterial(renderGroup);
       this.modelGroup.add(renderGroup);
       this.modelRenderObjects.set(npc.entityId, renderGroup);
 
