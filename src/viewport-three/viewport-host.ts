@@ -8104,16 +8104,6 @@ export class ViewportHost {
     }
   }
 
-  private refreshTerrainPresentation() {
-    if (this.currentDocument === null) {
-      return;
-    }
-
-    for (const terrain of Object.values(this.currentDocument.terrains)) {
-      this.refreshTerrainPresentationForId(terrain.id);
-    }
-  }
-
   private refreshTerrainPresentationForId(terrainId: string) {
     if (this.currentDocument === null) {
       return;
