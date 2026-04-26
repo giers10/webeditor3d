@@ -8678,26 +8678,29 @@ export class ViewportHost {
   private clearEntityMarkers() {
     for (const renderObjects of this.entityRenderObjects.values()) {
       this.entityGroup.remove(renderObjects.group);
-
-      if (renderObjects.dispose !== undefined) {
-        renderObjects.dispose();
-        continue;
-      }
-
-      for (const mesh of renderObjects.meshes) {
-        mesh.geometry.dispose();
-
-        if (Array.isArray(mesh.material)) {
-          for (const material of mesh.material) {
-            material.dispose();
-          }
-        } else {
-          mesh.material.dispose();
-        }
-      }
+      this.disposeEntityRenderObjects(renderObjects);
     }
 
     this.entityRenderObjects.clear();
+  }
+
+  private disposeEntityRenderObjects(renderObjects: EntityRenderObjects) {
+    if (renderObjects.dispose !== undefined) {
+      renderObjects.dispose();
+      return;
+    }
+
+    for (const mesh of renderObjects.meshes) {
+      mesh.geometry.dispose();
+
+      if (Array.isArray(mesh.material)) {
+        for (const material of mesh.material) {
+          material.dispose();
+        }
+      } else {
+        mesh.material.dispose();
+      }
+    }
   }
 
   private clearModelInstances() {
