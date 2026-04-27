@@ -552,7 +552,7 @@ export const DEFAULT_PLAYER_START_KEYBOARD_BINDINGS: PlayerStartKeyboardBindings
     sprint: "ShiftLeft",
     crouch: "ControlLeft",
     interact: "MouseLeft",
-    clearTarget: "Escape",
+    clearTarget: "KeyQ",
     pauseTime: "KeyP"
   };
 export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
