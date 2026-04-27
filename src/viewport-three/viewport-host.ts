@@ -1017,6 +1017,7 @@ export class ViewportHost {
   ) {
     this.currentSimulationScene = runtimeScene;
     this.currentSimulationClock = clock;
+    this.simulationInteractableEnabledById.clear();
     this.applyWorld();
 
     if (this.currentDocument === null) {
@@ -1027,6 +1028,29 @@ export class ViewportHost {
     this.rebuildLightVolumes(this.currentDocument);
     this.rebuildEntityMarkers(this.currentDocument, this.currentSelection);
     this.rebuildModelInstances(this.currentDocument, this.currentSelection);
+  }
+
+  updateSimulationFrame(
+    runtimeScene: RuntimeSceneDefinition | null,
+    clock: RuntimeClockState | null
+  ) {
+    if (this.currentSimulationScene !== runtimeScene) {
+      this.updateSimulation(runtimeScene, clock);
+      return;
+    }
+
+    this.currentSimulationClock = clock;
+    this.applyWorld();
+
+    if (this.currentDocument === null || runtimeScene === null) {
+      return;
+    }
+
+    this.syncSimulationLocalLights(runtimeScene);
+    this.syncSimulationLightVolumes(runtimeScene);
+    this.syncSimulationNpcs(runtimeScene);
+    this.syncSimulationInteractables(runtimeScene);
+    this.syncSimulationModelInstances(runtimeScene);
   }
 
   updateSelection(selection: EditorSelection, activeSelectionId: string | null) {
