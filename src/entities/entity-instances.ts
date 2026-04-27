@@ -50,6 +50,7 @@ export interface PlayerStartEntity extends PositionedEntity {
   interactionAngleDegrees: number;
   allowLookInputTargetSwitch: boolean;
   targetButtonCyclesActiveTarget: boolean;
+  invertMouseCameraHorizontal: boolean;
   movementTemplate: PlayerStartMovementTemplate;
   inputBindings: PlayerStartInputBindings;
   collider: PlayerStartColliderSettings;
@@ -584,6 +585,7 @@ export const DEFAULT_PLAYER_START_INTERACTION_REACH_METERS = 1.5;
 export const DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES = 30;
 export const DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH = true;
 export const DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET = false;
+export const DEFAULT_PLAYER_START_INVERT_MOUSE_CAMERA_HORIZONTAL = false;
 export const DEFAULT_PLAYER_START_BOX_SIZE: Vec3 = {
   x: 0.6,
   y: 1.8,
@@ -2036,6 +2038,7 @@ export function createPlayerStartEntity(
       | "interactionAngleDegrees"
       | "allowLookInputTargetSwitch"
       | "targetButtonCyclesActiveTarget"
+      | "invertMouseCameraHorizontal"
     >
   > & {
     movementTemplate?: PlayerStartMovementTemplateOverrides;
@@ -2061,6 +2064,9 @@ export function createPlayerStartEntity(
   const targetButtonCyclesActiveTarget =
     overrides.targetButtonCyclesActiveTarget ??
     DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET;
+  const invertMouseCameraHorizontal =
+    overrides.invertMouseCameraHorizontal ??
+    DEFAULT_PLAYER_START_INVERT_MOUSE_CAMERA_HORIZONTAL;
   const movementTemplate = createPlayerStartMovementTemplate(
     overrides.movementTemplate
   );
@@ -2101,6 +2107,10 @@ export function createPlayerStartEntity(
     targetButtonCyclesActiveTarget,
     "Player Start target-button cycles active target"
   );
+  assertBoolean(
+    invertMouseCameraHorizontal,
+    "Player Start invert-mouse-camera horizontal"
+  );
 
   return {
     id: overrides.id ?? createOpaqueId("entity-player-start"),
@@ -2115,6 +2125,7 @@ export function createPlayerStartEntity(
     interactionAngleDegrees,
     allowLookInputTargetSwitch,
     targetButtonCyclesActiveTarget,
+    invertMouseCameraHorizontal,
     movementTemplate,
     inputBindings,
     collider
@@ -2829,6 +2840,8 @@ export function areEntityInstancesEqual(
           typedRight.allowLookInputTargetSwitch &&
         left.targetButtonCyclesActiveTarget ===
           typedRight.targetButtonCyclesActiveTarget &&
+        left.invertMouseCameraHorizontal ===
+          typedRight.invertMouseCameraHorizontal &&
         arePlayerStartMovementTemplatesEqual(
           left.movementTemplate,
           typedRight.movementTemplate
