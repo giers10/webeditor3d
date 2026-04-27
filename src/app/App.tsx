@@ -663,7 +663,7 @@ function getPlayerStartInputActionLabel(
     case "interact":
       return "Interact";
     case "clearTarget":
-      return "Clear Target";
+      return "Cancel Target";
     case "pauseTime":
       return "Pause";
   }
