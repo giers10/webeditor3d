@@ -12,8 +12,7 @@ import type { ArmedTerrainBrushState } from "../../src/core/terrain-brush";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createTerrain } from "../../src/document/terrains";
-import { createRuntimeClockState } from "../../src/runtime-three/runtime-project-time";
-import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
+import { EditorSimulationController } from "../../src/runtime-three/editor-simulation-controller";
 import { ViewportCanvas } from "../../src/viewport-three/ViewportCanvas";
 import {
   createDefaultViewportPanelCameraState,
@@ -31,6 +30,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setRenderEnabled: ReturnType<typeof vi.fn>;
     updateWorld: ReturnType<typeof vi.fn>;
     updateSimulation: ReturnType<typeof vi.fn>;
+    updateSimulationFrame: ReturnType<typeof vi.fn>;
     updateAssets: ReturnType<typeof vi.fn>;
     updateDocument: ReturnType<typeof vi.fn>;
     updateSelection: ReturnType<typeof vi.fn>;
@@ -64,6 +64,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setRenderEnabled = vi.fn();
     updateWorld = vi.fn();
     updateSimulation = vi.fn();
+    updateSimulationFrame = vi.fn();
     updateAssets = vi.fn();
     updateDocument = vi.fn();
     updateSelection = vi.fn();
