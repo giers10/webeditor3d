@@ -176,7 +176,7 @@ describe("ThirdPersonNavigationController", () => {
       id: "entity-player-start-invert-third-person",
       invertMouseCameraHorizontal: true
     });
-    const { context, domElement } = createRuntimeControllerContext(playerStart);
+    const { context } = createRuntimeControllerContext(playerStart);
     const controller = new ThirdPersonNavigationController();
     const controllerInternals = controller as unknown as {
       pointerLocked: boolean;
@@ -193,7 +193,7 @@ describe("ThirdPersonNavigationController", () => {
       configurable: true,
       value: 0
     });
-    Object.defineProperty(domElement, "requestPointerLock", {
+    Object.defineProperty(context.domElement, "requestPointerLock", {
       configurable: true,
       value: requestPointerLock
     });
