@@ -969,11 +969,54 @@ export class RuntimeHost {
         this.runtimeMessageHandler?.(message);
       },
       setPlayerControllerTelemetry: (telemetry) => {
+        const pointerLockReleasedWithEscapeTargetClear =
+          this.currentPlayerControllerTelemetry?.pointerLocked === true &&
+          telemetry !== null &&
+          telemetry.pointerLocked === false &&
+          this.activeController === this.thirdPersonController &&
+          this.activeRuntimeTargetReference !== null &&
+          this.resolveRuntimePlayerInputBindings().keyboard.clearTarget ===
+            "Escape";
+
         this.currentPlayerControllerTelemetry = telemetry;
         this.currentPlayerAudioHooks = telemetry?.hooks.audio ?? null;
+
+        if (pointerLockReleasedWithEscapeTargetClear) {
+          this.clearActiveRuntimeTarget();
+          this.requestRuntimePointerLock();
+        }
+
         this.playerControllerTelemetryHandler?.(telemetry);
       }
     };
+  }
+
+  private requestRuntimePointerLock() {
+    if (
+      document.pointerLockElement === this.domElement ||
+      (this.activeController !== this.firstPersonController &&
+        this.activeController !== this.thirdPersonController)
+    ) {
+      return;
+    }
+
+    const pointerLockCapableElement = this.domElement as HTMLCanvasElement & {
+      requestPointerLock?: () => void | Promise<void>;
+    };
+
+    if (typeof pointerLockCapableElement.requestPointerLock !== "function") {
+      return;
+    }
+
+    try {
+      const pointerLockResult = pointerLockCapableElement.requestPointerLock();
+
+      if (pointerLockResult instanceof Promise) {
+        pointerLockResult.catch(() => {});
+      }
+    } catch {
+      // Browser Escape handling can reject immediate recapture; clearing wins.
+    }
   }
 
   private resolvePlayerVolumeState(feetPosition: {

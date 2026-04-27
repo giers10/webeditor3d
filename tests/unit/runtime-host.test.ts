@@ -191,7 +191,7 @@ describe("RuntimeHost", () => {
         message: null
       });
       expect(runtimeMessages).toContain(
-        "Third Person active. Drag to orbit the camera, use the right stick for gamepad camera look, move with your authored bindings, and scroll to zoom."
+        "Third Person active. Click inside the runner viewport to capture mouse look, or drag to orbit if pointer lock is unavailable. Scroll to zoom and use the right stick for gamepad camera look."
       );
     });
 
@@ -3886,6 +3886,66 @@ describe("RuntimeHost", () => {
     expect(hostInternals.activeRuntimeTargetReference).toBeNull();
     expect(clearTargetEvent.preventDefault).toHaveBeenCalledTimes(1);
     expect(clearTargetEvent.stopImmediatePropagation).toHaveBeenCalledTimes(1);
+    host.dispose();
+  });
+
+  it("clears active target when third-person Escape releases pointer lock", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      activeRuntimeTargetReference: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      domElement: HTMLCanvasElement;
+      controllerContext: {
+        setPlayerControllerTelemetry(telemetry: unknown): void;
+      };
+    };
+    const requestPointerLock = vi.fn();
+
+    Object.defineProperty(hostInternals.domElement, "requestPointerLock", {
+      configurable: true,
+      value: requestPointerLock
+    });
+
+    hostInternals.runtimeScene = {
+      playerInputBindings: {
+        keyboard: {
+          clearTarget: "Escape"
+        }
+      },
+      entities: {
+        cameraRigs: [],
+        interactables: [],
+        npcs: []
+      }
+    } as never;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+
+    hostInternals.controllerContext.setPlayerControllerTelemetry({
+      pointerLocked: true,
+      hooks: {
+        audio: null
+      }
+    });
+    hostInternals.controllerContext.setPlayerControllerTelemetry({
+      pointerLocked: false,
+      hooks: {
+        audio: null
+      }
+    });
+
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    expect(requestPointerLock).toHaveBeenCalledTimes(1);
     host.dispose();
   });
 

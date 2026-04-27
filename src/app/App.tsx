@@ -4899,9 +4899,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      const pointerCaptured =
-        activeNavigationMode === "firstPerson" &&
-        firstPersonTelemetry?.pointerLocked === true;
+      const pointerCaptured = firstPersonTelemetry?.pointerLocked === true;
 
       if (pointerCaptured) {
         return;
@@ -4916,7 +4914,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     return () => {
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [activeNavigationMode, editorState.toolMode, firstPersonTelemetry]);
+  }, [editorState.toolMode, firstPersonTelemetry]);
 
   const applyProjectName = () => {
     const normalizedName = projectNameDraft.trim() || DEFAULT_PROJECT_NAME;
@@ -13359,11 +13357,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="stat-card">
                   <div className="label">Pointer Lock</div>
                   <div className="value">
-                    {activeNavigationMode === "firstPerson"
-                      ? firstPersonTelemetry?.pointerLocked
-                        ? "active"
-                        : "idle"
-                      : "not used"}
+                    {firstPersonTelemetry?.pointerLocked ? "active" : "idle"}
                   </div>
                 </div>
                 <div className="stat-card">
