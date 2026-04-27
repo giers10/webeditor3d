@@ -5778,14 +5778,26 @@ export class ViewportHost {
     this.currentTransformPreviewTargetIds = nextPreviewTargetIds;
   }
 
-  private syncSimulationLocalLights(runtimeScene: RuntimeSceneDefinition) {
+  private collectActiveSimulationNpcEntityIds(
+    runtimeScene: RuntimeSceneDefinition | null
+  ): Set<string> {
+    return new Set(
+      runtimeScene?.npcDefinitions
+        .filter((npc) => npc.active && npc.visible)
+        .map((npc) => npc.entityId) ?? []
+    );
+  }
+
+  private syncSimulationLocalLights(
+    runtimeScene: RuntimeSceneDefinition
+  ): boolean {
     for (const pointLight of runtimeScene.localLights.pointLights) {
       const renderObjects = this.localLightRenderObjects.get(
         pointLight.entityId
       );
 
       if (renderObjects === undefined) {
-        continue;
+        return false;
       }
 
       renderObjects.group.visible =
@@ -5805,8 +5817,11 @@ export class ViewportHost {
         spotLight.entityId
       );
 
-      if (renderObjects === undefined) {
-        continue;
+      if (
+        renderObjects === undefined ||
+        !(renderObjects.light instanceof SpotLight)
+      ) {
+        return false;
       }
 
       renderObjects.group.visible =
@@ -5819,20 +5834,25 @@ export class ViewportHost {
       renderObjects.light.color.set(spotLight.colorHex);
       renderObjects.light.intensity = spotLight.intensity;
       renderObjects.light.distance = spotLight.distance;
-      if (renderObjects.light instanceof SpotLight) {
-        renderObjects.light.angle = (spotLight.angleDegrees * Math.PI) / 180;
-      }
+      renderObjects.light.angle = (spotLight.angleDegrees * Math.PI) / 180;
     }
+
+    return true;
   }
 
-  private syncSimulationLightVolumes(runtimeScene: RuntimeSceneDefinition) {
+  private syncSimulationLightVolumes(
+    runtimeScene: RuntimeSceneDefinition
+  ): boolean {
     for (const lightVolume of runtimeScene.volumes.light) {
       const renderObjects = this.lightVolumeRenderObjects.get(
         lightVolume.brushId
       );
 
-      if (renderObjects === undefined) {
-        continue;
+      if (
+        renderObjects === undefined ||
+        renderObjects.lights.length !== lightVolume.lights.length
+      ) {
+        return false;
       }
 
       renderObjects.group.visible =
@@ -5866,12 +5886,18 @@ export class ViewportHost {
         );
       }
     }
+
+    return true;
   }
 
   private syncSimulationNpcs(runtimeScene: RuntimeSceneDefinition) {
     if (this.currentDocument === null) {
       return;
     }
+
+    const nextActiveNpcEntityIds = this.collectActiveSimulationNpcEntityIds(
+      runtimeScene
+    );
 
     for (const runtimeNpc of runtimeScene.npcDefinitions) {
       const authoredEntity = this.currentDocument.entities[runtimeNpc.entityId];
@@ -5881,6 +5907,9 @@ export class ViewportHost {
       }
 
       const renderObjects = this.entityRenderObjects.get(runtimeNpc.entityId);
+      const wasActive = this.simulationActiveNpcEntityIds.has(
+        runtimeNpc.entityId
+      );
 
       if (!runtimeNpc.active || !runtimeNpc.visible) {
         if (renderObjects !== undefined) {
@@ -5891,6 +5920,8 @@ export class ViewportHost {
 
       if (renderObjects === undefined) {
         this.rebuildEntityMarkerForId(runtimeNpc.entityId);
+      } else if (!wasActive) {
+        renderObjects.group.visible = true;
       }
 
       const nextRenderObjects = this.entityRenderObjects.get(
@@ -5906,6 +5937,8 @@ export class ViewportHost {
         yawDegrees: runtimeNpc.yawDegrees
       });
     }
+
+    this.simulationActiveNpcEntityIds = nextActiveNpcEntityIds;
   }
 
   private syncSimulationInteractables(runtimeScene: RuntimeSceneDefinition) {
@@ -5926,18 +5959,22 @@ export class ViewportHost {
     }
   }
 
-  private syncSimulationModelInstances(runtimeScene: RuntimeSceneDefinition) {
+  private syncSimulationModelInstances(
+    runtimeScene: RuntimeSceneDefinition
+  ): boolean {
     for (const modelInstance of runtimeScene.modelInstances) {
       const renderGroup = this.modelRenderObjects.get(
         modelInstance.instanceId
       );
 
       if (renderGroup === undefined) {
-        continue;
+        return false;
       }
 
       renderGroup.visible = modelInstance.visible;
     }
+
+    return true;
   }
 
   private rebuildLocalLights(document: SceneDocument) {
