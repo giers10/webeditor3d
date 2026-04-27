@@ -1095,6 +1095,7 @@ export class RuntimeHost {
     this.manualPauseActive = false;
     this.controlPauseActive = false;
     this.dialoguePauseActive = false;
+    this.previousInteractInputActive = false;
     this.previousPauseInputActive = false;
     this.cameraRigLookDragging = false;
     this.cameraRigLookYawRadians = 0;
@@ -1336,6 +1337,7 @@ export class RuntimeHost {
     this.manualPauseActive = false;
     this.controlPauseActive = false;
     this.dialoguePauseActive = false;
+    this.previousInteractInputActive = false;
     this.previousPauseInputActive = false;
     this.cameraRigLookDragging = false;
     this.cameraRigLookYawRadians = 0;
@@ -6740,6 +6742,7 @@ export class RuntimeHost {
 
   private handleRuntimeBlur = () => {
     this.pressedKeys.clear();
+    this.previousInteractInputActive = false;
     this.previousPauseInputActive = false;
     this.previousTargetCycleInputActive = false;
     this.cameraRigLookDragging = false;
