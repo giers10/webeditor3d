@@ -2760,6 +2760,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setPlayerStartInteractionAngleDraft
   ] = useState(String(DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES));
   const [
+    playerStartAllowLookInputTargetSwitchDraft,
+    setPlayerStartAllowLookInputTargetSwitchDraft
+  ] = useState(DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH);
+  const [
+    playerStartTargetButtonCyclesActiveTargetDraft,
+    setPlayerStartTargetButtonCyclesActiveTargetDraft
+  ] = useState(DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET);
+  const [
     playerStartMovementTemplateDraft,
     setPlayerStartMovementTemplateDraft
   ] = useState<PlayerStartMovementTemplate>(
