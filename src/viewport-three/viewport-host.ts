@@ -5983,16 +5983,40 @@ export class ViewportHost {
   private syncSimulationModelInstances(
     runtimeScene: RuntimeSceneDefinition
   ): boolean {
+    let addedRenderGroup = false;
+
     for (const modelInstance of runtimeScene.modelInstances) {
       const renderGroup = this.modelRenderObjects.get(
         modelInstance.instanceId
       );
 
       if (renderGroup === undefined) {
-        return false;
+        const displayedModelInstance = this.getDisplayedModelInstanceById(
+          modelInstance.instanceId
+        );
+
+        if (
+          displayedModelInstance !== null &&
+          displayedModelInstance.enabled &&
+          displayedModelInstance.visible
+        ) {
+          this.addModelInstanceRenderGroup(
+            displayedModelInstance,
+            isModelInstanceSelected(
+              this.currentSelection,
+              displayedModelInstance.id
+            )
+          );
+          addedRenderGroup = true;
+        }
+        continue;
       }
 
       renderGroup.visible = modelInstance.visible;
+    }
+
+    if (addedRenderGroup) {
+      this.applyShadowState();
     }
 
     return true;
