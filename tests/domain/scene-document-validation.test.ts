@@ -576,8 +576,8 @@ describe("validateSceneDocument", () => {
           navigationMode: "invalidMode" as unknown as "firstPerson",
           interactionReachMeters: Number.NaN,
           interactionAngleDegrees: Number.NaN,
-          allowLookInputTargetSwitch: true,
-          targetButtonCyclesActiveTarget: false,
+          allowLookInputTargetSwitch: "yes",
+          targetButtonCyclesActiveTarget: 1,
           movementTemplate: {
             kind: "invalidTemplate",
             moveSpeed: 0,
@@ -612,6 +612,7 @@ describe("validateSceneDocument", () => {
               sprint: "",
               crouch: "",
               interact: "",
+              clearTarget: "",
               pauseTime: ""
             },
             gamepad: {
@@ -620,6 +621,7 @@ describe("validateSceneDocument", () => {
               sprint: "invalidButton",
               crouch: "invalidButton",
               interact: "invalidButton",
+              clearTarget: "invalidButton",
               pauseTime: "invalidButton"
             }
           } as unknown as ReturnType<
@@ -656,6 +658,12 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-interaction-angle"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-look-input-target-switch"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-target-button-cycles-active-target"
         }),
         expect.objectContaining({
           code: "invalid-player-start-movement-template-kind"
@@ -715,6 +723,9 @@ describe("validateSceneDocument", () => {
           code: "invalid-player-start-interact-keyboard-binding"
         }),
         expect.objectContaining({
+          code: "invalid-player-start-clear-target-keyboard-binding"
+        }),
+        expect.objectContaining({
           code: "invalid-player-start-pause-keyboard-binding"
         }),
         expect.objectContaining({
@@ -728,6 +739,9 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-interact-gamepad-binding"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-clear-target-gamepad-binding"
         }),
         expect.objectContaining({
           code: "invalid-player-start-pause-gamepad-binding"

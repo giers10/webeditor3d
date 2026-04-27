@@ -21,6 +21,7 @@ interface TraversalOptions {
   skipProperties: ReadonlySet<string>;
   includeIdentityProperties: boolean;
   skipPropertiesForThisObject?: ReadonlySet<string>;
+  typeStack: ReadonlySet<string>;
 }
 
 const AUTHORABLE_ROOTS: readonly FieldRoot[] = [
@@ -313,6 +314,29 @@ function isLeafType(type: ts.Type): boolean {
   );
 }
 
+function getTypeKey(type: ts.Type): string {
+  const internalType = type as ts.Type & { id?: number };
+  return String(
+    internalType.id ??
+      type.aliasSymbol?.escapedName ??
+      type.symbol?.escapedName ??
+      type.flags
+  );
+}
+
+function getTypeLabel(type: ts.Type): string {
+  try {
+    return checker.typeToString(type);
+  } catch {
+    return getTypeKey(type);
+  }
+}
+
+function isCallableType(type: ts.Type): boolean {
+  const normalizedType = withoutNullish(type);
+  return normalizedType.getCallSignatures().length > 0;
+}
+
 function getArrayElementType(type: ts.Type): ts.Type | null {
   const normalizedType = withoutNullish(type);
 
@@ -325,7 +349,11 @@ function getArrayElementType(type: ts.Type): ts.Type | null {
 
 function isTypedArrayType(type: ts.Type): boolean {
   const normalizedType = withoutNullish(type);
-  const typeName = checker.typeToString(normalizedType);
+  const typeName = String(
+    normalizedType.aliasSymbol?.escapedName ??
+      normalizedType.symbol?.escapedName ??
+      ""
+  );
   return TYPED_ARRAY_TYPE_NAMES.has(typeName);
 }
 
@@ -469,6 +497,14 @@ function collectFields(
     return;
   }
 
+  if (isCallableType(normalizedType)) {
+    entries.push({
+      path: currentPath,
+      condition: options.condition
+    });
+    return;
+  }
+
   const arrayElementType = getArrayElementType(normalizedType);
 
   if (arrayElementType !== null) {
@@ -492,11 +528,37 @@ function collectFields(
   }
 
   if (normalizedType.isUnion()) {
-    collectUnionFields(normalizedType.types, currentPath, entries, options);
+    const typeKey = getTypeKey(normalizedType);
+
+    if (options.typeStack.has(typeKey)) {
+      entries.push({
+        path: currentPath,
+        condition: options.condition
+      });
+      return;
+    }
+
+    collectUnionFields(normalizedType.types, currentPath, entries, {
+      ...options,
+      typeStack: new Set([...options.typeStack, typeKey])
+    });
     return;
   }
 
-  collectObjectFields(normalizedType, currentPath, entries, options);
+  const typeKey = getTypeKey(normalizedType);
+
+  if (options.typeStack.has(typeKey)) {
+    entries.push({
+      path: currentPath,
+      condition: options.condition
+    });
+    return;
+  }
+
+  collectObjectFields(normalizedType, currentPath, entries, {
+    ...options,
+    typeStack: new Set([...options.typeStack, typeKey])
+  });
 }
 
 function collectUnionFields(
@@ -548,7 +610,7 @@ function collectUnionFields(
 
       const typeLabels = objectTypes.map((objectType) => {
         const propertyType = getPropertyType(objectType, name);
-        return propertyType === null ? "" : checker.typeToString(propertyType);
+        return propertyType === null ? "" : getTypeLabel(propertyType);
       });
 
       return new Set(typeLabels).size === 1;
@@ -573,7 +635,7 @@ function collectUnionFields(
         ? ""
         : literalUnionLabels(discriminatorType)[0] ?? "";
     const groupKey =
-      discriminator === null ? checker.typeToString(objectType) : discriminatorValue;
+      discriminator === null ? getTypeLabel(objectType) : discriminatorValue;
     groupedTypes.set(groupKey, [...(groupedTypes.get(groupKey) ?? []), objectType]);
   }
 
@@ -594,7 +656,8 @@ function collectUnionFields(
       collectUnionFields(groupTypes, currentPath, entries, {
         condition,
         skipProperties: skippedForGroup,
-        includeIdentityProperties: options.includeIdentityProperties
+        includeIdentityProperties: options.includeIdentityProperties,
+        typeStack: options.typeStack
       });
       continue;
     }
@@ -603,7 +666,8 @@ function collectUnionFields(
       condition,
       skipProperties: options.skipProperties,
       includeIdentityProperties: options.includeIdentityProperties,
-      skipPropertiesForThisObject: skippedForGroup
+      skipPropertiesForThisObject: skippedForGroup,
+      typeStack: options.typeStack
     });
   }
 }
@@ -630,7 +694,8 @@ function collectObjectFields(
     collectFields(propertyType, `${currentPath}.${propertyName}`, entries, {
       condition: options.condition,
       skipProperties: options.skipProperties,
-      includeIdentityProperties: options.includeIdentityProperties
+      includeIdentityProperties: options.includeIdentityProperties,
+      typeStack: options.typeStack
     });
   }
 }
@@ -688,7 +753,8 @@ function collectRootFields(
     collectFields(getRootType(root), root.path, entries, {
       condition: null,
       skipProperties: new Set(root.skipProperties ?? []),
-      includeIdentityProperties
+      includeIdentityProperties,
+      typeStack: new Set()
     });
 
     return {
