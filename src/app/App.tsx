@@ -312,6 +312,7 @@ import {
   PLAYER_START_GAMEPAD_CAMERA_LOOK_BINDINGS,
   PLAYER_START_GAMEPAD_BINDINGS,
   PLAYER_START_LOCOMOTION_ACTIONS,
+  PLAYER_START_MOUSE_BINDING_CODES,
   PLAYER_START_MOVEMENT_ACTIONS,
   PLAYER_START_SYSTEM_ACTIONS,
   PLAYER_START_NAVIGATION_MODES,
@@ -346,6 +347,8 @@ import {
   getEntityInstances,
   getEntityKindLabel,
   getPrimaryEnabledPlayerStartEntity,
+  getPlayerStartMouseBindingCodeForButton,
+  isPlayerStartMouseBindingCode,
   normalizeEntityName,
   normalizeYawDegrees,
   normalizeInteractablePrompt,
@@ -656,6 +659,8 @@ function getPlayerStartInputActionLabel(
       return "Sprint";
     case "crouch":
       return "Crouch";
+    case "interact":
+      return "Interact";
     case "pauseTime":
       return "Pause";
   }
@@ -673,6 +678,16 @@ function formatPlayerStartKeyboardBindingLabel(
   }
 
   switch (code) {
+    case "MouseLeft":
+      return "Left Mouse";
+    case "MouseMiddle":
+      return "Middle Mouse";
+    case "MouseRight":
+      return "Right Mouse";
+    case "MouseBack":
+      return "Mouse Back";
+    case "MouseForward":
+      return "Mouse Forward";
     case "ArrowUp":
       return "Arrow Up";
     case "ArrowLeft":
@@ -3437,10 +3452,37 @@ export function App({ store, initialStatusMessage }: AppProps) {
       );
     };
 
+    const handleWindowPointerCapture = (event: globalThis.PointerEvent) => {
+      const capturedCode = getPlayerStartMouseBindingCodeForButton(
+        event.button
+      );
+
+      if (capturedCode === null) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      handlePlayerStartKeyboardBindingChange(
+        playerStartKeyboardCaptureAction,
+        capturedCode
+      );
+      setPlayerStartKeyboardCaptureAction(null);
+      setStatusMessage(
+        `Bound ${getPlayerStartInputActionLabel(playerStartKeyboardCaptureAction)} to ${formatPlayerStartKeyboardBindingLabel(capturedCode)}.`
+      );
+    };
+
     window.addEventListener("keydown", handleWindowKeyCapture, true);
+    window.addEventListener("pointerdown", handleWindowPointerCapture, true);
 
     return () => {
       window.removeEventListener("keydown", handleWindowKeyCapture, true);
+      window.removeEventListener(
+        "pointerdown",
+        handleWindowPointerCapture,
+        true
+      );
     };
   }, [playerStartKeyboardCaptureAction]);
 
@@ -21715,7 +21757,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 onClick={() => {
                                   setPlayerStartKeyboardCaptureAction(action);
                                   setStatusMessage(
-                                    `Press any key for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
+                                    `Press any key or mouse button for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
                                   );
                                 }}
                               >
@@ -21776,7 +21818,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 onClick={() => {
                                   setPlayerStartKeyboardCaptureAction(action);
                                   setStatusMessage(
-                                    `Press any key for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
+                                    `Press any key or mouse button for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
                                   );
                                 }}
                               >
@@ -21837,7 +21879,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 onClick={() => {
                                   setPlayerStartKeyboardCaptureAction(action);
                                   setStatusMessage(
-                                    `Press any key for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
+                                    `Press any key or mouse button for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
                                   );
                                 }}
                               >
