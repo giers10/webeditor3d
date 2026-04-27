@@ -21748,7 +21748,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           >
                             <label className="form-field">
                               <span className="label">
-                                {getPlayerStartInputActionLabel(action)} Key
+                                {getPlayerStartInputActionLabel(action)} Key / Mouse
                               </span>
                               <button
                                 type="button"
@@ -21809,7 +21809,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           >
                             <label className="form-field">
                               <span className="label">
-                                {getPlayerStartInputActionLabel(action)} Key
+                                {getPlayerStartInputActionLabel(action)} Key / Mouse
                               </span>
                               <button
                                 type="button"
@@ -21870,7 +21870,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           >
                             <label className="form-field">
                               <span className="label">
-                                {getPlayerStartInputActionLabel(action)} Key
+                                {getPlayerStartInputActionLabel(action)} Key / Mouse
                               </span>
                               <button
                                 type="button"
