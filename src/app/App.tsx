@@ -8887,10 +8887,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
   const applyPlayerStartChange = (
     overrides: {
+      allowLookInputTargetSwitch?: boolean;
       colliderMode?: PlayerStartColliderMode;
       movementTemplate?: PlayerStartMovementTemplate;
       navigationMode?: PlayerStartNavigationMode;
       inputBindings?: PlayerStartInputBindings;
+      targetButtonCyclesActiveTarget?: boolean;
     } = {}
   ) => {
     if (selectedPlayerStart === null) {
@@ -8920,6 +8922,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
         playerStartInteractionAngleDraft,
         "Player Start interaction angle"
       );
+      const allowLookInputTargetSwitch =
+        overrides.allowLookInputTargetSwitch ??
+        playerStartAllowLookInputTargetSwitchDraft;
+      const targetButtonCyclesActiveTarget =
+        overrides.targetButtonCyclesActiveTarget ??
+        playerStartTargetButtonCyclesActiveTargetDraft;
       const nextEntity = createPlayerStartEntity({
         id: selectedPlayerStart.id,
         name: selectedPlayerStart.name,
@@ -8928,10 +8936,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
         navigationMode,
         interactionReachMeters,
         interactionAngleDegrees,
-        allowLookInputTargetSwitch:
-          playerStartAllowLookInputTargetSwitchDraft,
-        targetButtonCyclesActiveTarget:
-          playerStartTargetButtonCyclesActiveTargetDraft,
+        allowLookInputTargetSwitch,
+        targetButtonCyclesActiveTarget,
         movementTemplate,
         inputBindings,
         collider: {
@@ -20782,11 +20788,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               playerStartAllowLookInputTargetSwitchDraft
                             }
                             onChange={(event) => {
+                              const nextValue = event.currentTarget.checked;
                               setPlayerStartAllowLookInputTargetSwitchDraft(
-                                event.currentTarget.checked
+                                nextValue
                               );
                               scheduleDraftCommit(() =>
-                                applyPlayerStartChange()
+                                applyPlayerStartChange({
+                                  allowLookInputTargetSwitch: nextValue
+                                })
                               );
                             }}
                           />
@@ -20802,11 +20811,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               playerStartTargetButtonCyclesActiveTargetDraft
                             }
                             onChange={(event) => {
+                              const nextValue = event.currentTarget.checked;
                               setPlayerStartTargetButtonCyclesActiveTargetDraft(
-                                event.currentTarget.checked
+                                nextValue
                               );
                               scheduleDraftCommit(() =>
-                                applyPlayerStartChange()
+                                applyPlayerStartChange({
+                                  targetButtonCyclesActiveTarget: nextValue
+                                })
                               );
                             }}
                           />

@@ -324,14 +324,6 @@ function getTypeKey(type: ts.Type): string {
   );
 }
 
-function getTypeLabel(type: ts.Type): string {
-  try {
-    return checker.typeToString(type);
-  } catch {
-    return getTypeKey(type);
-  }
-}
-
 function isCallableType(type: ts.Type): boolean {
   const normalizedType = withoutNullish(type);
   return normalizedType.getCallSignatures().length > 0;
@@ -389,10 +381,11 @@ function literalLabel(type: ts.Type): string | null {
     return String(type.value);
   }
 
-  const typeText = checker.typeToString(type);
+  const intrinsicName = (type as ts.Type & { intrinsicName?: string })
+    .intrinsicName;
 
-  if (typeText === "true" || typeText === "false") {
-    return typeText;
+  if (intrinsicName === "true" || intrinsicName === "false") {
+    return intrinsicName;
   }
 
   return null;
@@ -610,7 +603,9 @@ function collectUnionFields(
 
       const typeLabels = objectTypes.map((objectType) => {
         const propertyType = getPropertyType(objectType, name);
-        return propertyType === null ? "" : getTypeLabel(propertyType);
+        return propertyType === null
+          ? ""
+          : getTypeKey(withoutNullish(propertyType));
       });
 
       return new Set(typeLabels).size === 1;
@@ -635,7 +630,7 @@ function collectUnionFields(
         ? ""
         : literalUnionLabels(discriminatorType)[0] ?? "";
     const groupKey =
-      discriminator === null ? getTypeLabel(objectType) : discriminatorValue;
+      discriminator === null ? getTypeKey(objectType) : discriminatorValue;
     groupedTypes.set(groupKey, [...(groupedTypes.get(groupKey) ?? []), objectType]);
   }
 
