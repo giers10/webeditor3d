@@ -1,4 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent
+} from "react";
 
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
@@ -42,6 +49,7 @@ interface ViewportCanvasProps {
   world: WorldSettings;
   sceneDocument: SceneDocument;
   editorSimulationController: EditorSimulationController;
+  editorSimulationPlaying?: boolean;
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
   loadedImageAssets: Record<string, LoadedImageAsset>;
@@ -71,6 +79,187 @@ interface ViewportCanvasProps {
   onTransformPreviewChange?(transformSession: ActiveTransformSession): void;
   onTransformCommit(transformSession: ActiveTransformSession): void;
   onTransformCancel(): void;
+  onPlayEditorSimulation?(): void;
+  onPauseEditorSimulation?(): void;
+  onStepEditorSimulation?(deltaHours: number): void;
+}
+
+const VIEWPORT_TIME_TRANSPORT_STEP_HOURS = 0.25;
+const VIEWPORT_TIME_TRANSPORT_REPEAT_MS = 125;
+
+interface ViewportTimeTransportProps {
+  panelId: ViewportPanelId;
+  editorSimulationPlaying: boolean;
+  onPlayEditorSimulation(): void;
+  onPauseEditorSimulation(): void;
+  onStepEditorSimulation(deltaHours: number): void;
+}
+
+function ViewportTimeTransport({
+  panelId,
+  editorSimulationPlaying,
+  onPlayEditorSimulation,
+  onPauseEditorSimulation,
+  onStepEditorSimulation
+}: ViewportTimeTransportProps) {
+  const repeatIntervalRef = useRef<number | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+  const activeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const pointerStepHandledRef = useRef(false);
+  const latestStepHandlerRef = useRef(onStepEditorSimulation);
+
+  useEffect(() => {
+    latestStepHandlerRef.current = onStepEditorSimulation;
+  }, [onStepEditorSimulation]);
+
+  const stopStepping = useCallback(() => {
+    if (repeatIntervalRef.current !== null) {
+      window.clearInterval(repeatIntervalRef.current);
+      repeatIntervalRef.current = null;
+    }
+
+    const activeButton = activeButtonRef.current;
+    const activePointerId = activePointerIdRef.current;
+
+    if (
+      activeButton !== null &&
+      activePointerId !== null &&
+      activeButton.hasPointerCapture?.(activePointerId)
+    ) {
+      activeButton.releasePointerCapture(activePointerId);
+    }
+
+    activePointerIdRef.current = null;
+    activeButtonRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    const handleWindowBlur = () => {
+      stopStepping();
+    };
+
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      window.removeEventListener("blur", handleWindowBlur);
+      stopStepping();
+    };
+  }, [stopStepping]);
+
+  const step = useCallback((direction: -1 | 1) => {
+    latestStepHandlerRef.current(
+      direction * VIEWPORT_TIME_TRANSPORT_STEP_HOURS
+    );
+  }, []);
+
+  const startStepping = useCallback(
+    (direction: -1 | 1, event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      stopStepping();
+
+      pointerStepHandledRef.current = true;
+      activePointerIdRef.current = event.pointerId;
+      activeButtonRef.current = event.currentTarget;
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+
+      step(direction);
+      repeatIntervalRef.current = window.setInterval(() => {
+        step(direction);
+      }, VIEWPORT_TIME_TRANSPORT_REPEAT_MS);
+    },
+    [step, stopStepping]
+  );
+
+  const stopPointerStepping = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (
+        activePointerIdRef.current !== null &&
+        event.pointerId !== activePointerIdRef.current
+      ) {
+        return;
+      }
+
+      event.stopPropagation();
+      stopStepping();
+    },
+    [stopStepping]
+  );
+
+  const clickStep = useCallback((direction: -1 | 1) => {
+    if (pointerStepHandledRef.current) {
+      pointerStepHandledRef.current = false;
+      return;
+    }
+
+    step(direction);
+  }, [step]);
+
+  return (
+    <div
+      className="viewport-canvas__time-transport"
+      data-testid={`viewport-time-transport-${panelId}`}
+      role="group"
+      aria-label="Editor project time transport"
+    >
+      <button
+        className="viewport-canvas__time-button"
+        type="button"
+        data-testid={`viewport-time-rewind-${panelId}`}
+        aria-label="Step editor project time backward"
+        title="Step editor project time backward"
+        onPointerDown={(event) => startStepping(-1, event)}
+        onPointerUp={stopPointerStepping}
+        onPointerCancel={stopPointerStepping}
+        onLostPointerCapture={stopPointerStepping}
+        onBlur={stopStepping}
+        onClick={() => clickStep(-1)}
+      >
+        &lt;&lt;
+      </button>
+      <button
+        className="viewport-canvas__time-button viewport-canvas__time-button--primary"
+        type="button"
+        data-testid={`viewport-time-play-toggle-${panelId}`}
+        aria-label={
+          editorSimulationPlaying
+            ? "Pause editor project time"
+            : "Play editor project time"
+        }
+        title={
+          editorSimulationPlaying
+            ? "Pause editor project time"
+            : "Play editor project time"
+        }
+        onClick={
+          editorSimulationPlaying
+            ? onPauseEditorSimulation
+            : onPlayEditorSimulation
+        }
+      >
+        {editorSimulationPlaying ? "II" : ">"}
+      </button>
+      <button
+        className="viewport-canvas__time-button"
+        type="button"
+        data-testid={`viewport-time-forward-${panelId}`}
+        aria-label="Step editor project time forward"
+        title="Step editor project time forward"
+        onPointerDown={(event) => startStepping(1, event)}
+        onPointerUp={stopPointerStepping}
+        onPointerCancel={stopPointerStepping}
+        onLostPointerCapture={stopPointerStepping}
+        onBlur={stopStepping}
+        onClick={() => clickStep(1)}
+      >
+        &gt;&gt;
+      </button>
+    </div>
+  );
 }
 
 export function ViewportCanvas({
@@ -78,6 +267,7 @@ export function ViewportCanvas({
   world,
   sceneDocument,
   editorSimulationController,
+  editorSimulationPlaying = false,
   projectAssets,
   loadedModelAssets,
   loadedImageAssets,
@@ -106,7 +296,10 @@ export function ViewportCanvas({
   onTransformSessionChange,
   onTransformPreviewChange = () => undefined,
   onTransformCommit,
-  onTransformCancel
+  onTransformCancel,
+  onPlayEditorSimulation = () => undefined,
+  onPauseEditorSimulation = () => undefined,
+  onStepEditorSimulation = () => undefined
 }: ViewportCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<ViewportHost | null>(null);
@@ -427,6 +620,16 @@ export function ViewportCanvas({
             </div>
           )}
         </div>
+      )}
+
+      {!isActivePanel ? null : (
+        <ViewportTimeTransport
+          panelId={panelId}
+          editorSimulationPlaying={editorSimulationPlaying}
+          onPlayEditorSimulation={onPlayEditorSimulation}
+          onPauseEditorSimulation={onPauseEditorSimulation}
+          onStepEditorSimulation={onStepEditorSimulation}
+        />
       )}
 
       {viewportMessage === null ? null : (
