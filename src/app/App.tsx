@@ -13494,7 +13494,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 >
                   {runtimeInteractionPrompt === null
                     ? `Aim at an authored Interactable or NPC. ${runtimeInteractInstruction} when a prompt appears.`
-                    : `${runtimeInteractInstruction} "${runtimeInteractionPrompt.prompt}" within ${runtimeInteractionPrompt.range.toFixed(1)}m.`}
+                    : `${runtimeInteractInstruction} to activate "${runtimeInteractionPrompt.prompt}" within ${runtimeInteractionPrompt.range.toFixed(1)}m.`}
                 </div>
               </div>
 

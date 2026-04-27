@@ -138,7 +138,9 @@ import {
 import {
   DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES,
   DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
-  getNpcColliderHeight
+  getNpcColliderHeight,
+  getPlayerStartMouseBindingCodeForButton,
+  isPlayerStartMouseBindingCode
 } from "../entities/entity-instances";
 import type { InteractionLink } from "../interactions/interaction-links";
 import type {
@@ -214,6 +216,7 @@ import {
 } from "./runtime-scene-build";
 import {
   resolveDefaultTargetCycleInput,
+  resolvePlayerStartInteractInput,
   resolvePlayerStartLookInput,
   resolvePlayerStartPauseInput
 } from "./player-input-bindings";
