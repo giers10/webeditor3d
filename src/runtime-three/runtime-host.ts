@@ -815,6 +815,7 @@ export class RuntimeHost {
   private manualPauseActive = false;
   private controlPauseActive = false;
   private dialoguePauseActive = false;
+  private previousInteractInputActive = false;
   private previousPauseInputActive = false;
   private readonly pressedKeys = new Set<string>();
   private activeScheduledImpulseRoutineIds = new Set<string>();
