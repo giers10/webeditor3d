@@ -1075,10 +1075,21 @@ export class ViewportHost {
 
   updateSimulation(
     runtimeScene: RuntimeSceneDefinition | null,
-    clock: RuntimeClockState | null
+    clock: RuntimeClockState | null,
+    versionInfo?: ViewportSimulationVersionInfo
   ) {
     this.currentSimulationScene = runtimeScene;
     this.currentSimulationClock = clock;
+    this.currentSimulationSceneVersion =
+      versionInfo?.sceneVersion ?? this.currentSimulationSceneVersion + 1;
+    this.currentSimulationFrameVersion =
+      versionInfo?.frameVersion ?? this.currentSimulationFrameVersion + 1;
+    this.currentSimulationMembershipSignatures =
+      createViewportSimulationMembershipSignatures(runtimeScene);
+    this.simulationActiveNpcEntityIds = this.collectActiveSimulationNpcEntityIds(
+      runtimeScene
+    );
+    this.simulationSceneIdentityMismatchWarned = false;
     this.simulationInteractableEnabledById.clear();
     this.applyWorld();
 
@@ -1094,25 +1105,74 @@ export class ViewportHost {
 
   updateSimulationFrame(
     runtimeScene: RuntimeSceneDefinition | null,
-    clock: RuntimeClockState | null
+    clock: RuntimeClockState | null,
+    versionInfo?: ViewportSimulationVersionInfo
   ) {
-    if (this.currentSimulationScene !== runtimeScene) {
-      this.updateSimulation(runtimeScene, clock);
-      return;
+    if (
+      this.currentSimulationScene !== runtimeScene &&
+      !this.simulationSceneIdentityMismatchWarned
+    ) {
+      console.warn(
+        "Viewport simulation frame received a new runtime scene object without a scene-version change. Continuing on the incremental frame path."
+      );
+      this.simulationSceneIdentityMismatchWarned = true;
     }
 
+    this.currentSimulationScene = runtimeScene;
     this.currentSimulationClock = clock;
+    this.currentSimulationSceneVersion =
+      versionInfo?.sceneVersion ?? this.currentSimulationSceneVersion;
+    this.currentSimulationFrameVersion =
+      versionInfo?.frameVersion ?? this.currentSimulationFrameVersion + 1;
     this.applyWorld();
 
     if (this.currentDocument === null || runtimeScene === null) {
       return;
     }
 
-    this.syncSimulationLocalLights(runtimeScene);
-    this.syncSimulationLightVolumes(runtimeScene);
+    const nextMembershipSignatures =
+      createViewportSimulationMembershipSignatures(runtimeScene);
+
+    if (
+      nextMembershipSignatures.localLights !==
+      this.currentSimulationMembershipSignatures.localLights
+    ) {
+      this.rebuildLocalLights(this.currentDocument);
+    } else if (!this.syncSimulationLocalLights(runtimeScene)) {
+      this.rebuildLocalLights(this.currentDocument);
+    }
+
+    if (
+      nextMembershipSignatures.lightVolumes !==
+      this.currentSimulationMembershipSignatures.lightVolumes
+    ) {
+      this.rebuildLightVolumes(this.currentDocument);
+    } else if (!this.syncSimulationLightVolumes(runtimeScene)) {
+      this.rebuildLightVolumes(this.currentDocument);
+    }
+
     this.syncSimulationNpcs(runtimeScene);
-    this.syncSimulationInteractables(runtimeScene);
-    this.syncSimulationModelInstances(runtimeScene);
+
+    if (
+      nextMembershipSignatures.interactables !==
+      this.currentSimulationMembershipSignatures.interactables
+    ) {
+      this.simulationInteractableEnabledById.clear();
+      this.rebuildEntityMarkers(this.currentDocument, this.currentSelection);
+    } else {
+      this.syncSimulationInteractables(runtimeScene);
+    }
+
+    if (
+      nextMembershipSignatures.modelInstances !==
+      this.currentSimulationMembershipSignatures.modelInstances
+    ) {
+      this.rebuildModelInstances(this.currentDocument, this.currentSelection);
+    } else if (!this.syncSimulationModelInstances(runtimeScene)) {
+      this.rebuildModelInstances(this.currentDocument, this.currentSelection);
+    }
+
+    this.currentSimulationMembershipSignatures = nextMembershipSignatures;
   }
 
   updateSelection(selection: EditorSelection, activeSelectionId: string | null) {
