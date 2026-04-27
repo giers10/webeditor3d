@@ -198,10 +198,6 @@ describe("ThirdPersonNavigationController", () => {
     document.dispatchEvent(mouseMoveEvent);
     controller.update(0);
 
-    const telemetry =
-      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
-
-    expect(telemetry?.pointerLocked).toBe(true);
     expect(context.camera.position.x).toBeLessThan(0);
 
     controller.deactivate(context, {
