@@ -660,6 +660,8 @@ function getPlayerStartInputActionLabel(
       return "Crouch";
     case "interact":
       return "Interact";
+    case "clearTarget":
+      return "Clear Target";
     case "pauseTime":
       return "Pause";
   }

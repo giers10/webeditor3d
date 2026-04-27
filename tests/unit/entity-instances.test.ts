@@ -196,7 +196,9 @@ describe("entity registry defaults", () => {
       createPointLightEntity({
         distance: 0
       })
-    ).toThrow("Point Light distance must be a finite number greater than zero.");
+    ).toThrow(
+      "Point Light distance must be a finite number greater than zero."
+    );
 
     expect(() =>
       createSpotLightEntity({

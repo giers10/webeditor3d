@@ -66,7 +66,14 @@ import {
   type RuntimeSceneLoadState
 } from "../../src/runtime-three/runtime-host";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
-import { AnimationClip, BoxGeometry, PerspectiveCamera, Quaternion, Vector3, type AnimationMixer } from "three";
+import {
+  AnimationClip,
+  BoxGeometry,
+  PerspectiveCamera,
+  Quaternion,
+  Vector3,
+  type AnimationMixer
+} from "three";
 import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-collider-fixtures";
 
 function createDeferred<T>() {
@@ -97,7 +104,9 @@ function resolveYawPitchRadians(direction: Vector3) {
 
 function captureCameraPose(camera: PerspectiveCamera) {
   const position = camera.position.clone();
-  const lookTarget = position.clone().add(camera.getWorldDirection(new Vector3()));
+  const lookTarget = position
+    .clone()
+    .add(camera.getWorldDirection(new Vector3()));
 
   return {
     position,
@@ -123,7 +132,10 @@ function createRuntimeKeyEvent(
   } as unknown as KeyboardEvent;
 }
 
-function resolveShortestAngleDeltaDegrees(fromDegrees: number, toDegrees: number) {
+function resolveShortestAngleDeltaDegrees(
+  fromDegrees: number,
+  toDegrees: number
+) {
   return ((toDegrees - fromDegrees + 540) % 360) - 180;
 }
 
@@ -336,7 +348,9 @@ describe("RuntimeHost", () => {
     hostInternals.camera.position.set(-12, 3, 14);
     hostInternals.camera.lookAt(0, 1.6, 0);
 
-    expect(hostInternals.applyActiveCameraRig(0.1)?.entityId).toBe(defaultRig.id);
+    expect(hostInternals.applyActiveCameraRig(0.1)?.entityId).toBe(
+      defaultRig.id
+    );
     expect(hostInternals.camera.position).toMatchObject(defaultRig.position);
     expect(hostInternals.cameraTransitionState).toBeNull();
 
@@ -407,7 +421,9 @@ describe("RuntimeHost", () => {
 
     host.setActiveCameraRigOverride(cameraRig.id);
 
-    expect(hostInternals.applyActiveCameraRig(0.25)?.entityId).toBe(cameraRig.id);
+    expect(hostInternals.applyActiveCameraRig(0.25)?.entityId).toBe(
+      cameraRig.id
+    );
     expect(hostInternals.cameraTransitionState).not.toBeNull();
     expect(hostInternals.camera.position.x).toBeCloseTo(4, 4);
     expect(hostInternals.camera.position.y).toBeCloseTo(3, 4);
@@ -482,7 +498,9 @@ describe("RuntimeHost", () => {
     hostInternals.camera.position.set(-6, 3, 8);
     hostInternals.camera.lookAt(0, 1.5, 0);
 
-    expect(hostInternals.applyActiveCameraRig(0.25, previousRigPose)).toBeNull();
+    expect(
+      hostInternals.applyActiveCameraRig(0.25, previousRigPose)
+    ).toBeNull();
     expect(hostInternals.cameraTransitionState).not.toBeNull();
     expect(hostInternals.camera.position.x).toBeCloseTo(1, 4);
     expect(hostInternals.camera.position.y).toBeCloseTo(3.5, 4);
@@ -583,7 +601,10 @@ describe("RuntimeHost", () => {
     hostInternals.sceneReady = true;
     hostInternals.camera.position.set(0, 2.6, 6);
     hostInternals.camera.lookAt(0, 1.6, 0);
-    hostInternals.applyActiveCameraRig(0, captureCameraPose(hostInternals.camera));
+    hostInternals.applyActiveCameraRig(
+      0,
+      captureCameraPose(hostInternals.camera)
+    );
 
     dispatcher.startNpcDialogue(npc.id, null, {
       kind: "npc",
@@ -732,7 +753,8 @@ describe("RuntimeHost", () => {
     hostInternals.applyActiveCameraRig(0.175, gameplayPose);
 
     expect(resolveThirdPersonCameraCollision).toHaveBeenCalled();
-    const lastCollisionCall = resolveThirdPersonCameraCollision.mock.calls.at(-1);
+    const lastCollisionCall =
+      resolveThirdPersonCameraCollision.mock.calls.at(-1);
 
     expect(lastCollisionCall).toBeDefined();
 
@@ -885,12 +907,10 @@ describe("RuntimeHost", () => {
       camera: PerspectiveCamera;
       collisionWorld: RapierCollisionWorld | null;
       activeCameraSourceKey: string | null;
-      currentPlayerControllerTelemetry:
-        | {
-            feetPosition: { x: number; y: number; z: number };
-            yawDegrees: number;
-          }
-        | null;
+      currentPlayerControllerTelemetry: {
+        feetPosition: { x: number; y: number; z: number };
+        yawDegrees: number;
+      } | null;
       dialogueParticipantState: { npcEntityId: string } | null;
       runtimeScene: ReturnType<typeof buildRuntimeSceneFromDocument> | null;
       activateDesiredNavigationController(): void;
@@ -927,9 +947,9 @@ describe("RuntimeHost", () => {
     } as unknown as RapierCollisionWorld;
     hostInternals.activateDesiredNavigationController();
 
-    expect(hostInternals.currentPlayerControllerTelemetry?.feetPosition).toEqual(
-      playerStart.position
-    );
+    expect(
+      hostInternals.currentPlayerControllerTelemetry?.feetPosition
+    ).toEqual(playerStart.position);
 
     dispatcher.startNpcDialogue(npc.id, null, {
       kind: "npc",
@@ -967,7 +987,10 @@ describe("RuntimeHost", () => {
       playerFeetPosition.z - npc.position.z
     );
     const playerTargetYawDegrees =
-      (Math.atan2(npc.position.x - playerFeetPosition.x, npc.position.z - playerFeetPosition.z) *
+      (Math.atan2(
+        npc.position.x - playerFeetPosition.x,
+        npc.position.z - playerFeetPosition.z
+      ) *
         180) /
       Math.PI;
 
@@ -983,9 +1006,7 @@ describe("RuntimeHost", () => {
       )
     ).toBeLessThan(35);
     expect(
-      Math.abs(
-        resolveShortestAngleDeltaDegrees(runtimeNpc?.yawDegrees ?? 0, 0)
-      )
+      Math.abs(resolveShortestAngleDeltaDegrees(runtimeNpc?.yawDegrees ?? 0, 0))
     ).toBeGreaterThan(10);
 
     hostInternals.updateRuntimeDialogueParticipants(0.1);
@@ -995,7 +1016,8 @@ describe("RuntimeHost", () => {
       captureCameraPose(hostInternals.camera)
     );
 
-    const stagedPlayerTelemetry = hostInternals.currentPlayerControllerTelemetry;
+    const stagedPlayerTelemetry =
+      hostInternals.currentPlayerControllerTelemetry;
     const stagedPlayerDistanceFromNpc = Math.hypot(
       (stagedPlayerTelemetry?.feetPosition.x ?? 0) - npc.position.x,
       (stagedPlayerTelemetry?.feetPosition.z ?? 0) - npc.position.z
@@ -1013,7 +1035,9 @@ describe("RuntimeHost", () => {
       hostInternals.updateRuntimeDialogueParticipants(0.05);
     }
 
-    expect(Math.abs(runtimeNpc?.yawDegrees ?? Number.POSITIVE_INFINITY)).toBeLessThan(1);
+    expect(
+      Math.abs(runtimeNpc?.yawDegrees ?? Number.POSITIVE_INFINITY)
+    ).toBeLessThan(1);
     expect(hostInternals.dialogueParticipantState).toBeNull();
 
     host.dispose();
@@ -1207,7 +1231,10 @@ describe("RuntimeHost", () => {
       linkId: null,
       trigger: "click"
     });
-    hostInternals.applyActiveCameraRig(0.35, captureCameraPose(hostInternals.camera));
+    hostInternals.applyActiveCameraRig(
+      0.35,
+      captureCameraPose(hostInternals.camera)
+    );
     const dialoguePose = captureCameraPose(hostInternals.camera);
 
     host.closeRuntimeDialogue();
@@ -1306,9 +1333,7 @@ describe("RuntimeHost", () => {
         preventDefault(): void;
         stopImmediatePropagation(): void;
       }): void;
-      handleRuntimePointerUp(event: {
-        stopImmediatePropagation(): void;
-      }): void;
+      handleRuntimePointerUp(event: { stopImmediatePropagation(): void }): void;
     };
 
     hostInternals.sceneReady = true;
@@ -1339,7 +1364,9 @@ describe("RuntimeHost", () => {
     });
     hostInternals.applyActiveCameraRig(0);
 
-    const lookedDirection = hostInternals.camera.getWorldDirection(new Vector3());
+    const lookedDirection = hostInternals.camera.getWorldDirection(
+      new Vector3()
+    );
     const baseAngles = resolveYawPitchRadians(expectedBaseDirection);
     const lookedAngles = resolveYawPitchRadians(lookedDirection);
 
@@ -1460,7 +1487,9 @@ describe("RuntimeHost", () => {
     dispatcher.dispatchControlEffect(activateEffect, activateLink);
 
     expect(hostInternals.activeCameraRigOverrideEntityId).toBe(overrideRig.id);
-    expect(hostInternals.applyActiveCameraRig(0)?.entityId).toBe(overrideRig.id);
+    expect(hostInternals.applyActiveCameraRig(0)?.entityId).toBe(
+      overrideRig.id
+    );
     expect(runtimeScene.control.resolved.discrete).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -1584,9 +1613,7 @@ describe("RuntimeHost", () => {
         preventDefault(): void;
         stopImmediatePropagation(): void;
       }): void;
-      handleRuntimePointerUp(event: {
-        stopImmediatePropagation(): void;
-      }): void;
+      handleRuntimePointerUp(event: { stopImmediatePropagation(): void }): void;
     };
 
     hostInternals.sceneReady = true;
@@ -1707,7 +1734,9 @@ describe("RuntimeHost", () => {
       transitionMode: "cut"
     });
     const runtimeScene = buildRuntimeSceneFromDocument({
-      ...createEmptySceneDocument({ name: "Mapped Rail Camera Rig Runtime Scene" }),
+      ...createEmptySceneDocument({
+        name: "Mapped Rail Camera Rig Runtime Scene"
+      }),
       paths: {
         [path.id]: path
       },
@@ -1893,7 +1922,11 @@ describe("RuntimeHost", () => {
         string,
         {
           group: { visible: boolean };
-          lights: Array<{ intensity: number; distance: number; castShadow: boolean }>;
+          lights: Array<{
+            intensity: number;
+            distance: number;
+            castShadow: boolean;
+          }>;
         }
       >;
     };
@@ -1906,7 +1939,10 @@ describe("RuntimeHost", () => {
     expect(renderObjects?.lights).toHaveLength(4);
     expect(
       renderObjects?.lights.every(
-        (light) => light.intensity > 0 && light.distance > 0 && light.castShadow === false
+        (light) =>
+          light.intensity > 0 &&
+          light.distance > 0 &&
+          light.castShadow === false
       )
     ).toBe(true);
 
@@ -2191,7 +2227,10 @@ describe("RuntimeHost", () => {
     hostInternals.previousFrameTime = 1000;
     hostInternals.camera.position.set(0, 2.6, 6);
     hostInternals.camera.lookAt(0, 1.6, 0);
-    hostInternals.applyActiveCameraRig(0, captureCameraPose(hostInternals.camera));
+    hostInternals.applyActiveCameraRig(
+      0,
+      captureCameraPose(hostInternals.camera)
+    );
     const clockBefore = {
       ...hostInternals.currentClockState!
     };
@@ -2209,7 +2248,9 @@ describe("RuntimeHost", () => {
       source: "dialogue"
     });
     expect(hostInternals.activeCameraSourceKey).toBe(`dialogue:${npc.id}`);
-    expect(hostInternals.cameraTransitionState?.elapsedSeconds).toBeGreaterThan(0);
+    expect(hostInternals.cameraTransitionState?.elapsedSeconds).toBeGreaterThan(
+      0
+    );
     expect(hostInternals.currentClockState).toEqual(clockBefore);
 
     host.advanceRuntimeDialogue();
@@ -2341,7 +2382,6 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
-
   it("applies expanded typed control effects for model, sound, and scene lighting", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(RapierCollisionWorld, "create").mockResolvedValue({
@@ -2462,7 +2502,9 @@ describe("RuntimeHost", () => {
     };
 
     const dispatcher = hostInternals.createInteractionDispatcher();
-    const lightRenderObjects = hostInternals.localLightObjects.get(pointLight.id);
+    const lightRenderObjects = hostInternals.localLightObjects.get(
+      pointLight.id
+    );
     const modelRenderGroup = hostInternals.modelRenderObjects.get(
       modelInstance.id
     );
@@ -2483,12 +2525,9 @@ describe("RuntimeHost", () => {
     const setSoundEmitterVolumeSpy = vi
       .spyOn(hostInternals.audioSystem, "setSoundEmitterVolume")
       .mockImplementation(() => undefined);
-    hostInternals.animationMixers.set(
-      modelInstance.id,
-      {
-        stopAllAction: vi.fn()
-      } as unknown as AnimationMixer
-    );
+    hostInternals.animationMixers.set(modelInstance.id, {
+      stopAllAction: vi.fn()
+    } as unknown as AnimationMixer);
     const playAnimationSpy = vi
       .spyOn(hostInternals, "applyPlayAnimationAction")
       .mockImplementation(() => undefined);
@@ -2602,7 +2641,10 @@ describe("RuntimeHost", () => {
     dispatcher.dispatchControlEffect(stopAnimationEffect, links.stopAnimation);
     dispatcher.dispatchControlEffect(playSoundEffect, links.playSound);
     dispatcher.dispatchControlEffect(stopSoundEffect, links.stopSound);
-    dispatcher.dispatchControlEffect(setSoundVolumeEffect, links.setSoundVolume);
+    dispatcher.dispatchControlEffect(
+      setSoundVolumeEffect,
+      links.setSoundVolume
+    );
     dispatcher.dispatchControlEffect(lightColorEffect, links.lightColor);
     dispatcher.dispatchControlEffect(
       ambientIntensityEffect,
@@ -2648,8 +2690,12 @@ describe("RuntimeHost", () => {
     expect(hostInternals.ambientLight.color.getHexString()).not.toBe(
       initialAmbientColor
     );
-    expect(hostInternals.sunLight.intensity).not.toBeCloseTo(initialSunIntensity);
-    expect(hostInternals.sunLight.color.getHexString()).not.toBe(initialSunColor);
+    expect(hostInternals.sunLight.intensity).not.toBeCloseTo(
+      initialSunIntensity
+    );
+    expect(hostInternals.sunLight.color.getHexString()).not.toBe(
+      initialSunColor
+    );
     expect(runtimeScene.world.ambientLight).toEqual(
       expect.objectContaining({
         intensity: 0.6,
@@ -2849,31 +2895,32 @@ describe("RuntimeHost", () => {
     document.assets[asset.id] = asset;
     document.entities[npc.id] = npc;
     document.paths[path.id] = path;
-    document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
-      id: "routine-patrol",
-      title: "Patrolling",
-      target: actorTarget,
-      startHour: 9,
-      endHour: 13,
-      effects: [
-        createSetActorPresenceControlEffect({
-          target: actorTarget,
-          active: true
-        }),
-        createPlayActorAnimationControlEffect({
-          target: actorTarget,
-          clipName: "Walk",
-          loop: true
-        }),
-        createFollowActorPathControlEffect({
-          target: actorTarget,
-          pathId: path.id,
-          speed: 2,
-          loop: false,
-          progressMode: "deriveFromTime"
-        })
-      ]
-    });
+    document.scheduler.routines["routine-patrol"] =
+      createProjectScheduleRoutine({
+        id: "routine-patrol",
+        title: "Patrolling",
+        target: actorTarget,
+        startHour: 9,
+        endHour: 13,
+        effects: [
+          createSetActorPresenceControlEffect({
+            target: actorTarget,
+            active: true
+          }),
+          createPlayActorAnimationControlEffect({
+            target: actorTarget,
+            clipName: "Walk",
+            loop: true
+          }),
+          createFollowActorPathControlEffect({
+            target: actorTarget,
+            pathId: path.id,
+            speed: 2,
+            loop: false,
+            progressMode: "deriveFromTime"
+          })
+        ]
+      });
 
     const runtimeScene = buildRuntimeSceneFromDocument(document, {
       runtimeClock: {
@@ -3337,7 +3384,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-active",
             visible: true,
             position: { x: 0, y: 0, z: 4 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Active",
             defaultDialogueId: null,
             dialogues: []
@@ -3347,7 +3399,12 @@ describe("RuntimeHost", () => {
         cameraRigs: []
       },
       interactionLinks: [
-        { id: "link-active", sourceEntityId: "npc-active", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        {
+          id: "link-active",
+          sourceEntityId: "npc-active",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        }
       ]
     } as never;
     hostInternals.sceneReady = true;
@@ -3372,7 +3429,10 @@ describe("RuntimeHost", () => {
     expect(hostInternals.targetingActiveGroup.position.y).toBeCloseTo(0.9);
 
     for (const arrow of hostInternals.targetingActiveArrows) {
-      const inwardDirection = arrow.position.clone().multiplyScalar(-1).normalize();
+      const inwardDirection = arrow.position
+        .clone()
+        .multiplyScalar(-1)
+        .normalize();
       const arrowTipDirection = new Vector3(0, 1, 0)
         .applyQuaternion(arrow.quaternion)
         .normalize();
@@ -3642,7 +3702,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-active",
             visible: true,
             position: { x: 0, y: 0, z: 5 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Active",
             defaultDialogueId: null,
             dialogues: []
@@ -3651,7 +3716,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-right",
             visible: true,
             position: { x: 2, y: 0, z: 5 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Right",
             defaultDialogueId: null,
             dialogues: []
@@ -3660,7 +3730,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-above",
             visible: true,
             position: { x: 0, y: 2, z: 5 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Above",
             defaultDialogueId: null,
             dialogues: []
@@ -3670,9 +3745,24 @@ describe("RuntimeHost", () => {
         cameraRigs: []
       },
       interactionLinks: [
-        { id: "link-active", sourceEntityId: "npc-active", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
-        { id: "link-right", sourceEntityId: "npc-right", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
-        { id: "link-above", sourceEntityId: "npc-above", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        {
+          id: "link-active",
+          sourceEntityId: "npc-active",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        },
+        {
+          id: "link-right",
+          sourceEntityId: "npc-right",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        },
+        {
+          id: "link-above",
+          sourceEntityId: "npc-above",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        }
       ]
     } as never;
     hostInternals.activeController = hostInternals.thirdPersonController;
@@ -3799,7 +3889,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-active",
             visible: true,
             position: { x: 0, y: 0, z: 5 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Active",
             defaultDialogueId: null,
             dialogues: []
@@ -3809,7 +3904,12 @@ describe("RuntimeHost", () => {
         cameraRigs: []
       },
       interactionLinks: [
-        { id: "link-active", sourceEntityId: "npc-active", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        {
+          id: "link-active",
+          sourceEntityId: "npc-active",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        }
       ]
     } as never;
     hostInternals.activeController = hostInternals.thirdPersonController;
@@ -3885,7 +3985,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-far",
             visible: true,
             position: { x: 0, y: 0, z: 16 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Far",
             defaultDialogueId: null,
             dialogues: []
@@ -3894,7 +3999,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-near",
             visible: true,
             position: { x: 0, y: 0, z: 6 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Near",
             defaultDialogueId: null,
             dialogues: []
@@ -3904,8 +4014,18 @@ describe("RuntimeHost", () => {
         cameraRigs: []
       },
       interactionLinks: [
-        { id: "link-far", sourceEntityId: "npc-far", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
-        { id: "link-near", sourceEntityId: "npc-near", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        {
+          id: "link-far",
+          sourceEntityId: "npc-far",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        },
+        {
+          id: "link-near",
+          sourceEntityId: "npc-near",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        }
       ]
     } as never;
     hostInternals.activeController = hostInternals.thirdPersonController;
@@ -3989,7 +4109,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-border-a",
             visible: true,
             position: { x: 0, y: 0, z: 15.5 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Border A",
             defaultDialogueId: null,
             dialogues: []
@@ -3998,7 +4123,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-border-b",
             visible: true,
             position: { x: 0.3, y: 0, z: 15.2 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Border B",
             defaultDialogueId: null,
             dialogues: []
@@ -4008,8 +4138,18 @@ describe("RuntimeHost", () => {
         cameraRigs: []
       },
       interactionLinks: [
-        { id: "link-border-a", sourceEntityId: "npc-border-a", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
-        { id: "link-border-b", sourceEntityId: "npc-border-b", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        {
+          id: "link-border-a",
+          sourceEntityId: "npc-border-a",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        },
+        {
+          id: "link-border-b",
+          sourceEntityId: "npc-border-b",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        }
       ]
     } as never;
     hostInternals.activeController = hostInternals.thirdPersonController;
@@ -4127,7 +4267,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-far",
             visible: true,
             position: { x: 0, y: 0, z: 16 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Far",
             defaultDialogueId: null,
             dialogues: []
@@ -4137,7 +4282,12 @@ describe("RuntimeHost", () => {
         cameraRigs: []
       },
       interactionLinks: [
-        { id: "link-far", sourceEntityId: "npc-far", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        {
+          id: "link-far",
+          sourceEntityId: "npc-far",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        }
       ]
     } as never;
     hostInternals.activeController = hostInternals.thirdPersonController;
@@ -4186,7 +4336,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-close-edge",
             visible: true,
             position: { x: 3, y: 0, z: 4 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Close Edge",
             defaultDialogueId: null,
             dialogues: []
@@ -4195,7 +4350,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-center-farther",
             visible: true,
             position: { x: 0, y: 0, z: 10 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Center Farther",
             defaultDialogueId: null,
             dialogues: []
@@ -4205,8 +4365,18 @@ describe("RuntimeHost", () => {
         cameraRigs: []
       },
       interactionLinks: [
-        { id: "link-close-edge", sourceEntityId: "npc-close-edge", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
-        { id: "link-center-farther", sourceEntityId: "npc-center-farther", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        {
+          id: "link-close-edge",
+          sourceEntityId: "npc-close-edge",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        },
+        {
+          id: "link-center-farther",
+          sourceEntityId: "npc-center-farther",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        }
       ]
     } as never;
     hostInternals.sceneReady = true;
@@ -4335,7 +4505,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-visible",
             visible: true,
             position: { x: 0, y: 0, z: 6 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Visible",
             defaultDialogueId: null,
             dialogues: []
@@ -4344,7 +4519,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-occluded",
             visible: true,
             position: { x: 0, y: 0, z: 8 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Occluded",
             defaultDialogueId: null,
             dialogues: []
@@ -4354,8 +4534,18 @@ describe("RuntimeHost", () => {
         cameraRigs: []
       },
       interactionLinks: [
-        { id: "link-visible", sourceEntityId: "npc-visible", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
-        { id: "link-occluded", sourceEntityId: "npc-occluded", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        {
+          id: "link-visible",
+          sourceEntityId: "npc-visible",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        },
+        {
+          id: "link-occluded",
+          sourceEntityId: "npc-occluded",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        }
       ]
     } as never;
     hostInternals.sceneReady = true;
@@ -4422,7 +4612,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-player-occluded",
             visible: true,
             position: { x: 0, y: 0, z: 7 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Player Occluded",
             defaultDialogueId: null,
             dialogues: []
@@ -4431,7 +4626,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-player-visible",
             visible: true,
             position: { x: 0.8, y: 0, z: 8 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Player Visible",
             defaultDialogueId: null,
             dialogues: []
@@ -4441,8 +4641,18 @@ describe("RuntimeHost", () => {
         cameraRigs: []
       },
       interactionLinks: [
-        { id: "link-player-occluded", sourceEntityId: "npc-player-occluded", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
-        { id: "link-player-visible", sourceEntityId: "npc-player-visible", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        {
+          id: "link-player-occluded",
+          sourceEntityId: "npc-player-occluded",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        },
+        {
+          id: "link-player-visible",
+          sourceEntityId: "npc-player-visible",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        }
       ]
     } as never;
     hostInternals.sceneReady = true;
@@ -4451,8 +4661,7 @@ describe("RuntimeHost", () => {
       eyePosition: { x: 0, y: 1.6, z: 0 }
     };
     hostInternals.collisionWorld = {
-      isLineSegmentClear: (start, end) =>
-        start.x !== 0 || end.z !== 7,
+      isLineSegmentClear: (start, end) => start.x !== 0 || end.z !== 7,
       dispose: vi.fn()
     };
     hostInternals.camera.position.set(1, 1.6, 0);
@@ -4511,7 +4720,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-close-above",
             visible: true,
             position: { x: 0, y: 0, z: 1 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Close Above",
             defaultDialogueId: null,
             dialogues: []
@@ -4521,7 +4735,12 @@ describe("RuntimeHost", () => {
         cameraRigs: []
       },
       interactionLinks: [
-        { id: "link-close-above", sourceEntityId: "npc-close-above", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        {
+          id: "link-close-above",
+          sourceEntityId: "npc-close-above",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        }
       ]
     } as never;
     hostInternals.sceneReady = true;
@@ -4584,7 +4803,12 @@ describe("RuntimeHost", () => {
             entityId: "npc-occluded-active",
             visible: true,
             position: { x: 0, y: 0, z: 6 },
-            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            collider: {
+              mode: "capsule",
+              radius: 0.35,
+              height: 1.8,
+              eyeHeight: 1.6
+            },
             name: "Occluded Active",
             defaultDialogueId: null,
             dialogues: []
@@ -4594,7 +4818,12 @@ describe("RuntimeHost", () => {
         cameraRigs: []
       },
       interactionLinks: [
-        { id: "link-occluded-active", sourceEntityId: "npc-occluded-active", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+        {
+          id: "link-occluded-active",
+          sourceEntityId: "npc-occluded-active",
+          trigger: "click",
+          action: { type: "runSequence", sequenceId: "noop" }
+        }
       ]
     } as never;
     hostInternals.activeController = hostInternals.thirdPersonController;

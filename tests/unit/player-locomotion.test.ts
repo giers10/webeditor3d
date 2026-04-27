@@ -35,14 +35,17 @@ const FORWARD_INPUT: PlayerStartActionInputState = {
   sprint: 0,
   crouch: 0,
   interact: 0,
+  clearTarget: 0,
   pauseTime: 0
 };
 
-function createVolumeState(overrides: {
-  inWater?: boolean;
-  inFog?: boolean;
-  waterSurfaceHeight?: number | null;
-} = {}) {
+function createVolumeState(
+  overrides: {
+    inWater?: boolean;
+    inFog?: boolean;
+    waterSurfaceHeight?: number | null;
+  } = {}
+) {
   return {
     inWater: false,
     inFog: false,
@@ -738,7 +741,9 @@ describe("player-locomotion", () => {
     expect(step?.locomotionState.locomotionMode).toBe("swimming");
     expect(step?.inWaterVolume).toBe(true);
     expect(step?.feetPosition.y).toBeCloseTo(0.84, 5);
-    expect((step?.feetPosition.y ?? 0) + FIRST_PERSON_PLAYER_SHAPE.eyeHeight).toBeGreaterThan(2.4);
+    expect(
+      (step?.feetPosition.y ?? 0) + FIRST_PERSON_PLAYER_SHAPE.eyeHeight
+    ).toBeGreaterThan(2.4);
   });
 
   it("uses sprint input to dive downward while submerged", () => {

@@ -136,8 +136,11 @@ import {
   type AdvancedRenderingSettings
 } from "../document/world-settings";
 import {
+  createPlayerStartInputBindings,
+  DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH,
   DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES,
   DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
+  DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET,
   getNpcColliderHeight,
   getPlayerStartMouseBindingCodeForButton,
   isPlayerStartMouseBindingCode
@@ -216,6 +219,7 @@ import {
 } from "./runtime-scene-build";
 import {
   resolveDefaultTargetCycleInput,
+  resolvePlayerStartClearTargetInput,
   resolvePlayerStartInteractInput,
   resolvePlayerStartLookInput,
   resolvePlayerStartPauseInput
@@ -787,6 +791,7 @@ export class RuntimeHost {
   private activeRuntimeTargetOcclusionSeconds = 0;
   private runtimeTargetSwitchInputHeld = false;
   private previousTargetCycleInputActive = false;
+  private previousClearTargetInputActive = false;
   private activeCameraRigOverrideEntityId: string | null = null;
   private activeCameraSourceKey: RuntimeCameraSourceKey | null = null;
   private activeRuntimeCameraRig: RuntimeCameraRig | null = null;
@@ -1095,6 +1100,7 @@ export class RuntimeHost {
     this.controlPauseActive = false;
     this.dialoguePauseActive = false;
     this.previousInteractInputActive = false;
+    this.previousClearTargetInputActive = false;
     this.previousPauseInputActive = false;
     this.cameraRigLookDragging = false;
     this.cameraRigLookYawRadians = 0;
@@ -1337,6 +1343,7 @@ export class RuntimeHost {
     this.controlPauseActive = false;
     this.dialoguePauseActive = false;
     this.previousInteractInputActive = false;
+    this.previousClearTargetInputActive = false;
     this.previousPauseInputActive = false;
     this.cameraRigLookDragging = false;
     this.cameraRigLookYawRadians = 0;
@@ -5009,6 +5016,7 @@ export class RuntimeHost {
     this.updateInteractInputState();
     this.updatePauseInputState();
     this.updateRuntimeTargetingInputState();
+    this.updateClearTargetInputState();
     const simulationDt = this.isRuntimePaused() ? 0 : dt;
     const cameraDt = dt;
     const previousCameraPose = this.captureCurrentCameraPose();
@@ -5687,6 +5695,7 @@ export class RuntimeHost {
     this.activeRuntimeTargetOcclusionSeconds = 0;
     this.runtimeTargetSwitchInputHeld = false;
     this.previousTargetCycleInputActive = false;
+    this.previousClearTargetInputActive = false;
     this.targetingLuxInitialized = false;
     this.targetingLuxFlightState = "hidden";
     this.targetingVisualTime = 0;
@@ -6764,6 +6773,7 @@ export class RuntimeHost {
   private handleRuntimeBlur = () => {
     this.pressedKeys.clear();
     this.previousInteractInputActive = false;
+    this.previousClearTargetInputActive = false;
     this.previousPauseInputActive = false;
     this.previousTargetCycleInputActive = false;
     this.cameraRigLookDragging = false;

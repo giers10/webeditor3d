@@ -131,9 +131,9 @@ describe("Player Start inspector", () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("player-start-movement-template")
-      ).toHaveValue("default");
+      expect(screen.getByTestId("player-start-movement-template")).toHaveValue(
+        "default"
+      );
     });
 
     expect(store.getState().document.entities[playerStart.id]).toMatchObject({
@@ -146,7 +146,9 @@ describe("Player Start inspector", () => {
     expect(screen.getByTestId("player-start-movement-move-speed")).toHaveValue(
       4.5
     );
-    expect(screen.getByTestId("player-start-movement-jump-enabled")).toBeChecked();
+    expect(
+      screen.getByTestId("player-start-movement-jump-enabled")
+    ).toBeChecked();
   });
 
   it("lets the inspector switch to a custom movement template and persist authored settings", async () => {
@@ -341,7 +343,9 @@ describe("Player Start inspector", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("player-start-keyboard-binding-jump")).toBeVisible();
+      expect(
+        screen.getByTestId("player-start-keyboard-binding-jump")
+      ).toBeVisible();
     });
 
     expect(screen.getByTestId("player-start-gamepad-binding-jump")).toHaveValue(
