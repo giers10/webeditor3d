@@ -2997,6 +2997,19 @@ function validatePlayerStartEntity(
   }
 
   if (
+    !isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.interact)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-interact-keyboard-binding",
+        "Player Start interact keyboard binding must be a supported key or mouse code.",
+        `${path}.inputBindings.keyboard.interact`
+      )
+    );
+  }
+
+  if (
     !isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.pauseTime)
   ) {
     diagnostics.push(
@@ -3088,6 +3101,19 @@ function validatePlayerStartEntity(
         "invalid-player-start-crouch-gamepad-binding",
         "Player Start crouch gamepad binding must be a supported standard-gamepad action input.",
         `${path}.inputBindings.gamepad.crouch`
+      )
+    );
+  }
+
+  if (
+    !isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.interact)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-interact-gamepad-binding",
+        "Player Start interact gamepad binding must be a supported standard-gamepad action input.",
+        `${path}.inputBindings.gamepad.interact`
       )
     );
   }
