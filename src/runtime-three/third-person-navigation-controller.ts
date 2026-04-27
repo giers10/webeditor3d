@@ -181,6 +181,7 @@ export class ThirdPersonNavigationController implements NavigationController {
   private inFogVolume = false;
   private pointerLocked = false;
   private suppressNextPointerLockError = false;
+  private escapeLockedForTargeting = false;
   private dragging = false;
   private pointerLookInputPending = false;
   private lastPointerClientX = 0;
@@ -307,6 +308,7 @@ export class ThirdPersonNavigationController implements NavigationController {
 
     this.pointerLocked = false;
     this.suppressNextPointerLockError = false;
+    this.releaseEscapeKeyLock();
     this.dragging = false;
     this.jumpPressed = false;
     this.latestJumpStarted = false;
@@ -357,6 +359,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.inFogVolume = false;
     this.pointerLocked = false;
     this.suppressNextPointerLockError = false;
+    this.escapeLockedForTargeting = false;
     this.dragging = false;
     this.pointerLookInputPending = false;
     this.lastPointerClientX = 0;
@@ -509,6 +512,8 @@ export class ThirdPersonNavigationController implements NavigationController {
         dt
       );
     }
+
+    this.syncEscapeKeyLock();
 
     const movementYawRadians =
       cameraDrivenExternally
@@ -790,12 +795,96 @@ export class ThirdPersonNavigationController implements NavigationController {
       document.pointerLockElement === this.context.domElement;
     this.pointerLocked = pointerLocked;
     this.dragging = false;
+
+    if (!pointerLocked) {
+      this.releaseEscapeKeyLock();
+    }
+
     this.context.setRuntimeMessage(
       pointerLocked
         ? "Third Person mouse look active. Scroll to zoom, use the right stick for gamepad camera look, and press Escape to release the cursor."
         : "Third Person active. Click inside the runner viewport to capture mouse look, or drag to orbit if pointer lock is unavailable. Scroll to zoom and use the right stick for gamepad camera look."
     );
     this.publishTelemetry();
+  }
+
+  private syncEscapeKeyLock() {
+    if (typeof navigator === "undefined") {
+      return;
+    }
+
+    const keyboard = (
+      navigator as Navigator & {
+        keyboard?: {
+          lock?: (keys?: string[]) => Promise<void>;
+          unlock?: () => void;
+        };
+      }
+    ).keyboard;
+
+    const shouldLockEscape =
+      this.pointerLocked &&
+      this.context?.resolveThirdPersonTargetAssist?.() !== null &&
+      typeof keyboard?.lock === "function";
+
+    if (!shouldLockEscape) {
+      this.releaseEscapeKeyLock();
+      return;
+    }
+
+    if (this.escapeLockedForTargeting) {
+      return;
+    }
+
+    void keyboard
+      .lock?.(["Escape"])
+      .then(() => {
+        this.escapeLockedForTargeting = true;
+      })
+      .catch(() => {});
+  }
+
+  private releaseEscapeKeyLock() {
+    if (!this.escapeLockedForTargeting || typeof navigator === "undefined") {
+      this.escapeLockedForTargeting = false;
+      return;
+    }
+
+    const keyboard = (
+      navigator as Navigator & {
+        keyboard?: {
+          unlock?: () => void;
+        };
+      }
+    ).keyboard;
+
+    keyboard?.unlock?.();
+    this.escapeLockedForTargeting = false;
+  }
+
+  private requestPointerLock() {
+    if (this.context === null) {
+      return;
+    }
+
+    const pointerLockCapableElement = this.context
+      .domElement as HTMLCanvasElement & {
+      requestPointerLock?: () => void | Promise<void>;
+    };
+
+    if (typeof pointerLockCapableElement.requestPointerLock !== "function") {
+      return;
+    }
+
+    const pointerLockResult = pointerLockCapableElement.requestPointerLock();
+
+    if (pointerLockResult instanceof Promise) {
+      pointerLockResult.catch(() => {
+        this.context?.setRuntimeMessage(
+          "Pointer lock request was denied. Drag orbit remains available in Third Person."
+        );
+      });
+    }
   }
 
   private resolveHorizontalMouseLookSign() {
@@ -877,22 +966,7 @@ export class ThirdPersonNavigationController implements NavigationController {
 
     if (document.pointerLockElement !== this.context.domElement) {
       this.suppressNextPointerLockError = false;
-      const pointerLockCapableElement = this.context
-        .domElement as HTMLCanvasElement & {
-        requestPointerLock?: () => void | Promise<void>;
-      };
-
-      if (typeof pointerLockCapableElement.requestPointerLock === "function") {
-        const pointerLockResult = pointerLockCapableElement.requestPointerLock();
-
-        if (pointerLockResult instanceof Promise) {
-          pointerLockResult.catch(() => {
-            this.context?.setRuntimeMessage(
-              "Pointer lock request was denied. Drag orbit remains available in Third Person."
-            );
-          });
-        }
-      }
+      this.requestPointerLock();
     }
 
     if (
@@ -1024,8 +1098,17 @@ export class ThirdPersonNavigationController implements NavigationController {
   };
 
   private handlePointerLockChange = () => {
+    const wasPointerLocked = this.pointerLocked;
     this.suppressNextPointerLockError = false;
     this.syncPointerLockState();
+
+    if (
+      wasPointerLocked &&
+      !this.pointerLocked &&
+      this.context?.handleThirdPersonPointerLockReleased?.() === true
+    ) {
+      this.requestPointerLock();
+    }
   };
 
   private handlePointerLockError = () => {
