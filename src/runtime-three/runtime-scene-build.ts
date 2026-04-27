@@ -1839,7 +1839,9 @@ export function buildRuntimeSceneFromDocument(
   assertRuntimeSceneBuildable(document, {
     navigationMode,
     loadedModelAssets: options.loadedModelAssets,
-    projectDocument: options.projectDocument
+    ...(options.projectDocument === undefined
+      ? {}
+      : { projectDocument: options.projectDocument })
   });
 
   const enabledBrushes = Object.values(document.brushes).filter(
