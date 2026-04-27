@@ -1084,6 +1084,12 @@ describe("buildRuntimeSceneFromDocument", () => {
       },
       yawDegrees: 90,
       navigationMode: "firstPerson",
+      interactionReachMeters: playerStart.interactionReachMeters,
+      interactionAngleDegrees: playerStart.interactionAngleDegrees,
+      allowLookInputTargetSwitch: playerStart.allowLookInputTargetSwitch,
+      targetButtonCyclesActiveTarget:
+        playerStart.targetButtonCyclesActiveTarget,
+      invertMouseCameraHorizontal: playerStart.invertMouseCameraHorizontal,
       movement: {
         templateKind: "default",
         moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
