@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { createPlayerStartInputBindings } from "../../src/entities/entity-instances";
-import { resolvePlayerStartPauseInput } from "../../src/runtime-three/player-input-bindings";
+import {
+  resolvePlayerStartInteractInput,
+  resolvePlayerStartPauseInput
+} from "../../src/runtime-three/player-input-bindings";
 
 function createMockGamepad(pressedButtons: number[] = []): Gamepad {
   return {
@@ -47,6 +50,37 @@ describe("player-input-bindings pause input", () => {
     expect(
       resolvePlayerStartPauseInput(new Set<string>(), bindings, [
         createMockGamepad([9])
+      ])
+    ).toBe(1);
+  });
+});
+
+describe("player-input-bindings interact input", () => {
+  it("resolves authored keyboard interact bindings", () => {
+    const bindings = createPlayerStartInputBindings({
+      keyboard: {
+        interact: "KeyE"
+      }
+    });
+
+    expect(resolvePlayerStartInteractInput(new Set(["MouseLeft"]), bindings, [])).toBe(
+      0
+    );
+    expect(resolvePlayerStartInteractInput(new Set(["KeyE"]), bindings, [])).toBe(
+      1
+    );
+  });
+
+  it("resolves the authored gamepad interact binding from the standard west button", () => {
+    const bindings = createPlayerStartInputBindings({
+      gamepad: {
+        interact: "buttonWest"
+      }
+    });
+
+    expect(
+      resolvePlayerStartInteractInput(new Set<string>(), bindings, [
+        createMockGamepad([2])
       ])
     ).toBe(1);
   });
