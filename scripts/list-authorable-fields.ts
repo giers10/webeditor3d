@@ -155,6 +155,10 @@ const TYPED_ARRAY_TYPE_NAMES = new Set([
   "Uint16Array",
   "Uint32Array"
 ]);
+const OPAQUE_EXTERNAL_TYPE_NAMES = new Set([
+  "HTMLCanvasElement",
+  "PerspectiveCamera"
+]);
 
 const repoRoot = process.cwd();
 const configPath = ts.findConfigFile(repoRoot, ts.sys.fileExists, "tsconfig.json");
@@ -338,17 +342,25 @@ function isRepoSourceFile(fileName: string): boolean {
   );
 }
 
-function isExternalObjectType(type: ts.Type): boolean {
+function isOpaqueExternalObjectType(type: ts.Type): boolean {
   const normalizedType = withoutNullish(type);
   const symbol = normalizedType.aliasSymbol ?? normalizedType.symbol;
+  const symbolName = String(symbol?.escapedName ?? "");
   const declarations = symbol?.declarations ?? [];
 
   if (declarations.length === 0) {
     return false;
   }
 
-  return declarations.every(
-    (declaration) => !isRepoSourceFile(declaration.getSourceFile().fileName)
+  return (
+    OPAQUE_EXTERNAL_TYPE_NAMES.has(symbolName) ||
+    declarations.some((declaration) => {
+      const fileName = declaration.getSourceFile().fileName;
+      return (
+        fileName.includes(`${path.sep}node_modules${path.sep}`) ||
+        fileName.endsWith(`${path.sep}lib.dom.d.ts`)
+      );
+    })
   );
 }
 
@@ -536,7 +548,7 @@ function collectFields(
     return;
   }
 
-  if (isExternalObjectType(normalizedType)) {
+  if (isOpaqueExternalObjectType(normalizedType)) {
     entries.push({
       path: currentPath,
       condition: options.condition
