@@ -280,32 +280,6 @@ function isPlayerInsideTriggerVolume(
   );
 }
 
-function raySphereHitDistance(
-  origin: Vec3,
-  direction: Vec3,
-  center: Vec3,
-  radius: number
-): number | null {
-  const offset = subtractVec3(origin, center);
-  const halfB = dotVec3(offset, direction);
-  const c = dotVec3(offset, offset) - radius * radius;
-  const discriminant = halfB * halfB - c;
-
-  if (discriminant < 0) {
-    return null;
-  }
-
-  const discriminantRoot = Math.sqrt(discriminant);
-  const nearestHit = -halfB - discriminantRoot;
-
-  if (nearestHit >= 0) {
-    return nearestHit;
-  }
-
-  const farHit = -halfB + discriminantRoot;
-  return farHit >= 0 ? 0 : null;
-}
-
 function resolveTeleportTarget(
   runtimeScene: RuntimeSceneDefinition,
   entityId: string
@@ -472,7 +446,6 @@ interface RuntimeInteractionTargetSource {
   acquisitionRange: number;
   horizontalRadius: number;
   bounds?: { min: Vec3; max: Vec3 };
-  targetRadius?: number;
 }
 
 interface Vec2 {
@@ -554,8 +527,7 @@ function collectRuntimeInteractionTargetSources(
       distance,
       range: interactable.radius,
       acquisitionRange,
-      horizontalRadius: targetRadius,
-      targetRadius
+      horizontalRadius: targetRadius
     });
   }
 
@@ -751,43 +723,6 @@ export function resolveStableRuntimeTargetProposal(
   }
 
   return best;
-}
-
-function updateBestPrompt(
-  currentBestPrompt: RuntimeInteractionPrompt | null,
-  currentBestHitDistance: number,
-  candidateEntityId: string,
-  candidatePrompt: string,
-  candidateDistance: number,
-  candidateRange: number,
-  candidateHitDistance: number
-): { prompt: RuntimeInteractionPrompt | null; hitDistance: number } {
-  const nextPrompt: RuntimeInteractionPrompt = {
-    sourceEntityId: candidateEntityId,
-    prompt: candidatePrompt,
-    distance: candidateDistance,
-    range: candidateRange
-  };
-
-  if (
-    candidateHitDistance < currentBestHitDistance ||
-    (candidateHitDistance === currentBestHitDistance &&
-      (currentBestPrompt === null ||
-        candidateDistance < currentBestPrompt.distance ||
-        (candidateDistance === currentBestPrompt.distance &&
-          candidateEntityId.localeCompare(currentBestPrompt.sourceEntityId) <
-            0)))
-  ) {
-    return {
-      prompt: nextPrompt,
-      hitDistance: candidateHitDistance
-    };
-  }
-
-  return {
-    prompt: currentBestPrompt,
-    hitDistance: currentBestHitDistance
-  };
 }
 
 export class RuntimeInteractionSystem {
