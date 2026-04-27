@@ -325,9 +325,9 @@ export class EditorSimulationController {
 
     try {
       const runtimeScene = this.buildScene(this.document, {
-          loadedModelAssets: this.loadedModelAssets,
-          runtimeClock: this.currentClock
-        });
+        loadedModelAssets: this.loadedModelAssets,
+        runtimeClock: this.currentClock
+      });
       const syncContext = createRuntimeScheduleSyncContext(runtimeScene);
 
       this.runtimeScene = syncRuntimeSceneToClock(
