@@ -1,5 +1,4 @@
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
 interface AuthorableRoot {
@@ -134,10 +133,7 @@ const DISCRIMINATOR_CANDIDATES = [
   "kind"
 ] as const;
 
-const repoRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  ".."
-);
+const repoRoot = process.cwd();
 const configPath = ts.findConfigFile(repoRoot, ts.sys.fileExists, "tsconfig.json");
 
 if (configPath === undefined) {
