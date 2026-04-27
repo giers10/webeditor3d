@@ -254,7 +254,7 @@ describe("Player Start inspector", () => {
     });
   });
 
-  it("persists the authored interaction reach for a selected Player Start", async () => {
+  it("persists the authored interaction sector settings for a selected Player Start", async () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-interaction-reach",
       name: "Interaction Reach"
@@ -284,8 +284,10 @@ describe("Player Start inspector", () => {
     const reachInput = await screen.findByTestId(
       "player-start-interaction-reach"
     );
+    const angleInput = screen.getByTestId("player-start-interaction-angle");
 
     expect(reachInput).toHaveValue(1.5);
+    expect(angleInput).toHaveValue(30);
 
     act(() => {
       fireEvent.change(reachInput, {
@@ -293,13 +295,20 @@ describe("Player Start inspector", () => {
           value: "3.2"
         }
       });
+      fireEvent.change(angleInput, {
+        target: {
+          value: "42"
+        }
+      });
       fireEvent.blur(reachInput);
+      fireEvent.blur(angleInput);
     });
 
     await waitFor(() => {
       expect(store.getState().document.entities[playerStart.id]).toMatchObject({
         kind: "playerStart",
-        interactionReachMeters: 3.2
+        interactionReachMeters: 3.2,
+        interactionAngleDegrees: 42
       });
     });
   });
