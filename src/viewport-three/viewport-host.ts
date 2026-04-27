@@ -5697,7 +5697,9 @@ export class ViewportHost {
       renderObjects.light.color.set(spotLight.colorHex);
       renderObjects.light.intensity = spotLight.intensity;
       renderObjects.light.distance = spotLight.distance;
-      renderObjects.light.angle = (spotLight.angleDegrees * Math.PI) / 180;
+      if (renderObjects.light instanceof SpotLight) {
+        renderObjects.light.angle = (spotLight.angleDegrees * Math.PI) / 180;
+      }
     }
   }
 
@@ -5769,7 +5771,13 @@ export class ViewportHost {
         this.rebuildEntityMarkerForId(runtimeNpc.entityId);
       }
 
-      this.entityRenderObjects.get(runtimeNpc.entityId)?.group.visible = true;
+      const nextRenderObjects = this.entityRenderObjects.get(
+        runtimeNpc.entityId
+      );
+
+      if (nextRenderObjects !== undefined) {
+        nextRenderObjects.group.visible = true;
+      }
       this.applyEntityRenderObjectTransform({
         ...authoredEntity,
         position: runtimeNpc.position,
