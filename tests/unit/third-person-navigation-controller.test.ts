@@ -179,8 +179,10 @@ describe("ThirdPersonNavigationController", () => {
     const { context, domElement } = createRuntimeControllerContext(playerStart);
     const controller = new ThirdPersonNavigationController();
     const controllerInternals = controller as unknown as {
+      pointerLocked: boolean;
       handleMouseMove(event: MouseEvent): void;
     };
+    const requestPointerLock = vi.fn();
     const mouseMoveEvent = new MouseEvent("mousemove");
 
     Object.defineProperty(mouseMoveEvent, "movementX", {
@@ -191,13 +193,15 @@ describe("ThirdPersonNavigationController", () => {
       configurable: true,
       value: 0
     });
-    Object.defineProperty(document, "pointerLockElement", {
+    Object.defineProperty(domElement, "requestPointerLock", {
       configurable: true,
-      get: () => domElement
+      value: requestPointerLock
     });
 
     controller.activate(context);
-    document.dispatchEvent(new Event("pointerlockchange"));
+    expect(requestPointerLock).toHaveBeenCalledTimes(1);
+
+    controllerInternals.pointerLocked = true;
     controllerInternals.handleMouseMove(mouseMoveEvent);
     controller.update(0);
 
