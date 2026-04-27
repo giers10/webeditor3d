@@ -551,17 +551,11 @@ describe("RuntimeInteractionSystem", () => {
         },
         {
           x: 0,
-          y: 1.6,
-          z: 0
+          y: 0,
+          z: 1
         },
-        [
-          {
-            x: 0,
-            y: 0,
-            z: 1
-          }
-        ],
         2,
+        30,
         runtimeScene
       )
     ).toEqual({
@@ -579,18 +573,12 @@ describe("RuntimeInteractionSystem", () => {
           z: 0
         },
         {
-          x: 0,
-          y: 1.6,
+          x: 1,
+          y: 0,
           z: 0
         },
-        [
-          {
-            x: 1,
-            y: 0,
-            z: 0
-          }
-        ],
         2,
+        30,
         runtimeScene
       )
     ).toBeNull();
@@ -618,17 +606,11 @@ describe("RuntimeInteractionSystem", () => {
         },
         {
           x: 0,
-          y: 1.6,
-          z: -2
+          y: 0,
+          z: 1
         },
-        [
-          {
-            x: 0,
-            y: 0,
-            z: 1
-          }
-        ],
         2,
+        30,
         runtimeScene
       )
     ).toEqual({
@@ -878,17 +860,11 @@ describe("RuntimeInteractionSystem", () => {
       },
       {
         x: 0,
-        y: 1.6,
-        z: 0
+        y: 0,
+        z: 1
       },
-      [
-        {
-          x: 0,
-          y: 0,
-          z: 1
-        }
-      ],
       2,
+      30,
       runtimeScene
     );
 
@@ -1193,17 +1169,11 @@ describe("RuntimeInteractionSystem", () => {
       },
       {
         x: 0,
-        y: 1.6,
-        z: 0
+        y: 0,
+        z: 1
       },
-      [
-        {
-          x: 0,
-          y: 0,
-          z: 1
-        }
-      ],
       2,
+      30,
       runtimeScene
     );
 
@@ -1260,17 +1230,11 @@ describe("RuntimeInteractionSystem", () => {
         },
         {
           x: 0,
-          y: 1.6,
-          z: 0
+          y: 0,
+          z: 1
         },
-        [
-          {
-            x: 0,
-            y: 0,
-            z: 1
-          }
-        ],
         2,
+        30,
         runtimeScene
       )
     ).toBeNull();
@@ -1314,17 +1278,11 @@ describe("RuntimeInteractionSystem", () => {
         },
         {
           x: 0,
-          y: 1.6,
-          z: 0
+          y: 0,
+          z: 1
         },
-        [
-          {
-            x: 0,
-            y: 0,
-            z: 1
-          }
-        ],
         2,
+        30,
         runtimeScene
       )
     ).toEqual({
