@@ -384,9 +384,148 @@ describe("ViewportCanvas", () => {
       expect(viewportHostInstances).toHaveLength(1);
       expect(viewportHostInstances[0].updateSimulation).toHaveBeenCalledWith(
         editorSimulationFrame.runtimeScene,
-        editorSimulationFrame.clock
+        editorSimulationFrame.clock,
+        {
+          sceneVersion: editorSimulationFrame.sceneVersion,
+          frameVersion: editorSimulationFrame.frameVersion
+        }
       );
     });
+  });
+
+  it("routes ordinary editor simulation frames through the incremental host update", async () => {
+    const sceneDocument = createEmptySceneDocument();
+    sceneDocument.time.dayLengthMinutes = 24;
+    const editorSimulationController = new EditorSimulationController({
+      requestAnimationFrame: () => 1,
+      cancelAnimationFrame: () => undefined
+    });
+    editorSimulationController.updateInputs({
+      document: sceneDocument,
+      loadedModelAssets: {}
+    });
+
+    render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationController={editorSimulationController}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "none" }}
+        activeSelectionId={null}
+        terrainBrushState={null}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={createDefaultViewportPanelCameraState()}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(viewportHostInstances).toHaveLength(1);
+    });
+
+    const viewportHost = viewportHostInstances[0];
+    viewportHost.updateSimulation.mockClear();
+    viewportHost.updateSimulationFrame.mockClear();
+
+    act(() => {
+      editorSimulationController.play();
+      editorSimulationController.advance(0.25);
+    });
+
+    expect(viewportHost.updateSimulation).not.toHaveBeenCalled();
+    expect(viewportHost.updateSimulationFrame).toHaveBeenCalled();
+  });
+
+  it("routes editor simulation scene-version changes through the structural host update", async () => {
+    const sceneDocument = createEmptySceneDocument();
+    const editorSimulationController = new EditorSimulationController();
+    editorSimulationController.updateInputs({
+      document: sceneDocument,
+      loadedModelAssets: {}
+    });
+
+    render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationController={editorSimulationController}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "none" }}
+        activeSelectionId={null}
+        terrainBrushState={null}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={createDefaultViewportPanelCameraState()}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(viewportHostInstances).toHaveLength(1);
+    });
+
+    const viewportHost = viewportHostInstances[0];
+    viewportHost.updateSimulation.mockClear();
+    viewportHost.updateSimulationFrame.mockClear();
+
+    const nextSceneDocument = {
+      ...sceneDocument,
+      name: "Structural Simulation Scene"
+    };
+
+    act(() => {
+      editorSimulationController.updateInputs({
+        document: nextSceneDocument,
+        loadedModelAssets: {}
+      });
+    });
+
+    expect(viewportHost.updateSimulation).toHaveBeenCalledTimes(1);
+    expect(viewportHost.updateSimulationFrame).not.toHaveBeenCalled();
   });
 
   it("shows the surface snap translate overlay when the active transform enables it", () => {
