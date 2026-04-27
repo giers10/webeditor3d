@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:browser": "playwright test",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "list:fields": "tsc scripts/list-authorable-fields.ts --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --skipLibCheck --esModuleInterop --allowSyntheticDefaultImports --types node --outDir .tmp/list-authorable-fields && node .tmp/list-authorable-fields/list-authorable-fields.js"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.19.3",

@@ -576,8 +576,8 @@ describe("validateSceneDocument", () => {
           navigationMode: "invalidMode" as unknown as "firstPerson",
           interactionReachMeters: Number.NaN,
           interactionAngleDegrees: Number.NaN,
-          allowLookInputTargetSwitch: "yes",
-          targetButtonCyclesActiveTarget: 1,
+          allowLookInputTargetSwitch: "yes" as unknown as boolean,
+          targetButtonCyclesActiveTarget: 1 as unknown as boolean,
           movementTemplate: {
             kind: "invalidTemplate",
             moveSpeed: 0,
