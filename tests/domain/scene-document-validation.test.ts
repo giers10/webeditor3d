@@ -705,6 +705,7 @@ describe("validateSceneDocument", () => {
           interactionAngleDegrees: Number.NaN,
           allowLookInputTargetSwitch: "yes" as unknown as boolean,
           targetButtonCyclesActiveTarget: 1 as unknown as boolean,
+          invertMouseCameraHorizontal: "no" as unknown as boolean,
           movementTemplate: {
             kind: "invalidTemplate",
             moveSpeed: 0,
