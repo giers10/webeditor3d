@@ -3889,7 +3889,7 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
-  it("does not consume Escape for clear-target while pointer lock is active", () => {
+  it("reserves Escape for pointer-lock release before gameplay bindings", () => {
     const host = new RuntimeHost({
       enableRendering: false
     });
@@ -3897,12 +3897,18 @@ describe("RuntimeHost", () => {
       domElement: HTMLCanvasElement;
       runtimeScene: unknown;
       sceneReady: boolean;
+      pressedKeys: Set<string>;
       activeRuntimeTargetReference: {
         kind: "npc" | "interactable";
         entityId: string;
       } | null;
-      handleRuntimeKeyDown(event: KeyboardEvent): void;
+      handlePointerLockEscapeKeyDown(event: KeyboardEvent): void;
+      updateClearTargetInputState(): void;
     };
+    let pointerLockElement: Element | null = hostInternals.domElement;
+    const exitPointerLock = vi.fn(() => {
+      pointerLockElement = null;
+    });
     const escapeEvent = {
       code: "Escape",
       defaultPrevented: false,
@@ -3917,7 +3923,11 @@ describe("RuntimeHost", () => {
 
     Object.defineProperty(document, "pointerLockElement", {
       configurable: true,
-      get: () => hostInternals.domElement
+      get: () => pointerLockElement
+    });
+    Object.defineProperty(document, "exitPointerLock", {
+      configurable: true,
+      value: exitPointerLock
     });
 
     hostInternals.runtimeScene = {
@@ -3940,19 +3950,106 @@ describe("RuntimeHost", () => {
       entityId: "npc-active"
     };
 
-    hostInternals.handleRuntimeKeyDown(escapeEvent);
+    hostInternals.handlePointerLockEscapeKeyDown(escapeEvent);
+    hostInternals.updateClearTargetInputState();
 
     expect(hostInternals.activeRuntimeTargetReference).toEqual({
       kind: "npc",
       entityId: "npc-active"
     });
+    expect(hostInternals.pressedKeys.has("Escape")).toBe(false);
+    expect(exitPointerLock).toHaveBeenCalledTimes(1);
     expect(escapeEvent.preventDefault).not.toHaveBeenCalled();
-    expect(escapeEvent.stopImmediatePropagation).not.toHaveBeenCalled();
+    expect(escapeEvent.stopImmediatePropagation).toHaveBeenCalledTimes(1);
 
     Object.defineProperty(document, "pointerLockElement", {
       configurable: true,
       get: () => null
     });
+    host.dispose();
+  });
+
+  it("reserves Escape immediately after browser pointer-lock release", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      controllerContext: {
+        setPlayerControllerTelemetry(telemetry: unknown): void;
+      };
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeRuntimeTargetReference: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      handlePointerLockEscapeKeyDown(event: KeyboardEvent): void;
+      updateClearTargetInputState(): void;
+    };
+    const exitPointerLock = vi.fn();
+    const escapeEvent = {
+      code: "Escape",
+      defaultPrevented: false,
+      repeat: false,
+      altKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      target: null,
+      preventDefault: vi.fn(),
+      stopImmediatePropagation: vi.fn()
+    } as unknown as KeyboardEvent;
+
+    Object.defineProperty(document, "pointerLockElement", {
+      configurable: true,
+      get: () => null
+    });
+    Object.defineProperty(document, "exitPointerLock", {
+      configurable: true,
+      value: exitPointerLock
+    });
+
+    hostInternals.runtimeScene = {
+      playerInputBindings: {
+        keyboard: {
+          clearTarget: "Escape",
+          pauseTime: "KeyP"
+        }
+      },
+      entities: {
+        cameraRigs: [],
+        interactables: [],
+        npcs: []
+      },
+      interactionLinks: []
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+    hostInternals.controllerContext.setPlayerControllerTelemetry({
+      pointerLocked: true,
+      hooks: {
+        audio: null
+      }
+    });
+    hostInternals.controllerContext.setPlayerControllerTelemetry({
+      pointerLocked: false,
+      hooks: {
+        audio: null
+      }
+    });
+
+    hostInternals.handlePointerLockEscapeKeyDown(escapeEvent);
+    hostInternals.updateClearTargetInputState();
+
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-active"
+    });
+    expect(exitPointerLock).not.toHaveBeenCalled();
+    expect(escapeEvent.preventDefault).not.toHaveBeenCalled();
+    expect(escapeEvent.stopImmediatePropagation).toHaveBeenCalledTimes(1);
     host.dispose();
   });
 
