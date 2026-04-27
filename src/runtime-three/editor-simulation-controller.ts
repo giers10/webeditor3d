@@ -354,9 +354,13 @@ export class EditorSimulationController {
     }
 
     try {
-      this.runtimeScheduleSyncContext ??= createRuntimeScheduleSyncContext(
-        this.runtimeScene
-      );
+      if (
+        this.runtimeScheduleSyncContext?.runtimeScene !== this.runtimeScene
+      ) {
+        this.runtimeScheduleSyncContext = createRuntimeScheduleSyncContext(
+          this.runtimeScene
+        );
+      }
       syncRuntimeSceneToClock(
         this.runtimeScene,
         this.currentClock,
