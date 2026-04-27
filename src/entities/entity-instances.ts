@@ -47,6 +47,7 @@ export interface PlayerStartEntity extends PositionedEntity {
   yawDegrees: number;
   navigationMode: PlayerStartNavigationMode;
   interactionReachMeters: number;
+  interactionAngleDegrees: number;
   movementTemplate: PlayerStartMovementTemplate;
   inputBindings: PlayerStartInputBindings;
   collider: PlayerStartColliderSettings;
@@ -554,6 +555,7 @@ export const DEFAULT_PLAYER_START_EYE_HEIGHT = 1.6;
 export const DEFAULT_PLAYER_START_CAPSULE_RADIUS = 0.3;
 export const DEFAULT_PLAYER_START_CAPSULE_HEIGHT = 1.8;
 export const DEFAULT_PLAYER_START_INTERACTION_REACH_METERS = 1.5;
+export const DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES = 30;
 export const DEFAULT_PLAYER_START_BOX_SIZE: Vec3 = {
   x: 0.6,
   y: 1.8,
@@ -1847,6 +1849,7 @@ export function createPlayerStartEntity(
       | "yawDegrees"
       | "navigationMode"
       | "interactionReachMeters"
+      | "interactionAngleDegrees"
     >
   > & {
     movementTemplate?: PlayerStartMovementTemplateOverrides;
@@ -1861,6 +1864,9 @@ export function createPlayerStartEntity(
   const interactionReachMeters =
     overrides.interactionReachMeters ??
     DEFAULT_PLAYER_START_INTERACTION_REACH_METERS;
+  const interactionAngleDegrees =
+    overrides.interactionAngleDegrees ??
+    DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES;
   const movementTemplate = createPlayerStartMovementTemplate(
     overrides.movementTemplate
   );
@@ -1883,6 +1889,15 @@ export function createPlayerStartEntity(
     interactionReachMeters,
     "Player Start interaction reach"
   );
+  if (
+    !Number.isFinite(interactionAngleDegrees) ||
+    interactionAngleDegrees <= 0 ||
+    interactionAngleDegrees >= 180
+  ) {
+    throw new Error(
+      "Player Start interaction angle must be a finite number greater than zero and less than 180."
+    );
+  }
 
   return {
     id: overrides.id ?? createOpaqueId("entity-player-start"),
@@ -1894,6 +1909,7 @@ export function createPlayerStartEntity(
     yawDegrees: normalizeYawDegrees(yawDegrees),
     navigationMode,
     interactionReachMeters,
+    interactionAngleDegrees,
     movementTemplate,
     inputBindings,
     collider
@@ -2495,6 +2511,7 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
         left.yawDegrees === typedRight.yawDegrees &&
         left.navigationMode === typedRight.navigationMode &&
         left.interactionReachMeters === typedRight.interactionReachMeters &&
+        left.interactionAngleDegrees === typedRight.interactionAngleDegrees &&
         arePlayerStartMovementTemplatesEqual(
           left.movementTemplate,
           typedRight.movementTemplate
