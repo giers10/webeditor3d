@@ -9,18 +9,17 @@ import {
   type RuntimeClockState
 } from "./runtime-project-time";
 import {
-  applyRuntimeProjectScheduleToControlState,
-  resolveRuntimeProjectScheduleState
-} from "./runtime-project-scheduler";
-import {
-  applyActorScheduleStateToNpcDefinition,
-  buildRuntimeNpcCollider,
   buildRuntimeSceneFromDocument,
-  createRuntimeNpcFromDefinition,
   type BuildRuntimeSceneOptions,
   type RuntimeSceneDefinition
 } from "./runtime-scene-build";
 import { applyResolvedControlStateToRuntimeScene } from "./runtime-scene-editor-simulation";
+import {
+  commitRuntimeScheduleSyncResult,
+  createRuntimeScheduleSyncContext,
+  syncRuntimeSceneScheduleToClock,
+  type RuntimeScheduleSyncContext
+} from "./runtime-schedule-sync";
 
 const DEFAULT_EDITOR_SIMULATION_UI_SNAPSHOT_INTERVAL_SECONDS = 1 / 12;
 const MAX_EDITOR_SIMULATION_FRAME_DT_SECONDS = 0.25;
@@ -69,59 +68,20 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Editor simulation failed.";
 }
 
-function createRuntimePathLookup(
-  runtimeScene: RuntimeSceneDefinition
-): ReadonlyMap<string, RuntimeSceneDefinition["paths"][number]> {
-  return new Map(runtimeScene.paths.map((path) => [path.id, path]));
-}
-
-function isNonNull<TValue>(value: TValue | null): value is TValue {
-  return value !== null;
-}
-
 export function syncRuntimeSceneToClock(
   runtimeScene: RuntimeSceneDefinition,
-  clock: RuntimeClockState
+  clock: RuntimeClockState,
+  context: RuntimeScheduleSyncContext = createRuntimeScheduleSyncContext(
+    runtimeScene
+  )
 ): RuntimeSceneDefinition {
-  const nextResolvedScheduler = resolveRuntimeProjectScheduleState({
-    scheduler: runtimeScene.scheduler.document,
-    sequences: runtimeScene.sequences,
-    actorIds: runtimeScene.npcDefinitions.map((npc) => npc.actorId),
-    dayNumber: clock.dayCount + 1,
-    timeOfDayHours: clock.timeOfDayHours,
-    pathsById: createRuntimePathLookup(runtimeScene)
+  const syncResult = syncRuntimeSceneScheduleToClock({
+    runtimeScene,
+    clock,
+    context
   });
-  const actorStates = new Map(
-    nextResolvedScheduler.actors.map((actorState) => [
-      actorState.actorId,
-      actorState
-    ])
-  );
 
-  for (const npc of runtimeScene.npcDefinitions) {
-    applyActorScheduleStateToNpcDefinition(
-      npc,
-      actorStates.get(npc.actorId) ?? null
-    );
-  }
-
-  runtimeScene.entities.npcs = runtimeScene.npcDefinitions
-    .filter((npc) => npc.active)
-    .map((npc) => createRuntimeNpcFromDefinition(npc));
-  runtimeScene.colliders = [
-    ...runtimeScene.staticColliders,
-    ...runtimeScene.entities.npcs
-      .map((npc) => buildRuntimeNpcCollider(npc))
-      .filter(isNonNull)
-  ];
-
-  runtimeScene.scheduler.resolved = nextResolvedScheduler;
-  runtimeScene.control.resolved = applyRuntimeProjectScheduleToControlState(
-    runtimeScene.control.resolved,
-    nextResolvedScheduler,
-    runtimeScene.control.baselineResolved
-  );
-
+  commitRuntimeScheduleSyncResult(runtimeScene, syncResult);
   return applyResolvedControlStateToRuntimeScene(runtimeScene);
 }
 
@@ -147,6 +107,7 @@ export class EditorSimulationController {
   private document: SceneDocument | null = null;
   private loadedModelAssets: Record<string, LoadedModelAsset> | null = null;
   private runtimeScene: RuntimeSceneDefinition | null = null;
+  private runtimeScheduleSyncContext: RuntimeScheduleSyncContext | null = null;
   private currentClock: RuntimeClockState | null = null;
   private clockOverride: RuntimeClockState | null = null;
   private playing = false;
@@ -355,6 +316,7 @@ export class EditorSimulationController {
       this.currentClock === null
     ) {
       this.runtimeScene = null;
+      this.runtimeScheduleSyncContext = null;
       this.message = null;
       this.emitFrame();
       this.publishUiSnapshot(true);
@@ -362,16 +324,22 @@ export class EditorSimulationController {
     }
 
     try {
-      this.runtimeScene = syncRuntimeSceneToClock(
-        this.buildScene(this.document, {
+      const runtimeScene = this.buildScene(this.document, {
           loadedModelAssets: this.loadedModelAssets,
           runtimeClock: this.currentClock
-        }),
-        this.currentClock
+        });
+      const syncContext = createRuntimeScheduleSyncContext(runtimeScene);
+
+      this.runtimeScene = syncRuntimeSceneToClock(
+        runtimeScene,
+        this.currentClock,
+        syncContext
       );
+      this.runtimeScheduleSyncContext = syncContext;
       this.message = null;
     } catch (error) {
       this.runtimeScene = null;
+      this.runtimeScheduleSyncContext = null;
       this.message = getErrorMessage(error);
     }
 
@@ -386,10 +354,18 @@ export class EditorSimulationController {
     }
 
     try {
-      syncRuntimeSceneToClock(this.runtimeScene, this.currentClock);
+      this.runtimeScheduleSyncContext ??= createRuntimeScheduleSyncContext(
+        this.runtimeScene
+      );
+      syncRuntimeSceneToClock(
+        this.runtimeScene,
+        this.currentClock,
+        this.runtimeScheduleSyncContext
+      );
       this.message = null;
     } catch (error) {
       this.runtimeScene = null;
+      this.runtimeScheduleSyncContext = null;
       this.sceneVersion += 1;
       this.message = getErrorMessage(error);
     }
