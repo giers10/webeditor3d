@@ -687,9 +687,9 @@ export function isCameraRigRailPlacementMode(
 }
 
 export function isPlayerStartKeyboardBindingCode(
-  value: string
+  value: unknown
 ): value is PlayerStartKeyboardBindingCode {
-  return value.trim().length > 0;
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 export function isPlayerStartMouseBindingCode(
