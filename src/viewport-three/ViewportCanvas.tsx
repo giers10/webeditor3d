@@ -622,7 +622,7 @@ export function ViewportCanvas({
         </div>
       )}
 
-      {!isActivePanel ? null : (
+      {!isActivePanel || viewportMessage !== null ? null : (
         <ViewportTimeTransport
           panelId={panelId}
           editorSimulationPlaying={editorSimulationPlaying}
