@@ -486,8 +486,16 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
+    const wasPointerLocked = this.pointerLocked;
     const pointerLocked =
       document.pointerLockElement === this.context.domElement;
+
+    if (wasPointerLocked && !pointerLocked) {
+      this.pressedKeys.clear();
+      this.jumpPressed = false;
+      this.jumpHoldRemainingMs = 0;
+    }
+
     this.pointerLocked = pointerLocked;
     this.context.setRuntimeMessage(
       pointerLocked
