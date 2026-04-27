@@ -13357,11 +13357,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="stat-card">
                   <div className="label">Pointer Lock</div>
                   <div className="value">
-                    {activeNavigationMode === "firstPerson"
-                      ? firstPersonTelemetry?.pointerLocked
-                        ? "active"
-                        : "idle"
-                      : "not used"}
+                    {firstPersonTelemetry?.pointerLocked ? "active" : "idle"}
                   </div>
                 </div>
                 <div className="stat-card">
