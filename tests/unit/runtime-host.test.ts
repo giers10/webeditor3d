@@ -3889,6 +3889,58 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("clears the active target when third-person pointer lock drops on Escape", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      activeRuntimeTargetReference: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      controllerContext: {
+        setPlayerControllerTelemetry(telemetry: unknown): void;
+      };
+    };
+
+    hostInternals.runtimeScene = {
+      playerInputBindings: {
+        keyboard: {
+          clearTarget: "Escape"
+        }
+      },
+      entities: {
+        cameraRigs: [],
+        interactables: [],
+        npcs: []
+      }
+    } as never;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+
+    hostInternals.controllerContext.setPlayerControllerTelemetry({
+      pointerLocked: true,
+      hooks: {
+        audio: null
+      }
+    });
+    hostInternals.controllerContext.setPlayerControllerTelemetry({
+      pointerLocked: false,
+      hooks: {
+        audio: null
+      }
+    });
+
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    host.dispose();
+  });
+
   it("switches an active target once from directional screen-space look input", () => {
     const host = new RuntimeHost({
       enableRendering: false
