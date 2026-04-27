@@ -510,25 +510,23 @@ export class FirstPersonNavigationController implements NavigationController {
   };
 
   private handleMouseMove = (event: MouseEvent) => {
-    const context = this.context;
-
     if (
       !this.pointerLocked ||
-      context === null ||
-      context.isInputSuspended() === true ||
-      context.isCameraDrivenExternally() === true
+      this.context?.isInputSuspended() === true ||
+      this.context?.isCameraDrivenExternally() === true
     ) {
       return;
     }
 
     const horizontalMouseLookSign =
-      context.getRuntimeScene().playerStart?.invertMouseCameraHorizontal === true
+      this.context.getRuntimeScene().playerStart?.invertMouseCameraHorizontal ===
+      true
         ? -1
         : 1;
     const horizontalMovement = event.movementX * horizontalMouseLookSign;
 
     const targetLookResult =
-      context.handleRuntimeTargetLookInput?.({
+      this.context?.handleRuntimeTargetLookInput?.({
         horizontal: horizontalMovement,
         vertical: -event.movementY
       }) ?? null;
