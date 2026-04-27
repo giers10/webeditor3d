@@ -4904,7 +4904,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         })
       );
       if (options.resetEditorSimulation === true && !editorSimulationPlaying) {
-        setEditorSimulationClockOverride(null);
+        editorSimulationController.reset();
       }
       setStatusMessage(successMessage);
     } catch (error) {
