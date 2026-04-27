@@ -7,8 +7,15 @@ import {
 } from "../../src/document/scene-document";
 import {
   createPlayerStartEntity,
-  createSceneEntryEntity
+  createSceneEntryEntity,
+  createNpcEntity
 } from "../../src/entities/entity-instances";
+import {
+  createActorControlTargetRef,
+  createSetActorPresenceControlEffect
+} from "../../src/controls/control-surface";
+import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
+import { createProjectSequence } from "../../src/sequencer/project-sequences";
 
 const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
   const viewportHostInstances: Array<{
@@ -145,6 +152,11 @@ function createSceneTransitionProject() {
     },
     yawDegrees: 90
   });
+  const ana = createNpcEntity({
+    id: "entity-npc-ana-nanto",
+    actorId: "Ana Nanto"
+  });
+  const anaTarget = createActorControlTargetRef(ana.actorId);
   const housePlayerStart = createPlayerStartEntity({
     id: "entity-player-start-house",
     position: {
@@ -173,7 +185,8 @@ function createSceneTransitionProject() {
     [outdoorScene.id]: {
       ...outdoorScene,
       entities: {
-        [outdoorPlayerStart.id]: outdoorPlayerStart
+        [outdoorPlayerStart.id]: outdoorPlayerStart,
+        [ana.id]: ana
       }
     },
     [houseScene.id]: {
@@ -184,6 +197,29 @@ function createSceneTransitionProject() {
       }
     }
   };
+  projectDocument.sequences.sequences["sequence-ana-presence"] =
+    createProjectSequence({
+      id: "sequence-ana-presence",
+      title: "Ana Presence",
+      effects: [
+        {
+          stepClass: "held",
+          type: "controlEffect",
+          effect: createSetActorPresenceControlEffect({
+            target: anaTarget,
+            active: true
+          })
+        }
+      ]
+    });
+  projectDocument.scheduler.routines["routine-ana-presence"] =
+    createProjectScheduleRoutine({
+      id: "routine-ana-presence",
+      title: "Ana Presence",
+      target: anaTarget,
+      sequenceId: "sequence-ana-presence",
+      effects: []
+    });
 
   return projectDocument;
 }
