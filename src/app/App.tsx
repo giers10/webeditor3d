@@ -3447,7 +3447,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      if (event.code === "Escape") {
+      if (
+        event.code === "Escape" &&
+        playerStartKeyboardCaptureAction !== "clearTarget"
+      ) {
         setPlayerStartKeyboardCaptureAction(null);
         setStatusMessage("Cancelled Player Start key capture.");
         return;
@@ -8925,6 +8928,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         navigationMode,
         interactionReachMeters,
         interactionAngleDegrees,
+        allowLookInputTargetSwitch:
+          playerStartAllowLookInputTargetSwitchDraft,
+        targetButtonCyclesActiveTarget:
+          playerStartTargetButtonCyclesActiveTargetDraft,
         movementTemplate,
         inputBindings,
         collider: {
@@ -8956,6 +8963,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
+  };
+
+  const beginPlayerStartKeyboardCapture = (action: PlayerStartInputAction) => {
+    if (playerStartKeyboardCaptureAction === action) {
+      setPlayerStartKeyboardCaptureAction(null);
+      setStatusMessage("Cancelled Player Start key capture.");
+      return;
+    }
+
+    setPlayerStartKeyboardCaptureAction(action);
+    setStatusMessage(
+      action === "clearTarget"
+        ? `Press any key or mouse button for ${getPlayerStartInputActionLabel(action)}. Click the binding button again to cancel.`
+        : `Press any key or mouse button for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
+    );
   };
 
   const handlePlayerStartKeyboardBindingChange = (
