@@ -142,6 +142,39 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(context);
   });
 
+  it("clears held movement keys when pointer lock is released", () => {
+    const { context } = createRuntimeControllerContext();
+    const controller = new ThirdPersonNavigationController();
+    let pointerLockElement: Element | null = context.domElement;
+
+    Object.defineProperty(document, "pointerLockElement", {
+      configurable: true,
+      get: () => pointerLockElement
+    });
+
+    controller.activate(context);
+
+    const controllerInternals = controller as unknown as {
+      pressedKeys: Set<string>;
+      handleKeyDown(event: KeyboardEvent): void;
+      handlePointerLockChange(): void;
+    };
+    controllerInternals.handleKeyDown(
+      new KeyboardEvent("keydown", { code: "ArrowUp" })
+    );
+
+    expect(controllerInternals.pressedKeys.has("ArrowUp")).toBe(true);
+
+    pointerLockElement = null;
+    controllerInternals.handlePointerLockChange();
+
+    expect(controllerInternals.pressedKeys.size).toBe(0);
+
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
   it("uses the gamepad right stick for third-person camera orbit", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();

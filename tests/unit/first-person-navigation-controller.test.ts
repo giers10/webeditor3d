@@ -162,6 +162,39 @@ describe("FirstPersonNavigationController", () => {
     expect(exitPointerLockSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("clears held movement keys when pointer lock is released", () => {
+    const { context, domElement } = createRuntimeControllerContext();
+    const controller = new FirstPersonNavigationController();
+    let pointerLockElement: Element | null = domElement;
+
+    Object.defineProperty(document, "pointerLockElement", {
+      configurable: true,
+      get: () => pointerLockElement
+    });
+
+    controller.activate(context);
+
+    const controllerInternals = controller as unknown as {
+      pressedKeys: Set<string>;
+      handleKeyDown(event: KeyboardEvent): void;
+      handlePointerLockChange(): void;
+    };
+    controllerInternals.handleKeyDown(
+      new KeyboardEvent("keydown", { code: "KeyW" })
+    );
+
+    expect(controllerInternals.pressedKeys.has("KeyW")).toBe(true);
+
+    pointerLockElement = null;
+    controllerInternals.handlePointerLockChange();
+
+    expect(controllerInternals.pressedKeys.size).toBe(0);
+
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
   it("uses authored gamepad bindings instead of the hardcoded stick mapping", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-custom-gamepad",
