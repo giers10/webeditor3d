@@ -335,8 +335,7 @@ export function ViewportCanvas({
           : createWorldBackgroundStyle(
               world.background,
               world.background.mode === "image"
-                ? (loadedImageAssets[world.background.assetId]?.previewUrl ??
-                  null)
+                ? (loadedImageAssets[world.background.assetId]?.previewUrl ?? null)
                 : null,
               world.background.mode === "shader"
                 ? {
