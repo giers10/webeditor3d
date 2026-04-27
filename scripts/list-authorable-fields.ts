@@ -1,7 +1,9 @@
 import path from "node:path";
 import ts from "typescript";
 
-interface AuthorableRoot {
+type InventoryScope = "authorable" | "runtime" | "all";
+
+interface FieldRoot {
   title: string;
   file: string;
   typeName: string;
@@ -14,7 +16,14 @@ interface FieldEntry {
   condition: string | null;
 }
 
-const ROOTS: readonly AuthorableRoot[] = [
+interface TraversalOptions {
+  condition: string | null;
+  skipProperties: ReadonlySet<string>;
+  includeIdentityProperties: boolean;
+  skipPropertiesForThisObject?: ReadonlySet<string>;
+}
+
+const AUTHORABLE_ROOTS: readonly FieldRoot[] = [
   {
     title: "Project",
     file: "src/document/scene-document.ts",
@@ -121,6 +130,8 @@ const ROOTS: readonly AuthorableRoot[] = [
   }
 ];
 
+const RUNTIME_SOURCE_DIRECTORIES = ["src/runtime-three"] as const;
+const RUNTIME_SOURCE_FILES = ["src/controls/control-surface.ts"] as const;
 const IDENTITY_PROPERTIES = new Set(["id", "version"]);
 const DISCRIMINATOR_CANDIDATES = [
   "mode",
@@ -132,6 +143,17 @@ const DISCRIMINATOR_CANDIDATES = [
   "format",
   "kind"
 ] as const;
+const TYPED_ARRAY_TYPE_NAMES = new Set([
+  "Float32Array",
+  "Float64Array",
+  "Int8Array",
+  "Int16Array",
+  "Int32Array",
+  "Uint8Array",
+  "Uint8ClampedArray",
+  "Uint16Array",
+  "Uint32Array"
+]);
 
 const repoRoot = process.cwd();
 const configPath = ts.findConfigFile(repoRoot, ts.sys.fileExists, "tsconfig.json");
@@ -157,7 +179,7 @@ const program = ts.createProgram(parsedConfig.fileNames, {
 });
 const checker = program.getTypeChecker();
 
-function getRootType(root: AuthorableRoot): ts.Type {
+function getRootType(root: FieldRoot): ts.Type {
   const sourceFile = program.getSourceFile(path.join(repoRoot, root.file));
 
   if (sourceFile === undefined) {
@@ -180,6 +202,79 @@ function getRootType(root: AuthorableRoot): ts.Type {
   }
 
   return checker.getTypeAtLocation(foundName);
+}
+
+function isExportedDeclaration(node: ts.Node): boolean {
+  return (
+    ts.canHaveModifiers(node) &&
+    (ts.getModifiers(node)?.some(
+      (modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword
+    ) ??
+      false)
+  );
+}
+
+function formatTypeTitle(typeName: string): string {
+  return typeName
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .trim();
+}
+
+function isRuntimeSourceFile(sourceFile: ts.SourceFile): boolean {
+  const relativePath = path.relative(repoRoot, sourceFile.fileName);
+
+  return (
+    RUNTIME_SOURCE_FILES.includes(relativePath as (typeof RUNTIME_SOURCE_FILES)[number]) ||
+    RUNTIME_SOURCE_DIRECTORIES.some((directory) =>
+      relativePath.startsWith(`${directory}${path.sep}`)
+    )
+  );
+}
+
+function discoverRuntimeRoots(): FieldRoot[] {
+  const roots: FieldRoot[] = [];
+
+  for (const sourceFile of program.getSourceFiles()) {
+    if (
+      sourceFile.isDeclarationFile ||
+      sourceFile.fileName.includes(`${path.sep}node_modules${path.sep}`) ||
+      !isRuntimeSourceFile(sourceFile)
+    ) {
+      continue;
+    }
+
+    const relativePath = path.relative(repoRoot, sourceFile.fileName);
+
+    for (const statement of sourceFile.statements) {
+      if (
+        !isExportedDeclaration(statement) ||
+        (!ts.isInterfaceDeclaration(statement) && !ts.isTypeAliasDeclaration(statement)) ||
+        !statement.name.text.startsWith("Runtime")
+      ) {
+        continue;
+      }
+
+      const type = checker.getTypeAtLocation(statement.name);
+
+      if (isLeafType(type)) {
+        continue;
+      }
+
+      roots.push({
+        title: formatTypeTitle(statement.name.text),
+        file: relativePath,
+        typeName: statement.name.text,
+        path: `runtime.${statement.name.text}`
+      });
+    }
+  }
+
+  return roots.sort(
+    (left, right) =>
+      left.file.localeCompare(right.file) ||
+      left.typeName.localeCompare(right.typeName)
+  );
 }
 
 function withoutNullish(type: ts.Type): ts.Type {
@@ -226,6 +321,12 @@ function getArrayElementType(type: ts.Type): ts.Type | null {
   }
 
   return checker.getTypeArguments(normalizedType as ts.TypeReference)[0] ?? null;
+}
+
+function isTypedArrayType(type: ts.Type): boolean {
+  const normalizedType = withoutNullish(type);
+  const typeName = checker.typeToString(normalizedType);
+  return TYPED_ARRAY_TYPE_NAMES.has(typeName);
 }
 
 function getRecordValueType(type: ts.Type): ts.Type | null {
@@ -279,13 +380,11 @@ function literalUnionLabels(type: ts.Type): string[] {
 function shouldSkipProperty(
   propertyName: string,
   propertyType: ts.Type | null,
-  options: {
-    skipProperties: ReadonlySet<string>;
-    skipPropertiesForThisObject?: ReadonlySet<string>;
-  }
+  options: TraversalOptions
 ): boolean {
   if (
-    IDENTITY_PROPERTIES.has(propertyName) ||
+    (!options.includeIdentityProperties &&
+      IDENTITY_PROPERTIES.has(propertyName)) ||
     options.skipProperties.has(propertyName) ||
     options.skipPropertiesForThisObject?.has(propertyName)
   ) {
@@ -296,7 +395,10 @@ function shouldSkipProperty(
     return false;
   }
 
-  return literalUnionLabels(propertyType).length === 1;
+  return (
+    !options.includeIdentityProperties &&
+    literalUnionLabels(propertyType).length === 1
+  );
 }
 
 function chooseDiscriminator(types: readonly ts.Type[]): string | null {
@@ -355,10 +457,7 @@ function collectFields(
   type: ts.Type,
   currentPath: string,
   entries: FieldEntry[],
-  options: {
-    condition: string | null;
-    skipProperties: ReadonlySet<string>;
-  }
+  options: TraversalOptions
 ): void {
   const normalizedType = withoutNullish(type);
 
@@ -374,6 +473,14 @@ function collectFields(
 
   if (arrayElementType !== null) {
     collectFields(arrayElementType, `${currentPath}[]`, entries, options);
+    return;
+  }
+
+  if (isTypedArrayType(normalizedType)) {
+    entries.push({
+      path: `${currentPath}[]`,
+      condition: options.condition
+    });
     return;
   }
 
@@ -396,10 +503,7 @@ function collectUnionFields(
   types: readonly ts.Type[],
   currentPath: string,
   entries: FieldEntry[],
-  options: {
-    condition: string | null;
-    skipProperties: ReadonlySet<string>;
-  }
+  options: TraversalOptions
 ): void {
   const objectTypes = types.filter((type) => !isLeafType(type));
 
@@ -415,9 +519,11 @@ function collectUnionFields(
 
   if (
     discriminator !== null &&
-    discriminator !== "kind" &&
-    !IDENTITY_PROPERTIES.has(discriminator) &&
-    !options.skipProperties.has(discriminator)
+    !shouldSkipProperty(
+      discriminator,
+      getPropertyType(objectTypes[0]!, discriminator),
+      options
+    )
   ) {
     entries.push({
       path: `${currentPath}.${discriminator}`,
@@ -487,7 +593,8 @@ function collectUnionFields(
     if (groupTypes.length > 1) {
       collectUnionFields(groupTypes, currentPath, entries, {
         condition,
-        skipProperties: skippedForGroup
+        skipProperties: skippedForGroup,
+        includeIdentityProperties: options.includeIdentityProperties
       });
       continue;
     }
@@ -495,6 +602,7 @@ function collectUnionFields(
     collectObjectFields(groupTypes[0]!, currentPath, entries, {
       condition,
       skipProperties: options.skipProperties,
+      includeIdentityProperties: options.includeIdentityProperties,
       skipPropertiesForThisObject: skippedForGroup
     });
   }
@@ -504,11 +612,7 @@ function collectObjectFields(
   type: ts.Type,
   currentPath: string,
   entries: FieldEntry[],
-  options: {
-    condition: string | null;
-    skipProperties: ReadonlySet<string>;
-    skipPropertiesForThisObject?: ReadonlySet<string>;
-  }
+  options: TraversalOptions
 ): void {
   for (const property of type.getProperties()) {
     const propertyName = property.name;
@@ -525,7 +629,8 @@ function collectObjectFields(
 
     collectFields(propertyType, `${currentPath}.${propertyName}`, entries, {
       condition: options.condition,
-      skipProperties: options.skipProperties
+      skipProperties: options.skipProperties,
+      includeIdentityProperties: options.includeIdentityProperties
     });
   }
 }
@@ -574,7 +679,116 @@ function wrapFieldList(fields: readonly string[], indent = "  "): string[] {
   return lines;
 }
 
-const groupedFields = ROOTS.map((root) => {
+function collectRootFields(
+  roots: readonly FieldRoot[],
+  includeIdentityProperties: boolean
+) {
+  return roots.map((root) => {
+    const entries: FieldEntry[] = [];
+    collectFields(getRootType(root), root.path, entries, {
+      condition: null,
+      skipProperties: new Set(root.skipProperties ?? []),
+      includeIdentityProperties
+    });
+
+    return {
+      title: root.title,
+      fields: uniqueEntries(entries).map(formatEntry)
+    };
+  });
+}
+
+function parseScope(args: readonly string[]): InventoryScope {
+  if (args.includes("--help") || args.includes("-h")) {
+    process.stdout.write(
+      [
+        "Usage: list-authorable-fields [--authorable-only | --runtime-only | --include-runtime]",
+        "",
+        "Default: --authorable-only",
+        "--runtime-only     List exported Runtime* field roots from runtime/control code.",
+        "--include-runtime  List authorable fields first, then runtime fields."
+      ].join("\n") + "\n"
+    );
+    process.exit(0);
+  }
+
+  if (args.includes("--runtime-only")) {
+    return "runtime";
+  }
+
+  if (args.includes("--include-runtime") || args.includes("--all")) {
+    return "all";
+  }
+
+  return "authorable";
+}
+
+function createGroupedFields(scope: InventoryScope) {
+  switch (scope) {
+    case "authorable":
+      return {
+        title: "Authorable field inventory",
+        source:
+          "Source: current canonical TypeScript authoring schemas",
+        excludes:
+          "Excludes: ids, version, kind discriminators, textures, and generated imported-asset metadata/storage fields.",
+        groups: collectRootFields(AUTHORABLE_ROOTS, false)
+      };
+    case "runtime": {
+      const runtimeRoots = discoverRuntimeRoots();
+      return {
+        title: "Runtime field inventory",
+        source:
+          "Source: exported Runtime* TypeScript types in src/runtime-three and src/controls/control-surface.ts",
+        excludes:
+          "Includes ids and discriminators. Omits primitive-only Runtime* aliases because they have no object fields.",
+        groups: collectRootFields(runtimeRoots, true)
+      };
+    }
+    case "all": {
+      const runtimeRoots = discoverRuntimeRoots();
+      return {
+        title: "Authorable and runtime field inventory",
+        source:
+          "Source: canonical authoring schemas plus exported Runtime* TypeScript types.",
+        excludes:
+          "Authorable groups exclude ids/version/kind discriminators; runtime groups include ids and discriminators.",
+        groups: [
+          ...collectRootFields(AUTHORABLE_ROOTS, false).map((group) => ({
+            ...group,
+            title: `Authorable: ${group.title}`
+          })),
+          ...collectRootFields(runtimeRoots, true).map((group) => ({
+            ...group,
+            title: `Runtime: ${group.title}`
+          }))
+        ]
+      };
+  }
+  }
+}
+
+const inventory = createGroupedFields(parseScope(process.argv.slice(2)));
+const groupedFields = inventory.groups;
+const totalFieldCount = groupedFields.reduce(
+  (sum, group) => sum + group.fields.length,
+  0
+);
+const lines = [
+  inventory.title,
+  inventory.source,
+  inventory.excludes,
+  `Total: ${totalFieldCount} field paths across ${groupedFields.length} groups.`,
+  ""
+];
+
+for (const group of groupedFields) {
+  lines.push(`${group.title} (${group.fields.length})`);
+  lines.push(...wrapFieldList(group.fields));
+  lines.push("");
+}
+
+process.stdout.write(`${lines.join("\n").trimEnd()}\n`);
   const entries: FieldEntry[] = [];
   collectFields(getRootType(root), root.path, entries, {
     condition: null,
