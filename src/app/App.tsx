@@ -297,6 +297,7 @@ import {
   DEFAULT_PLAYER_START_CAPSULE_HEIGHT,
   DEFAULT_PLAYER_START_CAPSULE_RADIUS,
   DEFAULT_PLAYER_START_EYE_HEIGHT,
+  DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES,
   DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
   DEFAULT_PLAYER_START_NAVIGATION_MODE,
   PLAYER_START_MOVEMENT_TEMPLATE_KINDS,
@@ -2736,6 +2737,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     useState<PlayerStartNavigationMode>(DEFAULT_PLAYER_START_NAVIGATION_MODE);
   const [playerStartInteractionReachDraft, setPlayerStartInteractionReachDraft] =
     useState(String(DEFAULT_PLAYER_START_INTERACTION_REACH_METERS));
+  const [playerStartInteractionAngleDraft, setPlayerStartInteractionAngleDraft] =
+    useState(String(DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES));
   const [
     playerStartMovementTemplateDraft,
     setPlayerStartMovementTemplateDraft
@@ -3804,6 +3807,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setPlayerStartNavigationModeDraft(selectedEntity.navigationMode);
         setPlayerStartInteractionReachDraft(
           String(selectedEntity.interactionReachMeters)
+        );
+        setPlayerStartInteractionAngleDraft(
+          String(selectedEntity.interactionAngleDegrees)
         );
         setPlayerStartMovementTemplateDraft(
           clonePlayerStartMovementTemplate(selectedEntity.movementTemplate)
@@ -8910,6 +8916,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         playerStartInteractionReachDraft,
         "Player Start interaction reach"
       );
+      const interactionAngleDegrees = readNumberDraft(
+        playerStartInteractionAngleDraft,
+        "Player Start interaction angle"
+      );
       const nextEntity = createPlayerStartEntity({
         id: selectedPlayerStart.id,
         name: selectedPlayerStart.name,
@@ -8917,6 +8927,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         yawDegrees,
         navigationMode,
         interactionReachMeters,
+        interactionAngleDegrees,
         movementTemplate,
         inputBindings,
         collider: {
@@ -20654,41 +20665,79 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
                       <div className="form-section">
                         <div className="label">Interaction</div>
-                        <label className="form-field">
-                          <span className="label">Reach (m)</span>
-                          <input
-                            data-testid="player-start-interaction-reach"
-                            className="text-input"
-                            type="number"
-                            min="0.1"
-                            step="0.1"
-                            value={playerStartInteractionReachDraft}
-                            onChange={(event) =>
-                              setPlayerStartInteractionReachDraft(
-                                event.currentTarget.value
-                              )
-                            }
-                            onBlur={() => applyPlayerStartChange()}
-                            onKeyDown={(event) =>
-                              handleDraftVectorKeyDown(
-                                event,
-                                applyPlayerStartChange
-                              )
-                            }
-                            onKeyUp={(event) =>
-                              handleNumberInputKeyUp(
-                                event,
-                                applyPlayerStartChange
-                              )
-                            }
-                            onPointerUp={(event) =>
-                              handleNumberInputPointerUp(
-                                event,
-                                applyPlayerStartChange
-                              )
-                            }
-                          />
-                        </label>
+                        <div className="vector-inputs vector-inputs--two">
+                          <label className="form-field">
+                            <span className="label">Reach (m)</span>
+                            <input
+                              data-testid="player-start-interaction-reach"
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={playerStartInteractionReachDraft}
+                              onChange={(event) =>
+                                setPlayerStartInteractionReachDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applyPlayerStartChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyPlayerStartChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyPlayerStartChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyPlayerStartChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Angle (deg)</span>
+                            <input
+                              data-testid="player-start-interaction-angle"
+                              className="text-input"
+                              type="number"
+                              min="1"
+                              max="179"
+                              step="1"
+                              value={playerStartInteractionAngleDraft}
+                              onChange={(event) =>
+                                setPlayerStartInteractionAngleDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() => applyPlayerStartChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyPlayerStartChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyPlayerStartChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyPlayerStartChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
                       </div>
 
                       <div className="form-section">
