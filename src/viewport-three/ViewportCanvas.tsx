@@ -166,16 +166,32 @@ export function ViewportCanvas({
 
     const initialFrame = editorSimulationController.getFrameSnapshot();
     let currentSceneVersion = initialFrame.sceneVersion;
-    host.updateSimulation(initialFrame.runtimeScene, initialFrame.clock);
+    let currentFrameVersion = initialFrame.frameVersion;
+    host.updateSimulation(initialFrame.runtimeScene, initialFrame.clock, {
+      sceneVersion: initialFrame.sceneVersion,
+      frameVersion: initialFrame.frameVersion
+    });
 
     return editorSimulationController.subscribeFrame((frame) => {
       if (frame.sceneVersion !== currentSceneVersion) {
         currentSceneVersion = frame.sceneVersion;
-        host.updateSimulation(frame.runtimeScene, frame.clock);
+        currentFrameVersion = frame.frameVersion;
+        host.updateSimulation(frame.runtimeScene, frame.clock, {
+          sceneVersion: frame.sceneVersion,
+          frameVersion: frame.frameVersion
+        });
         return;
       }
 
-      host.updateSimulationFrame(frame.runtimeScene, frame.clock);
+      if (frame.frameVersion === currentFrameVersion) {
+        return;
+      }
+
+      currentFrameVersion = frame.frameVersion;
+      host.updateSimulationFrame(frame.runtimeScene, frame.clock, {
+        sceneVersion: frame.sceneVersion,
+        frameVersion: frame.frameVersion
+      });
     });
   }, [editorSimulationController]);
 

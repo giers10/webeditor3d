@@ -6731,11 +6731,22 @@ export class RuntimeHost {
       const pointerBinding = getPlayerStartMouseBindingCodeForButton(
         event.button
       );
+      const playerInputBindings = this.resolveRuntimePlayerInputBindings();
 
       if (
         pointerBinding !== null &&
-        this.runtimeScene.playerInputBindings.keyboard.interact ===
-          pointerBinding
+        this.activeRuntimeTargetReference !== null &&
+        playerInputBindings.keyboard.clearTarget === pointerBinding
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.clearActiveRuntimeTarget();
+        return;
+      }
+
+      if (
+        pointerBinding !== null &&
+        playerInputBindings.keyboard.interact === pointerBinding
       ) {
         this.dispatchRuntimeInteract();
       }
