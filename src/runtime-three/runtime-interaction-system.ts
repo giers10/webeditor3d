@@ -20,6 +20,7 @@ import type {
 
 const DEFAULT_INTERACTABLE_TARGET_RADIUS = 0.75;
 const DEFAULT_NPC_DIALOGUE_TARGET_RADIUS = 1.5;
+const DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS = 0.2;
 const TARGETING_ACQUISITION_REACH = 15;
 const TARGETING_MIN_VIEW_DOT = 0.1;
 
@@ -469,8 +470,49 @@ interface RuntimeInteractionTargetSource {
   distance: number;
   range: number;
   acquisitionRange: number;
+  horizontalRadius: number;
   bounds?: { min: Vec3; max: Vec3 };
   targetRadius?: number;
+}
+
+interface Vec2 {
+  x: number;
+  y: number;
+}
+
+function lengthSquaredVec2(vector: Vec2): number {
+  return vector.x * vector.x + vector.y * vector.y;
+}
+
+function normalizeVec2(vector: Vec2): Vec2 | null {
+  const lengthSquared = lengthSquaredVec2(vector);
+
+  if (lengthSquared <= Number.EPSILON) {
+    return null;
+  }
+
+  const inverseLength = 1 / Math.sqrt(lengthSquared);
+  return {
+    x: vector.x * inverseLength,
+    y: vector.y * inverseLength
+  };
+}
+
+function getNpcHorizontalTargetRadius(
+  npc: RuntimeNpc,
+  bounds: { min: Vec3; max: Vec3 }
+): number {
+  switch (npc.collider.mode) {
+    case "capsule":
+      return npc.collider.radius;
+    case "box":
+      return Math.max(npc.collider.size.x, npc.collider.size.z) * 0.5;
+    case "none":
+      return Math.max(
+        bounds.max.x - bounds.min.x,
+        bounds.max.z - bounds.min.z
+      ) * 0.5;
+  }
 }
 
 function collectRuntimeInteractionTargetSources(
@@ -492,9 +534,12 @@ function collectRuntimeInteractionTargetSources(
     }
 
     const distance = distanceBetweenVec3(interactionOrigin, interactable.position);
+    const targetRadius = getInteractableTargetRadius(interactable);
     const acquisitionRange = options.useTargetingReach
       ? TARGETING_ACQUISITION_REACH
-      : options.interactionReachMeters ?? interactable.radius;
+      : (options.interactionReachMeters ?? interactable.radius) +
+        targetRadius +
+        DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS;
 
     if (distance > acquisitionRange) {
       continue;
@@ -509,7 +554,8 @@ function collectRuntimeInteractionTargetSources(
       distance,
       range: interactable.radius,
       acquisitionRange,
-      targetRadius: getInteractableTargetRadius(interactable)
+      horizontalRadius: targetRadius,
+      targetRadius
     });
   }
 
@@ -525,10 +571,13 @@ function collectRuntimeInteractionTargetSources(
     }
 
     const bounds = getNpcDialogueTargetBounds(npc);
+    const horizontalRadius = getNpcHorizontalTargetRadius(npc, bounds);
     const distance = distanceToAxisAlignedBox(interactionOrigin, bounds);
     const acquisitionRange = options.useTargetingReach
       ? TARGETING_ACQUISITION_REACH
-      : options.interactionReachMeters ?? bounds.range;
+      : (options.interactionReachMeters ?? bounds.range) +
+        horizontalRadius +
+        DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS;
 
     if (distance > acquisitionRange) {
       continue;
@@ -543,6 +592,7 @@ function collectRuntimeInteractionTargetSources(
       distance,
       range: bounds.range,
       acquisitionRange,
+      horizontalRadius,
       bounds
     });
   }
@@ -803,14 +853,22 @@ export class RuntimeInteractionSystem {
 
   resolveClickInteractionPrompt(
     interactionOrigin: Vec3,
-    rayOrigin: Vec3,
-    rayDirections: readonly Vec3[],
+    viewDirection: Vec3,
     interactionReachMeters: number,
+    interactionAngleDegrees: number,
     runtimeScene: RuntimeSceneDefinition
   ): RuntimeInteractionPrompt | null {
-    if (rayDirections.length === 0) {
+    const horizontalViewDirection = normalizeVec2({
+      x: viewDirection.x,
+      y: viewDirection.z
+    });
+
+    if (horizontalViewDirection === null) {
       return null;
     }
+
+    const halfAngleRadians = (interactionAngleDegrees * Math.PI) / 360;
+    const coneSlope = Math.tan(halfAngleRadians);
     const promptCandidates = collectRuntimeInteractionTargetSources(
       interactionOrigin,
       runtimeScene,
@@ -821,90 +879,70 @@ export class RuntimeInteractionSystem {
       return null;
     }
 
-    const resolvePromptForRay = (
-      rayDirection: Vec3
-    ): { prompt: RuntimeInteractionPrompt | null; hitDistance: number } => {
-      const normalizedViewDirection = normalizeVec3(rayDirection);
+    let bestPrompt: RuntimeInteractionPrompt | null = null;
+    let bestAngularOffset = Number.POSITIVE_INFINITY;
+    let bestForwardDistance = Number.POSITIVE_INFINITY;
 
-      if (normalizedViewDirection === null) {
-        return {
-          prompt: null,
-          hitDistance: Number.POSITIVE_INFINITY
-        };
-      }
-
-      let bestPrompt: RuntimeInteractionPrompt | null = null;
-      let bestHitDistance = Number.POSITIVE_INFINITY;
-
-      for (const candidate of promptCandidates) {
-        const hitDistance =
-          candidate.kind === "interactable"
-            ? raySphereHitDistance(
-                rayOrigin,
-                normalizedViewDirection,
-                candidate.center,
-                candidate.targetRadius ?? DEFAULT_INTERACTABLE_TARGET_RADIUS
-              )
-            : candidate.bounds
-              ? rayAxisAlignedBoxHitDistance(
-                  rayOrigin,
-                  normalizedViewDirection,
-                  candidate.bounds
-                )
-              : null;
-
-        if (hitDistance === null) {
-          continue;
-        }
-
-        const next = updateBestPrompt(
-          bestPrompt,
-          bestHitDistance,
-          candidate.entityId,
-          candidate.prompt,
-          candidate.distance,
-          interactionReachMeters,
-          hitDistance
-        );
-        bestPrompt = next.prompt;
-        bestHitDistance = next.hitDistance;
-      }
-
-      return {
-        prompt: bestPrompt,
-        hitDistance: bestHitDistance
-      };
-    };
-
-    const centerPrompt = resolvePromptForRay(rayDirections[0]!);
-
-    if (centerPrompt.prompt !== null) {
-      return centerPrompt.prompt;
-    }
-
-    let bestSidePrompt: RuntimeInteractionPrompt | null = null;
-    let bestSideHitDistance = Number.POSITIVE_INFINITY;
-
-    for (let index = 1; index < rayDirections.length; index += 1) {
-      const sidePrompt = resolvePromptForRay(rayDirections[index]!);
+    for (const candidate of promptCandidates) {
+      const offsetX = candidate.center.x - interactionOrigin.x;
+      const offsetZ = candidate.center.z - interactionOrigin.z;
+      const forwardDistance =
+        offsetX * horizontalViewDirection.x + offsetZ * horizontalViewDirection.y;
+      const lateralDistance =
+        offsetX * -horizontalViewDirection.y +
+        offsetZ * horizontalViewDirection.x;
+      const absoluteLateralDistance = Math.abs(lateralDistance);
+      const paddedForwardDistance = Math.max(forwardDistance, 0);
+      const allowedLateralDistance =
+        DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS +
+        coneSlope * paddedForwardDistance +
+        candidate.horizontalRadius;
+      const minForwardDistance =
+        -DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS - candidate.horizontalRadius;
+      const maxForwardDistance =
+        interactionReachMeters +
+        DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS +
+        candidate.horizontalRadius;
 
       if (
-        sidePrompt.prompt !== null &&
-        (sidePrompt.hitDistance < bestSideHitDistance ||
-          (sidePrompt.hitDistance === bestSideHitDistance &&
-            (bestSidePrompt === null ||
-              sidePrompt.prompt.distance < bestSidePrompt.distance ||
-              (sidePrompt.prompt.distance === bestSidePrompt.distance &&
-                sidePrompt.prompt.sourceEntityId.localeCompare(
-                  bestSidePrompt.sourceEntityId
-                ) < 0))))
+        forwardDistance < minForwardDistance ||
+        forwardDistance > maxForwardDistance ||
+        absoluteLateralDistance > allowedLateralDistance
       ) {
-        bestSidePrompt = sidePrompt.prompt;
-        bestSideHitDistance = sidePrompt.hitDistance;
+        continue;
+      }
+
+      const angularOffset = Math.atan2(
+        absoluteLateralDistance,
+        Math.max(
+          paddedForwardDistance + DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS,
+          Number.EPSILON
+        )
+      );
+
+      if (
+        angularOffset < bestAngularOffset ||
+        (angularOffset === bestAngularOffset &&
+          (forwardDistance < bestForwardDistance ||
+            (forwardDistance === bestForwardDistance &&
+              (bestPrompt === null ||
+                candidate.distance < bestPrompt.distance ||
+                (candidate.distance === bestPrompt.distance &&
+                  candidate.entityId.localeCompare(bestPrompt.sourceEntityId) <
+                    0)))))
+      ) {
+        bestPrompt = {
+          sourceEntityId: candidate.entityId,
+          prompt: candidate.prompt,
+          distance: candidate.distance,
+          range: interactionReachMeters
+        };
+        bestAngularOffset = angularOffset;
+        bestForwardDistance = forwardDistance;
       }
     }
 
-    return bestSidePrompt;
+    return bestPrompt;
   }
 
   dispatchClickInteraction(
