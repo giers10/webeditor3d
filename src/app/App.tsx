@@ -3727,6 +3727,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setPlayerStartTargetButtonCyclesActiveTargetDraft(
         DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET_VALUE
       );
+      setPlayerStartInvertMouseCameraHorizontalDraft(
+        DEFAULT_PLAYER_START_INVERT_MOUSE_CAMERA_HORIZONTAL_VALUE
+      );
       setPlayerStartMovementTemplateDraft(createPlayerStartMovementTemplate());
       setPlayerStartMovementTemplateNumberDraft(
         createPlayerStartMovementTemplateNumberDraft(
@@ -3895,6 +3898,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         );
         setPlayerStartTargetButtonCyclesActiveTargetDraft(
           selectedEntity.targetButtonCyclesActiveTarget
+        );
+        setPlayerStartInvertMouseCameraHorizontalDraft(
+          selectedEntity.invertMouseCameraHorizontal
         );
         setPlayerStartMovementTemplateDraft(
           clonePlayerStartMovementTemplate(selectedEntity.movementTemplate)
