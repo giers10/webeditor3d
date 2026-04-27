@@ -464,6 +464,98 @@ describe("ViewportCanvas", () => {
     expect(viewportHost.updateSimulationFrame).toHaveBeenCalled();
   });
 
+  it("keeps same-scene-version simulation frames on the incremental path even if scene identity changes", async () => {
+    const sceneDocument = createEmptySceneDocument();
+    const firstRuntimeScene = buildRuntimeSceneFromDocument(sceneDocument);
+    const secondRuntimeScene = buildRuntimeSceneFromDocument({
+      ...sceneDocument,
+      name: "Different Runtime Object"
+    });
+    const clock = createRuntimeClockState(sceneDocument.time);
+    let frameListener:
+      | ((snapshot: EditorSimulationFrameSnapshot) => void)
+      | null = null;
+    const editorSimulationController = {
+      getFrameSnapshot: () => ({
+        runtimeScene: firstRuntimeScene,
+        clock,
+        sceneVersion: 1,
+        frameVersion: 1
+      }),
+      subscribeFrame: (
+        listener: (snapshot: EditorSimulationFrameSnapshot) => void
+      ) => {
+        frameListener = listener;
+        return () => undefined;
+      }
+    } as unknown as EditorSimulationController;
+
+    render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationController={editorSimulationController}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "none" }}
+        activeSelectionId={null}
+        terrainBrushState={null}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={createDefaultViewportPanelCameraState()}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(viewportHostInstances).toHaveLength(1);
+      expect(frameListener).not.toBeNull();
+    });
+
+    const viewportHost = viewportHostInstances[0];
+    viewportHost.updateSimulation.mockClear();
+    viewportHost.updateSimulationFrame.mockClear();
+
+    act(() => {
+      frameListener?.({
+        runtimeScene: secondRuntimeScene,
+        clock,
+        sceneVersion: 1,
+        frameVersion: 2
+      });
+    });
+
+    expect(viewportHost.updateSimulation).not.toHaveBeenCalled();
+    expect(viewportHost.updateSimulationFrame).toHaveBeenCalledWith(
+      secondRuntimeScene,
+      clock,
+      {
+        sceneVersion: 1,
+        frameVersion: 2
+      }
+    );
+  });
+
   it("routes editor simulation scene-version changes through the structural host update", async () => {
     const sceneDocument = createEmptySceneDocument();
     const editorSimulationController = new EditorSimulationController();
