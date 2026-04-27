@@ -154,7 +154,7 @@ function ViewportTimeTransport({
 
   const startStepping = useCallback(
     (direction: -1 | 1, event: ReactPointerEvent<HTMLButtonElement>) => {
-      if (event.button !== 0) {
+      if (typeof event.button === "number" && event.button !== 0) {
         return;
       }
 
