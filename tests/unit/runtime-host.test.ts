@@ -199,6 +199,80 @@ describe("RuntimeHost", () => {
     expect(collisionWorld.dispose).toHaveBeenCalledTimes(1);
   });
 
+  it("finishes loading when initial schedule sync changes NPC colliders", async () => {
+    const npc = createNpcEntity({
+      id: "entity-npc-scene-load-scheduled",
+      actorId: "actor-scene-load-scheduled"
+    });
+    const document = createEmptySceneDocument();
+    document.entities[npc.id] = npc;
+    document.scheduler.routines["routine-hide-at-night"] =
+      createProjectScheduleRoutine({
+        id: "routine-hide-at-night",
+        title: "Hide At Night",
+        target: createActorControlTargetRef(npc.actorId),
+        startHour: 20,
+        endHour: 4,
+        effect: createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef(npc.actorId),
+          active: false
+        })
+      });
+    const runtimeScene = buildRuntimeSceneFromDocument(document, {
+      runtimeClock: {
+        timeOfDayHours: 21,
+        dayCount: 0,
+        dayLengthMinutes: 24
+      }
+    });
+    const collisionWorld = {
+      dispose: vi.fn(),
+      resolveThirdPersonCameraCollision: vi.fn(
+        (_pivot, desiredCameraPosition) => desiredCameraPosition
+      )
+    } as unknown as RapierCollisionWorld;
+    const deferredCollisionWorld = createDeferred<RapierCollisionWorld>();
+    const createCollisionWorld = vi
+      .spyOn(RapierCollisionWorld, "create")
+      .mockReturnValue(deferredCollisionWorld.promise);
+    const sceneLoadStates: RuntimeSceneLoadState[] = [];
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.setSceneLoadStateHandler((state) => {
+      sceneLoadStates.push(state);
+    });
+
+    expect(runtimeScene.entities.npcs).toEqual([]);
+
+    host.loadScene(runtimeScene);
+
+    expect(runtimeScene.entities.npcs).toEqual([
+      expect.objectContaining({
+        entityId: npc.id
+      })
+    ]);
+    expect(createCollisionWorld).toHaveBeenCalledTimes(1);
+    expect(sceneLoadStates).toEqual([
+      {
+        status: "loading",
+        message: null
+      }
+    ]);
+
+    deferredCollisionWorld.resolve(collisionWorld);
+
+    await waitFor(() => {
+      expect(sceneLoadStates).toContainEqual({
+        status: "ready",
+        message: null
+      });
+    });
+
+    host.dispose();
+    expect(collisionWorld.dispose).toHaveBeenCalledTimes(1);
+  });
+
   it("uses the authored interact binding instead of always dispatching left mouse clicks", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-authored-interact",
