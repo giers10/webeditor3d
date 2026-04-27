@@ -5191,57 +5191,18 @@ export class RuntimeHost {
       return;
     }
 
-    const nextResolvedScheduler = resolveRuntimeProjectScheduleState({
-      scheduler: this.runtimeScene.scheduler.document,
-      sequences: this.runtimeScene.sequences,
-      actorIds: this.runtimeScene.npcDefinitions.map((npc) => npc.actorId),
-      dayNumber: this.currentClockState.dayCount + 1,
-      timeOfDayHours: this.currentClockState.timeOfDayHours,
-      pathsById: new Map(this.runtimeScene.paths.map((path) => [path.id, path]))
+    this.runtimeScheduleSyncContext ??= createRuntimeScheduleSyncContext(
+      this.runtimeScene
+    );
+
+    const syncResult = syncRuntimeSceneScheduleToClock({
+      runtimeScene: this.runtimeScene,
+      clock: this.currentClockState,
+      context: this.runtimeScheduleSyncContext
     });
-    const actorStates = new Map(
-      nextResolvedScheduler.actors.map((state) => [state.actorId, state])
-    );
-    const nextActiveImpulseRoutineIds = new Set(
-      nextResolvedScheduler.impulses.map((routine) => routine.routineId)
-    );
-    let changed = false;
 
-    for (const npc of this.runtimeScene.npcDefinitions) {
-      const actorState = actorStates.get(npc.actorId);
-      const previousActive = npc.active;
-      const previousRoutineId = npc.activeRoutineId;
-      const previousRoutineTitle = npc.activeRoutineTitle;
-      const previousAnimationClipName = npc.animationClipName;
-      const previousAnimationLoop = npc.animationLoop;
-      const previousYawDegrees = npc.yawDegrees;
-      const previousPosition = {
-        x: npc.position.x,
-        y: npc.position.y,
-        z: npc.position.z
-      };
-      const previousPathId = npc.resolvedPath?.pathId ?? null;
-      const previousPathProgress = npc.resolvedPath?.progress ?? null;
-
-      applyActorScheduleStateToNpcDefinition(npc, actorState ?? null);
-
-      if (
-        npc.active === previousActive &&
-        npc.activeRoutineId === previousRoutineId &&
-        npc.activeRoutineTitle === previousRoutineTitle &&
-        npc.animationClipName === previousAnimationClipName &&
-        npc.animationLoop === previousAnimationLoop &&
-        npc.yawDegrees === previousYawDegrees &&
-        npc.position.x === previousPosition.x &&
-        npc.position.y === previousPosition.y &&
-        npc.position.z === previousPosition.z &&
-        (npc.resolvedPath?.pathId ?? null) === previousPathId &&
-        (npc.resolvedPath?.progress ?? null) === previousPathProgress
-      ) {
-        continue;
-      }
-
-      changed = true;
+    for (const change of syncResult.npcChanges) {
+      const { npc } = change;
       const renderGroup = this.modelRenderObjects.get(npc.entityId);
 
       if (renderGroup !== undefined) {
@@ -5249,11 +5210,7 @@ export class RuntimeHost {
         this.syncNpcRenderGroupTransform(renderGroup, npc);
       }
 
-      if (
-        this.animationMixers.has(npc.entityId) &&
-        (npc.animationClipName !== previousAnimationClipName ||
-          npc.animationLoop !== previousAnimationLoop)
-      ) {
+      if (this.animationMixers.has(npc.entityId) && change.animationChanged) {
         if (npc.animationClipName === null) {
           this.applyStopAnimationAction(npc.entityId);
         } else {
@@ -5266,14 +5223,9 @@ export class RuntimeHost {
       }
     }
 
-    const nextResolvedControl = applyRuntimeProjectScheduleToControlState(
-      this.runtimeScene.control.resolved,
-      nextResolvedScheduler,
-      this.runtimeScene.control.baselineResolved
-    );
-    this.syncResolvedControlStateToRuntime(nextResolvedControl);
+    this.syncResolvedControlStateToRuntime(syncResult.resolvedControl);
 
-    for (const impulseRoutine of nextResolvedScheduler.impulses) {
+    for (const impulseRoutine of syncResult.resolvedScheduler.impulses) {
       if (
         this.activeScheduledImpulseRoutineIds.has(impulseRoutine.routineId) ||
         this.completedScheduledImpulseRoutineIds.has(impulseRoutine.routineId)
@@ -5288,30 +5240,13 @@ export class RuntimeHost {
       this.completedScheduledImpulseRoutineIds.add(impulseRoutine.routineId);
     }
 
-    this.runtimeScene.scheduler.resolved = nextResolvedScheduler;
-    this.runtimeScene.control.resolved = nextResolvedControl;
-    this.activeScheduledImpulseRoutineIds = nextActiveImpulseRoutineIds;
+    commitRuntimeScheduleSyncResult(this.runtimeScene, syncResult);
+    this.activeScheduledImpulseRoutineIds =
+      syncResult.nextActiveImpulseRoutineIds;
 
-    if (changed) {
-      this.refreshRuntimeNpcCollections();
+    if (syncResult.npcColliderCollectionChanged) {
       this.refreshCollisionWorldForNpcSchedule();
     }
-  }
-
-  private refreshRuntimeNpcCollections() {
-    if (this.runtimeScene === null) {
-      return;
-    }
-
-    this.runtimeScene.entities.npcs = this.runtimeScene.npcDefinitions
-      .filter((npc) => npc.active)
-      .map((npc) => createRuntimeNpcFromDefinition(npc));
-    this.runtimeScene.colliders = [
-      ...this.runtimeScene.staticColliders,
-      ...this.runtimeScene.entities.npcs
-        .map((npc) => buildRuntimeNpcCollider(npc))
-        .filter(isNonNull)
-    ];
   }
 
   private refreshCollisionWorldForNpcSchedule() {
