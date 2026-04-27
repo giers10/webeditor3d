@@ -136,6 +136,15 @@ function distanceBetweenVec3(left: Vec3, right: Vec3): number {
   return Math.sqrt(lengthSquaredVec3(subtractVec3(left, right)));
 }
 
+function distanceBetweenVec2(
+  left: { x: number; y: number },
+  right: { x: number; y: number }
+): number {
+  const dx = left.x - right.x;
+  const dy = left.y - right.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
 function normalizeVec3(vector: Vec3): Vec3 | null {
   const lengthSquared = lengthSquaredVec3(vector);
 
@@ -240,6 +249,26 @@ function distanceToAxisAlignedBox(
         : 0;
 
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+function distanceToHorizontalAxisAlignedBounds(
+  position: Vec3,
+  bounds: { min: Vec3; max: Vec3 }
+): number {
+  const dx =
+    position.x < bounds.min.x
+      ? bounds.min.x - position.x
+      : position.x > bounds.max.x
+        ? position.x - bounds.max.x
+        : 0;
+  const dz =
+    position.z < bounds.min.z
+      ? bounds.min.z - position.z
+      : position.z > bounds.max.z
+        ? position.z - bounds.max.z
+        : 0;
+
+  return Math.sqrt(dx * dx + dz * dz);
 }
 
 function isPlayerInsideTriggerVolume(
@@ -507,6 +536,16 @@ function collectRuntimeInteractionTargetSources(
     }
 
     const distance = distanceBetweenVec3(interactionOrigin, interactable.position);
+    const horizontalDistance = distanceBetweenVec2(
+      {
+        x: interactionOrigin.x,
+        y: interactionOrigin.z
+      },
+      {
+        x: interactable.position.x,
+        y: interactable.position.z
+      }
+    );
     const targetRadius = getInteractableTargetRadius(interactable);
     const acquisitionRange = options.useTargetingReach
       ? TARGETING_ACQUISITION_REACH
@@ -514,7 +553,10 @@ function collectRuntimeInteractionTargetSources(
         targetRadius +
         DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS;
 
-    if (distance > acquisitionRange) {
+    if (
+      (options.useTargetingReach ? distance : horizontalDistance) >
+      acquisitionRange
+    ) {
       continue;
     }
 
@@ -545,13 +587,20 @@ function collectRuntimeInteractionTargetSources(
     const bounds = getNpcDialogueTargetBounds(npc);
     const horizontalRadius = getNpcHorizontalTargetRadius(npc, bounds);
     const distance = distanceToAxisAlignedBox(interactionOrigin, bounds);
+    const horizontalDistance = distanceToHorizontalAxisAlignedBounds(
+      interactionOrigin,
+      bounds
+    );
     const acquisitionRange = options.useTargetingReach
       ? TARGETING_ACQUISITION_REACH
       : (options.interactionReachMeters ?? bounds.range) +
         horizontalRadius +
         DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS;
 
-    if (distance > acquisitionRange) {
+    if (
+      (options.useTargetingReach ? distance : horizontalDistance) >
+      acquisitionRange
+    ) {
       continue;
     }
 
