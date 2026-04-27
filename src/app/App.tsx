@@ -8898,6 +8898,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     overrides: {
       allowLookInputTargetSwitch?: boolean;
       colliderMode?: PlayerStartColliderMode;
+      invertMouseCameraHorizontal?: boolean;
       movementTemplate?: PlayerStartMovementTemplate;
       navigationMode?: PlayerStartNavigationMode;
       inputBindings?: PlayerStartInputBindings;
@@ -8937,6 +8938,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const targetButtonCyclesActiveTarget =
         overrides.targetButtonCyclesActiveTarget ??
         playerStartTargetButtonCyclesActiveTargetDraft;
+      const invertMouseCameraHorizontal =
+        overrides.invertMouseCameraHorizontal ??
+        playerStartInvertMouseCameraHorizontalDraft;
       const nextEntity = createPlayerStartEntity({
         id: selectedPlayerStart.id,
         name: selectedPlayerStart.name,
@@ -8947,6 +8951,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         interactionAngleDegrees,
         allowLookInputTargetSwitch,
         targetButtonCyclesActiveTarget,
+        invertMouseCameraHorizontal,
         movementTemplate,
         inputBindings,
         collider: {
