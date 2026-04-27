@@ -705,7 +705,6 @@ describe("validateSceneDocument", () => {
           interactionAngleDegrees: Number.NaN,
           allowLookInputTargetSwitch: "yes" as unknown as boolean,
           targetButtonCyclesActiveTarget: 1 as unknown as boolean,
-          invertMouseCameraHorizontal: "yes" as unknown as boolean,
           movementTemplate: {
             kind: "invalidTemplate",
             moveSpeed: 0,
@@ -792,9 +791,6 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-target-button-cycles-active-target"
-        }),
-        expect.objectContaining({
-          code: "invalid-player-start-invert-mouse-camera-horizontal"
         }),
         expect.objectContaining({
           code: "invalid-player-start-movement-template-kind"

@@ -3735,9 +3735,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setPlayerStartTargetButtonCyclesActiveTargetDraft(
         DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET_VALUE
       );
-      setPlayerStartInvertMouseCameraHorizontalDraft(
-        DEFAULT_PLAYER_START_INVERT_MOUSE_CAMERA_HORIZONTAL_VALUE
-      );
       setPlayerStartMovementTemplateDraft(createPlayerStartMovementTemplate());
       setPlayerStartMovementTemplateNumberDraft(
         createPlayerStartMovementTemplateNumberDraft(
@@ -3906,9 +3903,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
         );
         setPlayerStartTargetButtonCyclesActiveTargetDraft(
           selectedEntity.targetButtonCyclesActiveTarget
-        );
-        setPlayerStartInvertMouseCameraHorizontalDraft(
-          selectedEntity.invertMouseCameraHorizontal
         );
         setPlayerStartMovementTemplateDraft(
           clonePlayerStartMovementTemplate(selectedEntity.movementTemplate)
@@ -4910,7 +4904,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      const pointerCaptured = firstPersonTelemetry?.pointerLocked === true;
+      const pointerCaptured =
+        activeNavigationMode === "firstPerson" &&
+        firstPersonTelemetry?.pointerLocked === true;
 
       if (pointerCaptured) {
         return;
@@ -4925,7 +4921,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     return () => {
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [editorState.toolMode, firstPersonTelemetry]);
+  }, [activeNavigationMode, editorState.toolMode, firstPersonTelemetry]);
 
   const applyProjectName = () => {
     const normalizedName = projectNameDraft.trim() || DEFAULT_PROJECT_NAME;
@@ -8907,7 +8903,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     overrides: {
       allowLookInputTargetSwitch?: boolean;
       colliderMode?: PlayerStartColliderMode;
-      invertMouseCameraHorizontal?: boolean;
       movementTemplate?: PlayerStartMovementTemplate;
       navigationMode?: PlayerStartNavigationMode;
       inputBindings?: PlayerStartInputBindings;
@@ -8947,9 +8942,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
       const targetButtonCyclesActiveTarget =
         overrides.targetButtonCyclesActiveTarget ??
         playerStartTargetButtonCyclesActiveTargetDraft;
-      const invertMouseCameraHorizontal =
-        overrides.invertMouseCameraHorizontal ??
-        playerStartInvertMouseCameraHorizontalDraft;
       const nextEntity = createPlayerStartEntity({
         id: selectedPlayerStart.id,
         name: selectedPlayerStart.name,
@@ -8960,7 +8952,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
         interactionAngleDegrees,
         allowLookInputTargetSwitch,
         targetButtonCyclesActiveTarget,
-        invertMouseCameraHorizontal,
         movementTemplate,
         inputBindings,
         collider: {
@@ -13373,7 +13364,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="stat-card">
                   <div className="label">Pointer Lock</div>
                   <div className="value">
-                    {firstPersonTelemetry?.pointerLocked ? "active" : "idle"}
+                    {activeNavigationMode === "firstPerson"
+                      ? firstPersonTelemetry?.pointerLocked
+                        ? "active"
+                        : "idle"
+                      : "not used"}
                   </div>
                 </div>
                 <div className="stat-card">
@@ -20837,27 +20832,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               scheduleDraftCommit(() =>
                                 applyPlayerStartChange({
                                   targetButtonCyclesActiveTarget: nextValue
-                                })
-                              );
-                            }}
-                          />
-                        </label>
-                        <label className="form-field form-field--toggle">
-                          <span className="label">Invert Mouse Camera</span>
-                          <input
-                            data-testid="player-start-invert-mouse-camera"
-                            type="checkbox"
-                            checked={
-                              playerStartInvertMouseCameraHorizontalDraft
-                            }
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.checked;
-                              setPlayerStartInvertMouseCameraHorizontalDraft(
-                                nextValue
-                              );
-                              scheduleDraftCommit(() =>
-                                applyPlayerStartChange({
-                                  invertMouseCameraHorizontal: nextValue
                                 })
                               );
                             }}

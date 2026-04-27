@@ -191,7 +191,7 @@ describe("RuntimeHost", () => {
         message: null
       });
       expect(runtimeMessages).toContain(
-        "Third Person active. Click inside the runner viewport to capture mouse look, or drag to orbit if pointer lock is unavailable. Scroll to zoom and use the right stick for gamepad camera look."
+        "Third Person active. Drag to orbit the camera, use the right stick for gamepad camera look, move with your authored bindings, and scroll to zoom."
       );
     });
 
@@ -3886,74 +3886,6 @@ describe("RuntimeHost", () => {
     expect(hostInternals.activeRuntimeTargetReference).toBeNull();
     expect(clearTargetEvent.preventDefault).toHaveBeenCalledTimes(1);
     expect(clearTargetEvent.stopImmediatePropagation).toHaveBeenCalledTimes(1);
-    host.dispose();
-  });
-
-  it("preserves pointer lock when switching between first- and third-person controllers", () => {
-    const host = new RuntimeHost({
-      enableRendering: false
-    });
-    const runtimeScene = buildRuntimeSceneFromDocument(
-      {
-        ...createEmptySceneDocument(),
-        entities: {
-          "entity-player-start-switch": createPlayerStartEntity({
-            id: "entity-player-start-switch"
-          })
-        }
-      },
-      {
-        navigationMode: "firstPerson"
-      }
-    );
-    const hostInternals = host as unknown as {
-      activeController: {
-        id: "firstPerson" | "thirdPerson";
-        deactivate: ReturnType<typeof vi.fn>;
-      } | null;
-      controllerContext: unknown;
-      desiredNavigationMode: "firstPerson" | "thirdPerson";
-      runtimeScene: ReturnType<typeof buildRuntimeSceneFromDocument> | null;
-      sceneReady: boolean;
-      thirdPersonController: {
-        id: "thirdPerson";
-        activate: ReturnType<typeof vi.fn>;
-        deactivate: ReturnType<typeof vi.fn>;
-      };
-      activateDesiredNavigationController(): void;
-    };
-    const deactivate = vi.fn();
-    const activate = vi.fn();
-    const nextControllerDeactivate = vi.fn();
-    const domElement = (
-      host as unknown as {
-        domElement: HTMLCanvasElement;
-      }
-    ).domElement;
-
-    hostInternals.runtimeScene = runtimeScene;
-    hostInternals.sceneReady = true;
-    hostInternals.activeController = {
-      id: "firstPerson",
-      deactivate
-    };
-    hostInternals.desiredNavigationMode = "thirdPerson";
-    hostInternals.thirdPersonController = {
-      id: "thirdPerson",
-      activate,
-      deactivate: nextControllerDeactivate
-    };
-    Object.defineProperty(document, "pointerLockElement", {
-      configurable: true,
-      get: () => domElement
-    });
-
-    hostInternals.activateDesiredNavigationController();
-
-    expect(deactivate).toHaveBeenCalledWith(hostInternals.controllerContext, {
-      releasePointerLock: false
-    });
-    expect(activate).toHaveBeenCalledWith(hostInternals.controllerContext);
     host.dispose();
   });
 

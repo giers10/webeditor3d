@@ -3,13 +3,11 @@ import { describe, expect, it } from "vitest";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
 import {
   createEmptySceneDocument,
-  PLAYER_START_TARGETING_SETTINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INTERACTION_REACH_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INTERACT_BINDINGS_SCENE_DOCUMENT_VERSION
 } from "../../src/document/scene-document";
 import {
   DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH,
-  DEFAULT_PLAYER_START_INVERT_MOUSE_CAMERA_HORIZONTAL,
   DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES,
   DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
   DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET,
@@ -54,7 +52,6 @@ describe("Player Start interaction sector persistence", () => {
       interactionAngleDegrees: 42,
       allowLookInputTargetSwitch: false,
       targetButtonCyclesActiveTarget: true,
-      invertMouseCameraHorizontal: true,
       inputBindings: {
         keyboard: {
           clearTarget: "KeyQ"
@@ -79,7 +76,6 @@ describe("Player Start interaction sector persistence", () => {
       interactionAngleDegrees: 42,
       allowLookInputTargetSwitch: false,
       targetButtonCyclesActiveTarget: true,
-      invertMouseCameraHorizontal: true,
       inputBindings: {
         keyboard: {
           clearTarget: "KeyQ"
@@ -149,31 +145,6 @@ describe("Player Start interaction sector persistence", () => {
           clearTarget: "buttonNorth"
         }
       }
-    });
-  });
-
-  it("migrates version 83 player starts to include the mouse inversion default", () => {
-    const playerStart = createPlayerStartEntity({
-      id: "entity-player-start-mouse-invert-legacy"
-    });
-    const legacyPlayerStart = {
-      ...playerStart
-    } as Record<string, unknown>;
-
-    delete legacyPlayerStart.invertMouseCameraHorizontal;
-
-    const migrated = migrateSceneDocument({
-      ...createEmptySceneDocument({ name: "Legacy Player Mouse Invert Scene" }),
-      version: PLAYER_START_TARGETING_SETTINGS_SCENE_DOCUMENT_VERSION,
-      entities: {
-        [playerStart.id]: legacyPlayerStart
-      }
-    });
-
-    expect(migrated.entities[playerStart.id]).toMatchObject({
-      kind: "playerStart",
-      invertMouseCameraHorizontal:
-        DEFAULT_PLAYER_START_INVERT_MOUSE_CAMERA_HORIZONTAL
     });
   });
 });

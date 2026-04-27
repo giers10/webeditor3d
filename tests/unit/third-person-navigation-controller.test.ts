@@ -171,47 +171,6 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(context);
   });
 
-  it("captures pointer-locked third-person mouse look and honors horizontal inversion", () => {
-    const playerStart = createPlayerStartEntity({
-      id: "entity-player-start-invert-third-person",
-      invertMouseCameraHorizontal: true
-    });
-    const { context } = createRuntimeControllerContext(playerStart);
-    const controller = new ThirdPersonNavigationController();
-    const controllerInternals = controller as unknown as {
-      pointerLocked: boolean;
-      handleMouseMove(event: MouseEvent): void;
-    };
-    const requestPointerLock = vi.fn();
-    const mouseMoveEvent = new MouseEvent("mousemove");
-
-    Object.defineProperty(mouseMoveEvent, "movementX", {
-      configurable: true,
-      value: 24
-    });
-    Object.defineProperty(mouseMoveEvent, "movementY", {
-      configurable: true,
-      value: 0
-    });
-    Object.defineProperty(context.domElement, "requestPointerLock", {
-      configurable: true,
-      value: requestPointerLock
-    });
-
-    controller.activate(context);
-    expect(requestPointerLock).toHaveBeenCalledTimes(1);
-
-    controllerInternals.pointerLocked = true;
-    controllerInternals.handleMouseMove(mouseMoveEvent);
-    controller.update(0);
-
-    expect(context.camera.position.x).toBeLessThan(0);
-
-    controller.deactivate(context, {
-      releasePointerLock: false
-    });
-  });
-
   it("smooths the third-person camera back out when collision clears", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();
