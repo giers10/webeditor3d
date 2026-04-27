@@ -20770,6 +20770,50 @@ export function App({ store, initialStatusMessage }: AppProps) {
                       </div>
 
                       <div className="form-section">
+                        <div className="label">Targeting</div>
+                        <label className="form-field form-field--toggle">
+                          <span className="label">
+                            Camera Nudging Switches Target
+                          </span>
+                          <input
+                            data-testid="player-start-targeting-look-switch"
+                            type="checkbox"
+                            checked={
+                              playerStartAllowLookInputTargetSwitchDraft
+                            }
+                            onChange={(event) => {
+                              setPlayerStartAllowLookInputTargetSwitchDraft(
+                                event.currentTarget.checked
+                              );
+                              scheduleDraftCommit(() =>
+                                applyPlayerStartChange()
+                              );
+                            }}
+                          />
+                        </label>
+                        <label className="form-field form-field--toggle">
+                          <span className="label">
+                            Target Button Cycles Active Target
+                          </span>
+                          <input
+                            data-testid="player-start-targeting-button-cycle"
+                            type="checkbox"
+                            checked={
+                              playerStartTargetButtonCyclesActiveTargetDraft
+                            }
+                            onChange={(event) => {
+                              setPlayerStartTargetButtonCyclesActiveTargetDraft(
+                                event.currentTarget.checked
+                              );
+                              scheduleDraftCommit(() =>
+                                applyPlayerStartChange()
+                              );
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="form-section">
                         <div className="label">Movement Template</div>
                         <label className="form-field">
                           <span className="label">Template</span>
