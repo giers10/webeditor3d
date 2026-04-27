@@ -121,7 +121,7 @@ const ROOTS: readonly AuthorableRoot[] = [
   }
 ];
 
-const IDENTITY_PROPERTIES = new Set(["id", "version", "kind"]);
+const IDENTITY_PROPERTIES = new Set(["id", "version"]);
 const DISCRIMINATOR_CANDIDATES = [
   "mode",
   "type",
@@ -276,6 +276,29 @@ function literalUnionLabels(type: ts.Type): string[] {
   return labels.length === parts.length ? labels : [];
 }
 
+function shouldSkipProperty(
+  propertyName: string,
+  propertyType: ts.Type | null,
+  options: {
+    skipProperties: ReadonlySet<string>;
+    skipPropertiesForThisObject?: ReadonlySet<string>;
+  }
+): boolean {
+  if (
+    IDENTITY_PROPERTIES.has(propertyName) ||
+    options.skipProperties.has(propertyName) ||
+    options.skipPropertiesForThisObject?.has(propertyName)
+  ) {
+    return true;
+  }
+
+  if (propertyName !== "kind" || propertyType === null) {
+    return false;
+  }
+
+  return literalUnionLabels(propertyType).length === 1;
+}
+
 function chooseDiscriminator(types: readonly ts.Type[]): string | null {
   for (const candidate of DISCRIMINATOR_CANDIDATES) {
     const labels = types
@@ -392,6 +415,7 @@ function collectUnionFields(
 
   if (
     discriminator !== null &&
+    discriminator !== "kind" &&
     !IDENTITY_PROPERTIES.has(discriminator) &&
     !options.skipProperties.has(discriminator)
   ) {
@@ -411,8 +435,7 @@ function collectUnionFields(
     commonPropertyNames.filter((name) => {
       if (
         name === discriminator ||
-        IDENTITY_PROPERTIES.has(name) ||
-        options.skipProperties.has(name)
+        shouldSkipProperty(name, getPropertyType(objectTypes[0]!, name), options)
       ) {
         return false;
       }
@@ -490,19 +513,15 @@ function collectObjectFields(
   for (const property of type.getProperties()) {
     const propertyName = property.name;
 
-    if (
-      IDENTITY_PROPERTIES.has(propertyName) ||
-      options.skipProperties.has(propertyName) ||
-      options.skipPropertiesForThisObject?.has(propertyName)
-    ) {
-      continue;
-    }
-
     const declaration = property.valueDeclaration ?? property.declarations?.[0];
     const propertyType = checker.getTypeOfSymbolAtLocation(
       property,
       declaration ?? propertyDeclarationsFallback()
     );
+
+    if (shouldSkipProperty(propertyName, propertyType, options)) {
+      continue;
+    }
 
     collectFields(propertyType, `${currentPath}.${propertyName}`, entries, {
       condition: options.condition,
