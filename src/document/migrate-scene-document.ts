@@ -28,6 +28,7 @@ import {
   createCameraRigLookAroundSettings,
   createCameraRigPlayerTargetRef,
   createCameraRigWorldPointTargetRef,
+  DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES,
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
@@ -189,6 +190,7 @@ import {
   PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION,
   PROJECT_TIME_NIGHT_BACKGROUND_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_INTERACTION_ANGLE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
@@ -3306,6 +3308,11 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
       `${label}.interactionReachMeters`,
       DEFAULT_PLAYER_START_INTERACTION_REACH_METERS
     ),
+    interactionAngleDegrees: readOptionalFiniteNumber(
+      value.interactionAngleDegrees,
+      `${label}.interactionAngleDegrees`,
+      DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES
+    ),
     movementTemplate: readPlayerStartMovementTemplate(
       value.movementTemplate,
       `${label}.movementTemplate`
@@ -5455,6 +5462,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !==
       PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION &&
+    source.version !== PLAYER_START_INTERACTION_ANGLE_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_NAME_SCENE_DOCUMENT_VERSION &&
     source.version !== STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION &&

@@ -279,6 +279,7 @@ export interface RuntimePlayerStart {
   yawDegrees: number;
   navigationMode: RuntimeNavigationMode;
   interactionReachMeters: number;
+  interactionAngleDegrees: number;
   movement: RuntimePlayerMovement;
   inputBindings: PlayerStartInputBindings;
   collider: FirstPersonPlayerShape;
@@ -1593,6 +1594,7 @@ function buildRuntimeSceneCollections(
           yawDegrees: entity.yawDegrees,
           navigationMode: entity.navigationMode,
           interactionReachMeters: entity.interactionReachMeters,
+          interactionAngleDegrees: entity.interactionAngleDegrees,
           movement: buildRuntimePlayerMovement(entity.movementTemplate),
           inputBindings: clonePlayerStartInputBindings(entity.inputBindings),
           collider: buildRuntimePlayerShape(entity)
@@ -1990,6 +1992,7 @@ export function buildRuntimeSceneFromDocument(
           yawDegrees: playerStartEntity.yawDegrees,
           navigationMode,
           interactionReachMeters: playerStartEntity.interactionReachMeters,
+          interactionAngleDegrees: playerStartEntity.interactionAngleDegrees,
           movement: cloneRuntimePlayerMovement(playerMovement),
           inputBindings: clonePlayerStartInputBindings(playerInputBindings),
           collider: playerCollider
