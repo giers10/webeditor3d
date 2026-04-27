@@ -194,6 +194,7 @@ describe("ThirdPersonNavigationController", () => {
     });
 
     controller.activate(context);
+    document.dispatchEvent(new Event("pointerlockchange"));
     document.dispatchEvent(mouseMoveEvent);
     controller.update(0);
 

@@ -191,7 +191,7 @@ describe("RuntimeHost", () => {
         message: null
       });
       expect(runtimeMessages).toContain(
-        "Third Person active. Drag to orbit the camera, use the right stick for gamepad camera look, move with your authored bindings, and scroll to zoom."
+        "Third Person active. Click inside the runner viewport to capture mouse look, or drag to orbit if pointer lock is unavailable. Scroll to zoom and use the right stick for gamepad camera look."
       );
     });
 
@@ -3778,7 +3778,14 @@ describe("RuntimeHost", () => {
       enableRendering: false
     });
     const runtimeScene = buildRuntimeSceneFromDocument(
-      createEmptySceneDocument(),
+      {
+        ...createEmptySceneDocument(),
+        entities: {
+          "entity-player-start-switch": createPlayerStartEntity({
+            id: "entity-player-start-switch"
+          })
+        }
+      },
       {
         navigationMode: "firstPerson"
       }
