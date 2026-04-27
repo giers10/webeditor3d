@@ -952,6 +952,28 @@ export class RuntimeHost {
         this.clearActiveRuntimeTarget();
         return false;
       },
+      handleThirdPersonPointerLockReleased: () => {
+        if (
+          this.activeController !== this.thirdPersonController ||
+          this.activeRuntimeTargetReference === null
+        ) {
+          return false;
+        }
+
+        const clearTargetKeyboardBinding =
+          this.resolveRuntimePlayerInputBindings().keyboard.clearTarget;
+
+        if (
+          isPlayerStartMouseBindingCode(clearTargetKeyboardBinding) ||
+          clearTargetKeyboardBinding !== "Escape"
+        ) {
+          return false;
+        }
+
+        this.clearActiveRuntimeTarget();
+        this.previousClearTargetInputActive = true;
+        return true;
+      },
       isCameraDrivenExternally: () =>
         this.resolveActiveRuntimeCameraRig() !== null ||
         this.resolveDialogueAttentionNpc() !== null,
