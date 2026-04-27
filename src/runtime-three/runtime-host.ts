@@ -1071,8 +1071,8 @@ export class RuntimeHost {
   loadScene(runtimeScene: RuntimeSceneDefinition) {
     const requestId = ++this.collisionWorldRequestId;
     const preservePointerLockDuringLoad =
-      this.activeController === this.firstPersonController &&
-      this.desiredNavigationMode === "firstPerson" &&
+      this.activeController !== null &&
+      this.activeController.id === this.desiredNavigationMode &&
       document.pointerLockElement === this.domElement;
 
     this.sceneReady = false;
@@ -1526,7 +1526,13 @@ export class RuntimeHost {
       return;
     }
 
-    this.activeController?.deactivate(this.controllerContext);
+    const preservePointerLockDuringControllerSwitch =
+      this.activeController !== null &&
+      document.pointerLockElement === this.domElement;
+
+    this.activeController?.deactivate(this.controllerContext, {
+      releasePointerLock: !preservePointerLockDuringControllerSwitch
+    });
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
     if (nextController === this.firstPersonController) {
