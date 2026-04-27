@@ -123,8 +123,7 @@ export interface CameraRigBaseEntity extends AuthoredEntityState {
 }
 
 export interface FixedCameraRigEntity
-  extends PositionedEntity,
-    CameraRigBaseEntity {
+  extends PositionedEntity, CameraRigBaseEntity {
   rigType: "fixed";
 }
 
@@ -191,7 +190,8 @@ export interface NpcEntity extends PositionedEntity {
 }
 
 export const PLAYER_START_COLLIDER_MODES = ["capsule", "box", "none"] as const;
-export type PlayerStartColliderMode = (typeof PLAYER_START_COLLIDER_MODES)[number];
+export type PlayerStartColliderMode =
+  (typeof PLAYER_START_COLLIDER_MODES)[number];
 export const PLAYER_START_NAVIGATION_MODES = [
   "firstPerson",
   "thirdPerson"
@@ -403,7 +403,9 @@ export type EntityInstance =
 
 export type EntityKind = EntityInstance["kind"];
 
-export interface EntityRegistryEntry<T extends EntityInstance = EntityInstance> {
+export interface EntityRegistryEntry<
+  T extends EntityInstance = EntityInstance
+> {
   kind: T["kind"];
   label: string;
   description: string;
@@ -573,7 +575,8 @@ export const DEFAULT_NPC_DIALOGUE_ID: string | null = null;
 export const DEFAULT_NPC_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
 export const DEFAULT_NPC_TIME_WINDOW_START_HOUR = 9;
 export const DEFAULT_NPC_TIME_WINDOW_END_HOUR = 17;
-export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
+export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode =
+  "capsule";
 export const DEFAULT_PLAYER_START_EYE_HEIGHT = 1.6;
 export const DEFAULT_PLAYER_START_CAPSULE_RADIUS = 0.3;
 export const DEFAULT_PLAYER_START_CAPSULE_HEIGHT = 1.8;
@@ -613,7 +616,11 @@ function areVec3Equal(left: Vec3, right: Vec3): boolean {
 }
 
 function assertFiniteVec3(vector: Vec3, label: string) {
-  if (!Number.isFinite(vector.x) || !Number.isFinite(vector.y) || !Number.isFinite(vector.z)) {
+  if (
+    !Number.isFinite(vector.x) ||
+    !Number.isFinite(vector.y) ||
+    !Number.isFinite(vector.z)
+  ) {
     throw new Error(`${label} must be finite on every axis.`);
   }
 }
@@ -634,7 +641,9 @@ function assertPositiveFiniteVec3(vector: Vec3, label: string) {
 
 function assertNonNegativeFiniteNumber(value: number, label: string) {
   if (!Number.isFinite(value) || value < 0) {
-    throw new Error(`${label} must be a finite number greater than or equal to zero.`);
+    throw new Error(
+      `${label} must be a finite number greater than or equal to zero.`
+    );
   }
 }
 
@@ -656,7 +665,9 @@ function assertBoolean(value: boolean, label: string) {
   }
 }
 
-export function isPlayerStartColliderMode(value: string): value is PlayerStartColliderMode {
+export function isPlayerStartColliderMode(
+  value: string
+): value is PlayerStartColliderMode {
   return PLAYER_START_COLLIDER_MODES.includes(value as PlayerStartColliderMode);
 }
 
@@ -783,7 +794,9 @@ function normalizeCameraRigTargetActorId(actorId: string): string {
   const normalizedActorId = actorId.trim();
 
   if (normalizedActorId.length === 0) {
-    throw new Error("Camera Rig actor targets must reference a non-empty actor id.");
+    throw new Error(
+      "Camera Rig actor targets must reference a non-empty actor id."
+    );
   }
 
   return normalizedActorId;
@@ -793,7 +806,9 @@ function normalizeCameraRigTargetEntityId(entityId: string): string {
   const normalizedEntityId = entityId.trim();
 
   if (normalizedEntityId.length === 0) {
-    throw new Error("Camera Rig entity targets must reference a non-empty entity id.");
+    throw new Error(
+      "Camera Rig entity targets must reference a non-empty entity id."
+    );
   }
 
   return normalizedEntityId;
@@ -843,7 +858,9 @@ export function createCameraRigWorldPointTargetRef(
   };
 }
 
-export function cloneCameraRigTargetRef(target: CameraRigTargetRef): CameraRigTargetRef {
+export function cloneCameraRigTargetRef(
+  target: CameraRigTargetRef
+): CameraRigTargetRef {
   switch (target.kind) {
     case "player":
       return createCameraRigPlayerTargetRef();
@@ -882,15 +899,16 @@ export function areCameraRigTargetRefsEqual(
     case "entity":
       return right.kind === "entity" && left.entityId === right.entityId;
     case "worldPoint":
-      return right.kind === "worldPoint" && areVec3Equal(left.point, right.point);
+      return (
+        right.kind === "worldPoint" && areVec3Equal(left.point, right.point)
+      );
   }
 }
 
 export function createCameraRigLookAroundSettings(
   overrides: Partial<CameraRigLookAroundSettings> = {}
 ): CameraRigLookAroundSettings {
-  const enabled =
-    overrides.enabled ?? DEFAULT_CAMERA_RIG_LOOK_AROUND_ENABLED;
+  const enabled = overrides.enabled ?? DEFAULT_CAMERA_RIG_LOOK_AROUND_ENABLED;
   const yawLimitDegrees =
     overrides.yawLimitDegrees ??
     DEFAULT_CAMERA_RIG_LOOK_AROUND_YAW_LIMIT_DEGREES;
@@ -943,7 +961,10 @@ export function areCameraRigLookAroundSettingsEqual(
 function getPrimaryCameraRigDocumentPlayerTarget(
   entities: Record<string, EntityInstance>
 ): PlayerStartEntity | null {
-  return getPrimaryEnabledPlayerStartEntity(entities) ?? getPrimaryPlayerStartEntity(entities);
+  return (
+    getPrimaryEnabledPlayerStartEntity(entities) ??
+    getPrimaryPlayerStartEntity(entities)
+  );
 }
 
 export function resolveCameraRigDocumentTargetPosition(
@@ -952,7 +973,9 @@ export function resolveCameraRigDocumentTargetPosition(
 ): Vec3 | null {
   switch (target.kind) {
     case "player":
-      return getPrimaryCameraRigDocumentPlayerTarget(entities)?.position ?? null;
+      return (
+        getPrimaryCameraRigDocumentPlayerTarget(entities)?.position ?? null
+      );
     case "actor": {
       const enabledNpc =
         getEntityInstances(entities).find(
@@ -1012,10 +1035,7 @@ export function resolveCameraRigDocumentPosition(
         }
 
         return rig.railPlacementMode === "mapTargetBetweenPoints"
-          ? sampleResolvedScenePathPosition(
-              resolvedPath,
-              rig.railStartProgress
-            )
+          ? sampleResolvedScenePathPosition(resolvedPath, rig.railStartProgress)
           : resolvedPath.points.length > 0
             ? cloneVec3(resolvedPath.points[0]!.position)
             : null;
@@ -1046,7 +1066,10 @@ export function resolveCameraRigDocumentLookTarget(
   rig: Pick<CameraRigBaseEntity, "target" | "targetOffset">,
   entities: Record<string, EntityInstance>
 ): Vec3 | null {
-  const baseTarget = resolveCameraRigDocumentTargetPosition(rig.target, entities);
+  const baseTarget = resolveCameraRigDocumentTargetPosition(
+    rig.target,
+    entities
+  );
 
   if (baseTarget === null) {
     return null;
@@ -1196,14 +1219,11 @@ export function createPlayerStartInputBindings(
     moveRight:
       overrides.gamepad?.moveRight ??
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.moveRight,
-    jump:
-      overrides.gamepad?.jump ?? DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.jump,
+    jump: overrides.gamepad?.jump ?? DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.jump,
     sprint:
-      overrides.gamepad?.sprint ??
-      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.sprint,
+      overrides.gamepad?.sprint ?? DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.sprint,
     crouch:
-      overrides.gamepad?.crouch ??
-      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.crouch,
+      overrides.gamepad?.crouch ?? DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.crouch,
     interact:
       overrides.gamepad?.interact ??
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.interact,
@@ -1219,19 +1239,27 @@ export function createPlayerStartInputBindings(
   };
 
   if (!isPlayerStartKeyboardBindingCode(keyboard.moveForward)) {
-    throw new Error("Player Start move-forward keyboard binding must be supported.");
+    throw new Error(
+      "Player Start move-forward keyboard binding must be supported."
+    );
   }
 
   if (!isPlayerStartKeyboardBindingCode(keyboard.moveBackward)) {
-    throw new Error("Player Start move-backward keyboard binding must be supported.");
+    throw new Error(
+      "Player Start move-backward keyboard binding must be supported."
+    );
   }
 
   if (!isPlayerStartKeyboardBindingCode(keyboard.moveLeft)) {
-    throw new Error("Player Start move-left keyboard binding must be supported.");
+    throw new Error(
+      "Player Start move-left keyboard binding must be supported."
+    );
   }
 
   if (!isPlayerStartKeyboardBindingCode(keyboard.moveRight)) {
-    throw new Error("Player Start move-right keyboard binding must be supported.");
+    throw new Error(
+      "Player Start move-right keyboard binding must be supported."
+    );
   }
 
   if (!isPlayerStartKeyboardBindingCode(keyboard.jump)) {
@@ -1247,11 +1275,15 @@ export function createPlayerStartInputBindings(
   }
 
   if (!isPlayerStartKeyboardBindingCode(keyboard.interact)) {
-    throw new Error("Player Start interact keyboard binding must be supported.");
+    throw new Error(
+      "Player Start interact keyboard binding must be supported."
+    );
   }
 
   if (!isPlayerStartKeyboardBindingCode(keyboard.clearTarget)) {
-    throw new Error("Player Start clear-target keyboard binding must be supported.");
+    throw new Error(
+      "Player Start clear-target keyboard binding must be supported."
+    );
   }
 
   if (!isPlayerStartKeyboardBindingCode(keyboard.pauseTime)) {
@@ -1259,19 +1291,27 @@ export function createPlayerStartInputBindings(
   }
 
   if (!isPlayerStartGamepadBinding(gamepad.moveForward)) {
-    throw new Error("Player Start move-forward gamepad binding must be supported.");
+    throw new Error(
+      "Player Start move-forward gamepad binding must be supported."
+    );
   }
 
   if (!isPlayerStartGamepadBinding(gamepad.moveBackward)) {
-    throw new Error("Player Start move-backward gamepad binding must be supported.");
+    throw new Error(
+      "Player Start move-backward gamepad binding must be supported."
+    );
   }
 
   if (!isPlayerStartGamepadBinding(gamepad.moveLeft)) {
-    throw new Error("Player Start move-left gamepad binding must be supported.");
+    throw new Error(
+      "Player Start move-left gamepad binding must be supported."
+    );
   }
 
   if (!isPlayerStartGamepadBinding(gamepad.moveRight)) {
-    throw new Error("Player Start move-right gamepad binding must be supported.");
+    throw new Error(
+      "Player Start move-right gamepad binding must be supported."
+    );
   }
 
   if (!isPlayerStartGamepadActionBinding(gamepad.jump)) {
@@ -1291,7 +1331,9 @@ export function createPlayerStartInputBindings(
   }
 
   if (!isPlayerStartGamepadActionBinding(gamepad.clearTarget)) {
-    throw new Error("Player Start clear-target gamepad binding must be supported.");
+    throw new Error(
+      "Player Start clear-target gamepad binding must be supported."
+    );
   }
 
   if (!isPlayerStartGamepadActionBinding(gamepad.pauseTime)) {
@@ -1299,7 +1341,9 @@ export function createPlayerStartInputBindings(
   }
 
   if (!isPlayerStartGamepadCameraLookBinding(gamepad.cameraLook)) {
-    throw new Error("Player Start camera-look gamepad binding must be supported.");
+    throw new Error(
+      "Player Start camera-look gamepad binding must be supported."
+    );
   }
 
   return {
@@ -1319,8 +1363,7 @@ export function isPlayerStartMovementTemplateKind(
 export function createPlayerStartMovementTemplate(
   overrides: PlayerStartMovementTemplateOverrides = {}
 ): PlayerStartMovementTemplate {
-  const kind =
-    overrides.kind ?? DEFAULT_PLAYER_START_MOVEMENT_TEMPLATE_KIND;
+  const kind = overrides.kind ?? DEFAULT_PLAYER_START_MOVEMENT_TEMPLATE_KIND;
 
   if (!isPlayerStartMovementTemplateKind(kind)) {
     throw new Error(
@@ -1352,18 +1395,14 @@ export function createPlayerStartMovementTemplate(
   const maxSpeed = overrides.maxSpeed ?? preset.maxSpeed;
   const maxStepHeight = overrides.maxStepHeight ?? preset.maxStepHeight;
   const capabilities: PlayerStartMovementCapabilities = {
-    jump:
-      overrides.capabilities?.jump ?? preset.capabilities.jump,
-    sprint:
-      overrides.capabilities?.sprint ?? preset.capabilities.sprint,
-    crouch:
-      overrides.capabilities?.crouch ?? preset.capabilities.crouch
+    jump: overrides.capabilities?.jump ?? preset.capabilities.jump,
+    sprint: overrides.capabilities?.sprint ?? preset.capabilities.sprint,
+    crouch: overrides.capabilities?.crouch ?? preset.capabilities.crouch
   };
   const jump: PlayerStartJumpSettings = {
     speed: overrides.jump?.speed ?? preset.jump.speed,
     bufferMs: overrides.jump?.bufferMs ?? preset.jump.bufferMs,
-    coyoteTimeMs:
-      overrides.jump?.coyoteTimeMs ?? preset.jump.coyoteTimeMs,
+    coyoteTimeMs: overrides.jump?.coyoteTimeMs ?? preset.jump.coyoteTimeMs,
     variableHeight:
       overrides.jump?.variableHeight ?? preset.jump.variableHeight,
     maxHoldMs: overrides.jump?.maxHoldMs ?? preset.jump.maxHoldMs,
@@ -1371,11 +1410,9 @@ export function createPlayerStartMovementTemplate(
       overrides.jump?.moveWhileJumping ?? preset.jump.moveWhileJumping,
     moveWhileFalling:
       overrides.jump?.moveWhileFalling ?? preset.jump.moveWhileFalling,
-    directionOnly:
-      overrides.jump?.directionOnly ?? preset.jump.directionOnly,
+    directionOnly: overrides.jump?.directionOnly ?? preset.jump.directionOnly,
     bunnyHop: overrides.jump?.bunnyHop ?? preset.jump.bunnyHop,
-    bunnyHopBoost:
-      overrides.jump?.bunnyHopBoost ?? preset.jump.bunnyHopBoost
+    bunnyHopBoost: overrides.jump?.bunnyHopBoost ?? preset.jump.bunnyHopBoost
   };
   const sprint: PlayerStartSprintSettings = {
     speedMultiplier:
@@ -1388,10 +1425,7 @@ export function createPlayerStartMovementTemplate(
 
   assertPositiveFiniteNumber(moveSpeed, "Player Start move speed");
   assertNonNegativeFiniteNumber(maxSpeed, "Player Start max speed");
-  assertNonNegativeFiniteNumber(
-    maxStepHeight,
-    "Player Start max step height"
-  );
+  assertNonNegativeFiniteNumber(maxStepHeight, "Player Start max step height");
   assertBoolean(
     capabilities.jump,
     "Player Start movement template jump capability"
@@ -1429,10 +1463,7 @@ export function createPlayerStartMovementTemplate(
     jump.moveWhileFalling,
     "Player Start move while falling setting"
   );
-  assertBoolean(
-    jump.directionOnly,
-    "Player Start air direction only setting"
-  );
+  assertBoolean(jump.directionOnly, "Player Start air direction only setting");
   assertBoolean(jump.bunnyHop, "Player Start bunny hop setting");
   assertNonNegativeFiniteNumber(
     jump.bunnyHopBoost,
@@ -1460,7 +1491,9 @@ export function createPlayerStartMovementTemplate(
 }
 
 export function inferPlayerStartMovementTemplateKind(
-  template: Omit<PlayerStartMovementTemplate, "kind"> | PlayerStartMovementTemplate
+  template:
+    | Omit<PlayerStartMovementTemplate, "kind">
+    | PlayerStartMovementTemplate
 ): PlayerStartMovementTemplateKind {
   const candidate = createPlayerStartMovementTemplate({
     kind: "custom",
@@ -1486,35 +1519,47 @@ export function inferPlayerStartMovementTemplateKind(
       candidate.maxStepHeight ===
         createPlayerStartMovementTemplate({ kind: presetKind }).maxStepHeight &&
       candidate.capabilities.jump ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).capabilities.jump &&
+        createPlayerStartMovementTemplate({ kind: presetKind }).capabilities
+          .jump &&
       candidate.capabilities.sprint ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).capabilities.sprint &&
+        createPlayerStartMovementTemplate({ kind: presetKind }).capabilities
+          .sprint &&
       candidate.capabilities.crouch ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).capabilities.crouch &&
+        createPlayerStartMovementTemplate({ kind: presetKind }).capabilities
+          .crouch &&
       candidate.jump.speed ===
         createPlayerStartMovementTemplate({ kind: presetKind }).jump.speed &&
       candidate.jump.bufferMs ===
         createPlayerStartMovementTemplate({ kind: presetKind }).jump.bufferMs &&
       candidate.jump.coyoteTimeMs ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).jump.coyoteTimeMs &&
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump
+          .coyoteTimeMs &&
       candidate.jump.variableHeight ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).jump.variableHeight &&
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump
+          .variableHeight &&
       candidate.jump.maxHoldMs ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).jump.maxHoldMs &&
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump
+          .maxHoldMs &&
       candidate.jump.moveWhileJumping ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).jump.moveWhileJumping &&
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump
+          .moveWhileJumping &&
       candidate.jump.moveWhileFalling ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).jump.moveWhileFalling &&
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump
+          .moveWhileFalling &&
       candidate.jump.directionOnly ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).jump.directionOnly &&
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump
+          .directionOnly &&
       candidate.jump.bunnyHop ===
         createPlayerStartMovementTemplate({ kind: presetKind }).jump.bunnyHop &&
       candidate.jump.bunnyHopBoost ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).jump.bunnyHopBoost &&
+        createPlayerStartMovementTemplate({ kind: presetKind }).jump
+          .bunnyHopBoost &&
       candidate.sprint.speedMultiplier ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).sprint.speedMultiplier &&
+        createPlayerStartMovementTemplate({ kind: presetKind }).sprint
+          .speedMultiplier &&
       candidate.crouch.speedMultiplier ===
-        createPlayerStartMovementTemplate({ kind: presetKind }).crouch.speedMultiplier
+        createPlayerStartMovementTemplate({ kind: presetKind }).crouch
+          .speedMultiplier
     ) {
       return presetKind;
     }
@@ -1609,9 +1654,12 @@ function createCharacterColliderSettings(
   overrides: Partial<CharacterColliderSettings> = {},
   defaults: Partial<CharacterColliderSettings> = {}
 ): CharacterColliderSettings {
-  const mode = overrides.mode ?? defaults.mode ?? DEFAULT_PLAYER_START_COLLIDER_MODE;
+  const mode =
+    overrides.mode ?? defaults.mode ?? DEFAULT_PLAYER_START_COLLIDER_MODE;
   const eyeHeight =
-    overrides.eyeHeight ?? defaults.eyeHeight ?? DEFAULT_PLAYER_START_EYE_HEIGHT;
+    overrides.eyeHeight ??
+    defaults.eyeHeight ??
+    DEFAULT_PLAYER_START_EYE_HEIGHT;
   const capsuleRadius =
     overrides.capsuleRadius ??
     defaults.capsuleRadius ??
@@ -1678,7 +1726,9 @@ export function createNpcColliderSettings(
   });
 }
 
-function normalizeSoundEmitterAudioAssetId(audioAssetId: string | null | undefined): string | null {
+function normalizeSoundEmitterAudioAssetId(
+  audioAssetId: string | null | undefined
+): string | null {
   if (audioAssetId === undefined || audioAssetId === null) {
     return null;
   }
@@ -1686,13 +1736,17 @@ function normalizeSoundEmitterAudioAssetId(audioAssetId: string | null | undefin
   const trimmedAudioAssetId = audioAssetId.trim();
 
   if (trimmedAudioAssetId.length === 0) {
-    throw new Error("Sound Emitter audio asset id must be non-empty when authored.");
+    throw new Error(
+      "Sound Emitter audio asset id must be non-empty when authored."
+    );
   }
 
   return trimmedAudioAssetId;
 }
 
-export function normalizeEntityName(name: string | null | undefined): string | undefined {
+export function normalizeEntityName(
+  name: string | null | undefined
+): string | undefined {
   if (name === undefined || name === null) {
     return undefined;
   }
@@ -1701,7 +1755,9 @@ export function normalizeEntityName(name: string | null | undefined): string | u
   return trimmedName.length === 0 ? undefined : trimmedName;
 }
 
-function resolveAuthoredEntityVisibility(visible: boolean | undefined): boolean {
+function resolveAuthoredEntityVisibility(
+  visible: boolean | undefined
+): boolean {
   const resolvedVisible = visible ?? DEFAULT_ENTITY_VISIBLE;
 
   assertBoolean(resolvedVisible, "Entity visible");
@@ -1725,7 +1781,10 @@ export function createNpcActorId(): string {
 }
 
 export function isNpcPresenceMode(value: unknown): value is NpcPresenceMode {
-  return typeof value === "string" && NPC_PRESENCE_MODES.includes(value as NpcPresenceMode);
+  return (
+    typeof value === "string" &&
+    NPC_PRESENCE_MODES.includes(value as NpcPresenceMode)
+  );
 }
 
 export function createNpcAlwaysPresence(): NpcAlwaysPresence {
@@ -1787,9 +1846,7 @@ export function areNpcPresencesEqual(
   );
 }
 
-function normalizeNpcPresence(
-  presence: NpcPresence | undefined
-): NpcPresence {
+function normalizeNpcPresence(presence: NpcPresence | undefined): NpcPresence {
   if (presence === undefined) {
     return createNpcAlwaysPresence();
   }
@@ -1848,7 +1905,9 @@ function normalizeNpcDefaultDialogueId(
     return null;
   }
 
-  return dialogues.some((dialogue) => dialogue.id === normalizedDefaultDialogueId)
+  return dialogues.some(
+    (dialogue) => dialogue.id === normalizedDefaultDialogueId
+  )
     ? normalizedDefaultDialogueId
     : null;
 }
@@ -1864,9 +1923,23 @@ export function normalizeInteractablePrompt(prompt: string): string {
 }
 
 export function createPointLightEntity(
-  overrides: Partial<Pick<PointLightEntity, "id" | "name" | "visible" | "enabled" | "position" | "colorHex" | "intensity" | "distance">> = {}
+  overrides: Partial<
+    Pick<
+      PointLightEntity,
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "position"
+      | "colorHex"
+      | "intensity"
+      | "distance"
+    >
+  > = {}
 ): PointLightEntity {
-  const position = cloneVec3(overrides.position ?? DEFAULT_POINT_LIGHT_POSITION);
+  const position = cloneVec3(
+    overrides.position ?? DEFAULT_POINT_LIGHT_POSITION
+  );
   const colorHex = overrides.colorHex ?? DEFAULT_POINT_LIGHT_COLOR_HEX;
   const intensity = overrides.intensity ?? DEFAULT_POINT_LIGHT_INTENSITY;
   const distance = overrides.distance ?? DEFAULT_POINT_LIGHT_DISTANCE;
@@ -1890,14 +1963,31 @@ export function createPointLightEntity(
 }
 
 export function createSpotLightEntity(
-  overrides: Partial<Pick<SpotLightEntity, "id" | "name" | "visible" | "enabled" | "position" | "direction" | "colorHex" | "intensity" | "distance" | "angleDegrees">> = {}
+  overrides: Partial<
+    Pick<
+      SpotLightEntity,
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "position"
+      | "direction"
+      | "colorHex"
+      | "intensity"
+      | "distance"
+      | "angleDegrees"
+    >
+  > = {}
 ): SpotLightEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_SPOT_LIGHT_POSITION);
-  const direction = cloneVec3(overrides.direction ?? DEFAULT_SPOT_LIGHT_DIRECTION);
+  const direction = cloneVec3(
+    overrides.direction ?? DEFAULT_SPOT_LIGHT_DIRECTION
+  );
   const colorHex = overrides.colorHex ?? DEFAULT_SPOT_LIGHT_COLOR_HEX;
   const intensity = overrides.intensity ?? DEFAULT_SPOT_LIGHT_INTENSITY;
   const distance = overrides.distance ?? DEFAULT_SPOT_LIGHT_DISTANCE;
-  const angleDegrees = overrides.angleDegrees ?? DEFAULT_SPOT_LIGHT_ANGLE_DEGREES;
+  const angleDegrees =
+    overrides.angleDegrees ?? DEFAULT_SPOT_LIGHT_ANGLE_DEGREES;
 
   assertFiniteVec3(position, "Spot Light position");
   assertFiniteVec3(direction, "Spot Light direction");
@@ -1906,8 +1996,14 @@ export function createSpotLightEntity(
   assertNonNegativeFiniteNumber(intensity, "Spot Light intensity");
   assertPositiveFiniteNumber(distance, "Spot Light distance");
 
-  if (!Number.isFinite(angleDegrees) || angleDegrees <= 0 || angleDegrees >= 180) {
-    throw new Error("Spot Light angle must be a finite degree value between 0 and 180.");
+  if (
+    !Number.isFinite(angleDegrees) ||
+    angleDegrees <= 0 ||
+    angleDegrees >= 180
+  ) {
+    throw new Error(
+      "Spot Light angle must be a finite degree value between 0 and 180."
+    );
   }
 
   return {
@@ -1947,7 +2043,9 @@ export function createPlayerStartEntity(
     collider?: Partial<PlayerStartColliderSettings>;
   } = {}
 ): PlayerStartEntity {
-  const position = cloneVec3(overrides.position ?? DEFAULT_PLAYER_START_POSITION);
+  const position = cloneVec3(
+    overrides.position ?? DEFAULT_PLAYER_START_POSITION
+  );
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_PLAYER_START_YAW_DEGREES;
   const navigationMode =
     overrides.navigationMode ?? DEFAULT_PLAYER_START_NAVIGATION_MODE;
@@ -2024,7 +2122,12 @@ export function createPlayerStartEntity(
 }
 
 export function createSceneEntryEntity(
-  overrides: Partial<Pick<SceneEntryEntity, "id" | "name" | "visible" | "enabled" | "position" | "yawDegrees">> = {}
+  overrides: Partial<
+    Pick<
+      SceneEntryEntity,
+      "id" | "name" | "visible" | "enabled" | "position" | "yawDegrees"
+    >
+  > = {}
 ): SceneEntryEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_SCENE_ENTRY_YAW_DEGREES;
@@ -2204,8 +2307,7 @@ export function createCameraRigEntity(
           DEFAULT_CAMERA_RIG_TRACK_START_POINT
       );
       const trackEndPoint = cloneVec3(
-        mappedRailOverrides.trackEndPoint ??
-          DEFAULT_CAMERA_RIG_TRACK_END_POINT
+        mappedRailOverrides.trackEndPoint ?? DEFAULT_CAMERA_RIG_TRACK_END_POINT
       );
       const railStartProgress =
         mappedRailOverrides.railStartProgress ??
@@ -2325,15 +2427,29 @@ export function createSoundEmitterEntity(
   overrides: Partial<
     Pick<
       SoundEmitterEntity,
-      "id" | "name" | "visible" | "enabled" | "position" | "audioAssetId" | "volume" | "refDistance" | "maxDistance" | "autoplay" | "loop"
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "position"
+      | "audioAssetId"
+      | "volume"
+      | "refDistance"
+      | "maxDistance"
+      | "autoplay"
+      | "loop"
     >
   > = {}
 ): SoundEmitterEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
-  const audioAssetId = normalizeSoundEmitterAudioAssetId(overrides.audioAssetId ?? DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID);
+  const audioAssetId = normalizeSoundEmitterAudioAssetId(
+    overrides.audioAssetId ?? DEFAULT_SOUND_EMITTER_AUDIO_ASSET_ID
+  );
   const volume = overrides.volume ?? DEFAULT_SOUND_EMITTER_VOLUME;
-  const refDistance = overrides.refDistance ?? DEFAULT_SOUND_EMITTER_REF_DISTANCE;
-  const maxDistance = overrides.maxDistance ?? DEFAULT_SOUND_EMITTER_MAX_DISTANCE;
+  const refDistance =
+    overrides.refDistance ?? DEFAULT_SOUND_EMITTER_REF_DISTANCE;
+  const maxDistance =
+    overrides.maxDistance ?? DEFAULT_SOUND_EMITTER_MAX_DISTANCE;
   const autoplay = overrides.autoplay ?? false;
   const loop = overrides.loop ?? false;
 
@@ -2343,7 +2459,9 @@ export function createSoundEmitterEntity(
   assertPositiveFiniteNumber(maxDistance, "Sound Emitter max distance");
 
   if (maxDistance < refDistance) {
-    throw new Error("Sound Emitter max distance must be greater than or equal to ref distance.");
+    throw new Error(
+      "Sound Emitter max distance must be greater than or equal to ref distance."
+    );
   }
 
   assertBoolean(autoplay, "Sound Emitter autoplay");
@@ -2366,7 +2484,19 @@ export function createSoundEmitterEntity(
 }
 
 export function createTriggerVolumeEntity(
-  overrides: Partial<Pick<TriggerVolumeEntity, "id" | "name" | "visible" | "enabled" | "position" | "size" | "triggerOnEnter" | "triggerOnExit">> = {}
+  overrides: Partial<
+    Pick<
+      TriggerVolumeEntity,
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "position"
+      | "size"
+      | "triggerOnEnter"
+      | "triggerOnExit"
+    >
+  > = {}
 ): TriggerVolumeEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const size = cloneVec3(overrides.size ?? DEFAULT_TRIGGER_VOLUME_SIZE);
@@ -2392,10 +2522,16 @@ export function createTriggerVolumeEntity(
 }
 
 export function createTeleportTargetEntity(
-  overrides: Partial<Pick<TeleportTargetEntity, "id" | "name" | "visible" | "enabled" | "position" | "yawDegrees">> = {}
+  overrides: Partial<
+    Pick<
+      TeleportTargetEntity,
+      "id" | "name" | "visible" | "enabled" | "position" | "yawDegrees"
+    >
+  > = {}
 ): TeleportTargetEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
-  const yawDegrees = overrides.yawDegrees ?? DEFAULT_TELEPORT_TARGET_YAW_DEGREES;
+  const yawDegrees =
+    overrides.yawDegrees ?? DEFAULT_TELEPORT_TARGET_YAW_DEGREES;
 
   assertFiniteVec3(position, "Teleport Target position");
 
@@ -2415,11 +2551,25 @@ export function createTeleportTargetEntity(
 }
 
 export function createInteractableEntity(
-  overrides: Partial<Pick<InteractableEntity, "id" | "name" | "visible" | "enabled" | "position" | "radius" | "prompt" | "interactionEnabled">> = {}
+  overrides: Partial<
+    Pick<
+      InteractableEntity,
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "position"
+      | "radius"
+      | "prompt"
+      | "interactionEnabled"
+    >
+  > = {}
 ): InteractableEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const radius = overrides.radius ?? DEFAULT_INTERACTABLE_RADIUS;
-  const prompt = normalizeInteractablePrompt(overrides.prompt ?? DEFAULT_INTERACTABLE_PROMPT);
+  const prompt = normalizeInteractablePrompt(
+    overrides.prompt ?? DEFAULT_INTERACTABLE_PROMPT
+  );
   const interactionEnabled = overrides.interactionEnabled ?? true;
 
   assertFiniteVec3(position, "Interactable position");
@@ -2439,17 +2589,21 @@ export function createInteractableEntity(
   };
 }
 
-export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<EntityInstance, { kind: K }>> } = {
+export const ENTITY_REGISTRY: {
+  [K in EntityKind]: EntityRegistryEntry<Extract<EntityInstance, { kind: K }>>;
+} = {
   pointLight: {
     kind: "pointLight",
     label: "Point Light",
-    description: "Authored local point light that illuminates nearby geometry in a spherical radius.",
+    description:
+      "Authored local point light that illuminates nearby geometry in a spherical radius.",
     createDefaultEntity: createPointLightEntity
   },
   spotLight: {
     kind: "spotLight",
     label: "Spot Light",
-    description: "Authored local spotlight with an explicit direction and cone angle.",
+    description:
+      "Authored local spotlight with an explicit direction and cone angle.",
     createDefaultEntity: createSpotLightEntity
   },
   playerStart: {
@@ -2484,48 +2638,90 @@ export const ENTITY_REGISTRY: { [K in EntityKind]: EntityRegistryEntry<Extract<E
   soundEmitter: {
     kind: "soundEmitter",
     label: "Sound Emitter",
-    description: "Authored positional audio source wired to an audio asset and configurable for looping, volume, and distance falloff.",
+    description:
+      "Authored positional audio source wired to an audio asset and configurable for looping, volume, and distance falloff.",
     createDefaultEntity: createSoundEmitterEntity
   },
   triggerVolume: {
     kind: "triggerVolume",
     label: "Trigger Volume",
-    description: "Axis-aligned authored trigger volume for enter and exit events.",
+    description:
+      "Axis-aligned authored trigger volume for enter and exit events.",
     createDefaultEntity: createTriggerVolumeEntity
   },
   teleportTarget: {
     kind: "teleportTarget",
     label: "Teleport Target",
-    description: "Explicit authored teleport destination with a facing direction.",
+    description:
+      "Explicit authored teleport destination with a facing direction.",
     createDefaultEntity: createTeleportTargetEntity
   },
   interactable: {
     kind: "interactable",
     label: "Interactable",
-    description: "Explicit authored interaction point for later click and use behavior.",
+    description:
+      "Explicit authored interaction point for later click and use behavior.",
     createDefaultEntity: createInteractableEntity
   }
 };
 
 export function isEntityKind(value: unknown): value is EntityKind {
-  return typeof value === "string" && Object.prototype.hasOwnProperty.call(ENTITY_REGISTRY, value);
+  return (
+    typeof value === "string" &&
+    Object.prototype.hasOwnProperty.call(ENTITY_REGISTRY, value)
+  );
 }
 
-export function getEntityRegistryEntry<K extends EntityKind>(kind: K): EntityRegistryEntry<Extract<EntityInstance, { kind: K }>> {
+export function getEntityRegistryEntry<K extends EntityKind>(
+  kind: K
+): EntityRegistryEntry<Extract<EntityInstance, { kind: K }>> {
   return ENTITY_REGISTRY[kind];
 }
 
-export function createDefaultEntityInstance(kind: "playerStart", overrides?: Partial<PlayerStartEntity>): PlayerStartEntity;
-export function createDefaultEntityInstance(kind: "cameraRig", overrides?: Partial<CameraRigEntity>): CameraRigEntity;
-export function createDefaultEntityInstance(kind: "sceneEntry", overrides?: Partial<SceneEntryEntity>): SceneEntryEntity;
-export function createDefaultEntityInstance(kind: "npc", overrides?: Partial<NpcEntity>): NpcEntity;
-export function createDefaultEntityInstance(kind: "pointLight", overrides?: Partial<PointLightEntity>): PointLightEntity;
-export function createDefaultEntityInstance(kind: "spotLight", overrides?: Partial<SpotLightEntity>): SpotLightEntity;
-export function createDefaultEntityInstance(kind: "soundEmitter", overrides?: Partial<SoundEmitterEntity>): SoundEmitterEntity;
-export function createDefaultEntityInstance(kind: "triggerVolume", overrides?: Partial<TriggerVolumeEntity>): TriggerVolumeEntity;
-export function createDefaultEntityInstance(kind: "teleportTarget", overrides?: Partial<TeleportTargetEntity>): TeleportTargetEntity;
-export function createDefaultEntityInstance(kind: "interactable", overrides?: Partial<InteractableEntity>): InteractableEntity;
-export function createDefaultEntityInstance(kind: EntityKind, overrides: Partial<EntityInstance> = {}): EntityInstance {
+export function createDefaultEntityInstance(
+  kind: "playerStart",
+  overrides?: Partial<PlayerStartEntity>
+): PlayerStartEntity;
+export function createDefaultEntityInstance(
+  kind: "cameraRig",
+  overrides?: Partial<CameraRigEntity>
+): CameraRigEntity;
+export function createDefaultEntityInstance(
+  kind: "sceneEntry",
+  overrides?: Partial<SceneEntryEntity>
+): SceneEntryEntity;
+export function createDefaultEntityInstance(
+  kind: "npc",
+  overrides?: Partial<NpcEntity>
+): NpcEntity;
+export function createDefaultEntityInstance(
+  kind: "pointLight",
+  overrides?: Partial<PointLightEntity>
+): PointLightEntity;
+export function createDefaultEntityInstance(
+  kind: "spotLight",
+  overrides?: Partial<SpotLightEntity>
+): SpotLightEntity;
+export function createDefaultEntityInstance(
+  kind: "soundEmitter",
+  overrides?: Partial<SoundEmitterEntity>
+): SoundEmitterEntity;
+export function createDefaultEntityInstance(
+  kind: "triggerVolume",
+  overrides?: Partial<TriggerVolumeEntity>
+): TriggerVolumeEntity;
+export function createDefaultEntityInstance(
+  kind: "teleportTarget",
+  overrides?: Partial<TeleportTargetEntity>
+): TeleportTargetEntity;
+export function createDefaultEntityInstance(
+  kind: "interactable",
+  overrides?: Partial<InteractableEntity>
+): InteractableEntity;
+export function createDefaultEntityInstance(
+  kind: EntityKind,
+  overrides: Partial<EntityInstance> = {}
+): EntityInstance {
   switch (kind) {
     case "pointLight":
       return createPointLightEntity(overrides);
@@ -2575,11 +2771,21 @@ export function cloneEntityInstance(entity: EntityInstance): EntityInstance {
   }
 }
 
-export function cloneEntityRegistry(entities: Record<string, EntityInstance>): Record<string, EntityInstance> {
-  return Object.fromEntries(Object.entries(entities).map(([entityId, entity]) => [entityId, cloneEntityInstance(entity)]));
+export function cloneEntityRegistry(
+  entities: Record<string, EntityInstance>
+): Record<string, EntityInstance> {
+  return Object.fromEntries(
+    Object.entries(entities).map(([entityId, entity]) => [
+      entityId,
+      cloneEntityInstance(entity)
+    ])
+  );
 }
 
-export function areEntityInstancesEqual(left: EntityInstance, right: EntityInstance): boolean {
+export function areEntityInstancesEqual(
+  left: EntityInstance,
+  right: EntityInstance
+): boolean {
   if (
     left.kind !== right.kind ||
     left.id !== right.id ||
@@ -2650,7 +2856,10 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
             left.railPlacementMode === typedRight.railPlacementMode &&
             (left.railPlacementMode === "mapTargetBetweenPoints"
               ? typedRight.railPlacementMode === "mapTargetBetweenPoints" &&
-                areVec3Equal(left.trackStartPoint, typedRight.trackStartPoint) &&
+                areVec3Equal(
+                  left.trackStartPoint,
+                  typedRight.trackStartPoint
+                ) &&
                 areVec3Equal(left.trackEndPoint, typedRight.trackEndPoint) &&
                 left.railStartProgress === typedRight.railStartProgress &&
                 left.railEndProgress === typedRight.railEndProgress
@@ -2735,7 +2944,10 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
   }
 }
 
-export function compareEntityInstances(left: EntityInstance, right: EntityInstance): number {
+export function compareEntityInstances(
+  left: EntityInstance,
+  right: EntityInstance
+): number {
   const leftOrder = ENTITY_KIND_ORDER.indexOf(left.kind);
   const rightOrder = ENTITY_KIND_ORDER.indexOf(right.kind);
 
@@ -2746,7 +2958,9 @@ export function compareEntityInstances(left: EntityInstance, right: EntityInstan
   return left.id.localeCompare(right.id);
 }
 
-export function getEntityInstances(entities: Record<string, EntityInstance>): EntityInstance[] {
+export function getEntityInstances(
+  entities: Record<string, EntityInstance>
+): EntityInstance[] {
   return Object.values(entities).sort(compareEntityInstances);
 }
 
@@ -2754,10 +2968,15 @@ export function getEntitiesOfKind<K extends EntityKind>(
   entities: Record<string, EntityInstance>,
   kind: K
 ): Extract<EntityInstance, { kind: K }>[] {
-  return getEntityInstances(entities).filter((entity): entity is Extract<EntityInstance, { kind: K }> => entity.kind === kind);
+  return getEntityInstances(entities).filter(
+    (entity): entity is Extract<EntityInstance, { kind: K }> =>
+      entity.kind === kind
+  );
 }
 
-export function getPlayerStartEntities(entities: Record<string, EntityInstance>): PlayerStartEntity[] {
+export function getPlayerStartEntities(
+  entities: Record<string, EntityInstance>
+): PlayerStartEntity[] {
   return getEntitiesOfKind(entities, "playerStart");
 }
 
@@ -2767,12 +2986,18 @@ export function getCameraRigEntities(
   return getEntitiesOfKind(entities, "cameraRig");
 }
 
-export function getPrimaryPlayerStartEntity(entities: Record<string, EntityInstance>): PlayerStartEntity | null {
+export function getPrimaryPlayerStartEntity(
+  entities: Record<string, EntityInstance>
+): PlayerStartEntity | null {
   return getPlayerStartEntities(entities)[0] ?? null;
 }
 
-export function getPrimaryEnabledPlayerStartEntity(entities: Record<string, EntityInstance>): PlayerStartEntity | null {
-  return getPlayerStartEntities(entities).find((entity) => entity.enabled) ?? null;
+export function getPrimaryEnabledPlayerStartEntity(
+  entities: Record<string, EntityInstance>
+): PlayerStartEntity | null {
+  return (
+    getPlayerStartEntities(entities).find((entity) => entity.enabled) ?? null
+  );
 }
 
 export function getEntityKindLabel(kind: EntityKind): string {

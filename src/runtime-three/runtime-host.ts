@@ -5662,17 +5662,13 @@ export class RuntimeHost {
             z: this.cameraForward.z
           }
         : {
-            x:
-              Math.sin(
-                (this.currentPlayerControllerTelemetry.yawDegrees * Math.PI) /
-                  180
-              ),
+            x: Math.sin(
+              (this.currentPlayerControllerTelemetry.yawDegrees * Math.PI) / 180
+            ),
             y: 0,
-            z:
-              Math.cos(
-                (this.currentPlayerControllerTelemetry.yawDegrees * Math.PI) /
-                  180
-              )
+            z: Math.cos(
+              (this.currentPlayerControllerTelemetry.yawDegrees * Math.PI) / 180
+            )
           };
 
     return this.interactionSystem.resolveClickInteractionPrompt(

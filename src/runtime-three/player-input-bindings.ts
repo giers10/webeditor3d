@@ -14,8 +14,7 @@ export interface PlayerStartMovementActionState {
   moveRight: number;
 }
 
-export interface PlayerStartActionInputState
-  extends PlayerStartMovementActionState {
+export interface PlayerStartActionInputState extends PlayerStartMovementActionState {
   jump: number;
   sprint: number;
   crouch: number;
@@ -38,7 +37,9 @@ function readGamepadButtonStrength(button: GamepadButton | undefined): number {
     return 0;
   }
 
-  return clampUnitInterval(button.pressed ? Math.max(button.value, 1) : button.value);
+  return clampUnitInterval(
+    button.pressed ? Math.max(button.value, 1) : button.value
+  );
 }
 
 function readCenteredAxisValue(value: number | undefined): number {
@@ -116,7 +117,11 @@ function readGamepadBindingStrength(
   for (let index = 0; index < gamepads.length; index += 1) {
     const gamepad = gamepads[index];
 
-    if (gamepad === null || gamepad === undefined || gamepad.connected === false) {
+    if (
+      gamepad === null ||
+      gamepad === undefined ||
+      gamepad.connected === false
+    ) {
       continue;
     }
 
@@ -169,11 +174,18 @@ function readGamepadActionBindingStrength(
   for (let index = 0; index < gamepads.length; index += 1) {
     const gamepad = gamepads[index];
 
-    if (gamepad === null || gamepad === undefined || gamepad.connected === false) {
+    if (
+      gamepad === null ||
+      gamepad === undefined ||
+      gamepad.connected === false
+    ) {
       continue;
     }
 
-    strength = Math.max(strength, readSingleGamepadActionBinding(gamepad, binding));
+    strength = Math.max(
+      strength,
+      readSingleGamepadActionBinding(gamepad, binding)
+    );
   }
 
   return strength;
@@ -209,7 +221,11 @@ function readGamepadCameraLook(
   for (let index = 0; index < gamepads.length; index += 1) {
     const gamepad = gamepads[index];
 
-    if (gamepad === null || gamepad === undefined || gamepad.connected === false) {
+    if (
+      gamepad === null ||
+      gamepad === undefined ||
+      gamepad.connected === false
+    ) {
       continue;
     }
 
@@ -244,7 +260,10 @@ export function getAvailableGamepads(): ArrayLike<Gamepad | null> | undefined {
 export function resolvePlayerStartMovementActions(
   pressedKeys: ReadonlySet<string>,
   bindings: PlayerStartInputBindings,
-  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+  gamepads:
+    | ArrayLike<Gamepad | null>
+    | null
+    | undefined = getAvailableGamepads()
 ): PlayerStartMovementActionState {
   const actionInputs = resolvePlayerStartActionInputs(
     pressedKeys,
@@ -263,7 +282,10 @@ export function resolvePlayerStartMovementActions(
 export function resolvePlayerStartActionInputs(
   pressedKeys: ReadonlySet<string>,
   bindings: PlayerStartInputBindings,
-  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+  gamepads:
+    | ArrayLike<Gamepad | null>
+    | null
+    | undefined = getAvailableGamepads()
 ): PlayerStartActionInputState {
   return {
     moveForward: Math.max(
@@ -312,7 +334,10 @@ export function resolvePlayerStartActionInputs(
 export function resolvePlayerStartPauseInput(
   pressedKeys: ReadonlySet<string>,
   bindings: PlayerStartInputBindings,
-  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+  gamepads:
+    | ArrayLike<Gamepad | null>
+    | null
+    | undefined = getAvailableGamepads()
 ): number {
   return resolvePlayerStartActionInputs(pressedKeys, bindings, gamepads)
     .pauseTime;
@@ -321,7 +346,10 @@ export function resolvePlayerStartPauseInput(
 export function resolvePlayerStartInteractInput(
   pressedKeys: ReadonlySet<string>,
   bindings: PlayerStartInputBindings,
-  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+  gamepads:
+    | ArrayLike<Gamepad | null>
+    | null
+    | undefined = getAvailableGamepads()
 ): number {
   return resolvePlayerStartActionInputs(pressedKeys, bindings, gamepads)
     .interact;
@@ -330,21 +358,30 @@ export function resolvePlayerStartInteractInput(
 export function resolvePlayerStartClearTargetInput(
   pressedKeys: ReadonlySet<string>,
   bindings: PlayerStartInputBindings,
-  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+  gamepads:
+    | ArrayLike<Gamepad | null>
+    | null
+    | undefined = getAvailableGamepads()
 ): number {
   return resolvePlayerStartActionInputs(pressedKeys, bindings, gamepads)
     .clearTarget;
 }
 
 export function resolveDefaultTargetCycleInput(
-  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+  gamepads:
+    | ArrayLike<Gamepad | null>
+    | null
+    | undefined = getAvailableGamepads()
 ): number {
   return readGamepadActionBindingStrength(gamepads, "rightStickPress");
 }
 
 export function resolvePlayerStartLookInput(
   bindings: PlayerStartInputBindings,
-  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+  gamepads:
+    | ArrayLike<Gamepad | null>
+    | null
+    | undefined = getAvailableGamepads()
 ): PlayerStartLookInputState {
   return readGamepadCameraLook(gamepads, bindings.gamepad.cameraLook);
 }

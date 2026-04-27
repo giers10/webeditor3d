@@ -2747,10 +2747,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [playerStartYawDraft, setPlayerStartYawDraft] = useState("0");
   const [playerStartNavigationModeDraft, setPlayerStartNavigationModeDraft] =
     useState<PlayerStartNavigationMode>(DEFAULT_PLAYER_START_NAVIGATION_MODE);
-  const [playerStartInteractionReachDraft, setPlayerStartInteractionReachDraft] =
-    useState(String(DEFAULT_PLAYER_START_INTERACTION_REACH_METERS));
-  const [playerStartInteractionAngleDraft, setPlayerStartInteractionAngleDraft] =
-    useState(String(DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES));
+  const [
+    playerStartInteractionReachDraft,
+    setPlayerStartInteractionReachDraft
+  ] = useState(String(DEFAULT_PLAYER_START_INTERACTION_REACH_METERS));
+  const [
+    playerStartInteractionAngleDraft,
+    setPlayerStartInteractionAngleDraft
+  ] = useState(String(DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES));
   const [
     playerStartMovementTemplateDraft,
     setPlayerStartMovementTemplateDraft
@@ -13433,10 +13437,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
               {
                 <div
                   className="info-banner"
-                data-testid="runner-interaction-help"
-              >
+                  data-testid="runner-interaction-help"
+                >
                   Interact binding: {runtimeInteractInstruction}.
-              </div>
+                </div>
               }
             </Panel>
           </aside>
@@ -21679,7 +21683,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           >
                             <label className="form-field">
                               <span className="label">
-                                {getPlayerStartInputActionLabel(action)} Key / Mouse
+                                {getPlayerStartInputActionLabel(action)} Key /
+                                Mouse
                               </span>
                               <button
                                 type="button"
@@ -21740,7 +21745,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           >
                             <label className="form-field">
                               <span className="label">
-                                {getPlayerStartInputActionLabel(action)} Key / Mouse
+                                {getPlayerStartInputActionLabel(action)} Key /
+                                Mouse
                               </span>
                               <button
                                 type="button"
@@ -21801,7 +21807,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           >
                             <label className="form-field">
                               <span className="label">
-                                {getPlayerStartInputActionLabel(action)} Key / Mouse
+                                {getPlayerStartInputActionLabel(action)} Key /
+                                Mouse
                               </span>
                               <button
                                 type="button"
