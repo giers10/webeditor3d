@@ -329,6 +329,29 @@ function isCallableType(type: ts.Type): boolean {
   return normalizedType.getCallSignatures().length > 0;
 }
 
+function isRepoSourceFile(fileName: string): boolean {
+  const relativePath = path.relative(repoRoot, fileName);
+  return (
+    !relativePath.startsWith("..") &&
+    !path.isAbsolute(relativePath) &&
+    relativePath.startsWith(`src${path.sep}`)
+  );
+}
+
+function isExternalObjectType(type: ts.Type): boolean {
+  const normalizedType = withoutNullish(type);
+  const symbol = normalizedType.aliasSymbol ?? normalizedType.symbol;
+  const declarations = symbol?.declarations ?? [];
+
+  if (declarations.length === 0) {
+    return false;
+  }
+
+  return declarations.every(
+    (declaration) => !isRepoSourceFile(declaration.getSourceFile().fileName)
+  );
+}
+
 function getArrayElementType(type: ts.Type): ts.Type | null {
   const normalizedType = withoutNullish(type);
 
@@ -508,6 +531,14 @@ function collectFields(
   if (isTypedArrayType(normalizedType)) {
     entries.push({
       path: `${currentPath}[]`,
+      condition: options.condition
+    });
+    return;
+  }
+
+  if (isExternalObjectType(normalizedType)) {
+    entries.push({
+      path: currentPath,
       condition: options.condition
     });
     return;
