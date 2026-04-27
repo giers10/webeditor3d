@@ -139,7 +139,7 @@ describe("Player Start interaction sector persistence", () => {
         DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET,
       inputBindings: {
         keyboard: {
-          clearTarget: "Escape"
+          clearTarget: "KeyQ"
         },
         gamepad: {
           clearTarget: "buttonNorth"
