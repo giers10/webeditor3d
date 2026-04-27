@@ -3707,6 +3707,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setSpotLightDirectionDraft(createVec3Draft(DEFAULT_SPOT_LIGHT_DIRECTION));
       setPlayerStartYawDraft("0");
       setPlayerStartNavigationModeDraft(DEFAULT_PLAYER_START_NAVIGATION_MODE);
+      setPlayerStartInteractionReachDraft(
+        String(DEFAULT_PLAYER_START_INTERACTION_REACH_METERS)
+      );
+      setPlayerStartInteractionAngleDraft(
+        String(DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES)
+      );
+      setPlayerStartAllowLookInputTargetSwitchDraft(
+        DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH
+      );
+      setPlayerStartTargetButtonCyclesActiveTargetDraft(
+        DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET
+      );
       setPlayerStartMovementTemplateDraft(createPlayerStartMovementTemplate());
       setPlayerStartMovementTemplateNumberDraft(
         createPlayerStartMovementTemplateNumberDraft(
@@ -3869,6 +3881,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
         );
         setPlayerStartInteractionAngleDraft(
           String(selectedEntity.interactionAngleDegrees)
+        );
+        setPlayerStartAllowLookInputTargetSwitchDraft(
+          selectedEntity.allowLookInputTargetSwitch
+        );
+        setPlayerStartTargetButtonCyclesActiveTargetDraft(
+          selectedEntity.targetButtonCyclesActiveTarget
         );
         setPlayerStartMovementTemplateDraft(
           clonePlayerStartMovementTemplate(selectedEntity.movementTemplate)
