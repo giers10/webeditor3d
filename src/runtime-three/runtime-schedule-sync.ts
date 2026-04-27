@@ -16,7 +16,7 @@ import {
 export interface RuntimeScheduleSyncContext {
   readonly runtimeScene: RuntimeSceneDefinition;
   readonly pathsById: ReadonlyMap<string, RuntimeSceneDefinition["paths"][number]>;
-  readonly actorIds: readonly string[];
+  readonly actorIds: string[];
   readonly actorStatesByActorId: ReadonlyMap<
     string,
     RuntimeResolvedActorScheduleState
@@ -214,7 +214,7 @@ export function syncRuntimeSceneScheduleToClock(options: {
   const resolvedScheduler = resolveRuntimeProjectScheduleState({
     scheduler: runtimeScene.scheduler.document,
     sequences: runtimeScene.sequences,
-    actorIds: [...context.actorIds],
+    actorIds: context.actorIds,
     dayNumber: clock.dayCount + 1,
     timeOfDayHours: clock.timeOfDayHours,
     pathsById: context.pathsById

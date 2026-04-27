@@ -191,9 +191,11 @@ import {
   type DialogueAttentionSideSign
 } from "./dialogue-attention-camera";
 import {
-  applyRuntimeProjectScheduleToControlState,
-  resolveRuntimeProjectScheduleState
-} from "./runtime-project-scheduler";
+  commitRuntimeScheduleSyncResult,
+  createRuntimeScheduleSyncContext,
+  syncRuntimeSceneScheduleToClock,
+  type RuntimeScheduleSyncContext
+} from "./runtime-schedule-sync";
 import {
   THIRD_PERSON_CAMERA_COLLISION_RADIUS,
   ThirdPersonNavigationController
@@ -211,11 +213,6 @@ import type {
   RuntimeSceneDefinition,
   RuntimeTerrain,
   RuntimeTeleportTarget
-} from "./runtime-scene-build";
-import {
-  applyActorScheduleStateToNpcDefinition,
-  buildRuntimeNpcCollider,
-  createRuntimeNpcFromDefinition
 } from "./runtime-scene-build";
 import {
   resolveDefaultTargetCycleInput,
@@ -534,10 +531,6 @@ function dampAngleDegrees(
   );
 }
 
-function isNonNull<T>(value: T | null): value is T {
-  return value !== null;
-}
-
 export interface RuntimeSceneLoadState {
   status: "loading" | "ready" | "error";
   message: string | null;
@@ -740,6 +733,7 @@ export class RuntimeHost {
   private desiredNavigationMode: RuntimeNavigationMode = "thirdPerson";
   private sceneReady = false;
   private currentWorld: RuntimeSceneDefinition["world"] | null = null;
+  private runtimeScheduleSyncContext: RuntimeScheduleSyncContext | null = null;
   private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null =
     null;
   private advancedRenderingComposer: EffectComposer | null = null;
@@ -1082,6 +1076,8 @@ export class RuntimeHost {
 
     this.sceneReady = false;
     this.runtimeScene = runtimeScene;
+    this.runtimeScheduleSyncContext =
+      createRuntimeScheduleSyncContext(runtimeScene);
     this.currentWorld = runtimeScene.world;
     this.activeScheduledImpulseRoutineIds.clear();
     this.syncRuntimeClockState(runtimeScene.time);
@@ -1335,6 +1331,7 @@ export class RuntimeHost {
     this.advancedRenderingComposer = null;
     this.currentAdvancedRenderingSettings = null;
     this.scene.fog = null;
+    this.runtimeScheduleSyncContext = null;
     this.currentClockState = null;
     this.lastPublishedClockState = null;
     this.activeScheduledImpulseRoutineIds.clear();
