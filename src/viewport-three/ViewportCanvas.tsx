@@ -20,11 +20,7 @@ import {
 } from "../core/transform-session";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
-import {
-  resolveRuntimeDayNightWorldState,
-  type RuntimeClockState
-} from "../runtime-three/runtime-project-time";
-import type { RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
+import type { EditorSimulationController } from "../runtime-three/editor-simulation-controller";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import {
   getViewportPanelLabel,
@@ -45,8 +41,7 @@ interface ViewportCanvasProps {
   panelId: ViewportPanelId;
   world: WorldSettings;
   sceneDocument: SceneDocument;
-  editorSimulationScene: RuntimeSceneDefinition | null;
-  editorSimulationClock: RuntimeClockState | null;
+  editorSimulationController: EditorSimulationController;
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
   loadedImageAssets: Record<string, LoadedImageAsset>;
@@ -82,8 +77,7 @@ export function ViewportCanvas({
   panelId,
   world,
   sceneDocument,
-  editorSimulationScene,
-  editorSimulationClock,
+  editorSimulationController,
   projectAssets,
   loadedModelAssets,
   loadedImageAssets,
@@ -164,16 +158,26 @@ export function ViewportCanvas({
   }, [world]);
 
   useLayoutEffect(() => {
-    hostRef.current?.updateSimulation(
-      editorSimulationScene,
-      editorSimulationClock
-    );
-  }, [
-    editorSimulationScene,
-    editorSimulationClock?.dayCount,
-    editorSimulationClock?.dayLengthMinutes,
-    editorSimulationClock?.timeOfDayHours
-  ]);
+    const host = hostRef.current;
+
+    if (host === null) {
+      return;
+    }
+
+    const initialFrame = editorSimulationController.getFrameSnapshot();
+    let currentSceneVersion = initialFrame.sceneVersion;
+    host.updateSimulation(initialFrame.runtimeScene, initialFrame.clock);
+
+    return editorSimulationController.subscribeFrame((frame) => {
+      if (frame.sceneVersion !== currentSceneVersion) {
+        currentSceneVersion = frame.sceneVersion;
+        host.updateSimulation(frame.runtimeScene, frame.clock);
+        return;
+      }
+
+      host.updateSimulationFrame(frame.runtimeScene, frame.clock);
+    });
+  }, [editorSimulationController]);
 
   useLayoutEffect(() => {
     hostRef.current?.updateAssets(
@@ -308,14 +312,6 @@ export function ViewportCanvas({
       : null;
   const terrainBrushOverlayVisible =
     toolMode === "select" && terrainBrushState != null;
-  const resolvedViewportBackground =
-    editorSimulationScene !== null && editorSimulationClock !== null
-      ? resolveRuntimeDayNightWorldState(
-          editorSimulationScene.world,
-          editorSimulationScene.time,
-          editorSimulationClock
-        ).background
-      : world.background;
   const showOverlay =
     previewVisible ||
     transformPreviewVisible ||
@@ -337,12 +333,12 @@ export function ViewportCanvas({
               backgroundImage: "none"
             }
           : createWorldBackgroundStyle(
-              resolvedViewportBackground,
-              resolvedViewportBackground.mode === "image"
-                ? (loadedImageAssets[resolvedViewportBackground.assetId]
-                    ?.previewUrl ?? null)
+              world.background,
+              world.background.mode === "image"
+                ? (loadedImageAssets[world.background.assetId]?.previewUrl ??
+                  null)
                 : null,
-              resolvedViewportBackground.mode === "shader"
+              world.background.mode === "shader"
                 ? {
                     topColorHex: world.shaderSky.dayTopColorHex,
                     bottomColorHex: world.shaderSky.dayBottomColorHex
