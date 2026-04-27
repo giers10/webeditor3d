@@ -3889,6 +3889,66 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("clears active target when third-person Escape releases pointer lock", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      activeRuntimeTargetReference: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      domElement: HTMLCanvasElement;
+      controllerContext: {
+        setPlayerControllerTelemetry(telemetry: unknown): void;
+      };
+    };
+    const requestPointerLock = vi.fn();
+
+    Object.defineProperty(hostInternals.domElement, "requestPointerLock", {
+      configurable: true,
+      value: requestPointerLock
+    });
+
+    hostInternals.runtimeScene = {
+      playerInputBindings: {
+        keyboard: {
+          clearTarget: "Escape"
+        }
+      },
+      entities: {
+        cameraRigs: [],
+        interactables: [],
+        npcs: []
+      }
+    } as never;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+
+    hostInternals.controllerContext.setPlayerControllerTelemetry({
+      pointerLocked: true,
+      hooks: {
+        audio: null
+      }
+    });
+    hostInternals.controllerContext.setPlayerControllerTelemetry({
+      pointerLocked: false,
+      hooks: {
+        audio: null
+      }
+    });
+
+    expect(hostInternals.activeRuntimeTargetReference).toBeNull();
+    expect(requestPointerLock).toHaveBeenCalledTimes(1);
+    host.dispose();
+  });
+
   it("switches an active target once from directional screen-space look input", () => {
     const host = new RuntimeHost({
       enableRendering: false
