@@ -304,6 +304,26 @@ function appendCondition(
   return condition === null ? nextCondition : `${condition}; ${nextCondition}`;
 }
 
+function createConditionLabel(
+  currentPath: string,
+  discriminator: string,
+  value: string
+): string {
+  const parentName = currentPath.split(".").at(-1)?.replace(/\[\]$/, "") ?? "";
+
+  if (
+    (discriminator === "kind" ||
+      discriminator === "type" ||
+      discriminator === "mode") &&
+    parentName.length > 0 &&
+    !parentName.endsWith("s")
+  ) {
+    return `${parentName}.${discriminator}=${value}`;
+  }
+
+  return `${discriminator}=${value}`;
+}
+
 function fieldKey(entry: FieldEntry): string {
   return `${entry.path}::${entry.condition ?? ""}`;
 }
@@ -414,27 +434,45 @@ function collectUnionFields(
     }
   }
 
+  const groupedTypes = new Map<string, ts.Type[]>();
+
   for (const objectType of objectTypes) {
     const discriminatorType =
       discriminator === null ? null : getPropertyType(objectType, discriminator);
     const discriminatorValue =
       discriminatorType === null
-        ? null
-        : literalUnionLabels(discriminatorType)[0] ?? null;
+        ? ""
+        : literalUnionLabels(discriminatorType)[0] ?? "";
+    const groupKey =
+      discriminator === null ? checker.typeToString(objectType) : discriminatorValue;
+    groupedTypes.set(groupKey, [...(groupedTypes.get(groupKey) ?? []), objectType]);
+  }
+
+  for (const [groupKey, groupTypes] of groupedTypes) {
     const condition = appendCondition(
       options.condition,
-      discriminator !== null && discriminatorValue !== null
-        ? `${discriminator}=${discriminatorValue}`
+      discriminator !== null && groupKey.length > 0
+        ? createConditionLabel(currentPath, discriminator, groupKey)
         : null
     );
+    const skippedForGroup = new Set([
+      ...options.skipProperties,
+      ...commonProperties,
+      ...(discriminator === null ? [] : [discriminator])
+    ]);
 
-    collectObjectFields(objectType, currentPath, entries, {
+    if (groupTypes.length > 1) {
+      collectUnionFields(groupTypes, currentPath, entries, {
+        condition,
+        skipProperties: skippedForGroup
+      });
+      continue;
+    }
+
+    collectObjectFields(groupTypes[0]!, currentPath, entries, {
       condition,
       skipProperties: options.skipProperties,
-      skipPropertiesForThisObject: new Set([
-        ...commonProperties,
-        ...(discriminator === null ? [] : [discriminator])
-      ])
+      skipPropertiesForThisObject: skippedForGroup
     });
   }
 }
