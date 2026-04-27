@@ -14176,8 +14176,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   isActive={activePanelId === panelId}
                   world={editorState.document.world}
                   sceneDocument={editorState.document}
-                  editorSimulationScene={editorSimulationScene}
-                  editorSimulationClock={editorSimulationClock}
+                  editorSimulationController={editorSimulationController}
                   projectAssets={editorState.document.assets}
                   loadedModelAssets={loadedModelAssets}
                   loadedImageAssets={loadedImageAssets}
@@ -14709,13 +14708,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
                     )}
                   </div>
                   <div className="material-summary">
-                    {editorSimulationClockOverride === null
+                    {!editorSimulationOverrideActive
                       ? "The editor viewport follows the authored project start day and time."
                       : editorSimulationPlaying
                         ? "The editor viewport is running on an overridden clock."
                         : "The editor viewport is paused on an overridden clock."}
                   </div>
-                  {editorSimulationClockOverride === null ? null : (
+                  {!editorSimulationOverrideActive ? null : (
                     <div className="material-summary">
                       Authored start: Day{" "}
                       {editorState.projectDocument.time.startDayNumber} ·{" "}
