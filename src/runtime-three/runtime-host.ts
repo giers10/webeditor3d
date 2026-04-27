@@ -1054,6 +1054,11 @@ export class RuntimeHost {
     this.domElement.addEventListener("wheel", this.handleRuntimeWheel, {
       passive: false
     });
+    window.addEventListener(
+      "keydown",
+      this.handlePointerLockEscapeKeyDown,
+      true
+    );
     window.addEventListener("keydown", this.handleRuntimeKeyDown);
     window.addEventListener("keyup", this.handleRuntimeKeyUp);
     window.addEventListener("pointermove", this.handleRuntimePointerMove);
@@ -1383,6 +1388,11 @@ export class RuntimeHost {
       this.handleRuntimePointerDown
     );
     this.domElement.removeEventListener("wheel", this.handleRuntimeWheel);
+    window.removeEventListener(
+      "keydown",
+      this.handlePointerLockEscapeKeyDown,
+      true
+    );
     window.removeEventListener("keydown", this.handleRuntimeKeyDown);
     window.removeEventListener("keyup", this.handleRuntimeKeyUp);
     window.removeEventListener("pointermove", this.handleRuntimePointerMove);
