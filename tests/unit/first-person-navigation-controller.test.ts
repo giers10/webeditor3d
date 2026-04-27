@@ -162,6 +162,43 @@ describe("FirstPersonNavigationController", () => {
     expect(exitPointerLockSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("applies authored horizontal mouse inversion while pointer-locked", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-invert-first-person",
+      invertMouseCameraHorizontal: true
+    });
+    const { context, domElement } = createRuntimeControllerContext(playerStart);
+    const controller = new FirstPersonNavigationController();
+    const mouseMoveEvent = new MouseEvent("mousemove");
+
+    Object.defineProperty(mouseMoveEvent, "movementX", {
+      configurable: true,
+      value: 20
+    });
+    Object.defineProperty(mouseMoveEvent, "movementY", {
+      configurable: true,
+      value: 0
+    });
+    Object.defineProperty(document, "pointerLockElement", {
+      configurable: true,
+      get: () => domElement
+    });
+
+    controller.activate(context);
+    document.dispatchEvent(mouseMoveEvent);
+    controller.update(0);
+
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.pointerLocked).toBe(true);
+    expect(telemetry?.yawDegrees).toBeGreaterThan(0);
+
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
   it("uses authored gamepad bindings instead of the hardcoded stick mapping", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-custom-gamepad",

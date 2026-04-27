@@ -171,6 +171,43 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(context);
   });
 
+  it("captures pointer-locked third-person mouse look and honors horizontal inversion", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-invert-third-person",
+      invertMouseCameraHorizontal: true
+    });
+    const { context, domElement } = createRuntimeControllerContext(playerStart);
+    const controller = new ThirdPersonNavigationController();
+    const mouseMoveEvent = new MouseEvent("mousemove");
+
+    Object.defineProperty(mouseMoveEvent, "movementX", {
+      configurable: true,
+      value: 24
+    });
+    Object.defineProperty(mouseMoveEvent, "movementY", {
+      configurable: true,
+      value: 0
+    });
+    Object.defineProperty(document, "pointerLockElement", {
+      configurable: true,
+      get: () => domElement
+    });
+
+    controller.activate(context);
+    document.dispatchEvent(mouseMoveEvent);
+    controller.update(0);
+
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.pointerLocked).toBe(true);
+    expect(context.camera.position.x).toBeLessThan(0);
+
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
   it("smooths the third-person camera back out when collision clears", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();

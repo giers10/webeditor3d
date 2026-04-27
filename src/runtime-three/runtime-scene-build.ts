@@ -48,7 +48,7 @@ import {
   type WhiteboxFaceId,
   type FaceUvState
 } from "../document/brushes";
-import type { SceneDocument } from "../document/scene-document";
+import type { ProjectDocument, SceneDocument } from "../document/scene-document";
 import {
   cloneProjectTimeSettings,
   type ProjectTimeSettings
@@ -531,6 +531,7 @@ export interface BuildRuntimeSceneOptions {
   loadedModelAssets?: Record<string, LoadedModelAsset>;
   runtimeClock?: RuntimeClockState;
   sceneEntryId?: string | null;
+  projectDocument?: ProjectDocument;
 }
 
 export function resolveRuntimeNavigationMode(
@@ -1837,7 +1838,8 @@ export function buildRuntimeSceneFromDocument(
 
   assertRuntimeSceneBuildable(document, {
     navigationMode,
-    loadedModelAssets: options.loadedModelAssets
+    loadedModelAssets: options.loadedModelAssets,
+    projectDocument: options.projectDocument
   });
 
   const enabledBrushes = Object.values(document.brushes).filter(

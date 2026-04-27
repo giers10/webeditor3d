@@ -3773,6 +3773,64 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("preserves pointer lock when switching between first- and third-person controllers", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      createEmptySceneDocument(),
+      {
+        navigationMode: "firstPerson"
+      }
+    );
+    const hostInternals = host as unknown as {
+      activeController: {
+        id: "firstPerson" | "thirdPerson";
+        deactivate: ReturnType<typeof vi.fn>;
+      } | null;
+      controllerContext: unknown;
+      desiredNavigationMode: "firstPerson" | "thirdPerson";
+      runtimeScene: ReturnType<typeof buildRuntimeSceneFromDocument> | null;
+      sceneReady: boolean;
+      thirdPersonController: {
+        id: "thirdPerson";
+        activate: ReturnType<typeof vi.fn>;
+      };
+      activateDesiredNavigationController(): void;
+    };
+    const deactivate = vi.fn();
+    const activate = vi.fn();
+    const domElement = (
+      host as unknown as {
+        domElement: HTMLCanvasElement;
+      }
+    ).domElement;
+
+    hostInternals.runtimeScene = runtimeScene;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = {
+      id: "firstPerson",
+      deactivate
+    };
+    hostInternals.desiredNavigationMode = "thirdPerson";
+    hostInternals.thirdPersonController = {
+      id: "thirdPerson",
+      activate
+    };
+    Object.defineProperty(document, "pointerLockElement", {
+      configurable: true,
+      get: () => domElement
+    });
+
+    hostInternals.activateDesiredNavigationController();
+
+    expect(deactivate).toHaveBeenCalledWith(hostInternals.controllerContext, {
+      releasePointerLock: false
+    });
+    expect(activate).toHaveBeenCalledWith(hostInternals.controllerContext);
+    host.dispose();
+  });
+
   it("switches an active target once from directional screen-space look input", () => {
     const host = new RuntimeHost({
       enableRendering: false

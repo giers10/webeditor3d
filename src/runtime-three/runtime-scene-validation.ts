@@ -1,8 +1,10 @@
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import { getModelInstances } from "../assets/model-instances";
 import type { Brush } from "../document/brushes";
-import type { SceneDocument } from "../document/scene-document";
+import type { ProjectDocument, SceneDocument } from "../document/scene-document";
 import {
+  assertProjectSchedulingResourcesAreValid,
+  assertSceneDocumentLocalBuildContentIsValid,
   assertSceneDocumentIsValid,
   createDiagnostic,
   formatSceneDiagnosticSummary,
@@ -21,6 +23,7 @@ export interface RuntimeSceneBuildValidationResult {
 interface ValidateRuntimeSceneBuildOptions {
   navigationMode: "firstPerson" | "thirdPerson";
   loadedModelAssets?: Record<string, LoadedModelAsset>;
+  projectDocument?: ProjectDocument;
 }
 
 function validateBrushGeometry(brush: Brush, path: string, diagnostics: SceneDiagnostic[]) {
@@ -100,7 +103,12 @@ export function validateRuntimeSceneBuild(
 }
 
 export function assertRuntimeSceneBuildable(document: SceneDocument, options: ValidateRuntimeSceneBuildOptions) {
-  assertSceneDocumentIsValid(document);
+  if (options.projectDocument === undefined) {
+    assertSceneDocumentIsValid(document);
+  } else {
+    assertProjectSchedulingResourcesAreValid(options.projectDocument);
+    assertSceneDocumentLocalBuildContentIsValid(document);
+  }
 
   const validation = validateRuntimeSceneBuild(document, options);
 
