@@ -273,6 +273,48 @@ describe("RuntimeHost", () => {
     expect(collisionWorld.dispose).toHaveBeenCalledTimes(1);
   });
 
+  it("pauses project clock advancement while a scene is loading", () => {
+    vi.spyOn(window, "requestAnimationFrame").mockReturnValue(1);
+    vi.spyOn(performance, "now").mockReturnValue(1100);
+
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      previousFrameTime: number;
+      sceneReady: boolean;
+      currentClockState: {
+        timeOfDayHours: number;
+        dayCount: number;
+        dayLengthMinutes: number;
+      };
+      render(): void;
+    };
+    hostInternals.currentClockState = {
+      timeOfDayHours: 9,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    };
+
+    hostInternals.previousFrameTime = 1000;
+    hostInternals.sceneReady = false;
+    hostInternals.render();
+
+    expect(hostInternals.currentClockState).toEqual({
+      timeOfDayHours: 9,
+      dayCount: 0,
+      dayLengthMinutes: 24
+    });
+
+    hostInternals.previousFrameTime = 1000;
+    hostInternals.sceneReady = true;
+    hostInternals.render();
+
+    expect(hostInternals.currentClockState.timeOfDayHours).toBeGreaterThan(9);
+
+    host.dispose();
+  });
+
   it("uses the authored interact binding instead of always dispatching left mouse clicks", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-authored-interact",
