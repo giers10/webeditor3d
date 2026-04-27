@@ -5726,6 +5726,10 @@ export class RuntimeHost {
     this.runtimeTargetSwitchInputHeld = false;
   }
 
+  private resolveRuntimePlayerInputBindings() {
+    return createPlayerStartInputBindings(this.runtimeScene?.playerInputBindings);
+  }
+
   private resolveRuntimeTargetVisibilityClearance(target: {
     kind?: string;
     entityId?: string;
@@ -6006,7 +6010,14 @@ export class RuntimeHost {
     }
 
     if (this.activeRuntimeTargetReference !== null) {
-      this.clearActiveRuntimeTarget();
+      if (
+        this.runtimeScene.playerStart?.targetButtonCyclesActiveTarget ??
+        DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET
+      ) {
+        this.cycleActiveRuntimeTargetFromButton();
+      } else {
+        this.clearActiveRuntimeTarget();
+      }
       return;
     }
 
@@ -6022,6 +6033,53 @@ export class RuntimeHost {
         entityId: nextTarget.entityId
       });
     }
+  }
+
+  private cycleActiveRuntimeTargetFromButton() {
+    if (this.activeRuntimeTargetReference === null) {
+      return;
+    }
+
+    const cycleCandidates = this.runtimeTargetCandidates.filter((candidate) => {
+      if (!this.isRuntimeTargetPlayerVisible(candidate)) {
+        return false;
+      }
+
+      const screenPoint = this.resolveRuntimeTargetScreenPoint(candidate.center);
+
+      return (
+        screenPoint !== null &&
+        Math.abs(screenPoint.x) <= TARGETING_SCREEN_PROPOSAL_MAX_ABS_X &&
+        Math.abs(screenPoint.y) <= TARGETING_SCREEN_PROPOSAL_MAX_ABS_Y
+      );
+    });
+
+    if (cycleCandidates.length === 0) {
+      return;
+    }
+
+    const activeIndex = cycleCandidates.findIndex(
+      (candidate) =>
+        candidate.kind === this.activeRuntimeTargetReference?.kind &&
+        candidate.entityId === this.activeRuntimeTargetReference?.entityId
+    );
+    const nextCandidate =
+      activeIndex < 0
+        ? (cycleCandidates[0] ?? null)
+        : cycleCandidates.length > 1
+          ? (cycleCandidates[(activeIndex + 1) % cycleCandidates.length] ??
+            null)
+          : null;
+
+    if (nextCandidate === null) {
+      return;
+    }
+
+    this.setActiveRuntimeTargetReference({
+      kind: nextCandidate.kind,
+      entityId: nextCandidate.entityId
+    });
+    this.proposedRuntimeTarget = nextCandidate;
   }
 
   private clearActiveRuntimeTarget() {
@@ -6054,6 +6112,18 @@ export class RuntimeHost {
     const inputMagnitude = Math.hypot(input.horizontal, input.vertical);
 
     if (inputMagnitude <= Number.EPSILON) {
+      this.runtimeTargetSwitchInputHeld = false;
+      return this.createRuntimeTargetLookInputResult({
+        activeTargetLocked: true
+      });
+    }
+
+    if (
+      !(
+        this.runtimeScene?.playerStart?.allowLookInputTargetSwitch ??
+        DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH
+      )
+    ) {
       this.runtimeTargetSwitchInputHeld = false;
       return this.createRuntimeTargetLookInputResult({
         activeTargetLocked: true
@@ -6351,6 +6421,29 @@ export class RuntimeHost {
     }
 
     this.previousTargetCycleInputActive = targetInputActive;
+  }
+
+  private updateClearTargetInputState() {
+    if (this.runtimeScene === null || !this.sceneReady) {
+      this.previousClearTargetInputActive = false;
+      return;
+    }
+
+    const clearTargetInputActive =
+      resolvePlayerStartClearTargetInput(
+        this.pressedKeys,
+        this.resolveRuntimePlayerInputBindings()
+      ) >= 0.5;
+
+    if (
+      this.activeRuntimeTargetReference !== null &&
+      clearTargetInputActive &&
+      !this.previousClearTargetInputActive
+    ) {
+      this.clearActiveRuntimeTarget();
+    }
+
+    this.previousClearTargetInputActive = clearTargetInputActive;
   }
 
   private resolveThirdPersonTargetAssist() {
@@ -6682,8 +6775,8 @@ export class RuntimeHost {
       return;
     }
 
-    const interactKeyboardBinding =
-      this.runtimeScene.playerInputBindings.keyboard.interact;
+    const playerInputBindings = this.resolveRuntimePlayerInputBindings();
+    const interactKeyboardBinding = playerInputBindings.keyboard.interact;
     if (
       !isPlayerStartMouseBindingCode(interactKeyboardBinding) &&
       event.code === interactKeyboardBinding
@@ -6701,16 +6794,20 @@ export class RuntimeHost {
       return;
     }
 
-    if (event.code === "Escape" && this.activeRuntimeTargetReference !== null) {
+    const clearTargetKeyboardBinding = playerInputBindings.keyboard.clearTarget;
+    if (
+      this.activeRuntimeTargetReference !== null &&
+      !isPlayerStartMouseBindingCode(clearTargetKeyboardBinding) &&
+      event.code === clearTargetKeyboardBinding
+    ) {
       event.preventDefault();
       event.stopImmediatePropagation();
       this.clearActiveRuntimeTarget();
+      this.previousClearTargetInputActive = true;
       return;
     }
 
-    if (
-      event.code === this.runtimeScene.playerInputBindings.keyboard.pauseTime
-    ) {
+    if (event.code === playerInputBindings.keyboard.pauseTime) {
       event.preventDefault();
       this.toggleManualPause();
       this.previousPauseInputActive = true;
@@ -6788,7 +6885,7 @@ export class RuntimeHost {
     const interactInputActive =
       resolvePlayerStartInteractInput(
         this.pressedKeys,
-        this.runtimeScene.playerInputBindings
+        this.resolveRuntimePlayerInputBindings()
       ) >= 0.5;
 
     if (interactInputActive && !this.previousInteractInputActive) {
@@ -6807,7 +6904,7 @@ export class RuntimeHost {
     const pauseInputActive =
       resolvePlayerStartPauseInput(
         this.pressedKeys,
-        this.runtimeScene.playerInputBindings
+        this.resolveRuntimePlayerInputBindings()
       ) >= 0.5;
 
     if (pauseInputActive && !this.previousPauseInputActive) {
