@@ -819,6 +819,7 @@ export class RuntimeHost {
   private previousInteractInputActive = false;
   private previousPauseInputActive = false;
   private readonly pressedKeys = new Set<string>();
+  private lastPointerLockReleaseAt = Number.NEGATIVE_INFINITY;
   private activeScheduledImpulseRoutineIds = new Set<string>();
   private completedScheduledImpulseRoutineIds = new Set<string>();
 
