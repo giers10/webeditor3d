@@ -1045,7 +1045,6 @@ export class RuntimeHost {
   mount(container: HTMLElement) {
     this.container = container;
     container.appendChild(this.domElement);
-    this.domElement.addEventListener("click", this.handleRuntimeClick);
     this.domElement.addEventListener(
       "pointerdown",
       this.handleRuntimePointerDown
@@ -1372,7 +1371,6 @@ export class RuntimeHost {
     this.worldBackgroundRenderer.dispose();
     this.renderer?.forceContextLoss();
     this.renderer?.dispose();
-    this.domElement.removeEventListener("click", this.handleRuntimeClick);
     this.domElement.removeEventListener(
       "pointerdown",
       this.handleRuntimePointerDown
@@ -5008,6 +5006,7 @@ export class RuntimeHost {
     const now = performance.now();
     const dt = Math.min((now - this.previousFrameTime) / 1000, 1 / 20);
     this.previousFrameTime = now;
+    this.updateInteractInputState();
     this.updatePauseInputState();
     this.updateRuntimeTargetingInputState();
     const simulationDt = this.isRuntimePaused() ? 0 : dt;
@@ -6591,7 +6590,7 @@ export class RuntimeHost {
     }
   }
 
-  private handleRuntimeClick = () => {
+  private dispatchRuntimeInteract() {
     if (
       !this.sceneReady ||
       this.runtimeScene === null ||
@@ -6621,7 +6620,7 @@ export class RuntimeHost {
       this.runtimeScene,
       this.createInteractionDispatcher()
     );
-  };
+  }
 
   private handleRuntimePointerDown = (event: PointerEvent) => {
     if (!this.sceneReady) {
@@ -6629,6 +6628,20 @@ export class RuntimeHost {
     }
 
     this.audioSystem.handleUserGesture();
+
+    if (this.runtimeScene !== null) {
+      const pointerBinding = getPlayerStartMouseBindingCodeForButton(
+        event.button
+      );
+
+      if (
+        pointerBinding !== null &&
+        this.runtimeScene.playerInputBindings.keyboard.interact ===
+          pointerBinding
+      ) {
+        this.dispatchRuntimeInteract();
+      }
+    }
 
     if (
       this.activeRuntimeCameraRig === null ||
@@ -6661,6 +6674,18 @@ export class RuntimeHost {
       event.metaKey ||
       isEditableEventTarget(event.target)
     ) {
+      return;
+    }
+
+    const interactKeyboardBinding =
+      this.runtimeScene.playerInputBindings.keyboard.interact;
+    if (
+      !isPlayerStartMouseBindingCode(interactKeyboardBinding) &&
+      event.code === interactKeyboardBinding
+    ) {
+      event.preventDefault();
+      this.dispatchRuntimeInteract();
+      this.previousInteractInputActive = true;
       return;
     }
 
@@ -6747,6 +6772,25 @@ export class RuntimeHost {
     this.previousTargetCycleInputActive = false;
     this.cameraRigLookDragging = false;
   };
+
+  private updateInteractInputState() {
+    if (this.runtimeScene === null || !this.sceneReady) {
+      this.previousInteractInputActive = false;
+      return;
+    }
+
+    const interactInputActive =
+      resolvePlayerStartInteractInput(
+        this.pressedKeys,
+        this.runtimeScene.playerInputBindings
+      ) >= 0.5;
+
+    if (interactInputActive && !this.previousInteractInputActive) {
+      this.dispatchRuntimeInteract();
+    }
+
+    this.previousInteractInputActive = interactInputActive;
+  }
 
   private updatePauseInputState() {
     if (this.runtimeScene === null || !this.sceneReady) {

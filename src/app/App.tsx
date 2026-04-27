@@ -239,7 +239,6 @@ import {
   areProjectTimeSettingsEqual,
   cloneProjectTimeSettings,
   formatTimeOfDayHours,
-  HOURS_PER_DAY,
   normalizeTimeOfDayHours,
   type ProjectTimeSettings
 } from "../document/project-time-settings";
@@ -431,10 +430,8 @@ import {
 } from "../runtime-three/runtime-global-state";
 import type { RuntimeSceneTransitionRequest } from "../runtime-three/runtime-host";
 import {
-  advanceRuntimeClockState,
   areRuntimeClockStatesEqual,
   createRuntimeClockState,
-  reconfigureRuntimeClockState,
   resolveRuntimeTimeState,
   type RuntimeClockState
 } from "../runtime-three/runtime-project-time";
@@ -443,7 +440,10 @@ import {
   type RuntimeNavigationMode,
   type RuntimeSceneDefinition
 } from "../runtime-three/runtime-scene-build";
-import { applyResolvedControlStateToRuntimeScene } from "../runtime-three/runtime-scene-editor-simulation";
+import {
+  EditorSimulationController,
+  type EditorSimulationUiSnapshot
+} from "../runtime-three/editor-simulation-controller";
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
 import { EditorAutosaveController } from "../serialization/editor-autosave";
 import { Panel } from "../shared-ui/Panel";
@@ -873,26 +873,24 @@ function createVec3Draft(vector: Vec3): Vec3Draft {
   };
 }
 
-function offsetRuntimeClockState(
-  state: RuntimeClockState,
-  deltaHours: number
-): RuntimeClockState {
-  const totalHours = Math.max(
-    0,
-    state.dayCount * HOURS_PER_DAY + state.timeOfDayHours + deltaHours
-  );
-
-  return {
-    timeOfDayHours: normalizeTimeOfDayHours(totalHours),
-    dayCount: Math.floor(totalHours / HOURS_PER_DAY),
-    dayLengthMinutes: state.dayLengthMinutes
-  };
-}
-
 function formatRuntimeDayPhaseLabel(
   dayPhase: ReturnType<typeof resolveRuntimeTimeState>["dayPhase"]
 ): string {
   return dayPhase.charAt(0).toUpperCase() + dayPhase.slice(1);
+}
+
+function createInitialEditorSimulationUiSnapshot(
+  time: ProjectTimeSettings
+): EditorSimulationUiSnapshot {
+  return {
+    playing: false,
+    overrideActive: false,
+    clock: createRuntimeClockState(time),
+    message: null,
+    sceneReady: false,
+    sceneVersion: 0,
+    frameVersion: 0
+  };
 }
 
 function createPlayerStartMovementTemplateNumberDraft(
@@ -3121,14 +3119,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       createDefaultRuntimeGlobalState(editorState.projectDocument.time)
     );
   const [runtimeMessage, setRuntimeMessage] = useState<string | null>(null);
-  const [editorSimulationClockOverride, setEditorSimulationClockOverride] =
-    useState<RuntimeClockState | null>(null);
-  const [editorSimulationPlaying, setEditorSimulationPlaying] = useState(false);
-  const [editorSimulationScene, setEditorSimulationScene] =
-    useState<RuntimeSceneDefinition | null>(null);
-  const [editorSimulationMessage, setEditorSimulationMessage] = useState<
-    string | null
-  >(null);
+  const [editorSimulationSnapshot, setEditorSimulationSnapshot] =
+    useState<EditorSimulationUiSnapshot>(() =>
+      createInitialEditorSimulationUiSnapshot(editorState.projectDocument.time)
+    );
   const [firstPersonTelemetry, setFirstPersonTelemetry] =
     useState<FirstPersonTelemetry | null>(null);
   const [runtimeInteractionPrompt, setRuntimeInteractionPrompt] =
@@ -3169,6 +3163,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
     Record<string, ProjectAssetStorageRecord>
   >({});
   const autosaveControllerRef = useRef<EditorAutosaveController | null>(null);
+  const editorSimulationControllerRef =
+    useRef<EditorSimulationController | null>(null);
   const lastAutosaveErrorRef = useRef<string | null>(null);
   const viewportQuadSplitRef = useRef(editorState.viewportQuadSplit);
   const lastPointerPositionRef = useRef<HierarchicalMenuPosition>({
@@ -3187,6 +3183,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
   } | null>(null);
   const [schedulePaneResizeActive, setSchedulePaneResizeActive] =
     useState(false);
+  if (editorSimulationControllerRef.current === null) {
+    editorSimulationControllerRef.current = new EditorSimulationController();
+  }
+  const editorSimulationController = editorSimulationControllerRef.current;
   const documentValidation = validateSceneDocument(editorState.document);
   const projectValidation = validateProjectDocument(
     editorState.projectDocument
