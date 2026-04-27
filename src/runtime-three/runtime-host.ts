@@ -5253,7 +5253,7 @@ export class RuntimeHost {
     this.activeScheduledImpulseRoutineIds =
       syncResult.nextActiveImpulseRoutineIds;
 
-    if (syncResult.npcColliderCollectionChanged) {
+    if (syncResult.npcColliderCollectionChanged && this.sceneReady) {
       this.refreshCollisionWorldForNpcSchedule();
     }
   }
