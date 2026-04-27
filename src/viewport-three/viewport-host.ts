@@ -707,6 +707,10 @@ export class ViewportHost {
   private currentWorld: WorldSettings | null = null;
   private currentSimulationScene: RuntimeSceneDefinition | null = null;
   private currentSimulationClock: RuntimeClockState | null = null;
+  private readonly simulationInteractableEnabledById = new Map<
+    string,
+    boolean
+  >();
   private currentCelestialShadowCaster: "sun" | "moon" | null = null;
   private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null =
     null;
