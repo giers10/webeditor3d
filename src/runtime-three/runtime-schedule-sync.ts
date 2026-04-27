@@ -165,19 +165,30 @@ function createNpcChange(
   return change;
 }
 
-function refreshRuntimeNpcEntities(runtimeScene: RuntimeSceneDefinition): void {
+export function refreshRuntimeNpcEntities(
+  runtimeScene: RuntimeSceneDefinition
+): void {
   runtimeScene.entities.npcs = runtimeScene.npcDefinitions
     .filter((npc) => npc.active)
     .map((npc) => createRuntimeNpcFromDefinition(npc));
 }
 
-function refreshRuntimeNpcColliders(runtimeScene: RuntimeSceneDefinition): void {
+export function refreshRuntimeNpcColliders(
+  runtimeScene: RuntimeSceneDefinition
+): void {
   runtimeScene.colliders = [
     ...runtimeScene.staticColliders,
     ...runtimeScene.entities.npcs
       .map((npc) => buildRuntimeNpcCollider(npc))
       .filter(isNonNull)
   ];
+}
+
+export function refreshRuntimeNpcCollections(
+  runtimeScene: RuntimeSceneDefinition
+): void {
+  refreshRuntimeNpcEntities(runtimeScene);
+  refreshRuntimeNpcColliders(runtimeScene);
 }
 
 export function createRuntimeScheduleSyncContext(
