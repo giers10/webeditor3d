@@ -1091,6 +1091,7 @@ export class ViewportHost {
     );
     this.simulationSceneIdentityMismatchWarned = false;
     this.simulationInteractableEnabledById.clear();
+    this.cacheSimulationInteractableEnabledState(runtimeScene);
     this.applyWorld();
 
     if (this.currentDocument === null) {
