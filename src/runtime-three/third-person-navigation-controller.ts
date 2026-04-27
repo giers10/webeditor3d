@@ -16,6 +16,7 @@ import {
   stepPlayerLocomotion
 } from "./player-locomotion";
 import { createPlayerControllerTelemetry } from "./player-controller-telemetry";
+import { shouldAutoCapturePointerLockOnActivate } from "./pointer-lock-utils";
 import { smoothGroundedStairHeight } from "./stair-height-smoothing";
 import type {
   NavigationController,
@@ -178,6 +179,8 @@ export class ThirdPersonNavigationController implements NavigationController {
     createIdleRuntimeLocomotionState("flying");
   private inWaterVolume = false;
   private inFogVolume = false;
+  private pointerLocked = false;
+  private suppressNextPointerLockError = false;
   private dragging = false;
   private pointerLookInputPending = false;
   private lastPointerClientX = 0;
@@ -234,6 +237,12 @@ export class ThirdPersonNavigationController implements NavigationController {
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
     window.addEventListener("blur", this.handleBlur);
+    document.addEventListener("mousemove", this.handleMouseMove);
+    document.addEventListener(
+      "pointerlockchange",
+      this.handlePointerLockChange
+    );
+    document.addEventListener("pointerlockerror", this.handlePointerLockError);
     ctx.domElement.addEventListener("pointerdown", this.handlePointerDown);
     ctx.domElement.addEventListener("wheel", this.handleWheel, {
       passive: false
@@ -242,27 +251,62 @@ export class ThirdPersonNavigationController implements NavigationController {
     window.addEventListener("pointermove", this.handlePointerMove);
     window.addEventListener("pointerup", this.handlePointerUp);
 
-    ctx.setRuntimeMessage(
-      "Third Person active. Drag to orbit the camera, use the right stick for gamepad camera look, move with your authored bindings, and scroll to zoom."
-    );
+    this.syncPointerLockState();
+
+    if (
+      shouldAutoCapturePointerLockOnActivate() &&
+      document.pointerLockElement !== ctx.domElement
+    ) {
+      const pointerLockCapableElement = ctx.domElement as HTMLCanvasElement & {
+        requestPointerLock?: () => void | Promise<void>;
+      };
+
+      if (typeof pointerLockCapableElement.requestPointerLock === "function") {
+        this.suppressNextPointerLockError = true;
+        const pointerLockResult = pointerLockCapableElement.requestPointerLock();
+
+        if (pointerLockResult instanceof Promise) {
+          pointerLockResult.catch(() => {});
+        }
+      }
+    }
+
     this.updateCameraTransform(0);
     this.publishTelemetry();
   }
 
   deactivate(
     ctx: RuntimeControllerContext,
-    _options: NavigationControllerDeactivateOptions = {}
+    options: NavigationControllerDeactivateOptions = {}
   ): void {
-    void _options;
     window.removeEventListener("keydown", this.handleKeyDown);
     window.removeEventListener("keyup", this.handleKeyUp);
     window.removeEventListener("blur", this.handleBlur);
+    document.removeEventListener("mousemove", this.handleMouseMove);
+    document.removeEventListener(
+      "pointerlockchange",
+      this.handlePointerLockChange
+    );
+    document.removeEventListener(
+      "pointerlockerror",
+      this.handlePointerLockError
+    );
     ctx.domElement.removeEventListener("pointerdown", this.handlePointerDown);
     ctx.domElement.removeEventListener("wheel", this.handleWheel);
     ctx.domElement.removeEventListener("contextmenu", this.handleContextMenu);
     window.removeEventListener("pointermove", this.handlePointerMove);
     window.removeEventListener("pointerup", this.handlePointerUp);
     this.pressedKeys.clear();
+
+    if (
+      (options.releasePointerLock ?? true) &&
+      document.pointerLockElement === ctx.domElement
+    ) {
+      document.exitPointerLock();
+    }
+
+    this.pointerLocked = false;
+    this.suppressNextPointerLockError = false;
     this.dragging = false;
     this.jumpPressed = false;
     this.latestJumpStarted = false;
@@ -311,6 +355,8 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.locomotionState = createIdleRuntimeLocomotionState("flying");
     this.inWaterVolume = false;
     this.inFogVolume = false;
+    this.pointerLocked = false;
+    this.suppressNextPointerLockError = false;
     this.dragging = false;
     this.pointerLookInputPending = false;
     this.lastPointerClientX = 0;
@@ -735,6 +781,30 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.context.camera.lookAt(this.lookAtVector);
   }
 
+  private syncPointerLockState() {
+    if (this.context === null) {
+      return;
+    }
+
+    const pointerLocked =
+      document.pointerLockElement === this.context.domElement;
+    this.pointerLocked = pointerLocked;
+    this.dragging = false;
+    this.context.setRuntimeMessage(
+      pointerLocked
+        ? "Third Person mouse look active. Scroll to zoom, use the right stick for gamepad camera look, and press Escape to release the cursor."
+        : "Third Person active. Click inside the runner viewport to capture mouse look, or drag to orbit if pointer lock is unavailable. Scroll to zoom and use the right stick for gamepad camera look."
+    );
+    this.publishTelemetry();
+  }
+
+  private resolveHorizontalMouseLookSign() {
+    return this.context?.getRuntimeScene().playerStart
+      ?.invertMouseCameraHorizontal === true
+      ? -1
+      : 1;
+  }
+
   private publishTelemetry() {
     if (this.context === null) {
       return;
@@ -768,7 +838,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       inWaterVolume: this.inWaterVolume,
       cameraSubmerged,
       inFogVolume: this.inFogVolume,
-      pointerLocked: false,
+      pointerLocked: this.pointerLocked,
       spawn: this.context.getRuntimeScene().spawn,
       previousLocomotionState: this.previousTelemetry?.locomotionState ?? null,
       previousInWaterVolume: this.previousTelemetry?.inWaterVolume ?? false,
@@ -793,13 +863,41 @@ export class ThirdPersonNavigationController implements NavigationController {
   private handleBlur = () => {
     this.pressedKeys.clear();
     this.dragging = false;
+    this.pointerLookInputPending = false;
   };
 
   private handlePointerDown = (event: PointerEvent) => {
     if (
+      this.context === null ||
+      this.context.isInputSuspended() ||
+      this.context.isCameraDrivenExternally()
+    ) {
+      return;
+    }
+
+    if (document.pointerLockElement !== this.context.domElement) {
+      this.suppressNextPointerLockError = false;
+      const pointerLockCapableElement = this.context
+        .domElement as HTMLCanvasElement & {
+        requestPointerLock?: () => void | Promise<void>;
+      };
+
+      if (typeof pointerLockCapableElement.requestPointerLock === "function") {
+        const pointerLockResult = pointerLockCapableElement.requestPointerLock();
+
+        if (pointerLockResult instanceof Promise) {
+          pointerLockResult.catch(() => {
+            this.context?.setRuntimeMessage(
+              "Pointer lock request was denied. Drag orbit remains available in Third Person."
+            );
+          });
+        }
+      }
+    }
+
+    if (
       event.button !== 0 ||
-      this.context?.isInputSuspended() === true ||
-      this.context?.isCameraDrivenExternally() === true
+      this.pointerLocked
     ) {
       return;
     }
@@ -811,6 +909,7 @@ export class ThirdPersonNavigationController implements NavigationController {
 
   private handlePointerMove = (event: PointerEvent) => {
     if (
+      this.pointerLocked ||
       !this.dragging ||
       this.context?.isInputSuspended() === true ||
       this.context?.isCameraDrivenExternally() === true
@@ -828,10 +927,11 @@ export class ThirdPersonNavigationController implements NavigationController {
     }
 
     this.pointerLookInputPending = true;
+    const horizontalMovement = deltaX * this.resolveHorizontalMouseLookSign();
 
     const targetLookResult =
       this.context?.handleRuntimeTargetLookInput?.({
-        horizontal: deltaX * POINTER_TARGET_LOOK_INPUT_SCALE,
+        horizontal: horizontalMovement * POINTER_TARGET_LOOK_INPUT_SCALE,
         vertical: -deltaY * POINTER_TARGET_LOOK_INPUT_SCALE
       }) ?? null;
 
@@ -841,16 +941,59 @@ export class ThirdPersonNavigationController implements NavigationController {
         targetLookResult.switchInputHeld !== true
       ) {
         this.applyTargetLookOffsetDelta(
-          -deltaX * TARGET_LOOK_OFFSET_POINTER_SENSITIVITY,
+          -horizontalMovement * TARGET_LOOK_OFFSET_POINTER_SENSITIVITY,
           deltaY * TARGET_LOOK_OFFSET_POINTER_SENSITIVITY
         );
       }
       return;
     }
 
-    this.cameraYawRadians -= deltaX * LOOK_SENSITIVITY;
+    this.cameraYawRadians -= horizontalMovement * LOOK_SENSITIVITY;
     this.pitchRadians = clampPitch(
       this.pitchRadians + deltaY * LOOK_SENSITIVITY
+    );
+  };
+
+  private handleMouseMove = (event: MouseEvent) => {
+    if (
+      !this.pointerLocked ||
+      this.context?.isInputSuspended() === true ||
+      this.context?.isCameraDrivenExternally() === true
+    ) {
+      return;
+    }
+
+    const horizontalMovement =
+      event.movementX * this.resolveHorizontalMouseLookSign();
+
+    if (horizontalMovement === 0 && event.movementY === 0) {
+      return;
+    }
+
+    this.pointerLookInputPending = true;
+
+    const targetLookResult =
+      this.context?.handleRuntimeTargetLookInput?.({
+        horizontal: horizontalMovement * POINTER_TARGET_LOOK_INPUT_SCALE,
+        vertical: -event.movementY * POINTER_TARGET_LOOK_INPUT_SCALE
+      }) ?? null;
+
+    if (targetLookResult?.activeTargetLocked === true) {
+      if (
+        targetLookResult.switchedTarget !== true &&
+        targetLookResult.switchInputHeld !== true
+      ) {
+        this.applyTargetLookOffsetDelta(
+          -horizontalMovement * TARGET_LOOK_OFFSET_POINTER_SENSITIVITY,
+          event.movementY * TARGET_LOOK_OFFSET_POINTER_SENSITIVITY
+        );
+      }
+      return;
+    }
+
+    this.cameraYawRadians -= horizontalMovement * LOOK_SENSITIVITY;
+    this.pitchRadians = clampPitch(
+      this.pitchRadians + event.movementY * LOOK_SENSITIVITY
     );
   };
 
@@ -878,5 +1021,21 @@ export class ThirdPersonNavigationController implements NavigationController {
 
   private handleContextMenu = (event: MouseEvent) => {
     event.preventDefault();
+  };
+
+  private handlePointerLockChange = () => {
+    this.suppressNextPointerLockError = false;
+    this.syncPointerLockState();
+  };
+
+  private handlePointerLockError = () => {
+    if (this.suppressNextPointerLockError) {
+      this.suppressNextPointerLockError = false;
+      return;
+    }
+
+    this.context?.setRuntimeMessage(
+      "Pointer lock was unavailable in this browser context. Drag orbit remains available in Third Person."
+    );
   };
 }

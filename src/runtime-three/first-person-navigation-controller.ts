@@ -16,6 +16,7 @@ import {
   stepPlayerLocomotion
 } from "./player-locomotion";
 import { createPlayerControllerTelemetry } from "./player-controller-telemetry";
+import { shouldAutoCapturePointerLockOnActivate } from "./pointer-lock-utils";
 import { smoothGroundedStairHeight } from "./stair-height-smoothing";
 import type { PlayerControllerTelemetry } from "./navigation-controller";
 import type {
@@ -77,26 +78,6 @@ function cloneRuntimePlayerMovement(
       speedMultiplier: movement.crouch.speedMultiplier
     }
   };
-}
-
-function shouldAutoCapturePointerLockOnActivate(): boolean {
-  if (typeof navigator === "undefined") {
-    return true;
-  }
-
-  const userAgent = navigator.userAgent;
-  const vendor = navigator.vendor;
-  const isSafari =
-    vendor.includes("Apple") &&
-    userAgent.includes("Safari/") &&
-    !userAgent.includes("Chrome/") &&
-    !userAgent.includes("Chromium/") &&
-    !userAgent.includes("CriOS/") &&
-    !userAgent.includes("Edg/") &&
-    !userAgent.includes("OPR/") &&
-    !userAgent.includes("Firefox/");
-
-  return !isSafari;
 }
 
 export class FirstPersonNavigationController implements NavigationController {
@@ -537,9 +518,16 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
+    const horizontalMouseLookSign =
+      this.context.getRuntimeScene().playerStart?.invertMouseCameraHorizontal ===
+      true
+        ? -1
+        : 1;
+    const horizontalMovement = event.movementX * horizontalMouseLookSign;
+
     const targetLookResult =
       this.context?.handleRuntimeTargetLookInput?.({
-        horizontal: event.movementX,
+        horizontal: horizontalMovement,
         vertical: -event.movementY
       }) ?? null;
 
@@ -547,7 +535,7 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
-    this.yawRadians -= event.movementX * LOOK_SENSITIVITY;
+    this.yawRadians -= horizontalMovement * LOOK_SENSITIVITY;
     this.pitchRadians = clampPitch(
       this.pitchRadians - event.movementY * LOOK_SENSITIVITY
     );
