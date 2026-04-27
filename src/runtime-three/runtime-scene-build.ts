@@ -280,6 +280,8 @@ export interface RuntimePlayerStart {
   navigationMode: RuntimeNavigationMode;
   interactionReachMeters: number;
   interactionAngleDegrees: number;
+  allowLookInputTargetSwitch: boolean;
+  targetButtonCyclesActiveTarget: boolean;
   movement: RuntimePlayerMovement;
   inputBindings: PlayerStartInputBindings;
   collider: FirstPersonPlayerShape;
@@ -1595,6 +1597,8 @@ function buildRuntimeSceneCollections(
           navigationMode: entity.navigationMode,
           interactionReachMeters: entity.interactionReachMeters,
           interactionAngleDegrees: entity.interactionAngleDegrees,
+          allowLookInputTargetSwitch: entity.allowLookInputTargetSwitch,
+          targetButtonCyclesActiveTarget: entity.targetButtonCyclesActiveTarget,
           movement: buildRuntimePlayerMovement(entity.movementTemplate),
           inputBindings: clonePlayerStartInputBindings(entity.inputBindings),
           collider: buildRuntimePlayerShape(entity)
@@ -1993,6 +1997,10 @@ export function buildRuntimeSceneFromDocument(
           navigationMode,
           interactionReachMeters: playerStartEntity.interactionReachMeters,
           interactionAngleDegrees: playerStartEntity.interactionAngleDegrees,
+          allowLookInputTargetSwitch:
+            playerStartEntity.allowLookInputTargetSwitch,
+          targetButtonCyclesActiveTarget:
+            playerStartEntity.targetButtonCyclesActiveTarget,
           movement: cloneRuntimePlayerMovement(playerMovement),
           inputBindings: clonePlayerStartInputBindings(playerInputBindings),
           collider: playerCollider
