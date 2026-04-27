@@ -178,6 +178,9 @@ describe("ThirdPersonNavigationController", () => {
     });
     const { context, domElement } = createRuntimeControllerContext(playerStart);
     const controller = new ThirdPersonNavigationController();
+    const controllerInternals = controller as unknown as {
+      handleMouseMove(event: MouseEvent): void;
+    };
     const mouseMoveEvent = new MouseEvent("mousemove");
 
     Object.defineProperty(mouseMoveEvent, "movementX", {
@@ -195,7 +198,7 @@ describe("ThirdPersonNavigationController", () => {
 
     controller.activate(context);
     document.dispatchEvent(new Event("pointerlockchange"));
-    document.dispatchEvent(mouseMoveEvent);
+    controllerInternals.handleMouseMove(mouseMoveEvent);
     controller.update(0);
 
     expect(context.camera.position.x).toBeLessThan(0);
