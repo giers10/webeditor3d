@@ -1688,6 +1688,51 @@ describe("scene document JSON", () => {
     expect(migratedDocument.entities[playerStart.id]).toEqual(playerStart);
   });
 
+  it("migrates version 81 Player Start input bindings to include default interact bindings", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-legacy-interact-binding"
+    });
+    const legacyDocument = {
+      ...createEmptySceneDocument({
+        name: "Legacy Player Interact Binding Scene"
+      }),
+      version: PLAYER_START_INTERACTION_ANGLE_SCENE_DOCUMENT_VERSION,
+      entities: {
+        [playerStart.id]: {
+          ...playerStart,
+          inputBindings: {
+            keyboard: {
+              moveForward: playerStart.inputBindings.keyboard.moveForward,
+              moveBackward: playerStart.inputBindings.keyboard.moveBackward,
+              moveLeft: playerStart.inputBindings.keyboard.moveLeft,
+              moveRight: playerStart.inputBindings.keyboard.moveRight,
+              jump: playerStart.inputBindings.keyboard.jump,
+              sprint: playerStart.inputBindings.keyboard.sprint,
+              crouch: playerStart.inputBindings.keyboard.crouch,
+              pauseTime: playerStart.inputBindings.keyboard.pauseTime
+            },
+            gamepad: {
+              moveForward: playerStart.inputBindings.gamepad.moveForward,
+              moveBackward: playerStart.inputBindings.gamepad.moveBackward,
+              moveLeft: playerStart.inputBindings.gamepad.moveLeft,
+              moveRight: playerStart.inputBindings.gamepad.moveRight,
+              jump: playerStart.inputBindings.gamepad.jump,
+              sprint: playerStart.inputBindings.gamepad.sprint,
+              crouch: playerStart.inputBindings.gamepad.crouch,
+              pauseTime: playerStart.inputBindings.gamepad.pauseTime,
+              cameraLook: playerStart.inputBindings.gamepad.cameraLook
+            }
+          }
+        }
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[playerStart.id]).toEqual(playerStart);
+  });
+
   it("migrates version 30 Player Start entities to include the default movement template", () => {
     const playerStart = {
       id: "entity-player-start-legacy-movement-template",
