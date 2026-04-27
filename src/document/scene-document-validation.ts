@@ -2662,6 +2662,21 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (
+    !isFiniteNumber(entity.interactionAngleDegrees) ||
+    entity.interactionAngleDegrees <= 0 ||
+    entity.interactionAngleDegrees >= 180
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-interaction-angle",
+        "Player Start interaction angle must remain a finite number greater than zero and less than 180.",
+        `${path}.interactionAngleDegrees`
+      )
+    );
+  }
+
   if (!isPlayerStartMovementTemplateKind(entity.movementTemplate?.kind)) {
     diagnostics.push(
       createDiagnostic(
