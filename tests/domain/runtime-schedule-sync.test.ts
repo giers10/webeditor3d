@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createActorControlTargetRef,
+  createProjectGlobalControlTargetRef,
   createLightControlTargetRef,
   createFollowActorPathControlEffect,
   createPlayActorAnimationControlEffect,
@@ -26,13 +27,21 @@ import {
   createRuntimeScheduleSyncContext,
   syncRuntimeSceneScheduleToClock
 } from "../../src/runtime-three/runtime-schedule-sync";
+import { BoxGeometry } from "three";
+import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-collider-fixtures";
 
 describe("runtime schedule sync", () => {
   it("matches direct scheduler resolution while applying actor path and animation state", () => {
     const actorTarget = createActorControlTargetRef("actor-patroller");
+    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry(
+      "asset-npc-patroller",
+      new BoxGeometry(0.8, 1.8, 0.6)
+    );
+    asset.metadata.animationNames = ["Walk"];
     const npc = createNpcEntity({
       id: "entity-npc-patroller",
       actorId: actorTarget.actorId,
+      modelAssetId: asset.id,
       yawDegrees: 15
     });
     const path = createScenePath({
@@ -57,6 +66,7 @@ describe("runtime schedule sync", () => {
       ]
     });
     const document = createEmptySceneDocument();
+    document.assets[asset.id] = asset;
     document.entities[npc.id] = npc;
     document.paths[path.id] = path;
     document.scheduler.routines["routine-patrol"] =
@@ -90,6 +100,9 @@ describe("runtime schedule sync", () => {
         timeOfDayHours: 6,
         dayCount: 0,
         dayLengthMinutes: 24
+      },
+      loadedModelAssets: {
+        [asset.id]: loadedAsset
       }
     });
     const context = createRuntimeScheduleSyncContext(runtimeScene);
@@ -231,7 +244,7 @@ describe("runtime schedule sync", () => {
       createProjectScheduleRoutine({
         id: "routine-transition",
         title: "Transition Window",
-        target: createLightControlTargetRef("pointLight", pointLight.id),
+        target: createProjectGlobalControlTargetRef(),
         startHour: 20,
         endHour: 22,
         sequenceId: "sequence-transition",
