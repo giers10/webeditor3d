@@ -29,6 +29,7 @@ import {
   createCameraRigPlayerTargetRef,
   createCameraRigWorldPointTargetRef,
   DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH,
+  DEFAULT_PLAYER_START_INVERT_MOUSE_CAMERA_HORIZONTAL,
   DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES,
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
@@ -3348,6 +3349,11 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
       `${label}.targetButtonCyclesActiveTarget`,
       DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET
     ),
+    invertMouseCameraHorizontal: readOptionalBoolean(
+      value.invertMouseCameraHorizontal,
+      `${label}.invertMouseCameraHorizontal`,
+      DEFAULT_PLAYER_START_INVERT_MOUSE_CAMERA_HORIZONTAL
+    ),
     movementTemplate: readPlayerStartMovementTemplate(
       value.movementTemplate,
       `${label}.movementTemplate`
@@ -5500,6 +5506,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== PLAYER_START_INTERACTION_REACH_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_INTERACTION_ANGLE_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_TARGETING_SETTINGS_SCENE_DOCUMENT_VERSION &&
+    source.version !== PLAYER_START_MOUSE_INVERT_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_INTERACT_BINDINGS_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_NAME_SCENE_DOCUMENT_VERSION &&

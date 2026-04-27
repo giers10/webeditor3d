@@ -2699,6 +2699,17 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (typeof entity.invertMouseCameraHorizontal !== "boolean") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-invert-mouse-camera-horizontal",
+        "Player Start invertMouseCameraHorizontal must remain a boolean.",
+        `${path}.invertMouseCameraHorizontal`
+      )
+    );
+  }
+
   if (!isPlayerStartMovementTemplateKind(entity.movementTemplate?.kind)) {
     diagnostics.push(
       createDiagnostic(
