@@ -692,6 +692,33 @@ export function isPlayerStartKeyboardBindingCode(
   return value.trim().length > 0;
 }
 
+export function isPlayerStartMouseBindingCode(
+  value: string
+): value is PlayerStartMouseBindingCode {
+  return PLAYER_START_MOUSE_BINDING_CODES.includes(
+    value as PlayerStartMouseBindingCode
+  );
+}
+
+export function getPlayerStartMouseBindingCodeForButton(
+  button: number
+): PlayerStartMouseBindingCode | null {
+  switch (button) {
+    case 0:
+      return "MouseLeft";
+    case 1:
+      return "MouseMiddle";
+    case 2:
+      return "MouseRight";
+    case 3:
+      return "MouseBack";
+    case 4:
+      return "MouseForward";
+    default:
+      return null;
+  }
+}
+
 export function isPlayerStartGamepadBinding(
   value: string
 ): value is PlayerStartGamepadBinding {
@@ -1090,6 +1117,7 @@ export function clonePlayerStartInputBindings(
       jump: bindings.keyboard.jump,
       sprint: bindings.keyboard.sprint,
       crouch: bindings.keyboard.crouch,
+      interact: bindings.keyboard.interact,
       pauseTime: bindings.keyboard.pauseTime
     },
     gamepad: {
@@ -1100,6 +1128,7 @@ export function clonePlayerStartInputBindings(
       jump: bindings.gamepad.jump,
       sprint: bindings.gamepad.sprint,
       crouch: bindings.gamepad.crouch,
+      interact: bindings.gamepad.interact,
       pauseTime: bindings.gamepad.pauseTime,
       cameraLook: bindings.gamepad.cameraLook
     }
@@ -1130,6 +1159,9 @@ export function createPlayerStartInputBindings(
     crouch:
       overrides.keyboard?.crouch ??
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.crouch,
+    interact:
+      overrides.keyboard?.interact ??
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.interact,
     pauseTime:
       overrides.keyboard?.pauseTime ??
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.pauseTime
@@ -1155,6 +1187,9 @@ export function createPlayerStartInputBindings(
     crouch:
       overrides.gamepad?.crouch ??
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.crouch,
+    interact:
+      overrides.gamepad?.interact ??
+      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.interact,
     pauseTime:
       overrides.gamepad?.pauseTime ??
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.pauseTime,
@@ -1191,6 +1226,10 @@ export function createPlayerStartInputBindings(
     throw new Error("Player Start crouch keyboard binding must be supported.");
   }
 
+  if (!isPlayerStartKeyboardBindingCode(keyboard.interact)) {
+    throw new Error("Player Start interact keyboard binding must be supported.");
+  }
+
   if (!isPlayerStartKeyboardBindingCode(keyboard.pauseTime)) {
     throw new Error("Player Start pause keyboard binding must be supported.");
   }
@@ -1221,6 +1260,10 @@ export function createPlayerStartInputBindings(
 
   if (!isPlayerStartGamepadActionBinding(gamepad.crouch)) {
     throw new Error("Player Start crouch gamepad binding must be supported.");
+  }
+
+  if (!isPlayerStartGamepadActionBinding(gamepad.interact)) {
+    throw new Error("Player Start interact gamepad binding must be supported.");
   }
 
   if (!isPlayerStartGamepadActionBinding(gamepad.pauseTime)) {
@@ -1464,6 +1507,7 @@ export function arePlayerStartInputBindingsEqual(
     left.keyboard.jump === right.keyboard.jump &&
     left.keyboard.sprint === right.keyboard.sprint &&
     left.keyboard.crouch === right.keyboard.crouch &&
+    left.keyboard.interact === right.keyboard.interact &&
     left.keyboard.pauseTime === right.keyboard.pauseTime &&
     left.gamepad.moveForward === right.gamepad.moveForward &&
     left.gamepad.moveBackward === right.gamepad.moveBackward &&
@@ -1472,6 +1516,7 @@ export function arePlayerStartInputBindingsEqual(
     left.gamepad.jump === right.gamepad.jump &&
     left.gamepad.sprint === right.gamepad.sprint &&
     left.gamepad.crouch === right.gamepad.crouch &&
+    left.gamepad.interact === right.gamepad.interact &&
     left.gamepad.pauseTime === right.gamepad.pauseTime &&
     left.gamepad.cameraLook === right.gamepad.cameraLook
   );

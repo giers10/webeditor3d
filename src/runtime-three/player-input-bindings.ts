@@ -19,6 +19,7 @@ export interface PlayerStartActionInputState
   jump: number;
   sprint: number;
   crouch: number;
+  interact: number;
   pauseTime: number;
 }
 
@@ -292,6 +293,10 @@ export function resolvePlayerStartActionInputs(
       pressedKeys.has(bindings.keyboard.crouch) ? 1 : 0,
       readGamepadActionBindingStrength(gamepads, bindings.gamepad.crouch)
     ),
+    interact: Math.max(
+      pressedKeys.has(bindings.keyboard.interact) ? 1 : 0,
+      readGamepadActionBindingStrength(gamepads, bindings.gamepad.interact)
+    ),
     pauseTime: Math.max(
       pressedKeys.has(bindings.keyboard.pauseTime) ? 1 : 0,
       readGamepadActionBindingStrength(gamepads, bindings.gamepad.pauseTime)
@@ -306,6 +311,15 @@ export function resolvePlayerStartPauseInput(
 ): number {
   return resolvePlayerStartActionInputs(pressedKeys, bindings, gamepads)
     .pauseTime;
+}
+
+export function resolvePlayerStartInteractInput(
+  pressedKeys: ReadonlySet<string>,
+  bindings: PlayerStartInputBindings,
+  gamepads: ArrayLike<Gamepad | null> | null | undefined = getAvailableGamepads()
+): number {
+  return resolvePlayerStartActionInputs(pressedKeys, bindings, gamepads)
+    .interact;
 }
 
 export function resolveDefaultTargetCycleInput(
