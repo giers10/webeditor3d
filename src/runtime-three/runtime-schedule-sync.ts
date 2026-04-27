@@ -15,7 +15,10 @@ import {
 
 export interface RuntimeScheduleSyncContext {
   readonly runtimeScene: RuntimeSceneDefinition;
-  readonly pathsById: ReadonlyMap<string, RuntimeSceneDefinition["paths"][number]>;
+  readonly pathsById: ReadonlyMap<
+    string,
+    RuntimeSceneDefinition["paths"][number]
+  >;
   readonly actorIds: string[];
   readonly actorStatesByActorId: ReadonlyMap<
     string,
