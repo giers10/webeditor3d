@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -120,6 +120,7 @@ describe("ViewportCanvas", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -803,6 +804,260 @@ describe("ViewportCanvas", () => {
     expect(
       screen.getByTestId("viewport-terrain-brush-preview-topLeft")
     ).toHaveTextContent("terrain · paint · layer 3");
+  });
+
+  it("shows the viewport time transport only on the active viewport panel", () => {
+    const sceneDocument = createEmptySceneDocument();
+    const commonProps = {
+      world: sceneDocument.world,
+      sceneDocument,
+      editorSimulationController: new EditorSimulationController(),
+      projectAssets: sceneDocument.assets,
+      loadedModelAssets: {},
+      loadedImageAssets: {},
+      whiteboxSelectionMode: "object" as const,
+      whiteboxSnapEnabled: true,
+      whiteboxSnapStep: 1,
+      viewportGridVisible: true,
+      selection: { kind: "none" } as EditorSelection,
+      activeSelectionId: null,
+      terrainBrushState: null,
+      toolMode: "select" as const,
+      toolPreview: { kind: "none" } as ViewportToolPreview,
+      transformSession: createInactiveTransformSession(),
+      cameraState: createDefaultViewportPanelCameraState(),
+      viewMode: "perspective" as const,
+      displayMode: "normal" as const,
+      layoutMode: "quad" as const,
+      focusRequestId: 0,
+      focusSelection: { kind: "none" } as EditorSelection,
+      onSelectionChange: vi.fn(),
+      onTerrainBrushCommit: vi.fn(() => true),
+      onCommitCreation: vi.fn(() => true),
+      onCameraStateChange: vi.fn(),
+      onToolPreviewChange: vi.fn(),
+      onTransformSessionChange: vi.fn(),
+      onTransformCommit: vi.fn(),
+      onTransformCancel: vi.fn(),
+      onPlayEditorSimulation: vi.fn(),
+      onPauseEditorSimulation: vi.fn(),
+      onStepEditorSimulation: vi.fn()
+    };
+
+    const { rerender } = render(
+      <ViewportCanvas panelId="topLeft" isActivePanel {...commonProps} />
+    );
+
+    expect(screen.getByTestId("viewport-time-transport-topLeft")).toBeVisible();
+
+    rerender(
+      <ViewportCanvas
+        panelId="topRight"
+        isActivePanel={false}
+        {...commonProps}
+      />
+    );
+
+    expect(
+      screen.queryByTestId("viewport-time-transport-topRight")
+    ).not.toBeInTheDocument();
+  });
+
+  it("routes viewport time transport play and pause to editor simulation handlers", () => {
+    const sceneDocument = createEmptySceneDocument();
+    const onPlayEditorSimulation = vi.fn();
+    const onPauseEditorSimulation = vi.fn();
+
+    const renderCanvas = (editorSimulationPlaying: boolean) => (
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationController={new EditorSimulationController()}
+        editorSimulationPlaying={editorSimulationPlaying}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "none" }}
+        activeSelectionId={null}
+        terrainBrushState={null}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={createDefaultViewportPanelCameraState()}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+        onPlayEditorSimulation={onPlayEditorSimulation}
+        onPauseEditorSimulation={onPauseEditorSimulation}
+        onStepEditorSimulation={vi.fn()}
+      />
+    );
+
+    const { rerender } = render(renderCanvas(false));
+    const playToggle = screen.getByTestId("viewport-time-play-toggle-topLeft");
+
+    expect(playToggle).toHaveTextContent(">");
+    fireEvent.click(playToggle);
+    expect(onPlayEditorSimulation).toHaveBeenCalledTimes(1);
+    expect(onPauseEditorSimulation).not.toHaveBeenCalled();
+
+    rerender(renderCanvas(true));
+    const pauseToggle = screen.getByTestId("viewport-time-play-toggle-topLeft");
+
+    expect(pauseToggle).toHaveTextContent("II");
+    fireEvent.click(pauseToggle);
+    expect(onPauseEditorSimulation).toHaveBeenCalledTimes(1);
+  });
+
+  it("steps viewport time once on click and repeatedly while held", () => {
+    vi.useFakeTimers();
+
+    const sceneDocument = createEmptySceneDocument();
+    const onStepEditorSimulation = vi.fn();
+
+    render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationController={new EditorSimulationController()}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "none" }}
+        activeSelectionId={null}
+        terrainBrushState={null}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={createDefaultViewportPanelCameraState()}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+        onPlayEditorSimulation={vi.fn()}
+        onPauseEditorSimulation={vi.fn()}
+        onStepEditorSimulation={onStepEditorSimulation}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("viewport-time-rewind-topLeft"));
+    expect(onStepEditorSimulation).toHaveBeenLastCalledWith(-0.25);
+    expect(onStepEditorSimulation).toHaveBeenCalledTimes(1);
+
+    const fastForward = screen.getByTestId("viewport-time-forward-topLeft");
+    fireEvent.pointerDown(fastForward, { button: 0, pointerId: 1 });
+    expect(onStepEditorSimulation).toHaveBeenLastCalledWith(0.25);
+    expect(onStepEditorSimulation).toHaveBeenCalledTimes(2);
+
+    act(() => {
+      vi.advanceTimersByTime(124);
+    });
+    expect(onStepEditorSimulation).toHaveBeenCalledTimes(2);
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(onStepEditorSimulation).toHaveBeenCalledTimes(3);
+
+    fireEvent.pointerUp(fastForward, { pointerId: 1 });
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    expect(onStepEditorSimulation).toHaveBeenCalledTimes(3);
+  });
+
+  it("stops viewport time repeat stepping on pointer cancel and blur", () => {
+    vi.useFakeTimers();
+
+    const sceneDocument = createEmptySceneDocument();
+    const onStepEditorSimulation = vi.fn();
+
+    render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationController={new EditorSimulationController()}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "none" }}
+        activeSelectionId={null}
+        terrainBrushState={null}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={createDefaultViewportPanelCameraState()}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+        onPlayEditorSimulation={vi.fn()}
+        onPauseEditorSimulation={vi.fn()}
+        onStepEditorSimulation={onStepEditorSimulation}
+      />
+    );
+
+    const rewind = screen.getByTestId("viewport-time-rewind-topLeft");
+    fireEvent.pointerDown(rewind, { button: 0, pointerId: 2 });
+    fireEvent.pointerCancel(rewind, { pointerId: 2 });
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    expect(onStepEditorSimulation).toHaveBeenCalledTimes(1);
+
+    const fastForward = screen.getByTestId("viewport-time-forward-topLeft");
+    fireEvent.pointerDown(fastForward, { button: 0, pointerId: 3 });
+    fireEvent.blur(fastForward);
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    expect(onStepEditorSimulation).toHaveBeenCalledTimes(2);
   });
 
   it("does not refocus the viewport when the scene document changes without a new focus request", async () => {
