@@ -142,6 +142,32 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(context);
   });
 
+  it("releases third-person pointer lock on Escape", () => {
+    const { context, domElement } = createRuntimeControllerContext();
+    const controller = new ThirdPersonNavigationController();
+    let pointerLockElement: Element | null = domElement;
+    const exitPointerLock = vi.fn(() => {
+      pointerLockElement = null;
+      document.dispatchEvent(new Event("pointerlockchange"));
+    });
+
+    Object.defineProperty(document, "pointerLockElement", {
+      configurable: true,
+      get: () => pointerLockElement
+    });
+    Object.defineProperty(document, "exitPointerLock", {
+      configurable: true,
+      value: exitPointerLock
+    });
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Escape" }));
+
+    expect(exitPointerLock).toHaveBeenCalledTimes(1);
+
+    controller.deactivate(context);
+  });
+
   it("uses the gamepad right stick for third-person camera orbit", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new ThirdPersonNavigationController();
