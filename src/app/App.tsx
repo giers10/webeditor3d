@@ -2769,6 +2769,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setPlayerStartTargetButtonCyclesActiveTargetDraft
   ] = useState(DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET_VALUE);
   const [
+    playerStartInvertMouseCameraHorizontalDraft,
+    setPlayerStartInvertMouseCameraHorizontalDraft
+  ] = useState(DEFAULT_PLAYER_START_INVERT_MOUSE_CAMERA_HORIZONTAL_VALUE);
+  const [
     playerStartMovementTemplateDraft,
     setPlayerStartMovementTemplateDraft
   ] = useState<PlayerStartMovementTemplate>(
