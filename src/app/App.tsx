@@ -13255,6 +13255,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : undefined;
 
   if (editorState.toolMode === "play" && runtimeScene !== null) {
+    const runtimeInteractKeyboardBinding =
+      runtimeScene.playerInputBindings.keyboard.interact;
+    const runtimeInteractKeyboardInstruction = isPlayerStartMouseBindingCode(
+      runtimeInteractKeyboardBinding
+    )
+      ? `Click ${formatPlayerStartKeyboardBindingLabel(runtimeInteractKeyboardBinding)}`
+      : `Press ${formatPlayerStartKeyboardBindingLabel(runtimeInteractKeyboardBinding)}`;
+    const runtimeInteractGamepadInstruction = `press ${formatPlayerStartGamepadActionBindingLabel(
+      runtimeScene.playerInputBindings.gamepad.interact
+    )}`;
+    const runtimeInteractInstruction = `${runtimeInteractKeyboardInstruction} or ${runtimeInteractGamepadInstruction}`;
+
     return (
       <div className="app-shell app-shell--play">
         <header className="toolbar">
@@ -13481,8 +13493,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   data-testid="runner-interaction-summary"
                 >
                   {runtimeInteractionPrompt === null
-                    ? "Aim at an authored Interactable or NPC and click when a prompt appears."
-                    : `Click "${runtimeInteractionPrompt.prompt}" within ${runtimeInteractionPrompt.range.toFixed(1)}m.`}
+                    ? `Aim at an authored Interactable or NPC. ${runtimeInteractInstruction} when a prompt appears.`
+                    : `${runtimeInteractInstruction} "${runtimeInteractionPrompt.prompt}" within ${runtimeInteractionPrompt.range.toFixed(1)}m.`}
                 </div>
               </div>
 
@@ -13499,11 +13511,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
               {
                 <div
                   className="info-banner"
-                  data-testid="runner-interaction-help"
-                >
-                  Mouse click activates the current prompt target.
-                  Keyboard/controller fallback is not active yet.
-                </div>
+                data-testid="runner-interaction-help"
+              >
+                  Interact binding: {runtimeInteractInstruction}.
+              </div>
               }
             </Panel>
           </aside>
