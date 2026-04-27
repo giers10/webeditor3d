@@ -54,6 +54,7 @@ interface ViewportPanelProps {
   world: WorldSettings;
   sceneDocument: SceneDocument;
   editorSimulationController: EditorSimulationController;
+  editorSimulationPlaying: boolean;
   projectAssets: Record<string, ProjectAssetRecord>;
   loadedModelAssets: Record<string, LoadedModelAsset>;
   loadedImageAssets: Record<string, LoadedImageAsset>;
@@ -103,6 +104,9 @@ interface ViewportPanelProps {
   onTransformCommit(transformSession: ActiveTransformSession): void;
   onTransformCancel(): void;
   onSelectionChange(selection: EditorSelection): void;
+  onPlayEditorSimulation(): void;
+  onPauseEditorSimulation(): void;
+  onStepEditorSimulation(deltaHours: number): void;
 }
 
 const VIEWPORT_DISPLAY_MODES = ["normal", "authoring", "wireframe"] as const;
@@ -130,6 +134,7 @@ export function ViewportPanel({
   world,
   sceneDocument,
   editorSimulationController,
+  editorSimulationPlaying,
   projectAssets,
   loadedModelAssets,
   loadedImageAssets,
@@ -172,7 +177,10 @@ export function ViewportPanel({
   onTransformPreviewChange,
   onTransformCommit,
   onTransformCancel,
-  onSelectionChange
+  onSelectionChange,
+  onPlayEditorSimulation,
+  onPauseEditorSimulation,
+  onStepEditorSimulation
 }: ViewportPanelProps) {
   const shouldShow = layoutMode === "quad" || isActive;
   const panelStyle = shouldShow ? style : { ...(style ?? {}), display: "none" };
@@ -195,6 +203,7 @@ export function ViewportPanel({
         world={world}
         sceneDocument={sceneDocument}
         editorSimulationController={editorSimulationController}
+        editorSimulationPlaying={editorSimulationPlaying}
         projectAssets={projectAssets}
         loadedModelAssets={loadedModelAssets}
         loadedImageAssets={loadedImageAssets}
@@ -224,6 +233,9 @@ export function ViewportPanel({
         onTransformPreviewChange={onTransformPreviewChange}
         onTransformCommit={onTransformCommit}
         onTransformCancel={onTransformCancel}
+        onPlayEditorSimulation={onPlayEditorSimulation}
+        onPauseEditorSimulation={onPauseEditorSimulation}
+        onStepEditorSimulation={onStepEditorSimulation}
       />
 
       <div className="viewport-panel__overlay viewport-panel__overlay--top">

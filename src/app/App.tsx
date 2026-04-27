@@ -14244,6 +14244,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   world={editorState.document.world}
                   sceneDocument={editorState.document}
                   editorSimulationController={editorSimulationController}
+                  editorSimulationPlaying={editorSimulationPlaying}
                   projectAssets={editorState.document.assets}
                   loadedModelAssets={loadedModelAssets}
                   loadedImageAssets={loadedImageAssets}
@@ -14308,6 +14309,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onSelectionChange={(selection) =>
                     applySelection(selection, "viewport")
                   }
+                  onPlayEditorSimulation={handlePlayEditorSimulation}
+                  onPauseEditorSimulation={handlePauseEditorSimulation}
+                  onStepEditorSimulation={handleStepEditorSimulation}
                 />
               ))}
               {layoutMode !== "quad" ? null : (

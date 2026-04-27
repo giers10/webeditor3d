@@ -1411,6 +1411,10 @@ button:disabled {
   pointer-events: none;
 }
 
+.viewport-canvas[data-active="true"] .viewport-canvas__overlay {
+  max-width: calc(100% - 132px);
+}
+
 .viewport-canvas__overlay-badges {
   display: flex;
   flex-wrap: wrap;
@@ -1445,6 +1449,72 @@ button:disabled {
   font-size: 0.76rem;
   line-height: 1.35;
   backdrop-filter: blur(10px);
+}
+
+.viewport-canvas__time-transport {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  color: #f8efe3;
+  background: rgba(8, 10, 14, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.viewport-canvas__time-button {
+  width: 30px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: #f8efe3;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.viewport-canvas__time-button:hover,
+.viewport-canvas__time-button:focus-visible {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.viewport-canvas__time-button:focus-visible {
+  outline: 2px solid rgba(240, 197, 116, 0.78);
+  outline-offset: 2px;
+}
+
+.viewport-canvas__time-button:active {
+  transform: translateY(1px);
+}
+
+.viewport-canvas__time-button--primary {
+  width: 34px;
+  color: #20180e;
+  background: #f0c574;
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.viewport-canvas__time-button--primary:hover,
+.viewport-canvas__time-button--primary:focus-visible {
+  color: #140f08;
+  background: #ffd68a;
 }
 
 .viewport-region__splitter {
