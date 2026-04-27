@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createPlayerStartInputBindings } from "../../src/entities/entity-instances";
 import {
+  resolvePlayerStartClearTargetInput,
   resolvePlayerStartInteractInput,
   resolvePlayerStartPauseInput
 } from "../../src/runtime-three/player-input-bindings";
@@ -81,6 +82,37 @@ describe("player-input-bindings interact input", () => {
     expect(
       resolvePlayerStartInteractInput(new Set<string>(), bindings, [
         createMockGamepad([2])
+      ])
+    ).toBe(1);
+  });
+});
+
+describe("player-input-bindings clear-target input", () => {
+  it("resolves authored keyboard clear-target bindings", () => {
+    const bindings = createPlayerStartInputBindings({
+      keyboard: {
+        clearTarget: "KeyQ"
+      }
+    });
+
+    expect(
+      resolvePlayerStartClearTargetInput(new Set(["Escape"]), bindings, [])
+    ).toBe(0);
+    expect(
+      resolvePlayerStartClearTargetInput(new Set(["KeyQ"]), bindings, [])
+    ).toBe(1);
+  });
+
+  it("resolves the authored gamepad clear-target binding from the standard north button", () => {
+    const bindings = createPlayerStartInputBindings({
+      gamepad: {
+        clearTarget: "buttonNorth"
+      }
+    });
+
+    expect(
+      resolvePlayerStartClearTargetInput(new Set<string>(), bindings, [
+        createMockGamepad([3])
       ])
     ).toBe(1);
   });

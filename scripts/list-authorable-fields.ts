@@ -789,34 +789,3 @@ for (const group of groupedFields) {
 }
 
 process.stdout.write(`${lines.join("\n").trimEnd()}\n`);
-  const entries: FieldEntry[] = [];
-  collectFields(getRootType(root), root.path, entries, {
-    condition: null,
-    skipProperties: new Set(root.skipProperties ?? [])
-  });
-
-  return {
-    title: root.title,
-    fields: uniqueEntries(entries).map(formatEntry)
-  };
-});
-
-const totalFieldCount = groupedFields.reduce(
-  (sum, group) => sum + group.fields.length,
-  0
-);
-const lines = [
-  "Authorable field inventory",
-  "Source: current canonical TypeScript authoring schemas",
-  "Excludes: ids, version, kind discriminators, textures, and generated imported-asset metadata/storage fields.",
-  `Total: ${totalFieldCount} field paths across ${groupedFields.length} groups.`,
-  ""
-];
-
-for (const group of groupedFields) {
-  lines.push(`${group.title} (${group.fields.length})`);
-  lines.push(...wrapFieldList(group.fields));
-  lines.push("");
-}
-
-process.stdout.write(`${lines.join("\n").trimEnd()}\n`);

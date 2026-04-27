@@ -18,12 +18,14 @@ import {
   DEFAULT_PLAYER_START_CAPSULE_RADIUS,
   DEFAULT_PLAYER_START_CROUCH_SETTINGS,
   DEFAULT_PLAYER_START_EYE_HEIGHT,
+  DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH,
   DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES,
   DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
   DEFAULT_PLAYER_START_JUMP_SETTINGS,
   DEFAULT_PLAYER_START_MOVE_SPEED,
   DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
   DEFAULT_PLAYER_START_SPRINT_SETTINGS,
+  DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET,
   DEFAULT_SPOT_LIGHT_ANGLE_DEGREES,
   DEFAULT_SPOT_LIGHT_COLOR_HEX,
   DEFAULT_SPOT_LIGHT_DISTANCE,
@@ -53,6 +55,10 @@ describe("entity registry defaults", () => {
       navigationMode: "firstPerson",
       interactionReachMeters: DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
       interactionAngleDegrees: DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES,
+      allowLookInputTargetSwitch:
+        DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH,
+      targetButtonCyclesActiveTarget:
+        DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET,
       movementTemplate: {
         kind: "default",
         moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
@@ -78,6 +84,7 @@ describe("entity registry defaults", () => {
           sprint: "ShiftLeft",
           crouch: "ControlLeft",
           interact: "MouseLeft",
+          clearTarget: "Escape",
           pauseTime: "KeyP"
         },
         gamepad: {
@@ -89,6 +96,7 @@ describe("entity registry defaults", () => {
           sprint: "leftStickPress",
           crouch: "buttonEast",
           interact: "buttonWest",
+          clearTarget: "buttonNorth",
           pauseTime: "buttonMenu",
           cameraLook: "rightStick"
         }
