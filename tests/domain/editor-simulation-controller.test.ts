@@ -151,6 +151,7 @@ describe("EditorSimulationController", () => {
     uiListener.mockClear();
 
     controller.play();
+    frameListener.mockClear();
     uiListener.mockClear();
     controller.advance(0.25);
     controller.advance(0.25);
