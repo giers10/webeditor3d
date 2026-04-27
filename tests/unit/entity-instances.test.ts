@@ -84,7 +84,7 @@ describe("entity registry defaults", () => {
           sprint: "ShiftLeft",
           crouch: "ControlLeft",
           interact: "MouseLeft",
-          clearTarget: "Escape",
+          clearTarget: "KeyQ",
           pauseTime: "KeyP"
         },
         gamepad: {
