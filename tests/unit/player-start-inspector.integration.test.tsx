@@ -313,7 +313,7 @@ describe("Player Start inspector", () => {
     });
   });
 
-  it("shows authored jump, sprint, and crouch bindings for a selected Player Start", async () => {
+  it("shows authored locomotion and interact bindings for a selected Player Start", async () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-locomotion-bindings",
       name: "Locomotion Bindings"
@@ -353,5 +353,11 @@ describe("Player Start inspector", () => {
     expect(
       screen.getByTestId("player-start-gamepad-binding-crouch")
     ).toHaveValue("buttonEast");
+    expect(
+      screen.getByTestId("player-start-keyboard-binding-interact")
+    ).toHaveTextContent("Left Mouse");
+    expect(
+      screen.getByTestId("player-start-gamepad-binding-interact")
+    ).toHaveValue("buttonWest");
   });
 });
