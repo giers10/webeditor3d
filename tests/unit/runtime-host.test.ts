@@ -105,6 +105,24 @@ function captureCameraPose(camera: PerspectiveCamera) {
   };
 }
 
+function createRuntimeKeyEvent(
+  code: string,
+  overrides: Partial<KeyboardEvent> = {}
+): KeyboardEvent {
+  return {
+    code,
+    defaultPrevented: false,
+    repeat: false,
+    altKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    target: null,
+    preventDefault: vi.fn(),
+    stopImmediatePropagation: vi.fn(),
+    ...overrides
+  } as unknown as KeyboardEvent;
+}
+
 function resolveShortestAngleDeltaDegrees(fromDegrees: number, toDegrees: number) {
   return ((toDegrees - fromDegrees + 540) % 360) - 180;
 }
@@ -167,6 +185,88 @@ describe("RuntimeHost", () => {
 
     host.dispose();
     expect(collisionWorld.dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the authored interact binding instead of always dispatching left mouse clicks", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-authored-interact",
+      inputBindings: {
+        keyboard: {
+          interact: "KeyE"
+        },
+        gamepad: {
+          interact: "buttonWest"
+        }
+      }
+    });
+    const interactable = createInteractableEntity({
+      id: "entity-authored-interact-target"
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Authored Interact Scene" }),
+      entities: {
+        [playerStart.id]: playerStart,
+        [interactable.id]: interactable
+      }
+    });
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    host.loadScene(runtimeScene);
+
+    const hostInternals = host as unknown as {
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentInteractionPrompt: {
+        sourceEntityId: string;
+        prompt: string;
+        distance: number;
+        range: number;
+      } | null;
+      interactionSystem: {
+        dispatchClickInteraction: ReturnType<typeof vi.fn>;
+      };
+      handleRuntimePointerDown(event: {
+        button: number;
+        clientX: number;
+        clientY: number;
+        preventDefault(): void;
+        stopImmediatePropagation(): void;
+      }): void;
+      handleRuntimeKeyDown(event: KeyboardEvent): void;
+    };
+    const dispatchClickInteraction = vi.fn();
+
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentInteractionPrompt = {
+      sourceEntityId: interactable.id,
+      prompt: interactable.prompt,
+      distance: 0,
+      range: interactable.radius
+    };
+    hostInternals.interactionSystem.dispatchClickInteraction =
+      dispatchClickInteraction;
+
+    hostInternals.handleRuntimePointerDown({
+      button: 0,
+      clientX: 0,
+      clientY: 0,
+      preventDefault: vi.fn(),
+      stopImmediatePropagation: vi.fn()
+    });
+
+    expect(dispatchClickInteraction).not.toHaveBeenCalled();
+
+    hostInternals.handleRuntimeKeyDown(createRuntimeKeyEvent("KeyE"));
+
+    expect(dispatchClickInteraction).toHaveBeenCalledTimes(1);
+    expect(dispatchClickInteraction).toHaveBeenCalledWith(
+      interactable.id,
+      runtimeScene,
+      expect.any(Object)
+    );
   });
 
   it("starts default-active rigs in place and blends rig-to-rig overrides", () => {
