@@ -76,7 +76,9 @@ describe("entity registry defaults", () => {
           moveRight: "KeyD",
           jump: "Space",
           sprint: "ShiftLeft",
-          crouch: "ControlLeft"
+          crouch: "ControlLeft",
+          interact: "MouseLeft",
+          pauseTime: "KeyP"
         },
         gamepad: {
           moveForward: "leftStickUp",
@@ -86,6 +88,8 @@ describe("entity registry defaults", () => {
           jump: "buttonSouth",
           sprint: "leftStickPress",
           crouch: "buttonEast",
+          interact: "buttonWest",
+          pauseTime: "buttonMenu",
           cameraLook: "rightStick"
         }
       }

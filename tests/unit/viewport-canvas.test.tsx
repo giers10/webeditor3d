@@ -335,16 +335,20 @@ describe("ViewportCanvas", () => {
 
   it("pushes editor simulation scene state into the viewport host", async () => {
     const sceneDocument = createEmptySceneDocument();
-    const editorSimulationScene = buildRuntimeSceneFromDocument(sceneDocument);
-    const editorSimulationClock = createRuntimeClockState(sceneDocument.time);
+    const editorSimulationController = new EditorSimulationController();
+    editorSimulationController.updateInputs({
+      document: sceneDocument,
+      loadedModelAssets: {}
+    });
+    const editorSimulationFrame =
+      editorSimulationController.getFrameSnapshot();
 
     render(
       <ViewportCanvas
         panelId="topLeft"
         world={sceneDocument.world}
         sceneDocument={sceneDocument}
-        editorSimulationScene={editorSimulationScene}
-        editorSimulationClock={editorSimulationClock}
+        editorSimulationController={editorSimulationController}
         projectAssets={sceneDocument.assets}
         loadedModelAssets={{}}
         loadedImageAssets={{}}
@@ -379,8 +383,8 @@ describe("ViewportCanvas", () => {
     await waitFor(() => {
       expect(viewportHostInstances).toHaveLength(1);
       expect(viewportHostInstances[0].updateSimulation).toHaveBeenCalledWith(
-        editorSimulationScene,
-        editorSimulationClock
+        editorSimulationFrame.runtimeScene,
+        editorSimulationFrame.clock
       );
     });
   });

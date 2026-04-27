@@ -609,6 +609,7 @@ describe("validateSceneDocument", () => {
               jump: "",
               sprint: "",
               crouch: "",
+              interact: "",
               pauseTime: ""
             },
             gamepad: {
@@ -616,6 +617,7 @@ describe("validateSceneDocument", () => {
               jump: "invalidButton",
               sprint: "invalidButton",
               crouch: "invalidButton",
+              interact: "invalidButton",
               pauseTime: "invalidButton"
             }
           } as unknown as ReturnType<
@@ -708,6 +710,9 @@ describe("validateSceneDocument", () => {
           code: "invalid-player-start-crouch-keyboard-binding"
         }),
         expect.objectContaining({
+          code: "invalid-player-start-interact-keyboard-binding"
+        }),
+        expect.objectContaining({
           code: "invalid-player-start-pause-keyboard-binding"
         }),
         expect.objectContaining({
@@ -718,6 +723,9 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-crouch-gamepad-binding"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-interact-gamepad-binding"
         }),
         expect.objectContaining({
           code: "invalid-player-start-pause-gamepad-binding"
