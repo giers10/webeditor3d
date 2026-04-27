@@ -977,6 +977,10 @@ export class RuntimeHost {
 
         if (previousPointerLocked && !nextPointerLocked) {
           this.lastPointerLockReleaseAt = performance.now();
+          this.pressedKeys.clear();
+          this.previousInteractInputActive = false;
+          this.previousClearTargetInputActive = false;
+          this.previousPauseInputActive = false;
         }
 
         this.currentPlayerControllerTelemetry = telemetry;

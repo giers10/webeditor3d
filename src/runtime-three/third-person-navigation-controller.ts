@@ -786,8 +786,17 @@ export class ThirdPersonNavigationController implements NavigationController {
       return;
     }
 
+    const wasPointerLocked = this.pointerLocked;
     const pointerLocked =
       document.pointerLockElement === this.context.domElement;
+
+    if (wasPointerLocked && !pointerLocked) {
+      this.pressedKeys.clear();
+      this.jumpPressed = false;
+      this.jumpHoldRemainingMs = 0;
+      this.pointerLookInputPending = false;
+    }
+
     this.pointerLocked = pointerLocked;
     this.dragging = false;
     this.context.setRuntimeMessage(
