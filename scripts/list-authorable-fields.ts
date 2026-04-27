@@ -168,22 +168,22 @@ function getRootType(root: AuthorableRoot): ts.Type {
     throw new Error(`Could not load ${root.file}.`);
   }
 
-  let foundNode: ts.InterfaceDeclaration | ts.TypeAliasDeclaration | null = null;
+  let foundName: ts.Identifier | null = null;
 
   ts.forEachChild(sourceFile, (node) => {
     if (
       (ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)) &&
       node.name.text === root.typeName
     ) {
-      foundNode = node;
+      foundName = node.name;
     }
   });
 
-  if (foundNode === null) {
+  if (foundName === null) {
     throw new Error(`Could not find ${root.typeName} in ${root.file}.`);
   }
 
-  return checker.getTypeAtLocation(foundNode.name);
+  return checker.getTypeAtLocation(foundName);
 }
 
 function withoutNullish(type: ts.Type): ts.Type {
