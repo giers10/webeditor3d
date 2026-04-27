@@ -48,6 +48,8 @@ export interface PlayerStartEntity extends PositionedEntity {
   navigationMode: PlayerStartNavigationMode;
   interactionReachMeters: number;
   interactionAngleDegrees: number;
+  allowLookInputTargetSwitch: boolean;
+  targetButtonCyclesActiveTarget: boolean;
   movementTemplate: PlayerStartMovementTemplate;
   inputBindings: PlayerStartInputBindings;
   collider: PlayerStartColliderSettings;
@@ -218,7 +220,11 @@ export const PLAYER_START_LOCOMOTION_ACTIONS = [
 ] as const;
 export type PlayerStartLocomotionAction =
   (typeof PLAYER_START_LOCOMOTION_ACTIONS)[number];
-export const PLAYER_START_SYSTEM_ACTIONS = ["interact", "pauseTime"] as const;
+export const PLAYER_START_SYSTEM_ACTIONS = [
+  "interact",
+  "clearTarget",
+  "pauseTime"
+] as const;
 export type PlayerStartSystemAction =
   (typeof PLAYER_START_SYSTEM_ACTIONS)[number];
 export type PlayerStartInputAction =
@@ -277,6 +283,7 @@ export interface PlayerStartKeyboardBindings {
   sprint: PlayerStartKeyboardBindingCode;
   crouch: PlayerStartKeyboardBindingCode;
   interact: PlayerStartKeyboardBindingCode;
+  clearTarget: PlayerStartKeyboardBindingCode;
   pauseTime: PlayerStartKeyboardBindingCode;
 }
 
@@ -289,6 +296,7 @@ export interface PlayerStartGamepadBindings {
   sprint: PlayerStartGamepadActionBinding;
   crouch: PlayerStartGamepadActionBinding;
   interact: PlayerStartGamepadActionBinding;
+  clearTarget: PlayerStartGamepadActionBinding;
   pauseTime: PlayerStartGamepadActionBinding;
   cameraLook: PlayerStartGamepadCameraLookBinding;
 }
@@ -541,6 +549,7 @@ export const DEFAULT_PLAYER_START_KEYBOARD_BINDINGS: PlayerStartKeyboardBindings
     sprint: "ShiftLeft",
     crouch: "ControlLeft",
     interact: "MouseLeft",
+    clearTarget: "Escape",
     pauseTime: "KeyP"
   };
 export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
@@ -553,6 +562,7 @@ export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
     sprint: "leftStickPress",
     crouch: "buttonEast",
     interact: "buttonWest",
+    clearTarget: "buttonNorth",
     pauseTime: "buttonMenu",
     cameraLook: "rightStick"
   };
@@ -569,6 +579,8 @@ export const DEFAULT_PLAYER_START_CAPSULE_RADIUS = 0.3;
 export const DEFAULT_PLAYER_START_CAPSULE_HEIGHT = 1.8;
 export const DEFAULT_PLAYER_START_INTERACTION_REACH_METERS = 1.5;
 export const DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES = 30;
+export const DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH = true;
+export const DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET = false;
 export const DEFAULT_PLAYER_START_BOX_SIZE: Vec3 = {
   x: 0.6,
   y: 1.8,
@@ -1118,6 +1130,7 @@ export function clonePlayerStartInputBindings(
       sprint: bindings.keyboard.sprint,
       crouch: bindings.keyboard.crouch,
       interact: bindings.keyboard.interact,
+      clearTarget: bindings.keyboard.clearTarget,
       pauseTime: bindings.keyboard.pauseTime
     },
     gamepad: {
@@ -1129,6 +1142,7 @@ export function clonePlayerStartInputBindings(
       sprint: bindings.gamepad.sprint,
       crouch: bindings.gamepad.crouch,
       interact: bindings.gamepad.interact,
+      clearTarget: bindings.gamepad.clearTarget,
       pauseTime: bindings.gamepad.pauseTime,
       cameraLook: bindings.gamepad.cameraLook
     }
@@ -1162,6 +1176,9 @@ export function createPlayerStartInputBindings(
     interact:
       overrides.keyboard?.interact ??
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.interact,
+    clearTarget:
+      overrides.keyboard?.clearTarget ??
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.clearTarget,
     pauseTime:
       overrides.keyboard?.pauseTime ??
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.pauseTime
@@ -1190,6 +1207,9 @@ export function createPlayerStartInputBindings(
     interact:
       overrides.gamepad?.interact ??
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.interact,
+    clearTarget:
+      overrides.gamepad?.clearTarget ??
+      DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.clearTarget,
     pauseTime:
       overrides.gamepad?.pauseTime ??
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.pauseTime,
@@ -1230,6 +1250,10 @@ export function createPlayerStartInputBindings(
     throw new Error("Player Start interact keyboard binding must be supported.");
   }
 
+  if (!isPlayerStartKeyboardBindingCode(keyboard.clearTarget)) {
+    throw new Error("Player Start clear-target keyboard binding must be supported.");
+  }
+
   if (!isPlayerStartKeyboardBindingCode(keyboard.pauseTime)) {
     throw new Error("Player Start pause keyboard binding must be supported.");
   }
@@ -1264,6 +1288,10 @@ export function createPlayerStartInputBindings(
 
   if (!isPlayerStartGamepadActionBinding(gamepad.interact)) {
     throw new Error("Player Start interact gamepad binding must be supported.");
+  }
+
+  if (!isPlayerStartGamepadActionBinding(gamepad.clearTarget)) {
+    throw new Error("Player Start clear-target gamepad binding must be supported.");
   }
 
   if (!isPlayerStartGamepadActionBinding(gamepad.pauseTime)) {
@@ -1508,6 +1536,7 @@ export function arePlayerStartInputBindingsEqual(
     left.keyboard.sprint === right.keyboard.sprint &&
     left.keyboard.crouch === right.keyboard.crouch &&
     left.keyboard.interact === right.keyboard.interact &&
+    left.keyboard.clearTarget === right.keyboard.clearTarget &&
     left.keyboard.pauseTime === right.keyboard.pauseTime &&
     left.gamepad.moveForward === right.gamepad.moveForward &&
     left.gamepad.moveBackward === right.gamepad.moveBackward &&
@@ -1517,6 +1546,7 @@ export function arePlayerStartInputBindingsEqual(
     left.gamepad.sprint === right.gamepad.sprint &&
     left.gamepad.crouch === right.gamepad.crouch &&
     left.gamepad.interact === right.gamepad.interact &&
+    left.gamepad.clearTarget === right.gamepad.clearTarget &&
     left.gamepad.pauseTime === right.gamepad.pauseTime &&
     left.gamepad.cameraLook === right.gamepad.cameraLook
   );
@@ -1908,6 +1938,8 @@ export function createPlayerStartEntity(
       | "navigationMode"
       | "interactionReachMeters"
       | "interactionAngleDegrees"
+      | "allowLookInputTargetSwitch"
+      | "targetButtonCyclesActiveTarget"
     >
   > & {
     movementTemplate?: PlayerStartMovementTemplateOverrides;
@@ -1925,6 +1957,12 @@ export function createPlayerStartEntity(
   const interactionAngleDegrees =
     overrides.interactionAngleDegrees ??
     DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES;
+  const allowLookInputTargetSwitch =
+    overrides.allowLookInputTargetSwitch ??
+    DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH;
+  const targetButtonCyclesActiveTarget =
+    overrides.targetButtonCyclesActiveTarget ??
+    DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET;
   const movementTemplate = createPlayerStartMovementTemplate(
     overrides.movementTemplate
   );
@@ -1957,6 +1995,15 @@ export function createPlayerStartEntity(
     );
   }
 
+  assertBoolean(
+    allowLookInputTargetSwitch,
+    "Player Start allow-look-input target switch"
+  );
+  assertBoolean(
+    targetButtonCyclesActiveTarget,
+    "Player Start target-button cycles active target"
+  );
+
   return {
     id: overrides.id ?? createOpaqueId("entity-player-start"),
     kind: "playerStart",
@@ -1968,6 +2015,8 @@ export function createPlayerStartEntity(
     navigationMode,
     interactionReachMeters,
     interactionAngleDegrees,
+    allowLookInputTargetSwitch,
+    targetButtonCyclesActiveTarget,
     movementTemplate,
     inputBindings,
     collider
@@ -2570,6 +2619,10 @@ export function areEntityInstancesEqual(left: EntityInstance, right: EntityInsta
         left.navigationMode === typedRight.navigationMode &&
         left.interactionReachMeters === typedRight.interactionReachMeters &&
         left.interactionAngleDegrees === typedRight.interactionAngleDegrees &&
+        left.allowLookInputTargetSwitch ===
+          typedRight.allowLookInputTargetSwitch &&
+        left.targetButtonCyclesActiveTarget ===
+          typedRight.targetButtonCyclesActiveTarget &&
         arePlayerStartMovementTemplatesEqual(
           left.movementTemplate,
           typedRight.movementTemplate
