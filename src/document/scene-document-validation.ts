@@ -127,6 +127,10 @@ export interface SceneDocumentValidationResult {
   warnings: SceneDiagnostic[];
 }
 
+export interface ValidateSceneDocumentOptions {
+  projectScheduling?: "scene" | "skip";
+}
+
 export function createDiagnostic(
   severity: SceneDiagnosticSeverity,
   code: string,
@@ -6366,12 +6370,15 @@ export function formatSceneDiagnosticSummary(
 }
 
 export function validateSceneDocument(
-  document: SceneDocument
+  document: SceneDocument,
+  options: ValidateSceneDocumentOptions = {}
 ): SceneDocumentValidationResult {
   const diagnostics: SceneDiagnostic[] = [];
   const seenIds = new Map<string, string>();
-  const projectSchedulerValidationContext =
-    createProjectSchedulerValidationContextFromSceneDocument(document);
+  const validateProjectScheduling = options.projectScheduling !== "skip";
+  const projectSchedulerValidationContext = validateProjectScheduling
+    ? createProjectSchedulerValidationContextFromSceneDocument(document)
+    : createEmptyProjectSchedulerValidationContext();
 
   validateProjectTimeSettings(document.time, diagnostics);
   validateWorldSettings(document.world, document, diagnostics);
@@ -6411,30 +6418,32 @@ export function validateSceneDocument(
     validateProjectAsset(asset, path, diagnostics);
   }
 
-  for (const [sequenceKey, sequence] of Object.entries(
-    document.sequences.sequences
-  )) {
-    const path = `sequences.sequences.${sequenceKey}`;
+  if (validateProjectScheduling) {
+    for (const [sequenceKey, sequence] of Object.entries(
+      document.sequences.sequences
+    )) {
+      const path = `sequences.sequences.${sequenceKey}`;
 
-    if (sequence.id !== sequenceKey) {
-      diagnostics.push(
-        createDiagnostic(
-          "error",
-          "sequence-id-mismatch",
-          "Sequence ids must match their registry key.",
-          `${path}.id`
-        )
+      if (sequence.id !== sequenceKey) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "sequence-id-mismatch",
+            "Sequence ids must match their registry key.",
+            `${path}.id`
+          )
+        );
+      }
+
+      registerAuthoredId(sequence.id, path, seenIds, diagnostics);
+      validateProjectSequence(
+        sequence,
+        path,
+        { scenes: {}, currentSceneEntities: document.entities },
+        projectSchedulerValidationContext,
+        diagnostics
       );
     }
-
-    registerAuthoredId(sequence.id, path, seenIds, diagnostics);
-    validateProjectSequence(
-      sequence,
-      path,
-      { scenes: {}, currentSceneEntities: document.entities },
-      projectSchedulerValidationContext,
-      diagnostics
-    );
   }
 
   for (const [brushKey, brush] of Object.entries(document.brushes)) {
@@ -6989,12 +6998,14 @@ export function validateSceneDocument(
     validateInteractionLink(link, path, document, diagnostics);
   }
 
-  validateProjectScheduler(
-    document.scheduler,
-    document.sequences,
-    projectSchedulerValidationContext,
-    diagnostics
-  );
+  if (validateProjectScheduling) {
+    validateProjectScheduler(
+      document.scheduler,
+      document.sequences,
+      projectSchedulerValidationContext,
+      diagnostics
+    );
+  }
 
   return {
     diagnostics,
@@ -7011,6 +7022,86 @@ export function assertSceneDocumentIsValid(document: SceneDocument) {
   if (validation.errors.length > 0) {
     throw new Error(
       `Scene document has ${validation.errors.length} validation error(s): ${formatSceneDiagnosticSummary(validation.errors)}`
+    );
+  }
+}
+
+export function validateSceneDocumentLocalBuildContent(
+  document: SceneDocument
+): SceneDocumentValidationResult {
+  return validateSceneDocument(document, { projectScheduling: "skip" });
+}
+
+export function assertSceneDocumentLocalBuildContentIsValid(
+  document: SceneDocument
+) {
+  const validation = validateSceneDocumentLocalBuildContent(document);
+
+  if (validation.errors.length > 0) {
+    throw new Error(
+      `Scene document has ${validation.errors.length} validation error(s): ${formatSceneDiagnosticSummary(validation.errors)}`
+    );
+  }
+}
+
+export function validateProjectSchedulingResources(
+  document: ProjectDocument
+): SceneDocumentValidationResult {
+  const diagnostics: SceneDiagnostic[] = [];
+  const seenIds = new Map<string, string>();
+  const projectSchedulerValidationContext =
+    createProjectSchedulerValidationContextFromProjectDocument(document);
+
+  for (const [sequenceKey, sequence] of Object.entries(
+    document.sequences.sequences
+  )) {
+    const path = `sequences.sequences.${sequenceKey}`;
+
+    if (sequence.id !== sequenceKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "sequence-id-mismatch",
+          "Sequence ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(sequence.id, path, seenIds, diagnostics);
+    validateProjectSequence(
+      sequence,
+      path,
+      { scenes: document.scenes },
+      projectSchedulerValidationContext,
+      diagnostics
+    );
+  }
+
+  validateProjectScheduler(
+    document.scheduler,
+    document.sequences,
+    projectSchedulerValidationContext,
+    diagnostics
+  );
+
+  return {
+    diagnostics,
+    errors: diagnostics.filter((diagnostic) => diagnostic.severity === "error"),
+    warnings: diagnostics.filter(
+      (diagnostic) => diagnostic.severity === "warning"
+    )
+  };
+}
+
+export function assertProjectSchedulingResourcesAreValid(
+  document: ProjectDocument
+) {
+  const validation = validateProjectSchedulingResources(document);
+
+  if (validation.errors.length > 0) {
+    throw new Error(
+      `Project scheduling has ${validation.errors.length} validation error(s): ${formatSceneDiagnosticSummary(validation.errors)}`
     );
   }
 }
