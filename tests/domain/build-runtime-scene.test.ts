@@ -11,7 +11,12 @@ import { createBoxBrush } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createTerrain } from "../../src/document/terrains";
-import { createEmptySceneDocument } from "../../src/document/scene-document";
+import {
+  createEmptyProjectDocument,
+  createEmptyProjectScene,
+  createEmptySceneDocument,
+  createSceneDocumentFromProject
+} from "../../src/document/scene-document";
 import {
   createCameraRigEntity,
   createCameraRigEntityTargetRef,
