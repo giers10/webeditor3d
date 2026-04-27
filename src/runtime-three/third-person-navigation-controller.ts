@@ -234,7 +234,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       this.initializedFromSpawn = true;
     }
 
-    window.addEventListener("keydown", this.handleKeyDown);
+    window.addEventListener("keydown", this.handleKeyDown, true);
     window.addEventListener("keyup", this.handleKeyUp);
     window.addEventListener("blur", this.handleBlur);
     document.addEventListener("mousemove", this.handleMouseMove);
@@ -279,7 +279,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     ctx: RuntimeControllerContext,
     options: NavigationControllerDeactivateOptions = {}
   ): void {
-    window.removeEventListener("keydown", this.handleKeyDown);
+    window.removeEventListener("keydown", this.handleKeyDown, true);
     window.removeEventListener("keyup", this.handleKeyUp);
     window.removeEventListener("blur", this.handleBlur);
     document.removeEventListener("mousemove", this.handleMouseMove);
@@ -854,6 +854,14 @@ export class ThirdPersonNavigationController implements NavigationController {
 
   private handleKeyDown = (event: KeyboardEvent) => {
     this.pressedKeys.add(event.code);
+
+    if (
+      event.code === "Escape" &&
+      this.context !== null &&
+      document.pointerLockElement === this.context.domElement
+    ) {
+      document.exitPointerLock();
+    }
   };
 
   private handleKeyUp = (event: KeyboardEvent) => {
