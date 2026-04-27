@@ -1127,7 +1127,15 @@ export class ViewportHost {
       versionInfo?.frameVersion ?? this.currentSimulationFrameVersion + 1;
     this.applyWorld();
 
-    if (this.currentDocument === null || runtimeScene === null) {
+    if (runtimeScene === null) {
+      this.currentSimulationMembershipSignatures =
+        createViewportSimulationMembershipSignatures(null);
+      this.simulationActiveNpcEntityIds.clear();
+      this.simulationInteractableEnabledById.clear();
+      return;
+    }
+
+    if (this.currentDocument === null) {
       return;
     }
 
@@ -1159,6 +1167,7 @@ export class ViewportHost {
       this.currentSimulationMembershipSignatures.interactables
     ) {
       this.simulationInteractableEnabledById.clear();
+      this.cacheSimulationInteractableEnabledState(runtimeScene);
       this.rebuildEntityMarkers(this.currentDocument, this.currentSelection);
     } else {
       this.syncSimulationInteractables(runtimeScene);
