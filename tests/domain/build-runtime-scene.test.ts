@@ -1286,6 +1286,84 @@ describe("buildRuntimeSceneFromDocument", () => {
     );
   });
 
+  it("builds a project scene when global actor schedules target an NPC in another scene", () => {
+    const sceneA = createEmptyProjectScene({
+      id: "scene-a",
+      name: "Scene A"
+    });
+    const sceneB = createEmptyProjectScene({
+      id: "scene-b",
+      name: "Scene B"
+    });
+    const ana = createNpcEntity({
+      id: "entity-npc-ana-nanto",
+      actorId: "Ana Nanto"
+    });
+    const sceneBEntry = createSceneEntryEntity({
+      id: "entity-scene-entry-b"
+    });
+    const actorTarget = createActorControlTargetRef(ana.actorId);
+    const project = createEmptyProjectDocument({
+      sceneId: sceneA.id,
+      sceneName: sceneA.name
+    });
+
+    project.scenes = {
+      [sceneA.id]: {
+        ...sceneA,
+        entities: {
+          [ana.id]: ana
+        }
+      },
+      [sceneB.id]: {
+        ...sceneB,
+        entities: {
+          [sceneBEntry.id]: sceneBEntry
+        }
+      }
+    };
+    project.sequences.sequences["sequence-ana-presence"] =
+      createProjectSequence({
+        id: "sequence-ana-presence",
+        title: "Ana Presence",
+        effects: [
+          {
+            stepClass: "held",
+            type: "controlEffect",
+            effect: createSetActorPresenceControlEffect({
+              target: actorTarget,
+              active: true
+            })
+          }
+        ]
+      });
+    project.scheduler.routines["routine-ana-presence"] =
+      createProjectScheduleRoutine({
+        id: "routine-ana-presence",
+        title: "Ana Presence",
+        target: actorTarget,
+        sequenceId: "sequence-ana-presence",
+        effects: []
+      });
+
+    const runtimeScene = buildRuntimeSceneFromDocument(
+      createSceneDocumentFromProject(project, sceneB.id),
+      {
+        projectDocument: project,
+        sceneEntryId: sceneBEntry.id
+      }
+    );
+
+    expect(runtimeScene.spawn).toEqual(
+      expect.objectContaining({
+        source: "sceneEntry",
+        entityId: sceneBEntry.id
+      })
+    );
+    expect(runtimeScene.npcDefinitions).toEqual([]);
+    expect(runtimeScene.scheduler.resolved.actors).toEqual([]);
+  });
+
   it("builds a deterministic fallback spawn when no PlayerStart is authored", () => {
     const brush = createBoxBrush({
       id: "brush-room-wall",
