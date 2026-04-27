@@ -136,6 +136,7 @@ import {
   type AdvancedRenderingSettings
 } from "../document/world-settings";
 import {
+  DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES,
   DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
   getNpcColliderHeight
 } from "../entities/entity-instances";
@@ -358,7 +359,6 @@ const TARGETING_SCREEN_SWITCH_MAX_ABS_Y = 1.25;
 const TARGETING_SCREEN_PROPOSAL_MAX_ABS_X = 1;
 const TARGETING_SCREEN_PROPOSAL_MAX_ABS_Y = 1;
 const TARGETING_SCREEN_PROPOSAL_FOCUS_Y = 0.2;
-const INTERACTION_PROMPT_SIDE_RAY_ANGLE_RADIANS = (12 * Math.PI) / 180;
 const TARGETING_MAX_ACTIVE_TARGET_DISTANCE = 15;
 const TARGETING_ACTIVE_TARGET_RELEASE_DISTANCE =
   TARGETING_MAX_ACTIVE_TARGET_DISTANCE + 0.75;
@@ -5640,56 +5640,28 @@ export class RuntimeHost {
     this.camera.getWorldDirection(this.cameraForward);
 
     const interactionOrigin = this.currentPlayerControllerTelemetry.eyePosition;
-    const rayOrigin =
-      this.activeController === this.thirdPersonController
-        ? {
-            x: this.camera.position.x,
-            y: this.camera.position.y,
-            z: this.camera.position.z
-          }
-        : interactionOrigin;
     const interactionReachMeters =
       this.runtimeScene.playerStart?.interactionReachMeters ??
       DEFAULT_PLAYER_START_INTERACTION_REACH_METERS;
-    const centerDirection = new Vector3(
-      this.cameraForward.x,
-      this.cameraForward.y,
-      this.cameraForward.z
-    ).normalize();
-    const leftDirection = centerDirection
-      .clone()
-      .applyAxisAngle(
-        new Vector3(0, 1, 0),
-        INTERACTION_PROMPT_SIDE_RAY_ANGLE_RADIANS
-      );
-    const rightDirection = centerDirection
-      .clone()
-      .applyAxisAngle(
-        new Vector3(0, 1, 0),
-        -INTERACTION_PROMPT_SIDE_RAY_ANGLE_RADIANS
-      );
+    const interactionAngleDegrees =
+      this.runtimeScene.playerStart?.interactionAngleDegrees ??
+      DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES;
 
     return this.interactionSystem.resolveClickInteractionPrompt(
       interactionOrigin,
-      rayOrigin,
-      [
-        {
-          x: centerDirection.x,
-          y: centerDirection.y,
-          z: centerDirection.z
-        },
-        {
-          x: leftDirection.x,
-          y: leftDirection.y,
-          z: leftDirection.z
-        },
-        {
-          x: rightDirection.x,
-          y: rightDirection.y,
-          z: rightDirection.z
-        }
-      ],
+      this.activeController === this.thirdPersonController
+        ? {
+            x: this.cameraForward.x,
+            y: 0,
+            z: this.cameraForward.z
+          }
+        : {
+            x: this.cameraForward.x,
+            y: this.cameraForward.y,
+            z: this.cameraForward.z
+          },
       interactionReachMeters,
+      interactionAngleDegrees,
       this.runtimeScene
     );
   }
