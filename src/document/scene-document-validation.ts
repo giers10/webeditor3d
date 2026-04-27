@@ -6418,32 +6418,35 @@ export function validateSceneDocument(
     validateProjectAsset(asset, path, diagnostics);
   }
 
-  if (validateProjectScheduling) {
-    for (const [sequenceKey, sequence] of Object.entries(
-      document.sequences.sequences
-    )) {
-      const path = `sequences.sequences.${sequenceKey}`;
+  for (const [sequenceKey, sequence] of Object.entries(
+    document.sequences.sequences
+  )) {
+    const path = `sequences.sequences.${sequenceKey}`;
 
-      if (sequence.id !== sequenceKey) {
-        diagnostics.push(
-          createDiagnostic(
-            "error",
-            "sequence-id-mismatch",
-            "Sequence ids must match their registry key.",
-            `${path}.id`
-          )
-        );
-      }
-
-      registerAuthoredId(sequence.id, path, seenIds, diagnostics);
-      validateProjectSequence(
-        sequence,
-        path,
-        { scenes: {}, currentSceneEntities: document.entities },
-        projectSchedulerValidationContext,
-        diagnostics
+    if (sequence.id !== sequenceKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "sequence-id-mismatch",
+          "Sequence ids must match their registry key.",
+          `${path}.id`
+        )
       );
     }
+
+    registerAuthoredId(sequence.id, path, seenIds, diagnostics);
+
+    if (!validateProjectScheduling) {
+      continue;
+    }
+
+    validateProjectSequence(
+      sequence,
+      path,
+      { scenes: {}, currentSceneEntities: document.entities },
+      projectSchedulerValidationContext,
+      diagnostics
+    );
   }
 
   for (const [brushKey, brush] of Object.entries(document.brushes)) {
