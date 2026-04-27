@@ -4899,9 +4899,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      const pointerCaptured =
-        activeNavigationMode === "firstPerson" &&
-        firstPersonTelemetry?.pointerLocked === true;
+      const pointerCaptured = firstPersonTelemetry?.pointerLocked === true;
 
       if (pointerCaptured) {
         return;
@@ -4916,7 +4914,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     return () => {
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [activeNavigationMode, editorState.toolMode, firstPersonTelemetry]);
+  }, [editorState.toolMode, firstPersonTelemetry]);
 
   const applyProjectName = () => {
     const normalizedName = projectNameDraft.trim() || DEFAULT_PROJECT_NAME;

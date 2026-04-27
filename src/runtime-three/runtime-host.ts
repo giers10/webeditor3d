@@ -969,8 +969,22 @@ export class RuntimeHost {
         this.runtimeMessageHandler?.(message);
       },
       setPlayerControllerTelemetry: (telemetry) => {
+        const pointerLockReleasedFromThirdPerson =
+          this.currentPlayerControllerTelemetry?.pointerLocked === true &&
+          telemetry !== null &&
+          telemetry.pointerLocked === false &&
+          this.activeController === this.thirdPersonController &&
+          this.activeRuntimeTargetReference !== null &&
+          this.resolveRuntimePlayerInputBindings().keyboard.clearTarget ===
+            "Escape";
+
         this.currentPlayerControllerTelemetry = telemetry;
         this.currentPlayerAudioHooks = telemetry?.hooks.audio ?? null;
+
+        if (pointerLockReleasedFromThirdPerson) {
+          this.clearActiveRuntimeTarget();
+        }
+
         this.playerControllerTelemetryHandler?.(telemetry);
       }
     };
