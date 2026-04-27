@@ -193,7 +193,7 @@ import {
 import {
   commitRuntimeScheduleSyncResult,
   createRuntimeScheduleSyncContext,
-  refreshRuntimeNpcCollections,
+  refreshRuntimeNpcCollections as refreshRuntimeSceneNpcCollections,
   syncRuntimeSceneScheduleToClock,
   type RuntimeScheduleSyncContext
 } from "./runtime-schedule-sync";
@@ -5257,7 +5257,7 @@ export class RuntimeHost {
       return;
     }
 
-    refreshRuntimeNpcCollections(this.runtimeScene);
+    refreshRuntimeSceneNpcCollections(this.runtimeScene);
   }
 
   private refreshCollisionWorldForNpcSchedule() {
