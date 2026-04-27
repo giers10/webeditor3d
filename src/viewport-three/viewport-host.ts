@@ -5960,6 +5960,17 @@ export class ViewportHost {
     }
   }
 
+  private cacheSimulationInteractableEnabledState(
+    runtimeScene: RuntimeSceneDefinition | null
+  ) {
+    for (const interactable of runtimeScene?.entities.interactables ?? []) {
+      this.simulationInteractableEnabledById.set(
+        interactable.entityId,
+        interactable.interactionEnabled
+      );
+    }
+  }
+
   private syncSimulationModelInstances(
     runtimeScene: RuntimeSceneDefinition
   ): boolean {
