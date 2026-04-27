@@ -5646,20 +5646,33 @@ export class RuntimeHost {
     const interactionAngleDegrees =
       this.runtimeScene.playerStart?.interactionAngleDegrees ??
       DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES;
-
-    return this.interactionSystem.resolveClickInteractionPrompt(
-      interactionOrigin,
-      this.activeController === this.thirdPersonController
+    const horizontalViewLengthSquared =
+      this.cameraForward.x * this.cameraForward.x +
+      this.cameraForward.z * this.cameraForward.z;
+    const interactionViewDirection =
+      horizontalViewLengthSquared > Number.EPSILON
         ? {
             x: this.cameraForward.x,
             y: 0,
             z: this.cameraForward.z
           }
         : {
-            x: this.cameraForward.x,
-            y: this.cameraForward.y,
-            z: this.cameraForward.z
-          },
+            x:
+              Math.sin(
+                (this.currentPlayerControllerTelemetry.yawDegrees * Math.PI) /
+                  180
+              ),
+            y: 0,
+            z:
+              Math.cos(
+                (this.currentPlayerControllerTelemetry.yawDegrees * Math.PI) /
+                  180
+              )
+          };
+
+    return this.interactionSystem.resolveClickInteractionPrompt(
+      interactionOrigin,
+      interactionViewDirection,
       interactionReachMeters,
       interactionAngleDegrees,
       this.runtimeScene
