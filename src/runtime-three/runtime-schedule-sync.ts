@@ -226,6 +226,7 @@ export function syncRuntimeSceneScheduleToClock(options: {
     scheduler: runtimeScene.scheduler.document,
     sequences: runtimeScene.sequences,
     actorIds: context.actorIds,
+    actorIdsAreUnique: true,
     dayNumber: clock.dayCount + 1,
     timeOfDayHours: clock.timeOfDayHours,
     pathsById: context.pathsById
