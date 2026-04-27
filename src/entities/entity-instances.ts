@@ -218,7 +218,7 @@ export const PLAYER_START_LOCOMOTION_ACTIONS = [
 ] as const;
 export type PlayerStartLocomotionAction =
   (typeof PLAYER_START_LOCOMOTION_ACTIONS)[number];
-export const PLAYER_START_SYSTEM_ACTIONS = ["pauseTime"] as const;
+export const PLAYER_START_SYSTEM_ACTIONS = ["interact", "pauseTime"] as const;
 export type PlayerStartSystemAction =
   (typeof PLAYER_START_SYSTEM_ACTIONS)[number];
 export type PlayerStartInputAction =
@@ -226,6 +226,15 @@ export type PlayerStartInputAction =
   | PlayerStartLocomotionAction
   | PlayerStartSystemAction;
 export type PlayerStartKeyboardBindingCode = string;
+export const PLAYER_START_MOUSE_BINDING_CODES = [
+  "MouseLeft",
+  "MouseMiddle",
+  "MouseRight",
+  "MouseBack",
+  "MouseForward"
+] as const;
+export type PlayerStartMouseBindingCode =
+  (typeof PLAYER_START_MOUSE_BINDING_CODES)[number];
 export const PLAYER_START_GAMEPAD_BINDINGS = [
   "leftStickUp",
   "leftStickDown",
@@ -267,6 +276,7 @@ export interface PlayerStartKeyboardBindings {
   jump: PlayerStartKeyboardBindingCode;
   sprint: PlayerStartKeyboardBindingCode;
   crouch: PlayerStartKeyboardBindingCode;
+  interact: PlayerStartKeyboardBindingCode;
   pauseTime: PlayerStartKeyboardBindingCode;
 }
 
@@ -278,6 +288,7 @@ export interface PlayerStartGamepadBindings {
   jump: PlayerStartGamepadActionBinding;
   sprint: PlayerStartGamepadActionBinding;
   crouch: PlayerStartGamepadActionBinding;
+  interact: PlayerStartGamepadActionBinding;
   pauseTime: PlayerStartGamepadActionBinding;
   cameraLook: PlayerStartGamepadCameraLookBinding;
 }
@@ -529,6 +540,7 @@ export const DEFAULT_PLAYER_START_KEYBOARD_BINDINGS: PlayerStartKeyboardBindings
     jump: "Space",
     sprint: "ShiftLeft",
     crouch: "ControlLeft",
+    interact: "MouseLeft",
     pauseTime: "KeyP"
   };
 export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
@@ -540,6 +552,7 @@ export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
     jump: "buttonSouth",
     sprint: "leftStickPress",
     crouch: "buttonEast",
+    interact: "buttonWest",
     pauseTime: "buttonMenu",
     cameraLook: "rightStick"
   };
