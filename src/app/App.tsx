@@ -3228,11 +3228,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : authoredNavigationMode === "firstPerson"
         ? "Ready for First Person"
         : "Ready for Third Person";
-  const authoredEditorSimulationClock = createRuntimeClockState(
-    editorState.projectDocument.time
-  );
   const editorSimulationClock =
-    editorSimulationClockOverride ?? authoredEditorSimulationClock;
+    editorSimulationSnapshot.clock ??
+    createRuntimeClockState(editorState.projectDocument.time);
+  const editorSimulationPlaying = editorSimulationSnapshot.playing;
+  const editorSimulationOverrideActive =
+    editorSimulationSnapshot.overrideActive;
+  const editorSimulationMessage = editorSimulationSnapshot.message;
   const editorSimulationTimeState = resolveRuntimeTimeState(
     editorState.projectDocument.time,
     editorSimulationClock
