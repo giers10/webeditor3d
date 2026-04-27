@@ -28,10 +28,12 @@ import {
   createCameraRigLookAroundSettings,
   createCameraRigPlayerTargetRef,
   createCameraRigWorldPointTargetRef,
+  DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH,
   DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES,
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
+  DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET,
   createNpcAlwaysPresence,
   createNpcEntity,
   createNpcColliderSettings,
@@ -195,6 +197,7 @@ import {
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INTERACT_BINDINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_TARGETING_SETTINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_PAUSE_BINDINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
@@ -1681,6 +1684,16 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
         `${label}.keyboard.crouch`,
         DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.crouch
       ),
+      interact: readPlayerStartKeyboardBindingCode(
+        keyboard?.interact,
+        `${label}.keyboard.interact`,
+        DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.interact
+      ),
+      clearTarget: readPlayerStartKeyboardBindingCode(
+        keyboard?.clearTarget,
+        `${label}.keyboard.clearTarget`,
+        DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.clearTarget
+      ),
       pauseTime: readPlayerStartKeyboardBindingCode(
         keyboard?.pauseTime,
         `${label}.keyboard.pauseTime`,
@@ -1722,6 +1735,16 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
         gamepad?.crouch,
         `${label}.gamepad.crouch`,
         DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.crouch
+      ),
+      interact: readPlayerStartGamepadActionBinding(
+        gamepad?.interact,
+        `${label}.gamepad.interact`,
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.interact
+      ),
+      clearTarget: readPlayerStartGamepadActionBinding(
+        gamepad?.clearTarget,
+        `${label}.gamepad.clearTarget`,
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.clearTarget
       ),
       pauseTime: readPlayerStartGamepadActionBinding(
         gamepad?.pauseTime,
@@ -3314,6 +3337,16 @@ function readPlayerStartEntity(value: unknown, label: string): EntityInstance {
       value.interactionAngleDegrees,
       `${label}.interactionAngleDegrees`,
       DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES
+    ),
+    allowLookInputTargetSwitch: readOptionalBoolean(
+      value.allowLookInputTargetSwitch,
+      `${label}.allowLookInputTargetSwitch`,
+      DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH
+    ),
+    targetButtonCyclesActiveTarget: readOptionalBoolean(
+      value.targetButtonCyclesActiveTarget,
+      `${label}.targetButtonCyclesActiveTarget`,
+      DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET
     ),
     movementTemplate: readPlayerStartMovementTemplate(
       value.movementTemplate,
@@ -5466,6 +5499,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_INTERACTION_REACH_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_INTERACTION_ANGLE_SCENE_DOCUMENT_VERSION &&
+    source.version !== PLAYER_START_TARGETING_SETTINGS_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_INTERACT_BINDINGS_SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION &&
     source.version !== PROJECT_NAME_SCENE_DOCUMENT_VERSION &&
