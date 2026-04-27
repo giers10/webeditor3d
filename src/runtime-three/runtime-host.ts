@@ -971,6 +971,14 @@ export class RuntimeHost {
         this.runtimeMessageHandler?.(message);
       },
       setPlayerControllerTelemetry: (telemetry) => {
+        const previousPointerLocked =
+          this.currentPlayerControllerTelemetry?.pointerLocked === true;
+        const nextPointerLocked = telemetry?.pointerLocked === true;
+
+        if (previousPointerLocked && !nextPointerLocked) {
+          this.lastPointerLockReleaseAt = performance.now();
+        }
+
         this.currentPlayerControllerTelemetry = telemetry;
         this.currentPlayerAudioHooks = telemetry?.hooks.audio ?? null;
         this.playerControllerTelemetryHandler?.(telemetry);
@@ -6725,12 +6733,57 @@ export class RuntimeHost {
     event.stopImmediatePropagation();
   };
 
+  private shouldReserveEscapeForPointerLockRelease(): boolean {
+    if (document.pointerLockElement !== null) {
+      return true;
+    }
+
+    if (this.currentPlayerControllerTelemetry?.pointerLocked === true) {
+      return true;
+    }
+
+    return (
+      performance.now() - this.lastPointerLockReleaseAt <=
+      POINTER_LOCK_ESCAPE_RELEASE_GRACE_MS
+    );
+  }
+
+  private releasePointerLockForEscape(event: KeyboardEvent): boolean {
+    if (
+      event.code !== "Escape" ||
+      !this.shouldReserveEscapeForPointerLockRelease()
+    ) {
+      return false;
+    }
+
+    this.pressedKeys.delete(event.code);
+    this.previousClearTargetInputActive = false;
+    this.previousPauseInputActive = false;
+
+    if (
+      document.pointerLockElement !== null &&
+      typeof document.exitPointerLock === "function"
+    ) {
+      document.exitPointerLock();
+      this.lastPointerLockReleaseAt = performance.now();
+    }
+
+    event.stopImmediatePropagation();
+    return true;
+  }
+
+  private handlePointerLockEscapeKeyDown = (event: KeyboardEvent) => {
+    this.releasePointerLockForEscape(event);
+  };
+
   private handleRuntimeKeyDown = (event: KeyboardEvent) => {
     if (this.runtimeScene === null || !this.sceneReady) {
       return;
     }
 
-    this.pressedKeys.add(event.code);
+    if (this.releasePointerLockForEscape(event)) {
+      return;
+    }
 
     if (
       event.defaultPrevented ||
@@ -6743,12 +6796,7 @@ export class RuntimeHost {
       return;
     }
 
-    if (
-      document.pointerLockElement === this.domElement &&
-      event.code === "Escape"
-    ) {
-      return;
-    }
+    this.pressedKeys.add(event.code);
 
     const playerInputBindings = this.resolveRuntimePlayerInputBindings();
     const interactKeyboardBinding = playerInputBindings.keyboard.interact;
