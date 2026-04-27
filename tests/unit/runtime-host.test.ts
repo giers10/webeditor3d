@@ -3330,6 +3330,94 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("cycles the active target from the target button when authored", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      runtimeTargetCandidates: Array<{
+        kind: "npc" | "interactable";
+        entityId: string;
+        prompt: string;
+        position: { x: number; y: number; z: number };
+        center: { x: number; y: number; z: number };
+        distance: number;
+        range: number;
+        viewDot: number;
+        score: number;
+      }>;
+      activeRuntimeTargetReference: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      camera: PerspectiveCamera;
+      currentPlayerControllerTelemetry: unknown;
+      activateOrCycleRuntimeTarget(): void;
+      isRuntimeTargetPlayerVisible(target: unknown): boolean;
+    };
+    const firstTarget = {
+      kind: "npc" as const,
+      entityId: "npc-one",
+      prompt: "Talk",
+      position: { x: 0, y: 0, z: 4 },
+      center: { x: -0.5, y: 1, z: 4 },
+      distance: 4,
+      range: 1.5,
+      viewDot: 1,
+      score: 3
+    };
+    const secondTarget = {
+      ...firstTarget,
+      entityId: "npc-two",
+      center: { x: 0.5, y: 1, z: 4 },
+      score: 2.5
+    };
+
+    hostInternals.runtimeScene = {
+      playerStart: {
+        targetButtonCyclesActiveTarget: true
+      },
+      entities: {
+        cameraRigs: [],
+        interactables: [],
+        npcs: []
+      }
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.runtimeTargetCandidates = [firstTarget, secondTarget];
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-one"
+    };
+    hostInternals.camera.position.set(0, 1.6, 0);
+    hostInternals.camera.lookAt(0, 1, 4);
+    hostInternals.camera.updateMatrixWorld();
+    hostInternals.camera.updateProjectionMatrix();
+
+    hostInternals.activateOrCycleRuntimeTarget();
+
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-two"
+    });
+
+    hostInternals.activateOrCycleRuntimeTarget();
+
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-one"
+    });
+    host.dispose();
+  });
+
   it("places targeting visuals above the target focus at readable scale", () => {
     const placement = resolveRuntimeTargetVisualPlacement({
       center: { x: 1, y: 1.1, z: -2 },
@@ -3596,7 +3684,7 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
-  it("uses Lux-only proposal feedback and consumes Escape when clearing an active target", () => {
+  it("uses Lux-only proposal feedback and consumes the authored clear-target key", () => {
     const host = new RuntimeHost({
       enableRendering: false
     });
@@ -3628,10 +3716,22 @@ describe("RuntimeHost", () => {
       preventDefault: vi.fn(),
       stopImmediatePropagation: vi.fn()
     } as unknown as KeyboardEvent;
+    const clearTargetEvent = {
+      code: "KeyQ",
+      defaultPrevented: false,
+      repeat: false,
+      altKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      target: null,
+      preventDefault: vi.fn(),
+      stopImmediatePropagation: vi.fn()
+    } as unknown as KeyboardEvent;
 
     hostInternals.runtimeScene = {
       playerInputBindings: {
         keyboard: {
+          clearTarget: "KeyQ",
           pauseTime: "KeyP"
         }
       },
@@ -3658,9 +3758,18 @@ describe("RuntimeHost", () => {
     };
     hostInternals.handleRuntimeKeyDown(escapeEvent);
 
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-active"
+    });
+    expect(escapeEvent.preventDefault).not.toHaveBeenCalled();
+    expect(escapeEvent.stopImmediatePropagation).not.toHaveBeenCalled();
+
+    hostInternals.handleRuntimeKeyDown(clearTargetEvent);
+
     expect(hostInternals.activeRuntimeTargetReference).toBeNull();
-    expect(escapeEvent.preventDefault).toHaveBeenCalledTimes(1);
-    expect(escapeEvent.stopImmediatePropagation).toHaveBeenCalledTimes(1);
+    expect(clearTargetEvent.preventDefault).toHaveBeenCalledTimes(1);
+    expect(clearTargetEvent.stopImmediatePropagation).toHaveBeenCalledTimes(1);
     host.dispose();
   });
 
@@ -3939,6 +4048,113 @@ describe("RuntimeHost", () => {
     hostInternals.camera.lookAt(10, 1.6, 3);
     hostInternals.updateActiveRuntimeTargetLockState();
 
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-active"
+    });
+    host.dispose();
+  });
+
+  it("keeps the active target when authored look-input switching is disabled", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      runtimeScene: unknown;
+      activeController: unknown;
+      thirdPersonController: unknown;
+      currentPlayerControllerTelemetry: unknown;
+      runtimeTargetCandidates: Array<{
+        kind: "npc";
+        entityId: string;
+        center: { x: number; y: number; z: number };
+        score: number;
+      }>;
+      activeRuntimeTargetReference: {
+        kind: "npc";
+        entityId: string;
+      } | null;
+      camera: PerspectiveCamera;
+      handleRuntimeTargetLookInput(input: {
+        horizontal: number;
+        vertical: number;
+      }): {
+        activeTargetLocked: boolean;
+        switchedTarget: boolean;
+        switchInputHeld: boolean;
+      };
+    };
+
+    hostInternals.runtimeScene = {
+      playerStart: {
+        allowLookInputTargetSwitch: false
+      },
+      entities: {
+        npcs: [
+          {
+            entityId: "npc-active",
+            visible: true,
+            position: { x: 0, y: 0, z: 5 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Active",
+            defaultDialogueId: null,
+            dialogues: []
+          },
+          {
+            entityId: "npc-right",
+            visible: true,
+            position: { x: 2, y: 0, z: 5 },
+            collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
+            name: "Right",
+            defaultDialogueId: null,
+            dialogues: []
+          }
+        ],
+        interactables: [],
+        cameraRigs: []
+      },
+      interactionLinks: [
+        { id: "link-active", sourceEntityId: "npc-active", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } },
+        { id: "link-right", sourceEntityId: "npc-right", trigger: "click", action: { type: "runSequence", sequenceId: "noop" } }
+      ]
+    } as never;
+    hostInternals.activeController = hostInternals.thirdPersonController;
+    hostInternals.currentPlayerControllerTelemetry = {
+      eyePosition: { x: 0, y: 1.6, z: 0 }
+    };
+    hostInternals.runtimeTargetCandidates = [
+      {
+        kind: "npc",
+        entityId: "npc-active",
+        center: { x: 0, y: 0.9, z: 5 },
+        score: 3
+      },
+      {
+        kind: "npc",
+        entityId: "npc-right",
+        center: { x: 2, y: 0.9, z: 5 },
+        score: 2.5
+      }
+    ];
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+    hostInternals.camera.position.set(0, 1.6, 0);
+    hostInternals.camera.lookAt(0, 0.9, 5);
+    hostInternals.camera.updateMatrixWorld();
+    hostInternals.camera.updateProjectionMatrix();
+
+    expect(
+      hostInternals.handleRuntimeTargetLookInput({
+        horizontal: -1,
+        vertical: 0
+      })
+    ).toEqual({
+      activeTargetLocked: true,
+      switchedTarget: false,
+      switchInputHeld: false
+    });
     expect(hostInternals.activeRuntimeTargetReference).toEqual({
       kind: "npc",
       entityId: "npc-active"
