@@ -1042,6 +1042,7 @@ describe("scene document JSON", () => {
           jump: "Space",
           sprint: "ShiftRight",
           crouch: "KeyC",
+          interact: "MouseLeft",
           pauseTime: "KeyP"
         },
         gamepad: {
@@ -1052,6 +1053,7 @@ describe("scene document JSON", () => {
           jump: "buttonNorth",
           sprint: "rightShoulder",
           crouch: "buttonEast",
+          interact: "buttonWest",
           pauseTime: "buttonMenu",
           cameraLook: "rightStick"
         }
