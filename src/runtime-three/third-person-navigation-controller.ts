@@ -858,9 +858,15 @@ export class ThirdPersonNavigationController implements NavigationController {
     if (
       event.code === "Escape" &&
       this.context !== null &&
-      document.pointerLockElement === this.context.domElement
+      (this.pointerLocked ||
+        document.pointerLockElement === this.context.domElement)
     ) {
-      document.exitPointerLock();
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      if (document.pointerLockElement === this.context.domElement) {
+        document.exitPointerLock();
+      }
     }
   };
 

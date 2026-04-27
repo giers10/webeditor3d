@@ -161,7 +161,11 @@ describe("ThirdPersonNavigationController", () => {
     });
 
     controller.activate(context);
-    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Escape" }));
+    (
+      controller as unknown as {
+        handleKeyDown(event: KeyboardEvent): void;
+      }
+    ).handleKeyDown(new KeyboardEvent("keydown", { code: "Escape" }));
 
     expect(exitPointerLock).toHaveBeenCalledTimes(1);
 
