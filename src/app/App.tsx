@@ -8916,7 +8916,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         playerStartInteractionReachDraft,
         "Player Start interaction reach"
       );
-      const interactionAngleDegrees = readNumberDraft(
+      const interactionAngleDegrees = readFiniteNumberDraft(
         playerStartInteractionAngleDraft,
         "Player Start interaction angle"
       );
