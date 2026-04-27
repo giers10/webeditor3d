@@ -3979,6 +3979,7 @@ describe("RuntimeHost", () => {
       };
       runtimeScene: unknown;
       sceneReady: boolean;
+      pressedKeys: Set<string>;
       activeRuntimeTargetReference: {
         kind: "npc" | "interactable";
         entityId: string;
@@ -4027,6 +4028,7 @@ describe("RuntimeHost", () => {
       kind: "npc",
       entityId: "npc-active"
     };
+    hostInternals.pressedKeys.add("Escape");
     hostInternals.controllerContext.setPlayerControllerTelemetry({
       pointerLocked: true,
       hooks: {
@@ -4047,6 +4049,7 @@ describe("RuntimeHost", () => {
       kind: "npc",
       entityId: "npc-active"
     });
+    expect(hostInternals.pressedKeys.size).toBe(0);
     expect(exitPointerLock).not.toHaveBeenCalled();
     expect(escapeEvent.preventDefault).not.toHaveBeenCalled();
     expect(escapeEvent.stopImmediatePropagation).toHaveBeenCalledTimes(1);
