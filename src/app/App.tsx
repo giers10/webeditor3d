@@ -2762,11 +2762,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [
     playerStartAllowLookInputTargetSwitchDraft,
     setPlayerStartAllowLookInputTargetSwitchDraft
-  ] = useState(DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH);
+  ] = useState(DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH_VALUE);
   const [
     playerStartTargetButtonCyclesActiveTargetDraft,
     setPlayerStartTargetButtonCyclesActiveTargetDraft
-  ] = useState(DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET);
+  ] = useState(DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET_VALUE);
   const [
     playerStartMovementTemplateDraft,
     setPlayerStartMovementTemplateDraft
@@ -3717,10 +3717,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         String(DEFAULT_PLAYER_START_INTERACTION_ANGLE_DEGREES)
       );
       setPlayerStartAllowLookInputTargetSwitchDraft(
-        DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH
+        DEFAULT_PLAYER_START_ALLOW_LOOK_INPUT_TARGET_SWITCH_VALUE
       );
       setPlayerStartTargetButtonCyclesActiveTargetDraft(
-        DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET
+        DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET_VALUE
       );
       setPlayerStartMovementTemplateDraft(createPlayerStartMovementTemplate());
       setPlayerStartMovementTemplateNumberDraft(
@@ -21786,12 +21786,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 type="button"
                                 data-testid={`player-start-keyboard-binding-${action}`}
                                 className="toolbar__button"
-                                onClick={() => {
-                                  setPlayerStartKeyboardCaptureAction(action);
-                                  setStatusMessage(
-                                    `Press any key or mouse button for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
-                                  );
-                                }}
+                                onClick={() =>
+                                  beginPlayerStartKeyboardCapture(action)
+                                }
                               >
                                 {playerStartKeyboardCaptureAction === action
                                   ? "Press Any Key..."
@@ -21848,12 +21845,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 type="button"
                                 data-testid={`player-start-keyboard-binding-${action}`}
                                 className="toolbar__button"
-                                onClick={() => {
-                                  setPlayerStartKeyboardCaptureAction(action);
-                                  setStatusMessage(
-                                    `Press any key or mouse button for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
-                                  );
-                                }}
+                                onClick={() =>
+                                  beginPlayerStartKeyboardCapture(action)
+                                }
                               >
                                 {playerStartKeyboardCaptureAction === action
                                   ? "Press Any Key..."
@@ -21910,12 +21904,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                 type="button"
                                 data-testid={`player-start-keyboard-binding-${action}`}
                                 className="toolbar__button"
-                                onClick={() => {
-                                  setPlayerStartKeyboardCaptureAction(action);
-                                  setStatusMessage(
-                                    `Press any key or mouse button for ${getPlayerStartInputActionLabel(action)}. Press Escape to cancel.`
-                                  );
-                                }}
+                                onClick={() =>
+                                  beginPlayerStartKeyboardCapture(action)
+                                }
                               >
                                 {playerStartKeyboardCaptureAction === action
                                   ? "Press Any Key..."
