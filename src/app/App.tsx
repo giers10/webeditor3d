@@ -245,7 +245,8 @@ import {
 import {
   formatSceneDiagnosticSummary,
   validateProjectDocument,
-  validateSceneDocument
+  validateProjectSchedulingResources,
+  validateSceneDocumentLocalBuildContent
 } from "../document/scene-document-validation";
 import {
   cloneProjectAssetStorageRecord,
@@ -3208,8 +3209,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
     editorSimulationControllerRef.current = new EditorSimulationController();
   }
   const editorSimulationController = editorSimulationControllerRef.current;
-  const documentValidation = validateSceneDocument(editorState.document);
+  const documentValidation = validateSceneDocumentLocalBuildContent(
+    editorState.document
+  );
   const projectValidation = validateProjectDocument(
+    editorState.projectDocument
+  );
+  const projectSchedulingValidation = validateProjectSchedulingResources(
     editorState.projectDocument
   );
   const activeSceneProjectDiagnostics = projectValidation.diagnostics.filter(
@@ -3228,6 +3234,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const diagnostics = [
     ...documentValidation.errors,
     ...documentValidation.warnings,
+    ...projectSchedulingValidation.errors,
+    ...projectSchedulingValidation.warnings,
     ...activeSceneProjectDiagnostics,
     ...runValidation.errors,
     ...runValidation.warnings
@@ -7772,6 +7780,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
 
     return buildRuntimeSceneFromDocument(sceneDocument, {
       loadedModelAssets,
+      projectDocument: editorState.projectDocument,
       runtimeClock: runtimeGlobalState.clock,
       sceneEntryId: options.sceneEntryId
     });

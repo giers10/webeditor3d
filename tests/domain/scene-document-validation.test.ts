@@ -667,6 +667,9 @@ describe("validateSceneDocument", () => {
           code: "invalid-player-start-target-button-cycles-active-target"
         }),
         expect.objectContaining({
+          code: "invalid-player-start-invert-mouse-camera-horizontal"
+        }),
+        expect.objectContaining({
           code: "invalid-player-start-movement-template-kind"
         }),
         expect.objectContaining({
