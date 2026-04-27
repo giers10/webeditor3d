@@ -7760,32 +7760,19 @@ export function App({ store, initialStatusMessage }: AppProps) {
   };
 
   const handlePlayEditorSimulation = () => {
-    setEditorSimulationClockOverride(
-      (currentClock) =>
-        currentClock ??
-        createRuntimeClockState(editorState.projectDocument.time)
-    );
-    setEditorSimulationPlaying(true);
+    editorSimulationController.play();
   };
 
   const handlePauseEditorSimulation = () => {
-    setEditorSimulationPlaying(false);
+    editorSimulationController.pause();
   };
 
   const handleResetEditorSimulation = () => {
-    setEditorSimulationPlaying(false);
-    setEditorSimulationClockOverride(null);
+    editorSimulationController.reset();
   };
 
   const handleStepEditorSimulation = (deltaHours: number) => {
-    setEditorSimulationPlaying(false);
-    setEditorSimulationClockOverride((currentClock) =>
-      offsetRuntimeClockState(
-        currentClock ??
-          createRuntimeClockState(editorState.projectDocument.time),
-        deltaHours
-      )
-    );
+    editorSimulationController.stepHours(deltaHours);
   };
 
   const handleRunnerSceneTransitionActivated = (
