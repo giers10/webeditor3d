@@ -484,11 +484,14 @@ export function resolveRuntimeProjectScheduleState(options: {
   scheduler: ProjectScheduler;
   sequences: ProjectSequenceLibrary;
   actorIds: string[];
+  actorIdsAreUnique?: boolean;
   dayNumber: number;
   timeOfDayHours: number;
   pathsById?: ReadonlyMap<string, RuntimeProjectSchedulePathDefinition>;
 }): RuntimeResolvedProjectScheduleState {
-  const actorIds = [...new Set(options.actorIds)];
+  const actorIds = options.actorIdsAreUnique
+    ? options.actorIds
+    : [...new Set(options.actorIds)];
 
   return {
     actors: actorIds.map((actorId) =>
