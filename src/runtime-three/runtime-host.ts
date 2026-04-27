@@ -6731,6 +6731,13 @@ export class RuntimeHost {
       return;
     }
 
+    if (
+      document.pointerLockElement === this.domElement &&
+      event.code === "Escape"
+    ) {
+      return;
+    }
+
     const playerInputBindings = this.resolveRuntimePlayerInputBindings();
     const interactKeyboardBinding = playerInputBindings.keyboard.interact;
     if (
