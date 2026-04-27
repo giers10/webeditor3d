@@ -5191,9 +5191,11 @@ export class RuntimeHost {
       return;
     }
 
-    this.runtimeScheduleSyncContext ??= createRuntimeScheduleSyncContext(
-      this.runtimeScene
-    );
+    if (this.runtimeScheduleSyncContext?.runtimeScene !== this.runtimeScene) {
+      this.runtimeScheduleSyncContext = createRuntimeScheduleSyncContext(
+        this.runtimeScene
+      );
+    }
 
     const syncResult = syncRuntimeSceneScheduleToClock({
       runtimeScene: this.runtimeScene,
