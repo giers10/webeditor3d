@@ -952,28 +952,6 @@ export class RuntimeHost {
         this.clearActiveRuntimeTarget();
         return false;
       },
-      handleThirdPersonPointerLockReleased: () => {
-        if (
-          this.activeController !== this.thirdPersonController ||
-          this.activeRuntimeTargetReference === null
-        ) {
-          return false;
-        }
-
-        const clearTargetKeyboardBinding =
-          this.resolveRuntimePlayerInputBindings().keyboard.clearTarget;
-
-        if (
-          isPlayerStartMouseBindingCode(clearTargetKeyboardBinding) ||
-          clearTargetKeyboardBinding !== "Escape"
-        ) {
-          return false;
-        }
-
-        this.clearActiveRuntimeTarget();
-        this.previousClearTargetInputActive = true;
-        return true;
-      },
       isCameraDrivenExternally: () =>
         this.resolveActiveRuntimeCameraRig() !== null ||
         this.resolveDialogueAttentionNpc() !== null,
@@ -1093,8 +1071,8 @@ export class RuntimeHost {
   loadScene(runtimeScene: RuntimeSceneDefinition) {
     const requestId = ++this.collisionWorldRequestId;
     const preservePointerLockDuringLoad =
-      this.activeController !== null &&
-      this.activeController.id === this.desiredNavigationMode &&
+      this.activeController === this.firstPersonController &&
+      this.desiredNavigationMode === "firstPerson" &&
       document.pointerLockElement === this.domElement;
 
     this.sceneReady = false;
@@ -1548,13 +1526,7 @@ export class RuntimeHost {
       return;
     }
 
-    const preservePointerLockDuringControllerSwitch =
-      this.activeController !== null &&
-      document.pointerLockElement === this.domElement;
-
-    this.activeController?.deactivate(this.controllerContext, {
-      releasePointerLock: !preservePointerLockDuringControllerSwitch
-    });
+    this.activeController?.deactivate(this.controllerContext);
     this.interactionSystem.reset();
     this.setInteractionPrompt(null);
     if (nextController === this.firstPersonController) {
