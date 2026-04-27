@@ -3889,6 +3889,73 @@ describe("RuntimeHost", () => {
     host.dispose();
   });
 
+  it("does not consume Escape for clear-target while pointer lock is active", () => {
+    const host = new RuntimeHost({
+      enableRendering: false
+    });
+    const hostInternals = host as unknown as {
+      domElement: HTMLCanvasElement;
+      runtimeScene: unknown;
+      sceneReady: boolean;
+      activeRuntimeTargetReference: {
+        kind: "npc" | "interactable";
+        entityId: string;
+      } | null;
+      handleRuntimeKeyDown(event: KeyboardEvent): void;
+    };
+    const escapeEvent = {
+      code: "Escape",
+      defaultPrevented: false,
+      repeat: false,
+      altKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      target: null,
+      preventDefault: vi.fn(),
+      stopImmediatePropagation: vi.fn()
+    } as unknown as KeyboardEvent;
+
+    Object.defineProperty(document, "pointerLockElement", {
+      configurable: true,
+      get: () => hostInternals.domElement
+    });
+
+    hostInternals.runtimeScene = {
+      playerInputBindings: {
+        keyboard: {
+          clearTarget: "Escape",
+          pauseTime: "KeyP"
+        }
+      },
+      entities: {
+        cameraRigs: [],
+        interactables: [],
+        npcs: []
+      },
+      interactionLinks: []
+    } as never;
+    hostInternals.sceneReady = true;
+    hostInternals.activeRuntimeTargetReference = {
+      kind: "npc",
+      entityId: "npc-active"
+    };
+
+    hostInternals.handleRuntimeKeyDown(escapeEvent);
+
+    expect(hostInternals.activeRuntimeTargetReference).toEqual({
+      kind: "npc",
+      entityId: "npc-active"
+    });
+    expect(escapeEvent.preventDefault).not.toHaveBeenCalled();
+    expect(escapeEvent.stopImmediatePropagation).not.toHaveBeenCalled();
+
+    Object.defineProperty(document, "pointerLockElement", {
+      configurable: true,
+      get: () => null
+    });
+    host.dispose();
+  });
+
   it("switches an active target once from directional screen-space look input", () => {
     const host = new RuntimeHost({
       enableRendering: false
