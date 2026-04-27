@@ -4899,7 +4899,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
         return;
       }
 
-      const pointerCaptured = firstPersonTelemetry?.pointerLocked === true;
+      const pointerCaptured = document.pointerLockElement !== null;
 
       if (pointerCaptured) {
         return;
