@@ -13364,11 +13364,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                 <div className="stat-card">
                   <div className="label">Pointer Lock</div>
                   <div className="value">
-                    {activeNavigationMode === "firstPerson"
-                      ? firstPersonTelemetry?.pointerLocked
-                        ? "active"
-                        : "idle"
-                      : "not used"}
+                    {firstPersonTelemetry?.pointerLocked ? "active" : "idle"}
                   </div>
                 </div>
                 <div className="stat-card">
@@ -20832,6 +20828,27 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               scheduleDraftCommit(() =>
                                 applyPlayerStartChange({
                                   targetButtonCyclesActiveTarget: nextValue
+                                })
+                              );
+                            }}
+                          />
+                        </label>
+                        <label className="form-field form-field--toggle">
+                          <span className="label">Invert Mouse Camera</span>
+                          <input
+                            data-testid="player-start-invert-mouse-camera"
+                            type="checkbox"
+                            checked={
+                              playerStartInvertMouseCameraHorizontalDraft
+                            }
+                            onChange={(event) => {
+                              const nextValue = event.currentTarget.checked;
+                              setPlayerStartInvertMouseCameraHorizontalDraft(
+                                nextValue
+                              );
+                              scheduleDraftCommit(() =>
+                                applyPlayerStartChange({
+                                  invertMouseCameraHorizontal: nextValue
                                 })
                               );
                             }}
