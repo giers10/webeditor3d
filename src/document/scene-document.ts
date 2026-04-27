@@ -29,7 +29,9 @@ import {
 } from "../sequencer/project-sequences";
 import type { Terrain } from "./terrains";
 
-export const SCENE_DOCUMENT_VERSION = 82 as const;
+export const SCENE_DOCUMENT_VERSION = 83 as const;
+export const PLAYER_START_TARGETING_SETTINGS_SCENE_DOCUMENT_VERSION =
+  83 as const;
 export const PLAYER_START_INTERACT_BINDINGS_SCENE_DOCUMENT_VERSION =
   82 as const;
 export const PLAYER_START_INTERACTION_ANGLE_SCENE_DOCUMENT_VERSION = 81 as const;
