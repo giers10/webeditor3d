@@ -5052,14 +5052,16 @@ export class RuntimeHost {
       uniform.value = this.volumeTime;
     }
 
-    if (this.currentClockState !== null && simulationDt > 0) {
+    if (
+      this.sceneReady &&
+      this.currentClockState !== null &&
+      simulationDt > 0
+    ) {
       this.currentClockState = advanceRuntimeClockState(
         this.currentClockState,
         simulationDt
       );
-      if (this.sceneReady) {
-        this.syncRuntimeScheduleToCurrentClock();
-      }
+      this.syncRuntimeScheduleToCurrentClock();
       this.applyDayNightLighting();
       this.clockPublishAccumulator += simulationDt;
 
