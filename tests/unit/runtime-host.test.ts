@@ -3795,11 +3795,13 @@ describe("RuntimeHost", () => {
       thirdPersonController: {
         id: "thirdPerson";
         activate: ReturnType<typeof vi.fn>;
+        deactivate: ReturnType<typeof vi.fn>;
       };
       activateDesiredNavigationController(): void;
     };
     const deactivate = vi.fn();
     const activate = vi.fn();
+    const nextControllerDeactivate = vi.fn();
     const domElement = (
       host as unknown as {
         domElement: HTMLCanvasElement;
@@ -3815,7 +3817,8 @@ describe("RuntimeHost", () => {
     hostInternals.desiredNavigationMode = "thirdPerson";
     hostInternals.thirdPersonController = {
       id: "thirdPerson",
-      activate
+      activate,
+      deactivate: nextControllerDeactivate
     };
     Object.defineProperty(document, "pointerLockElement", {
       configurable: true,

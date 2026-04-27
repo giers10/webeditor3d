@@ -16,8 +16,17 @@ import {
   createSoundEmitterControlTargetRef
 } from "../../src/controls/control-surface";
 import { createScenePath } from "../../src/document/paths";
-import { createEmptySceneDocument } from "../../src/document/scene-document";
-import { validateSceneDocument } from "../../src/document/scene-document-validation";
+import {
+  createEmptyProjectDocument,
+  createEmptyProjectScene,
+  createEmptySceneDocument,
+  createSceneDocumentFromProject
+} from "../../src/document/scene-document";
+import {
+  validateProjectDocument,
+  validateSceneDocument,
+  validateSceneDocumentLocalBuildContent
+} from "../../src/document/scene-document-validation";
 import {
   createCameraRigActorTargetRef,
   createCameraRigEntity,
@@ -67,6 +76,124 @@ describe("validateSceneDocument", () => {
 
     expect(validation.errors).toEqual([]);
     expect(validation.warnings).toEqual([]);
+  });
+
+  it("validates project-global actor schedule targets against all project scenes", () => {
+    const sceneA = createEmptyProjectScene({
+      id: "scene-a",
+      name: "Scene A"
+    });
+    const sceneB = createEmptyProjectScene({
+      id: "scene-b",
+      name: "Scene B"
+    });
+    const ana = createNpcEntity({
+      id: "entity-npc-ana-nanto",
+      actorId: "Ana Nanto"
+    });
+    const actorTarget = createActorControlTargetRef(ana.actorId);
+    const project = createEmptyProjectDocument({
+      sceneId: sceneA.id,
+      sceneName: sceneA.name
+    });
+
+    project.scenes = {
+      [sceneA.id]: {
+        ...sceneA,
+        entities: {
+          [ana.id]: ana
+        }
+      },
+      [sceneB.id]: sceneB
+    };
+    project.sequences.sequences["sequence-ana-presence"] =
+      createProjectSequence({
+        id: "sequence-ana-presence",
+        title: "Ana Presence",
+        effects: [
+          {
+            stepClass: "held",
+            type: "controlEffect",
+            effect: createSetActorPresenceControlEffect({
+              target: actorTarget,
+              active: true
+            })
+          }
+        ]
+      });
+    project.scheduler.routines["routine-ana-presence"] =
+      createProjectScheduleRoutine({
+        id: "routine-ana-presence",
+        title: "Ana Presence",
+        target: actorTarget,
+        sequenceId: "sequence-ana-presence",
+        effects: []
+      });
+
+    const projectValidation = validateProjectDocument(project);
+    const sceneBValidation = validateSceneDocumentLocalBuildContent(
+      createSceneDocumentFromProject(project, sceneB.id)
+    );
+
+    expect(projectValidation.errors).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-control-actor-target"
+        })
+      ])
+    );
+    expect(sceneBValidation.errors).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-control-actor-target"
+        })
+      ])
+    );
+  });
+
+  it("keeps project validation strict for truly missing project-global actor targets", () => {
+    const project = createEmptyProjectDocument();
+    const missingActorTarget = createActorControlTargetRef("actor-missing");
+
+    project.sequences.sequences["sequence-missing-actor"] =
+      createProjectSequence({
+        id: "sequence-missing-actor",
+        title: "Missing Actor",
+        effects: [
+          {
+            stepClass: "held",
+            type: "controlEffect",
+            effect: createSetActorPresenceControlEffect({
+              target: missingActorTarget,
+              active: true
+            })
+          }
+        ]
+      });
+    project.scheduler.routines["routine-missing-actor"] =
+      createProjectScheduleRoutine({
+        id: "routine-missing-actor",
+        title: "Missing Actor",
+        target: missingActorTarget,
+        sequenceId: "sequence-missing-actor",
+        effects: []
+      });
+
+    const validation = validateProjectDocument(project);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-control-actor-target",
+          path:
+            "sequences.sequences.sequence-missing-actor.effects.0.effect.target.actorId"
+        }),
+        expect.objectContaining({
+          code: "missing-control-actor-target",
+          path: "scheduler.routines.routine-missing-actor.target.actorId"
+        })
+      ])
+    );
   });
 
   it("detects duplicate authored ids across collections", () => {
