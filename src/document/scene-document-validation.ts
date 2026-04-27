@@ -2677,6 +2677,28 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (typeof entity.allowLookInputTargetSwitch !== "boolean") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-look-input-target-switch",
+        "Player Start allowLookInputTargetSwitch must remain a boolean.",
+        `${path}.allowLookInputTargetSwitch`
+      )
+    );
+  }
+
+  if (typeof entity.targetButtonCyclesActiveTarget !== "boolean") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-target-button-cycles-active-target",
+        "Player Start targetButtonCyclesActiveTarget must remain a boolean.",
+        `${path}.targetButtonCyclesActiveTarget`
+      )
+    );
+  }
+
   if (!isPlayerStartMovementTemplateKind(entity.movementTemplate?.kind)) {
     diagnostics.push(
       createDiagnostic(
@@ -3010,6 +3032,34 @@ function validatePlayerStartEntity(
   }
 
   if (
+    !isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.interact)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-interact-keyboard-binding",
+        "Player Start interact keyboard binding must be a supported key code.",
+        `${path}.inputBindings.keyboard.interact`
+      )
+    );
+  }
+
+  if (
+    !isPlayerStartKeyboardBindingCode(
+      entity.inputBindings?.keyboard.clearTarget
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-clear-target-keyboard-binding",
+        "Player Start clear-target keyboard binding must be a supported key code.",
+        `${path}.inputBindings.keyboard.clearTarget`
+      )
+    );
+  }
+
+  if (
     !isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.pauseTime)
   ) {
     diagnostics.push(
@@ -3114,6 +3164,34 @@ function validatePlayerStartEntity(
         "invalid-player-start-interact-gamepad-binding",
         "Player Start interact gamepad binding must be a supported standard-gamepad action input.",
         `${path}.inputBindings.gamepad.interact`
+      )
+    );
+  }
+
+  if (
+    !isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.interact)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-interact-gamepad-binding",
+        "Player Start interact gamepad binding must be a supported standard-gamepad action input.",
+        `${path}.inputBindings.gamepad.interact`
+      )
+    );
+  }
+
+  if (
+    !isPlayerStartGamepadActionBinding(
+      entity.inputBindings?.gamepad.clearTarget
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-clear-target-gamepad-binding",
+        "Player Start clear-target gamepad binding must be a supported standard-gamepad action input.",
+        `${path}.inputBindings.gamepad.clearTarget`
       )
     );
   }
