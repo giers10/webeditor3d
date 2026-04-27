@@ -6734,7 +6734,7 @@ export class RuntimeHost {
   };
 
   private shouldReserveEscapeForPointerLockRelease(): boolean {
-    if (document.pointerLockElement !== null) {
+    if (document.pointerLockElement === this.domElement) {
       return true;
     }
 
@@ -6761,7 +6761,7 @@ export class RuntimeHost {
     this.previousPauseInputActive = false;
 
     if (
-      document.pointerLockElement !== null &&
+      document.pointerLockElement === this.domElement &&
       typeof document.exitPointerLock === "function"
     ) {
       document.exitPointerLock();
