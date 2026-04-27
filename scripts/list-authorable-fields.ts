@@ -357,7 +357,10 @@ function isOpaqueExternalObjectType(type: ts.Type): boolean {
     declarations.some((declaration) => {
       const fileName = declaration.getSourceFile().fileName;
       return (
-        fileName.includes(`${path.sep}node_modules${path.sep}`) ||
+        fileName.includes(`${path.sep}node_modules${path.sep}three${path.sep}`) ||
+        fileName.includes(
+          `${path.sep}node_modules${path.sep}@types${path.sep}three${path.sep}`
+        ) ||
         fileName.endsWith(`${path.sep}lib.dom.d.ts`)
       );
     })

@@ -601,6 +601,62 @@ interface LocalLightRenderObjects {
   light: PointLight | SpotLight;
 }
 
+interface ViewportSimulationVersionInfo {
+  sceneVersion: number;
+  frameVersion: number;
+}
+
+export interface ViewportSimulationMembershipSignatures {
+  localLights: string;
+  lightVolumes: string;
+  modelInstances: string;
+  interactables: string;
+}
+
+function createSortedMembershipSignature(values: readonly string[]): string {
+  return [...values].sort().join("|");
+}
+
+export function createViewportSimulationMembershipSignatures(
+  runtimeScene: RuntimeSceneDefinition | null
+): ViewportSimulationMembershipSignatures {
+  if (runtimeScene === null) {
+    return {
+      localLights: "",
+      lightVolumes: "",
+      modelInstances: "",
+      interactables: ""
+    };
+  }
+
+  return {
+    localLights: createSortedMembershipSignature([
+      ...runtimeScene.localLights.pointLights.map(
+        (light) => `point:${light.entityId}`
+      ),
+      ...runtimeScene.localLights.spotLights.map(
+        (light) => `spot:${light.entityId}`
+      )
+    ]),
+    lightVolumes: createSortedMembershipSignature(
+      runtimeScene.volumes.light.map(
+        (lightVolume) =>
+          `${lightVolume.brushId}:${String(lightVolume.lights.length)}`
+      )
+    ),
+    modelInstances: createSortedMembershipSignature(
+      runtimeScene.modelInstances.map(
+        (modelInstance) => modelInstance.instanceId
+      )
+    ),
+    interactables: createSortedMembershipSignature(
+      runtimeScene.entities.interactables.map(
+        (interactable) => interactable.entityId
+      )
+    )
+  };
+}
+
 export class ViewportHost {
   private readonly scene = new Scene();
   private readonly worldBackgroundRenderer = new WorldBackgroundRenderer();
@@ -707,10 +763,16 @@ export class ViewportHost {
   private currentWorld: WorldSettings | null = null;
   private currentSimulationScene: RuntimeSceneDefinition | null = null;
   private currentSimulationClock: RuntimeClockState | null = null;
+  private currentSimulationSceneVersion = -1;
+  private currentSimulationFrameVersion = -1;
+  private currentSimulationMembershipSignatures: ViewportSimulationMembershipSignatures =
+    createViewportSimulationMembershipSignatures(null);
   private readonly simulationInteractableEnabledById = new Map<
     string,
     boolean
   >();
+  private simulationActiveNpcEntityIds = new Set<string>();
+  private simulationSceneIdentityMismatchWarned = false;
   private currentCelestialShadowCaster: "sun" | "moon" | null = null;
   private currentAdvancedRenderingSettings: AdvancedRenderingSettings | null =
     null;
