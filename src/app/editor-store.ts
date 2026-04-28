@@ -66,6 +66,11 @@ import {
   type ViewportPanelCameraState,
   type ViewportQuadSplit
 } from "../viewport-three/viewport-layout";
+import {
+  summarizeUpdateLoopCameraState,
+  summarizeUpdateLoopCameraStateDeltas,
+  traceUpdateLoopEvent
+} from "../debug/update-loop-trace";
 
 export interface EditorStoreState {
   projectDocument: ProjectDocument;
@@ -408,12 +413,25 @@ export class EditorStore {
     panelId: ViewportPanelId,
     cameraState: ViewportPanelCameraState
   ) {
-    if (
-      areViewportPanelCameraStatesEqual(
-        this.viewportPanels[panelId].cameraState,
+    const previousCameraState = this.viewportPanels[panelId].cameraState;
+    const cameraStatesEqual = areViewportPanelCameraStatesEqual(
+      previousCameraState,
+      cameraState
+    );
+
+    traceUpdateLoopEvent("EditorStore.setViewportPanelCameraState", {
+      panelId,
+      previousCameraState:
+        summarizeUpdateLoopCameraState(previousCameraState),
+      nextCameraState: summarizeUpdateLoopCameraState(cameraState),
+      equalityGuardConsideredDifferent: !cameraStatesEqual,
+      deltas: summarizeUpdateLoopCameraStateDeltas(
+        previousCameraState,
         cameraState
       )
-    ) {
+    });
+
+    if (cameraStatesEqual) {
       return;
     }
 
@@ -424,7 +442,7 @@ export class EditorStore {
         cameraState: cloneViewportPanelCameraState(cameraState)
       }
     };
-    this.emit();
+    this.emit("setViewportPanelCameraState");
   }
 
   setViewportQuadSplit(viewportQuadSplit: ViewportQuadSplit) {
@@ -795,7 +813,12 @@ export class EditorStore {
     return document;
   }
 
-  private emit() {
+  private emit(reason?: string) {
+    traceUpdateLoopEvent("EditorStore.emit", {
+      reason: reason ?? "unspecified",
+      listenerCount: this.listeners.size
+    });
+
     this.snapshot = this.createSnapshot();
 
     for (const listener of this.listeners) {
