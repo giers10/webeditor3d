@@ -24,6 +24,7 @@ import {
   CAMERA_RIG_ENTITY_SCENE_DOCUMENT_VERSION,
   CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION,
   DAWN_DUSK_BACKGROUND_IMAGE_SCENE_DOCUMENT_VERSION,
+  DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION,
   FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
@@ -804,6 +805,14 @@ describe("scene document JSON", () => {
         enabled: true,
         edgeWidth: 0.18,
         normalStrength: 0.9
+      },
+      distanceFog: {
+        enabled: true,
+        colorHex: "#bfd0e0",
+        nearDistance: 45,
+        farDistance: 140,
+        strength: 0.72,
+        renderDistance: 160
       },
       fogPath: "quality",
       waterPath: "performance",
