@@ -4274,6 +4274,21 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setAdvancedRenderingDistanceFogRenderDistanceDraft(
       String(advancedRendering.distanceFog.renderDistance)
     );
+    setAdvancedRenderingGodRaysIntensityDraft(
+      String(advancedRendering.godRays.intensity)
+    );
+    setAdvancedRenderingGodRaysDecayDraft(
+      String(advancedRendering.godRays.decay)
+    );
+    setAdvancedRenderingGodRaysExposureDraft(
+      String(advancedRendering.godRays.exposure)
+    );
+    setAdvancedRenderingGodRaysDensityDraft(
+      String(advancedRendering.godRays.density)
+    );
+    setAdvancedRenderingGodRaysSamplesDraft(
+      String(advancedRendering.godRays.samples)
+    );
   }, [editorState.document.world.advancedRendering]);
 
   useEffect(() => {
