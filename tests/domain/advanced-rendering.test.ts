@@ -153,6 +153,7 @@ import {
 import {
   applyAdvancedRenderingPerspectiveCameraFar,
   resolveAdvancedRenderingPerspectiveCameraFar,
+  resolveDistanceFogFadeMargin,
   resolveDistanceFogParameters
 } from "../../src/rendering/distance-fog-pass";
 import {
@@ -270,20 +271,47 @@ describe("distance fog parameters", () => {
       nearDistance: 40,
       farDistance: 400,
       strength: 2,
-      renderDistance: 180
+      renderDistance: 180,
+      skyBlend: 2,
+      horizonStrength: 1.5,
+      heightFalloff: 0.02
     };
 
-    expect(resolveDistanceFogParameters(settings.distanceFog)).toMatchObject({
+    const resolvedParameters = resolveDistanceFogParameters(
+      settings.distanceFog
+    );
+
+    expect(resolvedParameters).toMatchObject({
       enabled: true,
       colorHex: "#aabbcc",
       nearDistance: 40,
-      farDistance: 180,
+      farDistance: 160.4,
       strength: 1,
-      renderDistance: 180
+      renderDistance: 180,
+      skyBlend: 1,
+      horizonStrength: 1,
+      heightFalloff: 0.02,
+      fadeMargin: 19.6
     });
     expect(
       resolveAdvancedRenderingPerspectiveCameraFar(settings, 1000, 0.1)
     ).toBe(180);
+  });
+
+  it("keeps a safe fade margin before the render-distance cutoff", () => {
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.distanceFog.enabled = true;
+    settings.distanceFog.nearDistance = 25;
+    settings.distanceFog.farDistance = 300;
+    settings.distanceFog.renderDistance = 100;
+
+    expect(resolveDistanceFogFadeMargin(25, 100)).toBe(10.5);
+    expect(resolveDistanceFogParameters(settings.distanceFog)).toMatchObject({
+      nearDistance: 25,
+      farDistance: 89.5,
+      renderDistance: 100,
+      fadeMargin: 10.5
+    });
   });
 
   it("applies and resets the perspective camera far clamp", () => {
