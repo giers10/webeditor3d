@@ -771,6 +771,7 @@ void main() {
 const SUN_FRAGMENT_SHADER = `
 uniform vec3 uColor;
 uniform float uIntensity;
+uniform float uHorizonVisibility;
 varying vec2 vUv;
 
 void main() {
@@ -784,7 +785,7 @@ void main() {
   vec3 color =
     warmCore * (disc * 1.15 + core * 0.8) +
     uColor * halo * glow * 0.55;
-  float alpha = disc * 0.82 + core * 0.28 + halo * glow * 0.22;
+  float alpha = (disc * 0.82 + core * 0.28 + halo * glow * 0.22) * uHorizonVisibility;
 
   if (alpha <= 0.001) {
     discard;
@@ -797,6 +798,7 @@ void main() {
 const MOON_FRAGMENT_SHADER = `
 uniform vec3 uColor;
 uniform float uIntensity;
+uniform float uHorizonVisibility;
 varying vec2 vUv;
 
 float hash(vec2 point) {
@@ -828,7 +830,7 @@ void main() {
   float glow = clamp(0.12 + min(uIntensity, 2.0) * 0.16, 0.12, 0.42);
   vec3 moonColor = mix(uColor, vec3(1.0, 1.0, 1.0), 0.35) * surfaceVariation;
   vec3 color = moonColor * (body * 1.08 + disc * 0.18) + uColor * halo * glow * 0.18;
-  float alpha = disc * 0.82 + halo * glow * 0.12;
+  float alpha = (disc * 0.82 + halo * glow * 0.12) * uHorizonVisibility;
 
   if (alpha <= 0.001) {
     discard;
@@ -845,6 +847,9 @@ function createCelestialBodyMaterial(fragmentShader: string) {
         value: new Color("#ffffff")
       },
       uIntensity: {
+        value: 0
+      },
+      uHorizonVisibility: {
         value: 0
       }
     },
@@ -1277,11 +1282,13 @@ export class WorldBackgroundRenderer {
     if (state === null) {
       mesh.visible = false;
       material.uniforms.uIntensity.value = 0;
+      material.uniforms.uHorizonVisibility.value = 0;
       return;
     }
 
     material.uniforms.uColor.value.set(state.colorHex);
     material.uniforms.uIntensity.value = state.intensity;
+    material.uniforms.uHorizonVisibility.value = state.horizonVisibility;
     mesh.scale.setScalar(state.size);
     mesh.visible = true;
   }
