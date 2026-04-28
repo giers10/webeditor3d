@@ -242,7 +242,7 @@ void main() {
 `;
 
 export class ScreenSpaceGlobalIlluminationPass extends Pass {
-  private readonly camera: PerspectiveCamera;
+  private readonly sourceCamera: PerspectiveCamera;
   private readonly material: ShaderMaterial;
   private readonly parameters: ResolvedDynamicGlobalIlluminationParameters;
   private readonly resolution = new Vector2(1, 1);
@@ -257,7 +257,7 @@ export class ScreenSpaceGlobalIlluminationPass extends Pass {
   ) {
     super("ScreenSpaceGlobalIlluminationPass");
 
-    this.camera = camera;
+    this.sourceCamera = camera;
     this.parameters = parameters;
     this.needsDepthTexture = true;
 
@@ -312,10 +312,12 @@ export class ScreenSpaceGlobalIlluminationPass extends Pass {
       return;
     }
 
-    this.camera.updateProjectionMatrix();
-    this.cameraNearFar.set(this.camera.near, this.camera.far);
-    this.cameraProjectionMatrix.copy(this.camera.projectionMatrix);
-    this.cameraProjectionMatrixInverse.copy(this.camera.projectionMatrixInverse);
+    this.sourceCamera.updateProjectionMatrix();
+    this.cameraNearFar.set(this.sourceCamera.near, this.sourceCamera.far);
+    this.cameraProjectionMatrix.copy(this.sourceCamera.projectionMatrix);
+    this.cameraProjectionMatrixInverse.copy(
+      this.sourceCamera.projectionMatrixInverse
+    );
     this.material.uniforms.inputBuffer.value = inputBuffer.texture;
     this.material.uniforms.intensity.value = this.parameters.intensity;
     this.material.uniforms.radius.value = this.parameters.radius;
