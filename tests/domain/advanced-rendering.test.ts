@@ -410,7 +410,7 @@ describe("god rays parameters", () => {
     });
   });
 
-  it("uses only rendered celestial bodies as god rays sources", () => {
+  it("chooses the dominant visible celestial body as the god rays source", () => {
     const visibleSun = {
       colorHex: "#ffd8aa",
       intensity: 1.1,
@@ -420,7 +420,7 @@ describe("god rays parameters", () => {
         z: -0.98
       }
     };
-    const hiddenMoon = {
+    const visibleMoon = {
       colorHex: "#ccd8ff",
       intensity: 2.4,
       direction: {
@@ -434,8 +434,8 @@ describe("god rays parameters", () => {
       resolveDominantScreenSpaceGodRaysLightInput(visibleSun, null)
     ).toBe(visibleSun);
     expect(
-      resolveDominantScreenSpaceGodRaysLightInput(visibleSun, hiddenMoon)
-    ).toBe(hiddenMoon);
+      resolveDominantScreenSpaceGodRaysLightInput(visibleSun, visibleMoon)
+    ).toBe(visibleMoon);
     expect(resolveDominantScreenSpaceGodRaysLightInput(null, null)).toBeNull();
   });
 
