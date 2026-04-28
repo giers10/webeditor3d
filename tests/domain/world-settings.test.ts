@@ -178,7 +178,7 @@ describe("world settings helpers", () => {
     const left = createDefaultWorldSettings();
     const right = cloneWorldSettings(left);
 
-    right.advancedRendering.godRays.enabled = true;
+    right.advancedRendering.godRays.sourceSize += 0.25;
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });

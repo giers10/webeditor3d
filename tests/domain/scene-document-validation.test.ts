@@ -1688,6 +1688,7 @@ describe("validateSceneDocument", () => {
         decay: 1.5,
         exposure: -0.2,
         density: Number.NaN,
+        sourceSize: 0,
         samples: 0
       }
     } as any;
@@ -1819,6 +1820,10 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-advanced-rendering-god-rays-density",
           path: "world.advancedRendering.godRays.density"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-god-rays-source-size",
+          path: "world.advancedRendering.godRays.sourceSize"
         }),
         expect.objectContaining({
           code: "invalid-advanced-rendering-god-rays-samples",
