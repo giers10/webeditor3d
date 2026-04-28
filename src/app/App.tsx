@@ -3328,6 +3328,11 @@ export function App({ store, initialStatusMessage }: AppProps) {
     useState<EditorSimulationUiSnapshot>(() =>
       createInitialEditorSimulationUiSnapshot(editorState.projectDocument.time)
     );
+  const editorSimulationSnapshotTraceRef = useRef(editorSimulationSnapshot);
+  const selectedEntityDraftSyncTraceRef = useRef<{
+    selectedEntity: EntityInstance | null;
+    projectDocument: typeof editorState.projectDocument;
+  } | null>(null);
   const [firstPersonTelemetry, setFirstPersonTelemetry] =
     useState<FirstPersonTelemetry | null>(null);
   const [runtimeInteractionPrompt, setRuntimeInteractionPrompt] =
