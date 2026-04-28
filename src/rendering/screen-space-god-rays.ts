@@ -1,16 +1,21 @@
 import {
   BasicDepthPacking,
   Color,
+  LinearFilter,
+  MeshBasicMaterial,
+  RGBAFormat,
   ShaderMaterial,
   Texture,
+  UnsignedByteType,
   Uniform,
   Vector4,
   Vector2,
   Vector3,
+  WebGLRenderTarget,
   type DepthPackingStrategies,
   type PerspectiveCamera,
+  type Scene,
   type WebGLRenderer,
-  type WebGLRenderTarget
 } from "three";
 import { Pass } from "postprocessing";
 
@@ -29,6 +34,7 @@ const MIN_GOD_RAYS_SAMPLES = 8;
 const MAX_GOD_RAYS_SAMPLES = 64;
 const LIGHT_OFFSCREEN_FADE_START = 0.92;
 const LIGHT_OFFSCREEN_FADE_END = 1;
+const MASK_RESOLUTION_SCALE = 0.5;
 
 export interface ResolvedGodRaysParameters {
   enabled: boolean;
@@ -246,6 +252,25 @@ void main() {
 }
 `;
 
+const sourceMaskFragmentShader = `
+uniform vec2 resolution;
+uniform vec2 lightPosition;
+uniform float sourceIntensity;
+
+varying vec2 vUv;
+
+void main() {
+  vec2 safeResolution = max(resolution, vec2(1.0));
+  vec2 aspectScale = vec2(safeResolution.x / safeResolution.y, 1.0);
+  float sourceDistance = length((vUv - lightPosition) * aspectScale);
+  float core = 1.0 - smoothstep(0.006, 0.035, sourceDistance);
+  float halo = 1.0 - smoothstep(0.025, 0.18, sourceDistance);
+  float sourceMask = clamp(core * 1.15 + halo * 0.55, 0.0, 1.0);
+
+  gl_FragColor = vec4(vec3(sourceMask * sourceIntensity), 1.0);
+}
+`;
+
 const fragmentShader = `
 #include <packing>
 
@@ -253,6 +278,7 @@ const fragmentShader = `
 
 uniform sampler2D inputBuffer;
 uniform sampler2D depthBuffer;
+uniform sampler2D shaftMaskBuffer;
 uniform vec2 cameraNearFar;
 uniform vec2 resolution;
 uniform vec2 lightPosition;
@@ -297,15 +323,6 @@ float getAtmosphereMask(const in float depth) {
   return mix(0.34, 1.0, clamp(distanceMask * atmosphere.z + atmosphere.w * 0.28, 0.0, 1.0));
 }
 
-float getSunSourceMask(const in vec2 sampleUv) {
-  vec2 safeResolution = max(resolution, vec2(1.0));
-  vec2 aspectScale = vec2(safeResolution.x / safeResolution.y, 1.0);
-  float sourceDistance = length((sampleUv - lightPosition) * aspectScale);
-  float core = 1.0 - smoothstep(0.01, 0.05, sourceDistance);
-  float halo = 1.0 - smoothstep(0.035, 0.2, sourceDistance);
-  return clamp(core * 1.25 + halo * 0.32, 0.0, 1.0);
-}
-
 void main() {
   vec4 baseColor = texture2D(inputBuffer, vUv);
 
@@ -322,9 +339,8 @@ void main() {
 
   vec2 delta = (lightPosition - vUv) * density / max(float(sampleCount), 1.0);
   vec2 sampleUv = vUv;
-  vec3 accumulatedLight = vec3(0.0);
+  float accumulatedMask = 0.0;
   float illuminationDecay = 1.0;
-  float transmittance = 1.0;
 
   for (int sampleIndex = 0; sampleIndex < MAX_GOD_RAYS_SAMPLES; ++sampleIndex) {
     if (sampleIndex >= sampleCount) {
@@ -343,36 +359,22 @@ void main() {
       continue;
     }
 
-    float depth = readDepth(sampleUv);
-    float backgroundMask = smoothstep(0.9975, 1.0, depth);
-    float occluderMask = 1.0 - backgroundMask;
-    float sourceMask = getSunSourceMask(sampleUv);
+    float shaftMask = texture2D(shaftMaskBuffer, sampleUv).r;
 
-    transmittance *= mix(1.0, 0.58, occluderMask);
-
-    if (backgroundMask <= 0.0 || sourceMask <= 0.0 || transmittance <= 0.02) {
+    if (shaftMask <= 0.001) {
       illuminationDecay *= decay;
       continue;
     }
 
-    vec3 sampleColor = texture2D(inputBuffer, sampleUv).rgb;
-    float luminance = readLuminance(sampleColor);
-    float brightness = smoothstep(0.025, 0.75, luminance);
-    float contribution =
-      backgroundMask *
-      sourceMask *
-      (0.22 + brightness * 0.78) *
-      transmittance *
-      illuminationDecay;
-    accumulatedLight += mix(lightColor, sampleColor, 0.28) * contribution;
+    accumulatedMask += shaftMask * illuminationDecay;
     illuminationDecay *= decay;
   }
 
   vec3 shaftColor =
-    accumulatedLight *
+    lightColor *
+    accumulatedMask *
     exposure *
     intensity *
-    sourceIntensity /
     max(float(sampleCount), 1.0);
   float receiverAtmosphere = getAtmosphereMask(readDepth(vUv));
   float baseLuminance = readLuminance(baseColor.rgb);
@@ -388,18 +390,31 @@ export class ScreenSpaceGodRaysPass extends Pass {
   private readonly lightSource: ScreenSpaceGodRaysLightSource;
   private readonly parameters: ResolvedGodRaysParameters;
   private readonly atmosphereParameters: ResolvedGodRaysAtmosphereParameters | null;
+  private readonly occluderScene: Scene;
+  private readonly occluderLayerMask: number;
+  private readonly shaftMaskRenderTarget: WebGLRenderTarget;
+  private readonly sourceMaskMaterial: ShaderMaterial;
+  private readonly occluderMaterial = new MeshBasicMaterial({
+    color: 0x000000,
+    depthWrite: true,
+    depthTest: true
+  });
   private readonly material: ShaderMaterial;
   private readonly lightPosition = new Vector2(0.5, 0.5);
   private readonly lightColor = new Color("#ffffff");
   private readonly cameraNearFar = new Vector2();
   private readonly resolution = new Vector2(1, 1);
+  private readonly maskResolution = new Vector2(1, 1);
   private readonly atmosphere = new Vector4(0, 1, 0, 0);
+  private readonly previousClearColor = new Color();
 
   constructor(
     camera: PerspectiveCamera,
     lightSource: ScreenSpaceGodRaysLightSource,
     parameters: ResolvedGodRaysParameters,
-    atmosphereParameters: ResolvedGodRaysAtmosphereParameters | null = null
+    atmosphereParameters: ResolvedGodRaysAtmosphereParameters | null,
+    occluderScene: Scene,
+    occluderLayerMask: number
   ) {
     super("ScreenSpaceGodRaysPass");
 
@@ -407,8 +422,31 @@ export class ScreenSpaceGodRaysPass extends Pass {
     this.lightSource = lightSource;
     this.parameters = parameters;
     this.atmosphereParameters = atmosphereParameters;
+    this.occluderScene = occluderScene;
+    this.occluderLayerMask = occluderLayerMask;
     this.needsDepthTexture = true;
 
+    this.shaftMaskRenderTarget = new WebGLRenderTarget(1, 1, {
+      depthBuffer: true,
+      stencilBuffer: false,
+      format: RGBAFormat,
+      type: UnsignedByteType,
+      minFilter: LinearFilter,
+      magFilter: LinearFilter
+    });
+    this.shaftMaskRenderTarget.texture.name = "ScreenSpaceGodRays.Mask";
+    this.sourceMaskMaterial = new ShaderMaterial({
+      name: "ScreenSpaceGodRaysSourceMaskMaterial",
+      uniforms: {
+        resolution: new Uniform(this.maskResolution),
+        lightPosition: new Uniform(this.lightPosition),
+        sourceIntensity: new Uniform(0)
+      },
+      vertexShader,
+      fragmentShader: sourceMaskFragmentShader,
+      depthWrite: false,
+      depthTest: false
+    });
     this.material = new ShaderMaterial({
       name: "ScreenSpaceGodRaysMaterial",
       defines: {
@@ -417,6 +455,7 @@ export class ScreenSpaceGodRaysPass extends Pass {
       uniforms: {
         inputBuffer: new Uniform<Texture | null>(null),
         depthBuffer: new Uniform<Texture | null>(null),
+        shaftMaskBuffer: new Uniform(this.shaftMaskRenderTarget.texture),
         cameraNearFar: new Uniform(this.cameraNearFar),
         resolution: new Uniform(this.resolution),
         lightPosition: new Uniform(this.lightPosition),
@@ -448,6 +487,43 @@ export class ScreenSpaceGodRaysPass extends Pass {
 
   override setSize(width: number, height: number) {
     this.resolution.set(Math.max(width, 1), Math.max(height, 1));
+    this.maskResolution.set(
+      Math.max(Math.round(width * MASK_RESOLUTION_SCALE), 1),
+      Math.max(Math.round(height * MASK_RESOLUTION_SCALE), 1)
+    );
+    this.shaftMaskRenderTarget.setSize(
+      this.maskResolution.x,
+      this.maskResolution.y
+    );
+  }
+
+  private renderShaftMask(renderer: WebGLRenderer, sourceIntensity: number) {
+    const previousRenderTarget = renderer.getRenderTarget();
+    const previousClearAlpha = renderer.getClearAlpha();
+    const previousAutoClear = renderer.autoClear;
+    const previousSceneOverrideMaterial = this.occluderScene.overrideMaterial;
+    const previousCameraLayerMask = this.sourceCamera.layers.mask;
+    renderer.getClearColor(this.previousClearColor);
+
+    renderer.setRenderTarget(this.shaftMaskRenderTarget);
+    renderer.setClearColor(0x000000, 1);
+    renderer.clear(true, true, false);
+
+    this.sourceMaskMaterial.uniforms.sourceIntensity.value = sourceIntensity;
+    this.fullscreenMaterial = this.sourceMaskMaterial;
+    renderer.render(this.scene, this.camera);
+
+    this.occluderScene.overrideMaterial = this.occluderMaterial;
+    this.sourceCamera.layers.mask = this.occluderLayerMask;
+    renderer.autoClear = false;
+    renderer.render(this.occluderScene, this.sourceCamera);
+
+    renderer.autoClear = previousAutoClear;
+    this.sourceCamera.layers.mask = previousCameraLayerMask;
+    this.occluderScene.overrideMaterial = previousSceneOverrideMaterial;
+    renderer.setClearColor(this.previousClearColor, previousClearAlpha);
+    renderer.setRenderTarget(previousRenderTarget);
+    this.fullscreenMaterial = this.material;
   }
 
   override render(
@@ -475,6 +551,10 @@ export class ScreenSpaceGodRaysPass extends Pass {
       );
     }
 
+    if (sourceIntensity > 0) {
+      this.renderShaftMask(renderer, sourceIntensity);
+    }
+
     this.cameraNearFar.set(this.sourceCamera.near, this.sourceCamera.far);
     if (this.atmosphereParameters === null) {
       this.atmosphere.set(0, 1, 0, 0);
@@ -488,6 +568,8 @@ export class ScreenSpaceGodRaysPass extends Pass {
     }
     this.lightColor.set(this.lightSource.colorHex);
     this.material.uniforms.inputBuffer.value = inputBuffer.texture;
+    this.material.uniforms.shaftMaskBuffer.value =
+      this.shaftMaskRenderTarget.texture;
     this.material.uniforms.sourceIntensity.value = sourceIntensity;
     this.material.uniforms.intensity.value = this.parameters.intensity;
     this.material.uniforms.decay.value = this.parameters.decay;
@@ -497,5 +579,12 @@ export class ScreenSpaceGodRaysPass extends Pass {
 
     renderer.setRenderTarget(this.renderToScreen ? null : outputBuffer);
     renderer.render(this.scene, this.camera);
+  }
+
+  override dispose() {
+    this.shaftMaskRenderTarget.dispose();
+    this.sourceMaskMaterial.dispose();
+    this.occluderMaterial.dispose();
+    this.material.dispose();
   }
 }
