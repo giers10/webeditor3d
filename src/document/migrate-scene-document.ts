@@ -788,6 +788,10 @@ function readAdvancedRenderingSettings(
     throw new Error("world.advancedRendering.whiteboxBevel must be an object.");
   }
 
+  if (value.distanceFog !== undefined && !isRecord(value.distanceFog)) {
+    throw new Error("world.advancedRendering.distanceFog must be an object.");
+  }
+
   const shadows = value.shadows as Record<string, unknown> | undefined;
   const ambientOcclusion = value.ambientOcclusion as
     | Record<string, unknown>
@@ -803,6 +807,7 @@ function readAdvancedRenderingSettings(
   const whiteboxBevel = value.whiteboxBevel as
     | Record<string, unknown>
     | undefined;
+  const distanceFog = value.distanceFog as Record<string, unknown> | undefined;
 
   const shadowsMapSize = readOptionalAllowedValue(
     shadows?.mapSize,
@@ -974,6 +979,40 @@ function readAdvancedRenderingSettings(
         whiteboxBevel?.normalStrength,
         "world.advancedRendering.whiteboxBevel.normalStrength",
         defaults.whiteboxBevel.normalStrength
+      )
+    },
+    distanceFog: {
+      enabled: readOptionalBoolean(
+        distanceFog?.enabled,
+        "world.advancedRendering.distanceFog.enabled",
+        defaults.distanceFog.enabled
+      ),
+      colorHex:
+        distanceFog?.colorHex === undefined
+          ? defaults.distanceFog.colorHex
+          : expectHexColor(
+              distanceFog.colorHex,
+              "world.advancedRendering.distanceFog.colorHex"
+            ),
+      nearDistance: readOptionalNonNegativeFiniteNumber(
+        distanceFog?.nearDistance,
+        "world.advancedRendering.distanceFog.nearDistance",
+        defaults.distanceFog.nearDistance
+      ),
+      farDistance: readOptionalPositiveFiniteNumber(
+        distanceFog?.farDistance,
+        "world.advancedRendering.distanceFog.farDistance",
+        defaults.distanceFog.farDistance
+      ),
+      strength: readOptionalNonNegativeFiniteNumber(
+        distanceFog?.strength,
+        "world.advancedRendering.distanceFog.strength",
+        defaults.distanceFog.strength
+      ),
+      renderDistance: readOptionalPositiveFiniteNumber(
+        distanceFog?.renderDistance,
+        "world.advancedRendering.distanceFog.renderDistance",
+        defaults.distanceFog.renderDistance
       )
     },
     fogPath,
