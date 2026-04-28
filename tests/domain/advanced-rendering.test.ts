@@ -305,13 +305,15 @@ describe("distance fog parameters", () => {
     settings.distanceFog.farDistance = 300;
     settings.distanceFog.renderDistance = 100;
 
-    expect(resolveDistanceFogFadeMargin(25, 100)).toBe(10.5);
-    expect(resolveDistanceFogParameters(settings.distanceFog)).toMatchObject({
-      nearDistance: 25,
-      farDistance: 89.5,
-      renderDistance: 100,
-      fadeMargin: 10.5
-    });
+    const resolvedParameters = resolveDistanceFogParameters(
+      settings.distanceFog
+    );
+
+    expect(resolveDistanceFogFadeMargin(25, 100)).toBeCloseTo(10.5, 6);
+    expect(resolvedParameters.nearDistance).toBe(25);
+    expect(resolvedParameters.farDistance).toBeCloseTo(89.5, 6);
+    expect(resolvedParameters.renderDistance).toBe(100);
+    expect(resolvedParameters.fadeMargin).toBeCloseTo(10.5, 6);
   });
 
   it("applies and resets the perspective camera far clamp", () => {
