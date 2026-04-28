@@ -1544,6 +1544,7 @@ export class ViewportHost {
     });
 
     this.applyViewModePose();
+    this.applyAdvancedRenderingCameraFar(this.currentAdvancedRenderingSettings);
     this.syncTerrainBrushPreview();
 
     if (this.currentAdvancedRenderingSettings !== null) {
@@ -2188,8 +2189,19 @@ export class ViewportHost {
     }
 
     configureAdvancedRenderingRenderer(this.renderer, rendererSettings);
+    this.applyAdvancedRenderingCameraFar(rendererSettings);
     this.syncAdvancedRenderingComposer(rendererSettings);
     this.applyShadowState();
+  }
+
+  private applyAdvancedRenderingCameraFar(
+    settings: AdvancedRenderingSettings | null
+  ) {
+    applyAdvancedRenderingPerspectiveCameraFar(
+      this.perspectiveCamera,
+      this.viewMode === "perspective" ? settings : null,
+      VIEWPORT_PERSPECTIVE_CAMERA_FAR
+    );
   }
 
   private syncAdvancedRenderingComposer(settings: AdvancedRenderingSettings) {
