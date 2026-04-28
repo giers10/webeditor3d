@@ -155,6 +155,12 @@ import {
   resolveAdvancedRenderingPerspectiveCameraFar,
   resolveDistanceFogParameters
 } from "../../src/rendering/distance-fog-pass";
+import {
+  createScreenSpaceGodRaysLightSource,
+  projectScreenSpaceGodRaysLight,
+  resolveGodRaysParameters,
+  syncScreenSpaceGodRaysLightSource
+} from "../../src/rendering/screen-space-god-rays";
 import { resolveDynamicGlobalIlluminationParameters } from "../../src/rendering/screen-space-global-illumination";
 import {
   ALL_RENDER_LAYER_MASK,
@@ -301,6 +307,105 @@ describe("distance fog parameters", () => {
   });
 });
 
+describe("god rays parameters", () => {
+  it("keeps the pass disabled by default", () => {
+    const settings = createDefaultWorldSettings().advancedRendering;
+
+    expect(resolveGodRaysParameters(settings.godRays)).toMatchObject({
+      enabled: false
+    });
+  });
+
+  it("resolves bounded screen-space shaft parameters", () => {
+    const settings = createDefaultWorldSettings().advancedRendering.godRays;
+    settings.enabled = true;
+    settings.intensity = 12;
+    settings.decay = 1.5;
+    settings.exposure = 6;
+    settings.density = 3;
+    settings.samples = 999;
+
+    expect(resolveGodRaysParameters(settings)).toEqual({
+      enabled: true,
+      intensity: 3,
+      decay: 1,
+      exposure: 2,
+      density: 1.5,
+      samples: 64
+    });
+  });
+
+  it("syncs the active celestial light source", () => {
+    const lightSource = createScreenSpaceGodRaysLightSource();
+
+    syncScreenSpaceGodRaysLightSource(lightSource, {
+      colorHex: "#ffd8aa",
+      intensity: 1.6,
+      direction: {
+        x: 0.1,
+        y: 0.8,
+        z: -0.2
+      }
+    });
+
+    expect(lightSource).toEqual({
+      colorHex: "#ffd8aa",
+      intensity: 1.6,
+      direction: {
+        x: 0.1,
+        y: 0.8,
+        z: -0.2
+      }
+    });
+
+    syncScreenSpaceGodRaysLightSource(lightSource, {
+      colorHex: "#ffd8aa",
+      intensity: 0,
+      direction: {
+        x: 0.1,
+        y: 0.8,
+        z: -0.2
+      }
+    });
+
+    expect(lightSource).toEqual({
+      colorHex: "#ffffff",
+      intensity: 0,
+      direction: null
+    });
+  });
+
+  it("projects the celestial light direction and rejects behind-camera lights", () => {
+    const camera = new PerspectiveCamera(60, 1, 0.1, 1000);
+
+    const projection = projectScreenSpaceGodRaysLight(camera, {
+      colorHex: "#ffffff",
+      intensity: 1,
+      direction: {
+        x: 0,
+        y: 0,
+        z: -1
+      }
+    });
+
+    expect(projection?.screenPosition.x).toBeCloseTo(0.5, 6);
+    expect(projection?.screenPosition.y).toBeCloseTo(0.5, 6);
+    expect(projection?.visibility).toBeCloseTo(1, 6);
+
+    expect(
+      projectScreenSpaceGodRaysLight(camera, {
+        colorHex: "#ffffff",
+        intensity: 1,
+        direction: {
+          x: 0,
+          y: 0,
+          z: 1
+        }
+      })
+    ).toBeNull();
+  });
+});
+
 describe("createAdvancedRenderingComposer", () => {
   it("keeps depth buffering enabled when the post stack only uses color effects", () => {
     postprocessingState.composerOptions.length = 0;
@@ -389,6 +494,100 @@ describe("createAdvancedRenderingComposer", () => {
       (postprocessingState.composerPasses[3] as { renderLayerMask?: number })
         .renderLayerMask
     ).toBe(OVERLAY_RENDER_LAYER_MASK);
+  });
+
+  it("adds god rays before post-world overlay layers when a celestial light source is available", () => {
+    postprocessingState.composerOptions.length = 0;
+    postprocessingState.composerPasses.length = 0;
+    postprocessingState.normalPassTextures.length = 0;
+    postprocessingState.ssaoCalls.length = 0;
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    const lightSource = createScreenSpaceGodRaysLightSource();
+    settings.enabled = true;
+    settings.godRays.enabled = true;
+    syncScreenSpaceGodRaysLightSource(lightSource, {
+      colorHex: "#fff3cc",
+      intensity: 1,
+      direction: {
+        x: 0,
+        y: 0.25,
+        z: -1
+      }
+    });
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings,
+      null,
+      lightSource
+    );
+
+    expect(
+      postprocessingState.composerPasses.map(
+        (pass) => (pass as { name: string }).name
+      )
+    ).toEqual([
+      "RenderPass",
+      "ScreenSpaceGodRaysPass",
+      "RenderPass",
+      "RenderPass",
+      "EffectPass"
+    ]);
+    expect(
+      (postprocessingState.composerPasses[0] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(AO_WORLD_RENDER_LAYER_MASK);
+    expect(
+      (postprocessingState.composerPasses[1] as { needsDepthTexture?: boolean })
+        .needsDepthTexture
+    ).toBe(true);
+    expect(
+      (postprocessingState.composerPasses[2] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(POST_AO_TRANSPARENT_RENDER_LAYER_MASK);
+    expect(
+      (postprocessingState.composerPasses[3] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(OVERLAY_RENDER_LAYER_MASK);
+  });
+
+  it("does not add god rays when the feature is enabled without a light source", () => {
+    postprocessingState.composerOptions.length = 0;
+    postprocessingState.composerPasses.length = 0;
+    postprocessingState.normalPassTextures.length = 0;
+    postprocessingState.ssaoCalls.length = 0;
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.godRays.enabled = true;
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(
+      postprocessingState.composerPasses.map(
+        (pass) => (pass as { name: string }).name
+      )
+    ).toEqual(["RenderPass", "EffectPass"]);
+    expect(
+      (postprocessingState.composerPasses[0] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(ALL_RENDER_LAYER_MASK);
   });
 
   it("adds the dynamic GI pass only when dynamic GI is enabled", () => {

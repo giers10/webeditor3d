@@ -35,6 +35,12 @@ describe("world settings helpers", () => {
     expect(clone.advancedRendering.whiteboxBevel).not.toBe(
       source.advancedRendering.whiteboxBevel
     );
+    expect(clone.advancedRendering.distanceFog).not.toBe(
+      source.advancedRendering.distanceFog
+    );
+    expect(clone.advancedRendering.godRays).not.toBe(
+      source.advancedRendering.godRays
+    );
   });
 
   it("switches a solid background into a gradient while preserving the authored color as the top edge", () => {
@@ -164,6 +170,15 @@ describe("world settings helpers", () => {
     const right = cloneWorldSettings(left);
 
     right.advancedRendering.dynamicGlobalIllumination.enabled = true;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
+
+  it("treats god rays settings as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.advancedRendering.godRays.enabled = true;
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });

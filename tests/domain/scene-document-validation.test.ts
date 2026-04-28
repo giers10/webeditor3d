@@ -1677,6 +1677,15 @@ describe("validateSceneDocument", () => {
         farDistance: 0,
         strength: 1.5,
         renderDistance: -2
+      },
+      godRays: {
+        ...document.world.advancedRendering.godRays,
+        enabled: "yes",
+        intensity: -0.1,
+        decay: 1.5,
+        exposure: -0.2,
+        density: Number.NaN,
+        samples: 0
       }
     } as any;
 
@@ -1775,6 +1784,30 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-advanced-rendering-distance-fog-render-distance",
           path: "world.advancedRendering.distanceFog.renderDistance"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-god-rays-enabled",
+          path: "world.advancedRendering.godRays.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-god-rays-intensity",
+          path: "world.advancedRendering.godRays.intensity"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-god-rays-decay",
+          path: "world.advancedRendering.godRays.decay"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-god-rays-exposure",
+          path: "world.advancedRendering.godRays.exposure"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-god-rays-density",
+          path: "world.advancedRendering.godRays.density"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-god-rays-samples",
+          path: "world.advancedRendering.godRays.samples"
         }),
         expect.objectContaining({
           code: "invalid-advanced-rendering-fog-path",
