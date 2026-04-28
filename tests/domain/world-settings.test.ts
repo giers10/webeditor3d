@@ -29,6 +29,9 @@ describe("world settings helpers", () => {
     expect(clone.advancedRendering.shadows).not.toBe(
       source.advancedRendering.shadows
     );
+    expect(clone.advancedRendering.dynamicGlobalIllumination).not.toBe(
+      source.advancedRendering.dynamicGlobalIllumination
+    );
     expect(clone.advancedRendering.whiteboxBevel).not.toBe(
       source.advancedRendering.whiteboxBevel
     );
@@ -152,6 +155,15 @@ describe("world settings helpers", () => {
     const right = cloneWorldSettings(left);
 
     right.advancedRendering.whiteboxBevel.enabled = true;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
+
+  it("treats dynamic global illumination settings as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.advancedRendering.dynamicGlobalIllumination.enabled = true;
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });
