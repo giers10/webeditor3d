@@ -179,6 +179,7 @@ import {
   type FaceUvState
 } from "../document/brushes";
 import {
+  ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_QUALITIES,
   ADVANCED_RENDERING_WATER_REFLECTION_MODES,
   BOX_VOLUME_RENDER_PATHS,
   ADVANCED_RENDERING_SHADOW_MAP_SIZES,
@@ -196,6 +197,7 @@ import {
   type AdvancedRenderingSettings,
   type BoxVolumeRenderPath,
   type AdvancedRenderingWaterReflectionMode,
+  type AdvancedRenderingDynamicGlobalIlluminationQuality,
   type AdvancedRenderingShadowMapSize,
   type AdvancedRenderingShadowType,
   type AdvancedRenderingToneMappingMode,
@@ -2140,6 +2142,17 @@ function formatAdvancedRenderingToneMappingLabel(
       return "Cineon";
     case "acesFilmic":
       return "ACES Filmic";
+  }
+}
+
+function formatAdvancedRenderingDynamicGlobalIlluminationQualityLabel(
+  quality: AdvancedRenderingDynamicGlobalIlluminationQuality
+): string {
+  switch (quality) {
+    case "low":
+      return "Low";
+    case "medium":
+      return "Medium";
   }
 }
 
