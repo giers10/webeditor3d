@@ -27,8 +27,8 @@ const MAX_GOD_RAYS_EXPOSURE = 2;
 const MAX_GOD_RAYS_DENSITY = 1.5;
 const MIN_GOD_RAYS_SAMPLES = 8;
 const MAX_GOD_RAYS_SAMPLES = 64;
-const LIGHT_OFFSCREEN_FADE_START = 1;
-const LIGHT_OFFSCREEN_FADE_END = 1.35;
+const LIGHT_OFFSCREEN_FADE_START = 0.98;
+const LIGHT_OFFSCREEN_FADE_END = 1.12;
 
 export interface ResolvedGodRaysParameters {
   enabled: boolean;
@@ -254,6 +254,7 @@ const fragmentShader = `
 uniform sampler2D inputBuffer;
 uniform sampler2D depthBuffer;
 uniform vec2 cameraNearFar;
+uniform vec2 resolution;
 uniform vec2 lightPosition;
 uniform vec3 lightColor;
 uniform vec4 atmosphere;
@@ -296,6 +297,15 @@ float getAtmosphereMask(const in float depth) {
   return mix(0.34, 1.0, clamp(distanceMask * atmosphere.z + atmosphere.w * 0.28, 0.0, 1.0));
 }
 
+float getSunSourceMask(const in vec2 sampleUv) {
+  vec2 safeResolution = max(resolution, vec2(1.0));
+  vec2 aspectScale = vec2(safeResolution.x / safeResolution.y, 1.0);
+  float sourceDistance = length((sampleUv - lightPosition) * aspectScale);
+  float core = 1.0 - smoothstep(0.015, 0.085, sourceDistance);
+  float halo = 1.0 - smoothstep(0.04, 0.42, sourceDistance);
+  return clamp(core * 1.35 + halo * 0.42, 0.0, 1.0);
+}
+
 void main() {
   vec4 baseColor = texture2D(inputBuffer, vUv);
 
@@ -334,8 +344,9 @@ void main() {
 
     float depth = readDepth(sampleUv);
     float backgroundMask = smoothstep(0.9975, 1.0, depth);
+    float sourceMask = getSunSourceMask(sampleUv);
 
-    if (backgroundMask <= 0.0) {
+    if (backgroundMask <= 0.0 || sourceMask <= 0.0) {
       illuminationDecay *= decay;
       continue;
     }
@@ -343,8 +354,12 @@ void main() {
     vec3 sampleColor = texture2D(inputBuffer, sampleUv).rgb;
     float luminance = readLuminance(sampleColor);
     float brightness = smoothstep(0.025, 0.75, luminance);
-    float contribution = backgroundMask * (0.32 + brightness * 0.68) * illuminationDecay;
-    accumulatedLight += mix(lightColor, sampleColor, 0.35) * contribution;
+    float contribution =
+      backgroundMask *
+      sourceMask *
+      (0.22 + brightness * 0.78) *
+      illuminationDecay;
+    accumulatedLight += mix(lightColor, sampleColor, 0.28) * contribution;
     illuminationDecay *= decay;
   }
 
@@ -372,6 +387,7 @@ export class ScreenSpaceGodRaysPass extends Pass {
   private readonly lightPosition = new Vector2(0.5, 0.5);
   private readonly lightColor = new Color("#ffffff");
   private readonly cameraNearFar = new Vector2();
+  private readonly resolution = new Vector2(1, 1);
   private readonly atmosphere = new Vector4(0, 1, 0, 0);
 
   constructor(
@@ -397,6 +413,7 @@ export class ScreenSpaceGodRaysPass extends Pass {
         inputBuffer: new Uniform<Texture | null>(null),
         depthBuffer: new Uniform<Texture | null>(null),
         cameraNearFar: new Uniform(this.cameraNearFar),
+        resolution: new Uniform(this.resolution),
         lightPosition: new Uniform(this.lightPosition),
         lightColor: new Uniform(this.lightColor),
         atmosphere: new Uniform(this.atmosphere),
@@ -422,6 +439,10 @@ export class ScreenSpaceGodRaysPass extends Pass {
     this.material.uniforms.depthBuffer.value = depthTexture;
     this.material.defines.DEPTH_PACKING = depthPacking.toFixed(0);
     this.material.needsUpdate = true;
+  }
+
+  override setSize(width: number, height: number) {
+    this.resolution.set(Math.max(width, 1), Math.max(height, 1));
   }
 
   override render(
