@@ -355,6 +355,7 @@ describe("god rays parameters", () => {
     settings.decay = 1.5;
     settings.exposure = 6;
     settings.density = 3;
+    settings.sourceSize = 8;
     settings.samples = 999;
 
     expect(resolveGodRaysParameters(settings)).toEqual({
@@ -363,6 +364,7 @@ describe("god rays parameters", () => {
       decay: 1,
       exposure: 2,
       density: 1.5,
+      sourceSize: 3,
       samples: 64
     });
   });
@@ -443,6 +445,7 @@ describe("god rays parameters", () => {
       resolveGodRaysSourceMask(GOD_RAYS_SOURCE_MASK_RADII.coreOuter)
     ).toBeGreaterThan(0.5);
     expect(resolveGodRaysSourceMask(0.035)).toBeLessThan(0.5);
+    expect(resolveGodRaysSourceMask(0.035, 2)).toBeGreaterThan(0.5);
     expect(
       resolveGodRaysSourceMask(GOD_RAYS_SOURCE_MASK_RADII.haloOuter)
     ).toBe(0);
