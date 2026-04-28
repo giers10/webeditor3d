@@ -157,9 +157,11 @@ import {
   resolveDistanceFogParameters
 } from "../../src/rendering/distance-fog-pass";
 import {
+  GOD_RAYS_SOURCE_MASK_RADII,
   createScreenSpaceGodRaysLightSource,
   projectScreenSpaceGodRaysLight,
   resolveGodRaysParameters,
+  resolveGodRaysSourceMask,
   syncScreenSpaceGodRaysLightSource
 } from "../../src/rendering/screen-space-god-rays";
 import { resolveDynamicGlobalIlluminationParameters } from "../../src/rendering/screen-space-global-illumination";
@@ -433,6 +435,17 @@ describe("god rays parameters", () => {
         }
       })
     ).toBeNull();
+  });
+
+  it("keeps the source mask compact around the celestial disc", () => {
+    expect(resolveGodRaysSourceMask(0)).toBe(1);
+    expect(
+      resolveGodRaysSourceMask(GOD_RAYS_SOURCE_MASK_RADII.coreOuter)
+    ).toBeGreaterThan(0.5);
+    expect(resolveGodRaysSourceMask(0.035)).toBeLessThan(0.5);
+    expect(
+      resolveGodRaysSourceMask(GOD_RAYS_SOURCE_MASK_RADII.haloOuter)
+    ).toBe(0);
   });
 });
 
