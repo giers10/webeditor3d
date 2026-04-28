@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createDefaultWorldSettings } from "../../src/document/world-settings";
 import {
   resolveWorldCelestialBodiesState,
+  resolveWorldCelestialHorizonVisibility,
   resolveWorldEnvironmentState
 } from "../../src/rendering/world-background-renderer";
 import type { WorldShaderSkyRenderState } from "../../src/rendering/world-shader-sky";
@@ -212,18 +213,40 @@ describe("resolveWorldCelestialBodiesState", () => {
     expect(celestialBodies.sun).toMatchObject({
       colorHex: "#ffddaa",
       intensity: 1.8,
+      horizonVisibility: 1,
       size: 28
     });
     expect(celestialBodies.moon).toMatchObject({
       colorHex: "#c7d8ff",
       intensity: 0.28,
+      horizonVisibility: 1,
       size: 20
     });
     expect(celestialBodies.sun?.direction.y ?? 0).toBeGreaterThan(0);
     expect(celestialBodies.moon?.direction.y ?? 0).toBeGreaterThan(0);
   });
 
-  it("hides celestial bodies when the feature is disabled or the light sits below the horizon", () => {
+  it("keeps celestial bodies visible through the lower horizon fade", () => {
+    const celestialBodies = resolveWorldCelestialBodiesState(
+      true,
+      {
+        colorHex: "#ffddaa",
+        intensity: 1.8,
+        direction: {
+          x: 0.2,
+          y: -0.16,
+          z: -0.1
+        }
+      },
+      null
+    );
+
+    expect(celestialBodies.sun).not.toBeNull();
+    expect(celestialBodies.sun?.horizonVisibility ?? 0).toBeGreaterThan(0);
+    expect(celestialBodies.sun?.horizonVisibility ?? 1).toBeLessThan(1);
+  });
+
+  it("hides celestial bodies when the feature is disabled or the light sits below the extended horizon fade", () => {
     const enabledButBelowHorizon = resolveWorldCelestialBodiesState(
       true,
       {
@@ -231,7 +254,7 @@ describe("resolveWorldCelestialBodiesState", () => {
         intensity: 1.8,
         direction: {
           x: 0.2,
-          y: -0.25,
+          y: -0.35,
           z: -0.1
         }
       },
@@ -267,5 +290,12 @@ describe("resolveWorldCelestialBodiesState", () => {
       sun: null,
       moon: null
     });
+  });
+
+  it("resolves celestial horizon visibility with a longer below-horizon fade", () => {
+    expect(resolveWorldCelestialHorizonVisibility(0)).toBe(1);
+    expect(resolveWorldCelestialHorizonVisibility(-0.16)).toBeGreaterThan(0);
+    expect(resolveWorldCelestialHorizonVisibility(-0.16)).toBeLessThan(1);
+    expect(resolveWorldCelestialHorizonVisibility(-0.35)).toBe(0);
   });
 });
