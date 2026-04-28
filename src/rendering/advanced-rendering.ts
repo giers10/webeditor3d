@@ -278,8 +278,8 @@ function configureEffectComposerDepthTextureIsolation(
     // postprocessing clones this source depth texture by default. Three.js
     // texture clones share a Source, which can alias the source and stable
     // depth attachments during gl.blitFramebuffer on WebKit.
-    const sourceDepthTexture = new DepthTexture();
-    const stableDepthTexture = new DepthTexture();
+    const sourceDepthTexture = new DepthTexture(1, 1);
+    const stableDepthTexture = new DepthTexture(1, 1);
 
     this.depthTexture = sourceDepthTexture;
 
