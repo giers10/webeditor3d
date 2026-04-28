@@ -185,6 +185,7 @@ export interface AdvancedRenderingGodRaysSettings {
   decay: number;
   exposure: number;
   density: number;
+  sourceSize: number;
   samples: number;
 }
 
@@ -301,6 +302,7 @@ const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_INTENSITY = 0.35;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_DECAY = 0.92;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_EXPOSURE = 0.28;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_DENSITY = 0.72;
+const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SOURCE_SIZE = 1;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SAMPLES = 48;
 const DEFAULT_BOX_VOLUME_RENDER_PATH: BoxVolumeRenderPath = "performance";
 const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE: AdvancedRenderingWaterReflectionMode =
@@ -573,6 +575,7 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
       decay: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_DECAY,
       exposure: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_EXPOSURE,
       density: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_DENSITY,
+      sourceSize: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SOURCE_SIZE,
       samples: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SAMPLES
     },
     fogPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
@@ -1104,6 +1107,7 @@ export function areAdvancedRenderingSettingsEqual(
     left.godRays.decay === right.godRays.decay &&
     left.godRays.exposure === right.godRays.exposure &&
     left.godRays.density === right.godRays.density &&
+    left.godRays.sourceSize === right.godRays.sourceSize &&
     left.godRays.samples === right.godRays.samples &&
     left.fogPath === right.fogPath &&
     left.waterPath === right.waterPath &&
