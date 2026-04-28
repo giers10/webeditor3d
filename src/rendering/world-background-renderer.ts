@@ -27,7 +27,9 @@ const BACKGROUND_SPHERE_HEIGHT_SEGMENTS = 24;
 const DEFAULT_IMAGE_BACKGROUND_FALLBACK_COLOR = "#0d1116";
 const NIGHT_BACKGROUND_EPSILON = 1e-4;
 const MIN_CELESTIAL_BODY_INTENSITY = 1e-4;
-const MIN_CELESTIAL_BODY_ALTITUDE = -0.02;
+const MIN_CELESTIAL_BODY_HORIZON_VISIBILITY = 1e-4;
+const CELESTIAL_BODY_HORIZON_FADE_START_OFFSET = -0.28;
+const CELESTIAL_BODY_HORIZON_FADE_END_OFFSET = -0.04;
 const CELESTIAL_BODY_DISTANCE = BACKGROUND_SPHERE_RADIUS - 6;
 const SUN_CELESTIAL_BODY_SIZE = 28;
 const MOON_CELESTIAL_BODY_SIZE = 20;
@@ -88,6 +90,7 @@ export interface WorldCelestialBodyState {
   colorHex: string;
   direction: Vec3;
   intensity: number;
+  horizonVisibility: number;
   size: number;
 }
 
@@ -192,6 +195,21 @@ function normalizeDirection(direction: Vec3): Vec3 | null {
   };
 }
 
+export function resolveWorldCelestialHorizonVisibility(
+  directionY: number,
+  horizonHeight: number = 0
+): number {
+  if (!Number.isFinite(directionY) || !Number.isFinite(horizonHeight)) {
+    return 0;
+  }
+
+  return smoothstep(
+    horizonHeight + CELESTIAL_BODY_HORIZON_FADE_START_OFFSET,
+    horizonHeight + CELESTIAL_BODY_HORIZON_FADE_END_OFFSET,
+    directionY
+  );
+}
+
 function resolveWorldCelestialBodyState(
   light: WorldSunLightSettings | null,
   size: number
@@ -202,7 +220,13 @@ function resolveWorldCelestialBodyState(
 
   const direction = normalizeDirection(light.direction);
 
-  if (direction === null || direction.y < MIN_CELESTIAL_BODY_ALTITUDE) {
+  if (direction === null) {
+    return null;
+  }
+
+  const horizonVisibility = resolveWorldCelestialHorizonVisibility(direction.y);
+
+  if (horizonVisibility <= MIN_CELESTIAL_BODY_HORIZON_VISIBILITY) {
     return null;
   }
 
@@ -210,6 +234,7 @@ function resolveWorldCelestialBodyState(
     colorHex: light.colorHex,
     direction,
     intensity: light.intensity,
+    horizonVisibility,
     size
   };
 }
