@@ -1,0 +1,425 @@
+import {
+  BasicDepthPacking,
+  Color,
+  ShaderMaterial,
+  Texture,
+  Uniform,
+  Vector2,
+  Vector3,
+  type DepthPackingStrategies,
+  type PerspectiveCamera,
+  type WebGLRenderer,
+  type WebGLRenderTarget
+} from "three";
+import { Pass } from "postprocessing";
+
+import type { Vec3 } from "../core/vector";
+import type {
+  AdvancedRenderingGodRaysSettings,
+  AdvancedRenderingSettings,
+  WorldSunLightSettings
+} from "../document/world-settings";
+
+const MIN_CELESTIAL_LIGHT_INTENSITY = 1e-4;
+const MAX_GOD_RAYS_INTENSITY = 3;
+const MAX_GOD_RAYS_EXPOSURE = 2;
+const MAX_GOD_RAYS_DENSITY = 1.5;
+const MIN_GOD_RAYS_SAMPLES = 8;
+const MAX_GOD_RAYS_SAMPLES = 64;
+const LIGHT_OFFSCREEN_FADE_START = 1;
+const LIGHT_OFFSCREEN_FADE_END = 1.35;
+
+export interface ResolvedGodRaysParameters {
+  enabled: boolean;
+  intensity: number;
+  decay: number;
+  exposure: number;
+  density: number;
+  samples: number;
+}
+
+export interface ScreenSpaceGodRaysLightSource {
+  direction: Vec3 | null;
+  colorHex: string;
+  intensity: number;
+}
+
+export interface ScreenSpaceGodRaysLightProjection {
+  screenPosition: {
+    x: number;
+    y: number;
+  };
+  visibility: number;
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function finiteOr(value: number, fallback: number) {
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function smoothstep(edge0: number, edge1: number, value: number) {
+  const t = clampNumber((value - edge0) / (edge1 - edge0), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+function isFiniteVec3(vector: Vec3 | null): vector is Vec3 {
+  return (
+    vector !== null &&
+    Number.isFinite(vector.x) &&
+    Number.isFinite(vector.y) &&
+    Number.isFinite(vector.z)
+  );
+}
+
+export function createScreenSpaceGodRaysLightSource(): ScreenSpaceGodRaysLightSource {
+  return {
+    direction: null,
+    colorHex: "#ffffff",
+    intensity: 0
+  };
+}
+
+export function syncScreenSpaceGodRaysLightSource(
+  target: ScreenSpaceGodRaysLightSource,
+  light: WorldSunLightSettings | null
+) {
+  if (
+    light === null ||
+    light.intensity <= MIN_CELESTIAL_LIGHT_INTENSITY ||
+    !isFiniteVec3(light.direction)
+  ) {
+    target.direction = null;
+    target.colorHex = "#ffffff";
+    target.intensity = 0;
+    return;
+  }
+
+  target.direction = {
+    x: light.direction.x,
+    y: light.direction.y,
+    z: light.direction.z
+  };
+  target.colorHex = light.colorHex;
+  target.intensity = light.intensity;
+}
+
+export function resolveGodRaysParameters(
+  settings: AdvancedRenderingGodRaysSettings
+): ResolvedGodRaysParameters {
+  const intensity = clampNumber(
+    finiteOr(settings.intensity, 0),
+    0,
+    MAX_GOD_RAYS_INTENSITY
+  );
+  const decay = clampNumber(finiteOr(settings.decay, 0), 0, 1);
+  const exposure = clampNumber(
+    finiteOr(settings.exposure, 0),
+    0,
+    MAX_GOD_RAYS_EXPOSURE
+  );
+  const density = clampNumber(
+    finiteOr(settings.density, 0),
+    0,
+    MAX_GOD_RAYS_DENSITY
+  );
+  const samples = Math.round(
+    clampNumber(
+      finiteOr(settings.samples, MIN_GOD_RAYS_SAMPLES),
+      MIN_GOD_RAYS_SAMPLES,
+      MAX_GOD_RAYS_SAMPLES
+    )
+  );
+
+  return {
+    enabled:
+      settings.enabled &&
+      intensity > 0 &&
+      exposure > 0 &&
+      density > 0 &&
+      samples > 0,
+    intensity,
+    decay,
+    exposure,
+    density,
+    samples
+  };
+}
+
+export function shouldApplyGodRays(settings: AdvancedRenderingSettings) {
+  return settings.enabled && resolveGodRaysParameters(settings.godRays).enabled;
+}
+
+export function projectScreenSpaceGodRaysLight(
+  camera: PerspectiveCamera,
+  lightSource: ScreenSpaceGodRaysLightSource
+): ScreenSpaceGodRaysLightProjection | null {
+  if (
+    lightSource.intensity <= MIN_CELESTIAL_LIGHT_INTENSITY ||
+    !isFiniteVec3(lightSource.direction)
+  ) {
+    return null;
+  }
+
+  const direction = new Vector3(
+    lightSource.direction.x,
+    lightSource.direction.y,
+    lightSource.direction.z
+  );
+
+  if (direction.lengthSq() <= 1e-8) {
+    return null;
+  }
+
+  direction.normalize();
+  camera.updateMatrixWorld();
+  camera.updateProjectionMatrix();
+
+  const cameraPosition = new Vector3().setFromMatrixPosition(
+    camera.matrixWorld
+  );
+  const projectionDistance = Math.max(
+    camera.near + 1,
+    Math.min(camera.far * 0.5, 500)
+  );
+  const worldPosition = cameraPosition
+    .clone()
+    .add(direction.multiplyScalar(projectionDistance));
+  const viewPosition = worldPosition.clone().applyMatrix4(
+    camera.matrixWorldInverse
+  );
+
+  if (viewPosition.z >= -camera.near) {
+    return null;
+  }
+
+  const ndcPosition = worldPosition.clone().project(camera);
+
+  if (
+    !Number.isFinite(ndcPosition.x) ||
+    !Number.isFinite(ndcPosition.y)
+  ) {
+    return null;
+  }
+
+  const maxAxisDistance = Math.max(
+    Math.abs(ndcPosition.x),
+    Math.abs(ndcPosition.y)
+  );
+  const visibility =
+    1 -
+    smoothstep(
+      LIGHT_OFFSCREEN_FADE_START,
+      LIGHT_OFFSCREEN_FADE_END,
+      maxAxisDistance
+    );
+
+  if (visibility <= 0) {
+    return null;
+  }
+
+  return {
+    screenPosition: {
+      x: ndcPosition.x * 0.5 + 0.5,
+      y: ndcPosition.y * 0.5 + 0.5
+    },
+    visibility
+  };
+}
+
+const vertexShader = `
+varying vec2 vUv;
+
+void main() {
+  vUv = uv;
+  gl_Position = vec4(position.xy, 1.0, 1.0);
+}
+`;
+
+const fragmentShader = `
+#include <packing>
+
+#define MAX_GOD_RAYS_SAMPLES 64
+
+uniform sampler2D inputBuffer;
+uniform sampler2D depthBuffer;
+uniform vec2 lightPosition;
+uniform vec3 lightColor;
+uniform float sourceIntensity;
+uniform float intensity;
+uniform float decay;
+uniform float exposure;
+uniform float density;
+uniform int sampleCount;
+
+varying vec2 vUv;
+
+float readDepth(const in vec2 uv) {
+#if DEPTH_PACKING == 3201
+  return unpackRGBAToDepth(texture2D(depthBuffer, uv));
+#else
+  return texture2D(depthBuffer, uv).r;
+#endif
+}
+
+float readLuminance(vec3 color) {
+  return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
+
+void main() {
+  vec4 baseColor = texture2D(inputBuffer, vUv);
+
+  if (
+    sourceIntensity <= 0.0 ||
+    intensity <= 0.0 ||
+    exposure <= 0.0 ||
+    density <= 0.0 ||
+    sampleCount <= 0
+  ) {
+    gl_FragColor = baseColor;
+    return;
+  }
+
+  vec2 delta = (lightPosition - vUv) * density / max(float(sampleCount), 1.0);
+  vec2 sampleUv = vUv;
+  vec3 accumulatedLight = vec3(0.0);
+  float illuminationDecay = 1.0;
+
+  for (int sampleIndex = 0; sampleIndex < MAX_GOD_RAYS_SAMPLES; ++sampleIndex) {
+    if (sampleIndex >= sampleCount) {
+      break;
+    }
+
+    sampleUv += delta;
+
+    if (
+      sampleUv.x < 0.0 ||
+      sampleUv.x > 1.0 ||
+      sampleUv.y < 0.0 ||
+      sampleUv.y > 1.0
+    ) {
+      illuminationDecay *= decay;
+      continue;
+    }
+
+    float depth = readDepth(sampleUv);
+    float backgroundMask = smoothstep(0.9975, 1.0, depth);
+
+    if (backgroundMask <= 0.0) {
+      illuminationDecay *= decay;
+      continue;
+    }
+
+    vec3 sampleColor = texture2D(inputBuffer, sampleUv).rgb;
+    float luminance = readLuminance(sampleColor);
+    float brightness = smoothstep(0.025, 0.75, luminance);
+    float contribution = backgroundMask * (0.32 + brightness * 0.68) * illuminationDecay;
+    accumulatedLight += mix(lightColor, sampleColor, 0.35) * contribution;
+    illuminationDecay *= decay;
+  }
+
+  vec3 shaftColor =
+    accumulatedLight *
+    exposure *
+    intensity *
+    sourceIntensity /
+    max(float(sampleCount), 1.0);
+
+  gl_FragColor = vec4(baseColor.rgb + shaftColor, baseColor.a);
+}
+`;
+
+export class ScreenSpaceGodRaysPass extends Pass {
+  private readonly sourceCamera: PerspectiveCamera;
+  private readonly lightSource: ScreenSpaceGodRaysLightSource;
+  private readonly parameters: ResolvedGodRaysParameters;
+  private readonly material: ShaderMaterial;
+  private readonly lightPosition = new Vector2(0.5, 0.5);
+  private readonly lightColor = new Color("#ffffff");
+
+  constructor(
+    camera: PerspectiveCamera,
+    lightSource: ScreenSpaceGodRaysLightSource,
+    parameters: ResolvedGodRaysParameters
+  ) {
+    super("ScreenSpaceGodRaysPass");
+
+    this.sourceCamera = camera;
+    this.lightSource = lightSource;
+    this.parameters = parameters;
+    this.needsDepthTexture = true;
+
+    this.material = new ShaderMaterial({
+      name: "ScreenSpaceGodRaysMaterial",
+      defines: {
+        DEPTH_PACKING: BasicDepthPacking.toFixed(0)
+      },
+      uniforms: {
+        inputBuffer: new Uniform<Texture | null>(null),
+        depthBuffer: new Uniform<Texture | null>(null),
+        lightPosition: new Uniform(this.lightPosition),
+        lightColor: new Uniform(this.lightColor),
+        sourceIntensity: new Uniform(0),
+        intensity: new Uniform(parameters.intensity),
+        decay: new Uniform(parameters.decay),
+        exposure: new Uniform(parameters.exposure),
+        density: new Uniform(parameters.density),
+        sampleCount: new Uniform(parameters.samples)
+      },
+      vertexShader,
+      fragmentShader,
+      depthWrite: false,
+      depthTest: false
+    });
+    this.fullscreenMaterial = this.material;
+  }
+
+  override setDepthTexture(
+    depthTexture: Texture | null,
+    depthPacking: DepthPackingStrategies = BasicDepthPacking
+  ) {
+    this.material.uniforms.depthBuffer.value = depthTexture;
+    this.material.defines.DEPTH_PACKING = depthPacking.toFixed(0);
+    this.material.needsUpdate = true;
+  }
+
+  override render(
+    renderer: WebGLRenderer,
+    inputBuffer: WebGLRenderTarget | null,
+    outputBuffer: WebGLRenderTarget | null
+  ) {
+    if (inputBuffer === null) {
+      return;
+    }
+
+    const projection = projectScreenSpaceGodRaysLight(
+      this.sourceCamera,
+      this.lightSource
+    );
+    const sourceIntensity =
+      projection === null
+        ? 0
+        : Math.min(this.lightSource.intensity, 4) * projection.visibility;
+
+    if (projection !== null) {
+      this.lightPosition.set(
+        projection.screenPosition.x,
+        projection.screenPosition.y
+      );
+    }
+
+    this.lightColor.set(this.lightSource.colorHex);
+    this.material.uniforms.inputBuffer.value = inputBuffer.texture;
+    this.material.uniforms.sourceIntensity.value = sourceIntensity;
+    this.material.uniforms.intensity.value = this.parameters.intensity;
+    this.material.uniforms.decay.value = this.parameters.decay;
+    this.material.uniforms.exposure.value = this.parameters.exposure;
+    this.material.uniforms.density.value = this.parameters.density;
+    this.material.uniforms.sampleCount.value = this.parameters.samples;
+
+    renderer.setRenderTarget(this.renderToScreen ? null : outputBuffer);
+    renderer.render(this.scene, this.camera);
+  }
+}
