@@ -3239,6 +3239,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     String(editorState.document.world.advancedRendering.godRays.density)
   );
   const [
+    advancedRenderingGodRaysSourceSizeDraft,
+    setAdvancedRenderingGodRaysSourceSizeDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.godRays.sourceSize)
+  );
+  const [
     advancedRenderingGodRaysSamplesDraft,
     setAdvancedRenderingGodRaysSamplesDraft
   ] = useState(
@@ -4315,6 +4321,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
     setAdvancedRenderingGodRaysDensityDraft(
       String(advancedRendering.godRays.density)
+    );
+    setAdvancedRenderingGodRaysSourceSizeDraft(
+      String(advancedRendering.godRays.sourceSize)
     );
     setAdvancedRenderingGodRaysSamplesDraft(
       String(advancedRendering.godRays.samples)
@@ -12574,6 +12583,23 @@ export function App({ store, initialStatusMessage }: AppProps) {
           advancedRendering.godRays.density = readNonNegativeNumberDraft(
             advancedRenderingGodRaysDensityDraft,
             "God rays density"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingGodRaysSourceSize = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set god rays source size",
+        "Updated the god rays source size.",
+        (advancedRendering) => {
+          advancedRendering.godRays.sourceSize = readPositiveNumberDraft(
+            advancedRenderingGodRaysSourceSizeDraft,
+            "God rays source size"
           );
         }
       );
