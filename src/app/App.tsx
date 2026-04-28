@@ -925,6 +925,45 @@ function createPlayerStartMovementTemplateNumberDraft(
   };
 }
 
+function arePlayerStartMovementTemplateNumberDraftsEqual(
+  left: PlayerStartMovementTemplateNumberDraft,
+  right: PlayerStartMovementTemplateNumberDraft
+): boolean {
+  return (
+    left.moveSpeed === right.moveSpeed &&
+    left.maxSpeed === right.maxSpeed &&
+    left.maxStepHeight === right.maxStepHeight &&
+    left.jumpSpeed === right.jumpSpeed &&
+    left.jumpBufferMs === right.jumpBufferMs &&
+    left.coyoteTimeMs === right.coyoteTimeMs &&
+    left.variableJumpMaxHoldMs === right.variableJumpMaxHoldMs &&
+    left.bunnyHopBoost === right.bunnyHopBoost &&
+    left.sprintSpeedMultiplier === right.sprintSpeedMultiplier &&
+    left.crouchSpeedMultiplier === right.crouchSpeedMultiplier
+  );
+}
+
+function summarizeEditorSimulationUiSnapshotForTrace(
+  snapshot: EditorSimulationUiSnapshot
+) {
+  return {
+    playing: snapshot.playing,
+    overrideActive: snapshot.overrideActive,
+    sceneReady: snapshot.sceneReady,
+    sceneVersion: snapshot.sceneVersion,
+    frameVersion: snapshot.frameVersion,
+    message: snapshot.message,
+    clock:
+      snapshot.clock === null
+        ? null
+        : {
+            dayCount: snapshot.clock.dayCount,
+            timeOfDayHours: snapshot.clock.timeOfDayHours,
+            dayLengthMinutes: snapshot.clock.dayLengthMinutes
+          }
+  };
+}
+
 function readVec2Draft(draft: Vec2Draft, label: string): Vec2 {
   if (draft.x.trim().length === 0 || draft.y.trim().length === 0) {
     throw new Error(`${label} values must be provided.`);
