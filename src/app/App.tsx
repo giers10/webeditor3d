@@ -17487,6 +17487,131 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         </div>
 
                         <div className="form-section">
+                          <div className="label">
+                            Dynamic Global Illumination
+                          </div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={
+                                advancedRendering.dynamicGlobalIllumination
+                                  .enabled
+                              }
+                              onChange={(event) =>
+                                applyAdvancedRenderingDynamicGlobalIlluminationEnabled(
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Intensity</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                value={
+                                  advancedRenderingDynamicGlobalIlluminationIntensityDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingDynamicGlobalIlluminationIntensityDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingDynamicGlobalIlluminationIntensity
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingDynamicGlobalIlluminationIntensity
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingDynamicGlobalIlluminationIntensity
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingDynamicGlobalIlluminationIntensity
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Radius</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.25"
+                                value={
+                                  advancedRenderingDynamicGlobalIlluminationRadiusDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingDynamicGlobalIlluminationRadiusDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingDynamicGlobalIlluminationRadius
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingDynamicGlobalIlluminationRadius
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingDynamicGlobalIlluminationRadius
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingDynamicGlobalIlluminationRadius
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <label className="form-field">
+                            <span className="label">Quality</span>
+                            <select
+                              className="select-input"
+                              value={
+                                advancedRendering.dynamicGlobalIllumination
+                                  .quality
+                              }
+                              onChange={(event) =>
+                                applyAdvancedRenderingDynamicGlobalIlluminationQuality(
+                                  event.currentTarget
+                                    .value as AdvancedRenderingDynamicGlobalIlluminationQuality
+                                )
+                              }
+                            >
+                              {ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_QUALITIES.map(
+                                (quality) => (
+                                  <option key={quality} value={quality}>
+                                    {formatAdvancedRenderingDynamicGlobalIlluminationQualityLabel(
+                                      quality
+                                    )}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                          </label>
+                        </div>
+
+                        <div className="form-section">
                           <div className="label">Bloom</div>
                           <label className="form-field form-field--toggle">
                             <span className="label">Enabled</span>
