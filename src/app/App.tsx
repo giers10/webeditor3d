@@ -12276,6 +12276,105 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyAdvancedRenderingDistanceFogEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set distance fog",
+      enabled ? "Distance fog enabled." : "Distance fog disabled.",
+      (advancedRendering) => {
+        advancedRendering.distanceFog.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingDistanceFogColor = (colorHex: string) => {
+    applyAdvancedRenderingSettings(
+      "Set distance fog color",
+      "Updated the distance fog color.",
+      (advancedRendering) => {
+        advancedRendering.distanceFog.colorHex = colorHex;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingDistanceFogNearDistance = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set distance fog near distance",
+        "Updated the distance fog near distance.",
+        (advancedRendering) => {
+          advancedRendering.distanceFog.nearDistance =
+            readNonNegativeNumberDraft(
+              advancedRenderingDistanceFogNearDistanceDraft,
+              "Distance fog near distance"
+            );
+          assertAdvancedRenderingDistanceFogRange(
+            advancedRendering.distanceFog
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingDistanceFogFarDistance = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set distance fog far distance",
+        "Updated the distance fog far distance.",
+        (advancedRendering) => {
+          advancedRendering.distanceFog.farDistance = readPositiveNumberDraft(
+            advancedRenderingDistanceFogFarDistanceDraft,
+            "Distance fog far distance"
+          );
+          assertAdvancedRenderingDistanceFogRange(
+            advancedRendering.distanceFog
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingDistanceFogStrength = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set distance fog strength",
+        "Updated the distance fog strength.",
+        (advancedRendering) => {
+          advancedRendering.distanceFog.strength = readUnitIntervalNumberDraft(
+            advancedRenderingDistanceFogStrengthDraft,
+            "Distance fog strength"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingDistanceFogRenderDistance = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set distance fog render distance",
+        "Updated the distance fog render distance.",
+        (advancedRendering) => {
+          advancedRendering.distanceFog.renderDistance =
+            readPositiveNumberDraft(
+              advancedRenderingDistanceFogRenderDistanceDraft,
+              "Distance fog render distance"
+            );
+          assertAdvancedRenderingDistanceFogRange(
+            advancedRendering.distanceFog
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyAdvancedRenderingFogPath = (path: BoxVolumeRenderPath) => {
     applyAdvancedRenderingSettings(
       "Set fog render path",
