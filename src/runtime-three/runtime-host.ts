@@ -85,6 +85,7 @@ import {
   resolveBoxVolumeRenderPaths,
   type ResolvedBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
+import { applyAdvancedRenderingPerspectiveCameraFar } from "../rendering/distance-fog-pass";
 import {
   fitCelestialDirectionalShadow,
   resolveDominantCelestialShadowCaster
@@ -331,6 +332,7 @@ interface RuntimeWaterContactUniformBinding {
 }
 
 const FALLBACK_FACE_COLOR = 0xf2ece2;
+const RUNTIME_PERSPECTIVE_CAMERA_FAR = 1000;
 const RUNTIME_CLOCK_PUBLISH_INTERVAL_SECONDS = 1 / 30;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
 const POINTER_LOCK_ESCAPE_RELEASE_GRACE_MS = 500;
@@ -621,7 +623,12 @@ type TargetingLuxFlightState =
 export class RuntimeHost {
   private readonly scene = new Scene();
   private readonly worldBackgroundRenderer = new WorldBackgroundRenderer();
-  private readonly camera = new PerspectiveCamera(70, 1, 0.05, 1000);
+  private readonly camera = new PerspectiveCamera(
+    70,
+    1,
+    0.05,
+    RUNTIME_PERSPECTIVE_CAMERA_FAR
+  );
   private readonly cameraForward = new Vector3();
   private readonly cameraRigLookTarget = new Vector3();
   private readonly cameraRigDirection = new Vector3();
