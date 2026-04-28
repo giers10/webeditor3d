@@ -894,6 +894,39 @@ describe("scene document JSON", () => {
     ).toEqual(emptyScene.world.advancedRendering.dynamicGlobalIllumination);
   });
 
+  it("migrates v85 scene documents without distance fog settings to defaults", () => {
+    const emptyScene = createEmptySceneDocument({
+      name: "Legacy Distance Fog Scene"
+    });
+    const { distanceFog: _distanceFog, ...legacyAdvancedRendering } =
+      emptyScene.world.advancedRendering;
+
+    const migratedDocument = migrateSceneDocument({
+      version: DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION,
+      name: emptyScene.name,
+      time: emptyScene.time,
+      scheduler: emptyScene.scheduler,
+      world: {
+        ...emptyScene.world,
+        advancedRendering: legacyAdvancedRendering
+      },
+      materials: emptyScene.materials,
+      textures: emptyScene.textures,
+      assets: emptyScene.assets,
+      brushes: emptyScene.brushes,
+      terrains: emptyScene.terrains,
+      paths: emptyScene.paths,
+      modelInstances: emptyScene.modelInstances,
+      entities: emptyScene.entities,
+      interactionLinks: emptyScene.interactionLinks
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.advancedRendering.distanceFog).toEqual(
+      emptyScene.world.advancedRendering.distanceFog
+    );
+  });
+
   it("defaults missing water reflection mode and clamps legacy foam limits during migration", () => {
     const migratedDocument = migrateSceneDocument({
       version: SCENE_DOCUMENT_VERSION,
