@@ -47,6 +47,10 @@ import {
   POST_AO_TRANSPARENT_RENDER_LAYER_MASK,
   isMaterialEligibleForAmbientOcclusion
 } from "./render-layers";
+import {
+  ScreenSpaceGlobalIlluminationPass,
+  resolveDynamicGlobalIlluminationParameters
+} from "./screen-space-global-illumination";
 
 const AMBIENT_OCCLUSION_LUMINANCE_INFLUENCE = 0.15;
 const MIN_AMBIENT_OCCLUSION_EFFECT_RADIUS = 0.02;
@@ -260,7 +264,15 @@ export function createAdvancedRenderingComposer(
       ? HalfFloatType
       : UnsignedByteType
   });
-  const mainRenderLayerMask = settings.ambientOcclusion.enabled
+  const dynamicGlobalIlluminationParameters =
+    resolveDynamicGlobalIlluminationParameters(
+      settings.dynamicGlobalIllumination
+    );
+  const dynamicGlobalIlluminationEnabled =
+    settings.enabled && dynamicGlobalIlluminationParameters.enabled;
+  const postWorldLayerIsolationEnabled =
+    settings.ambientOcclusion.enabled || dynamicGlobalIlluminationEnabled;
+  const mainRenderLayerMask = postWorldLayerIsolationEnabled
     ? AO_WORLD_RENDER_LAYER_MASK
     : ALL_RENDER_LAYER_MASK;
 
@@ -281,7 +293,7 @@ export function createAdvancedRenderingComposer(
     BloomEffect | DepthOfFieldEffect | ToneMappingEffect | SMAAEffect
   > = [];
 
-  if (settings.ambientOcclusion.enabled) {
+  if (settings.ambientOcclusion.enabled || dynamicGlobalIlluminationEnabled) {
     // postprocessing's internal depth-downsampling path writes zero normals unless
     // a real normal buffer is supplied, which turns SSAO into speckled noise.
     const normalPass = new RenderLayerNormalPass(
@@ -291,42 +303,55 @@ export function createAdvancedRenderingComposer(
     );
     composer.addPass(normalPass);
 
-    const ambientOcclusionRadius = clampAmbientOcclusionEffectRadius(
-      settings.ambientOcclusion.radius
-    );
-    const ambientOcclusionSamples = getAmbientOcclusionSampleCount(
-      settings.ambientOcclusion.samples
-    );
-    const detailAmbientOcclusionRadius = Math.max(
-      ambientOcclusionRadius * DETAIL_AMBIENT_OCCLUSION_RADIUS_SCALE,
-      MIN_AMBIENT_OCCLUSION_EFFECT_RADIUS
-    );
+    if (dynamicGlobalIlluminationEnabled) {
+      composer.addPass(
+        new ScreenSpaceGlobalIlluminationPass(
+          camera,
+          normalPass.texture,
+          dynamicGlobalIlluminationParameters
+        )
+      );
+    }
 
-    composer.addPass(
-      new EffectPass(
-        camera,
-        new SSAOEffect(camera, normalPass.texture, {
-          depthAwareUpsampling: true,
-          luminanceInfluence: AMBIENT_OCCLUSION_LUMINANCE_INFLUENCE,
-          resolutionScale: COARSE_AMBIENT_OCCLUSION_RESOLUTION_SCALE,
-          samples: ambientOcclusionSamples,
-          radius: ambientOcclusionRadius,
-          intensity:
-            settings.ambientOcclusion.intensity *
-            COARSE_AMBIENT_OCCLUSION_INTENSITY_SCALE
-        }),
-        new SSAOEffect(camera, normalPass.texture, {
-          depthAwareUpsampling: true,
-          luminanceInfluence: AMBIENT_OCCLUSION_LUMINANCE_INFLUENCE,
-          resolutionScale: DETAIL_AMBIENT_OCCLUSION_RESOLUTION_SCALE,
-          samples: ambientOcclusionSamples,
-          radius: detailAmbientOcclusionRadius,
-          intensity:
-            settings.ambientOcclusion.intensity *
-            DETAIL_AMBIENT_OCCLUSION_INTENSITY_SCALE
-        })
-      )
-    );
+    if (settings.ambientOcclusion.enabled) {
+      const ambientOcclusionRadius = clampAmbientOcclusionEffectRadius(
+        settings.ambientOcclusion.radius
+      );
+      const ambientOcclusionSamples = getAmbientOcclusionSampleCount(
+        settings.ambientOcclusion.samples
+      );
+      const detailAmbientOcclusionRadius = Math.max(
+        ambientOcclusionRadius * DETAIL_AMBIENT_OCCLUSION_RADIUS_SCALE,
+        MIN_AMBIENT_OCCLUSION_EFFECT_RADIUS
+      );
+
+      composer.addPass(
+        new EffectPass(
+          camera,
+          new SSAOEffect(camera, normalPass.texture, {
+            depthAwareUpsampling: true,
+            luminanceInfluence: AMBIENT_OCCLUSION_LUMINANCE_INFLUENCE,
+            resolutionScale: COARSE_AMBIENT_OCCLUSION_RESOLUTION_SCALE,
+            samples: ambientOcclusionSamples,
+            radius: ambientOcclusionRadius,
+            intensity:
+              settings.ambientOcclusion.intensity *
+              COARSE_AMBIENT_OCCLUSION_INTENSITY_SCALE
+          }),
+          new SSAOEffect(camera, normalPass.texture, {
+            depthAwareUpsampling: true,
+            luminanceInfluence: AMBIENT_OCCLUSION_LUMINANCE_INFLUENCE,
+            resolutionScale: DETAIL_AMBIENT_OCCLUSION_RESOLUTION_SCALE,
+            samples: ambientOcclusionSamples,
+            radius: detailAmbientOcclusionRadius,
+            intensity:
+              settings.ambientOcclusion.intensity *
+              DETAIL_AMBIENT_OCCLUSION_INTENSITY_SCALE
+          })
+        )
+      );
+    }
+
     composer.addPass(new ShaderPass(new CopyMaterial()));
     composer.addPass(
       createPostAmbientOcclusionRenderPass(
