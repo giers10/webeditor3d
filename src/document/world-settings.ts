@@ -32,6 +32,10 @@ export const ADVANCED_RENDERING_WATER_REFLECTION_MODES = [
   "world",
   "all"
 ] as const;
+export const ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_QUALITIES = [
+  "low",
+  "medium"
+] as const;
 
 export type AdvancedRenderingShadowMapSize =
   (typeof ADVANCED_RENDERING_SHADOW_MAP_SIZES)[number];
@@ -42,6 +46,8 @@ export type AdvancedRenderingToneMappingMode =
 export type BoxVolumeRenderPath = (typeof BOX_VOLUME_RENDER_PATHS)[number];
 export type AdvancedRenderingWaterReflectionMode =
   (typeof ADVANCED_RENDERING_WATER_REFLECTION_MODES)[number];
+export type AdvancedRenderingDynamicGlobalIlluminationQuality =
+  (typeof ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_QUALITIES)[number];
 
 export interface WorldSolidBackgroundSettings {
   mode: "solid";
@@ -129,6 +135,13 @@ export interface AdvancedRenderingAmbientOcclusionSettings {
   samples: number;
 }
 
+export interface AdvancedRenderingDynamicGlobalIlluminationSettings {
+  enabled: boolean;
+  intensity: number;
+  radius: number;
+  quality: AdvancedRenderingDynamicGlobalIlluminationQuality;
+}
+
 export interface AdvancedRenderingBloomSettings {
   enabled: boolean;
   intensity: number;
@@ -158,6 +171,7 @@ export interface AdvancedRenderingSettings {
   enabled: boolean;
   shadows: AdvancedRenderingShadowsSettings;
   ambientOcclusion: AdvancedRenderingAmbientOcclusionSettings;
+  dynamicGlobalIllumination: AdvancedRenderingDynamicGlobalIlluminationSettings;
   bloom: AdvancedRenderingBloomSettings;
   toneMapping: AdvancedRenderingToneMappingSettings;
   depthOfField: AdvancedRenderingDepthOfFieldSettings;
@@ -237,6 +251,10 @@ const DEFAULT_ADVANCED_RENDERING_SHADOW_BIAS = -0.0005;
 const DEFAULT_ADVANCED_RENDERING_AMBIENT_OCCLUSION_INTENSITY = 1;
 const DEFAULT_ADVANCED_RENDERING_AMBIENT_OCCLUSION_RADIUS = 0.5;
 const DEFAULT_ADVANCED_RENDERING_AMBIENT_OCCLUSION_SAMPLES = 8;
+const DEFAULT_ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_INTENSITY = 1.25;
+const DEFAULT_ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_RADIUS = 3.5;
+const DEFAULT_ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_QUALITY: AdvancedRenderingDynamicGlobalIlluminationQuality =
+  "low";
 const DEFAULT_ADVANCED_RENDERING_BLOOM_INTENSITY = 0.75;
 const DEFAULT_ADVANCED_RENDERING_BLOOM_THRESHOLD = 0.85;
 const DEFAULT_ADVANCED_RENDERING_BLOOM_RADIUS = 0.35;
@@ -451,6 +469,14 @@ export function isAdvancedRenderingWaterReflectionMode(
   );
 }
 
+export function isAdvancedRenderingDynamicGlobalIlluminationQuality(
+  value: unknown
+): value is AdvancedRenderingDynamicGlobalIlluminationQuality {
+  return ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_QUALITIES.includes(
+    value as AdvancedRenderingDynamicGlobalIlluminationQuality
+  );
+}
+
 export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSettings {
   return {
     enabled: false,
@@ -465,6 +491,13 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
       intensity: DEFAULT_ADVANCED_RENDERING_AMBIENT_OCCLUSION_INTENSITY,
       radius: DEFAULT_ADVANCED_RENDERING_AMBIENT_OCCLUSION_RADIUS,
       samples: DEFAULT_ADVANCED_RENDERING_AMBIENT_OCCLUSION_SAMPLES
+    },
+    dynamicGlobalIllumination: {
+      enabled: false,
+      intensity:
+        DEFAULT_ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_INTENSITY,
+      radius: DEFAULT_ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_RADIUS,
+      quality: DEFAULT_ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_QUALITY
     },
     bloom: {
       enabled: false,
@@ -794,6 +827,9 @@ export function cloneAdvancedRenderingSettings(
     ambientOcclusion: {
       ...settings.ambientOcclusion
     },
+    dynamicGlobalIllumination: {
+      ...settings.dynamicGlobalIllumination
+    },
     bloom: {
       ...settings.bloom
     },
@@ -972,6 +1008,14 @@ export function areAdvancedRenderingSettingsEqual(
     left.ambientOcclusion.intensity === right.ambientOcclusion.intensity &&
     left.ambientOcclusion.radius === right.ambientOcclusion.radius &&
     left.ambientOcclusion.samples === right.ambientOcclusion.samples &&
+    left.dynamicGlobalIllumination.enabled ===
+      right.dynamicGlobalIllumination.enabled &&
+    left.dynamicGlobalIllumination.intensity ===
+      right.dynamicGlobalIllumination.intensity &&
+    left.dynamicGlobalIllumination.radius ===
+      right.dynamicGlobalIllumination.radius &&
+    left.dynamicGlobalIllumination.quality ===
+      right.dynamicGlobalIllumination.quality &&
     left.bloom.enabled === right.bloom.enabled &&
     left.bloom.intensity === right.bloom.intensity &&
     left.bloom.threshold === right.bloom.threshold &&
