@@ -1239,6 +1239,41 @@ function validateWorldSettings(
     );
   }
 
+  if (!isFiniteNumberInRange(advancedRendering.distanceFog.skyBlend, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-distance-fog-sky-blend",
+        "Advanced rendering distance fog sky blend must be a finite number between 0 and 1.",
+        "world.advancedRendering.distanceFog.skyBlend"
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(advancedRendering.distanceFog.horizonStrength, 0, 1)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-distance-fog-horizon-strength",
+        "Advanced rendering distance fog horizon strength must be a finite number between 0 and 1.",
+        "world.advancedRendering.distanceFog.horizonStrength"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.distanceFog.heightFalloff)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-distance-fog-height-falloff",
+        "Advanced rendering distance fog height falloff must be a non-negative finite number.",
+        "world.advancedRendering.distanceFog.heightFalloff"
+      )
+    );
+  }
+
   if (!isBoolean(advancedRendering.godRays.enabled)) {
     diagnostics.push(
       createDiagnostic(

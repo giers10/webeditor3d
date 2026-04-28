@@ -174,6 +174,9 @@ export interface AdvancedRenderingDistanceFogSettings {
   farDistance: number;
   strength: number;
   renderDistance: number;
+  skyBlend: number;
+  horizonStrength: number;
+  heightFalloff: number;
 }
 
 export interface AdvancedRenderingGodRaysSettings {
@@ -291,6 +294,9 @@ const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_NEAR_DISTANCE = 70;
 const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_FAR_DISTANCE = 180;
 const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_STRENGTH = 0.85;
 const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_RENDER_DISTANCE = 220;
+const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_SKY_BLEND = 0.35;
+const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_HORIZON_STRENGTH = 0.55;
+const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_HEIGHT_FALLOFF = 0.012;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_INTENSITY = 0.35;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_DECAY = 0.92;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_EXPOSURE = 0.28;
@@ -556,7 +562,10 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
       nearDistance: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_NEAR_DISTANCE,
       farDistance: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_FAR_DISTANCE,
       strength: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_STRENGTH,
-      renderDistance: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_RENDER_DISTANCE
+      renderDistance: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_RENDER_DISTANCE,
+      skyBlend: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_SKY_BLEND,
+      horizonStrength: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_HORIZON_STRENGTH,
+      heightFalloff: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_HEIGHT_FALLOFF
     },
     godRays: {
       enabled: false,
@@ -1087,6 +1096,9 @@ export function areAdvancedRenderingSettingsEqual(
     left.distanceFog.farDistance === right.distanceFog.farDistance &&
     left.distanceFog.strength === right.distanceFog.strength &&
     left.distanceFog.renderDistance === right.distanceFog.renderDistance &&
+    left.distanceFog.skyBlend === right.distanceFog.skyBlend &&
+    left.distanceFog.horizonStrength === right.distanceFog.horizonStrength &&
+    left.distanceFog.heightFalloff === right.distanceFog.heightFalloff &&
     left.godRays.enabled === right.godRays.enabled &&
     left.godRays.intensity === right.godRays.intensity &&
     left.godRays.decay === right.godRays.decay &&

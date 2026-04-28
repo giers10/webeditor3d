@@ -165,6 +165,7 @@ import {
 import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
+  ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION,
   AUTHORED_TERRAIN_COLLISION_SCENE_DOCUMENT_VERSION,
   AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
   AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
@@ -1019,6 +1020,21 @@ function readAdvancedRenderingSettings(
         distanceFog?.renderDistance,
         "world.advancedRendering.distanceFog.renderDistance",
         defaults.distanceFog.renderDistance
+      ),
+      skyBlend: readOptionalNonNegativeFiniteNumber(
+        distanceFog?.skyBlend,
+        "world.advancedRendering.distanceFog.skyBlend",
+        defaults.distanceFog.skyBlend
+      ),
+      horizonStrength: readOptionalNonNegativeFiniteNumber(
+        distanceFog?.horizonStrength,
+        "world.advancedRendering.distanceFog.horizonStrength",
+        defaults.distanceFog.horizonStrength
+      ),
+      heightFalloff: readOptionalNonNegativeFiniteNumber(
+        distanceFog?.heightFalloff,
+        "world.advancedRendering.distanceFog.heightFalloff",
+        defaults.distanceFog.heightFalloff
       )
     },
     godRays: {
@@ -5679,6 +5695,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION &&
     source.version !== DISTANCE_FOG_SCENE_DOCUMENT_VERSION &&
     source.version !== GOD_RAYS_SCENE_DOCUMENT_VERSION &&
+    source.version !== ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
   ) {
