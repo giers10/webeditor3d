@@ -42,6 +42,12 @@ function lerp(left: number, right: number, amount: number) {
   return left + (right - left) * amount;
 }
 
+function smoothstep(edge0: number, edge1: number, value: number) {
+  const amount = clamp((value - edge0) / (edge1 - edge0), 0, 1);
+
+  return amount * amount * (3 - 2 * amount);
+}
+
 function resolveGradientColors(background: WorldBackgroundSettings) {
   if (background.mode === "solid") {
     return {
