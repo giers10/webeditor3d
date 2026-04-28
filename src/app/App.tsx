@@ -327,6 +327,7 @@ import {
   DEFAULT_SPOT_LIGHT_INTENSITY,
   DEFAULT_TRIGGER_VOLUME_SIZE,
   areEntityInstancesEqual,
+  arePlayerStartMovementTemplatesEqual,
   createCameraRigActorTargetRef,
   createCameraRigEntity,
   createCameraRigEntityTargetRef,
@@ -501,6 +502,7 @@ import {
 } from "../viewport-three/viewport-view-modes";
 import {
   VIEWPORT_PANEL_IDS,
+  areViewportPanelCameraStatesEqual,
   getViewportDisplayModeLabel,
   getViewportLayoutModeLabel,
   getViewportPanelLabel,
@@ -509,6 +511,11 @@ import {
   type ViewportPanelId,
   type ViewportQuadSplit
 } from "../viewport-three/viewport-layout";
+import {
+  summarizeUpdateLoopCameraState,
+  summarizeUpdateLoopCameraStateDeltas,
+  traceUpdateLoopEvent
+} from "../debug/update-loop-trace";
 import type { EditorStore } from "./editor-store";
 import { useEditorStoreState } from "./use-editor-store";
 
