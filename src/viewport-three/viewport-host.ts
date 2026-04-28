@@ -2088,11 +2088,15 @@ export class ViewportHost {
 
     this.ambientLight.color.set(displayedAmbientLight.colorHex);
     this.ambientLight.intensity = displayedAmbientLight.intensity;
-    this.currentCelestialShadowCaster =
-      resolveDominantCelestialShadowCaster(
-        displayedSunLight,
-        displayedMoonLight
-      )?.key ?? null;
+    const dominantCelestialLight = resolveDominantCelestialShadowCaster(
+      displayedSunLight,
+      displayedMoonLight
+    );
+    this.currentCelestialShadowCaster = dominantCelestialLight?.key ?? null;
+    syncScreenSpaceGodRaysLightSource(
+      this.godRaysLightSource,
+      dominantCelestialLight?.light ?? null
+    );
     this.sunLight.color.set(displayedSunLight.colorHex);
     this.sunLight.intensity = displayedSunLight.intensity;
     this.sunLight.position
