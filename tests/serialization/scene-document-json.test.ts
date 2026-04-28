@@ -29,6 +29,7 @@ import {
   DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION,
   FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION,
   GOD_RAYS_SCENE_DOCUMENT_VERSION,
+  GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -826,6 +827,7 @@ describe("scene document JSON", () => {
         decay: 0.9,
         exposure: 0.35,
         density: 0.8,
+        sourceSize: 1.35,
         samples: 40
       },
       fogPath: "quality",
@@ -1009,11 +1011,47 @@ describe("scene document JSON", () => {
     });
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.version).toBe(
-      ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION
-    );
     expect(migratedDocument.world.advancedRendering.distanceFog).toEqual(
       emptyScene.world.advancedRendering.distanceFog
+    );
+  });
+
+  it("migrates v88 scene documents without god rays source size to defaults", () => {
+    const emptyScene = createEmptySceneDocument({
+      name: "Legacy God Rays Source Size Scene"
+    });
+    const { sourceSize: _sourceSize, ...legacyGodRays } =
+      emptyScene.world.advancedRendering.godRays;
+
+    const migratedDocument = migrateSceneDocument({
+      version: ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION,
+      name: emptyScene.name,
+      time: emptyScene.time,
+      scheduler: emptyScene.scheduler,
+      world: {
+        ...emptyScene.world,
+        advancedRendering: {
+          ...emptyScene.world.advancedRendering,
+          godRays: legacyGodRays
+        }
+      },
+      materials: emptyScene.materials,
+      textures: emptyScene.textures,
+      assets: emptyScene.assets,
+      brushes: emptyScene.brushes,
+      terrains: emptyScene.terrains,
+      paths: emptyScene.paths,
+      modelInstances: emptyScene.modelInstances,
+      entities: emptyScene.entities,
+      interactionLinks: emptyScene.interactionLinks
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.version).toBe(
+      GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION
+    );
+    expect(migratedDocument.world.advancedRendering.godRays).toEqual(
+      emptyScene.world.advancedRendering.godRays
     );
   });
 
