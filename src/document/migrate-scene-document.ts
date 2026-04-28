@@ -300,6 +300,7 @@ import {
   createDefaultWorldTimePhaseProfile,
   createDefaultWorldShaderSkySettings,
   DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
+  isAdvancedRenderingDynamicGlobalIlluminationQuality,
   isAdvancedRenderingWaterReflectionMode,
   createDefaultAdvancedRenderingSettings,
   isBoxVolumeRenderPath,
@@ -764,6 +765,15 @@ function readAdvancedRenderingSettings(
     throw new Error("world.advancedRendering.bloom must be an object.");
   }
 
+  if (
+    value.dynamicGlobalIllumination !== undefined &&
+    !isRecord(value.dynamicGlobalIllumination)
+  ) {
+    throw new Error(
+      "world.advancedRendering.dynamicGlobalIllumination must be an object."
+    );
+  }
+
   if (value.toneMapping !== undefined && !isRecord(value.toneMapping)) {
     throw new Error("world.advancedRendering.toneMapping must be an object.");
   }
@@ -778,6 +788,9 @@ function readAdvancedRenderingSettings(
 
   const shadows = value.shadows as Record<string, unknown> | undefined;
   const ambientOcclusion = value.ambientOcclusion as
+    | Record<string, unknown>
+    | undefined;
+  const dynamicGlobalIllumination = value.dynamicGlobalIllumination as
     | Record<string, unknown>
     | undefined;
   const bloom = value.bloom as Record<string, unknown> | undefined;
@@ -806,6 +819,12 @@ function readAdvancedRenderingSettings(
     "world.advancedRendering.toneMapping.mode",
     defaults.toneMapping.mode,
     isAdvancedRenderingToneMappingMode
+  );
+  const dynamicGlobalIlluminationQuality = readOptionalAllowedValue(
+    dynamicGlobalIllumination?.quality,
+    "world.advancedRendering.dynamicGlobalIllumination.quality",
+    defaults.dynamicGlobalIllumination.quality,
+    isAdvancedRenderingDynamicGlobalIlluminationQuality
   );
   const fogPath = readOptionalAllowedValue(
     value.fogPath,
@@ -867,6 +886,24 @@ function readAdvancedRenderingSettings(
         "world.advancedRendering.ambientOcclusion.samples",
         defaults.ambientOcclusion.samples
       )
+    },
+    dynamicGlobalIllumination: {
+      enabled: readOptionalBoolean(
+        dynamicGlobalIllumination?.enabled,
+        "world.advancedRendering.dynamicGlobalIllumination.enabled",
+        defaults.dynamicGlobalIllumination.enabled
+      ),
+      intensity: readOptionalNonNegativeFiniteNumber(
+        dynamicGlobalIllumination?.intensity,
+        "world.advancedRendering.dynamicGlobalIllumination.intensity",
+        defaults.dynamicGlobalIllumination.intensity
+      ),
+      radius: readOptionalNonNegativeFiniteNumber(
+        dynamicGlobalIllumination?.radius,
+        "world.advancedRendering.dynamicGlobalIllumination.radius",
+        defaults.dynamicGlobalIllumination.radius
+      ),
+      quality: dynamicGlobalIlluminationQuality
     },
     bloom: {
       enabled: readOptionalBoolean(
