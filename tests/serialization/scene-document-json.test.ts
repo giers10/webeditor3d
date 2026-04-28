@@ -850,6 +850,43 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("migrates v84 scene documents without dynamic global illumination settings to defaults", () => {
+    const emptyScene = createEmptySceneDocument({
+      name: "Legacy Dynamic GI Scene"
+    });
+    const {
+      dynamicGlobalIllumination: _dynamicGlobalIllumination,
+      ...legacyAdvancedRendering
+    } = emptyScene.world.advancedRendering;
+
+    const migratedDocument = migrateSceneDocument({
+      version: PLAYER_START_MOUSE_INVERT_SCENE_DOCUMENT_VERSION,
+      name: emptyScene.name,
+      time: emptyScene.time,
+      scheduler: emptyScene.scheduler,
+      world: {
+        ...emptyScene.world,
+        advancedRendering: legacyAdvancedRendering
+      },
+      materials: emptyScene.materials,
+      textures: emptyScene.textures,
+      assets: emptyScene.assets,
+      brushes: emptyScene.brushes,
+      terrains: emptyScene.terrains,
+      paths: emptyScene.paths,
+      modelInstances: emptyScene.modelInstances,
+      entities: emptyScene.entities,
+      interactionLinks: emptyScene.interactionLinks
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(
+      migratedDocument.world.advancedRendering.dynamicGlobalIllumination
+    ).toEqual(
+      emptyScene.world.advancedRendering.dynamicGlobalIllumination
+    );
+  });
+
   it("defaults missing water reflection mode and clamps legacy foam limits during migration", () => {
     const migratedDocument = migrateSceneDocument({
       version: SCENE_DOCUMENT_VERSION,
