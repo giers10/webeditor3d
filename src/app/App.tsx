@@ -1041,6 +1041,32 @@ function readPositiveNumberDraft(source: string, label: string): number {
   return value;
 }
 
+function readUnitIntervalNumberDraft(source: string, label: string): number {
+  const value = Number(source);
+
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error(`${label} must be a finite number between zero and one.`);
+  }
+
+  return value;
+}
+
+function assertAdvancedRenderingDistanceFogRange(
+  distanceFog: AdvancedRenderingDistanceFogSettings
+) {
+  if (distanceFog.farDistance <= distanceFog.nearDistance) {
+    throw new Error(
+      "Distance fog far distance must be greater than near distance."
+    );
+  }
+
+  if (distanceFog.renderDistance <= distanceFog.nearDistance) {
+    throw new Error(
+      "Distance fog render distance must be greater than near distance."
+    );
+  }
+}
+
 function assertProjectTimeSettingsAreOrdered(time: ProjectTimeSettings) {
   if (time.sunriseTimeOfDayHours >= time.sunsetTimeOfDayHours) {
     throw new Error("Project sunrise must be earlier than project sunset.");
