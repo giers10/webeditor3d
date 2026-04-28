@@ -3193,6 +3193,36 @@ export function App({ store, initialStatusMessage }: AppProps) {
       editorState.document.world.advancedRendering.distanceFog.renderDistance
     )
   );
+  const [
+    advancedRenderingGodRaysIntensityDraft,
+    setAdvancedRenderingGodRaysIntensityDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.godRays.intensity)
+  );
+  const [
+    advancedRenderingGodRaysDecayDraft,
+    setAdvancedRenderingGodRaysDecayDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.godRays.decay)
+  );
+  const [
+    advancedRenderingGodRaysExposureDraft,
+    setAdvancedRenderingGodRaysExposureDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.godRays.exposure)
+  );
+  const [
+    advancedRenderingGodRaysDensityDraft,
+    setAdvancedRenderingGodRaysDensityDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.godRays.density)
+  );
+  const [
+    advancedRenderingGodRaysSamplesDraft,
+    setAdvancedRenderingGodRaysSamplesDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.godRays.samples)
+  );
   const [statusMessage, setStatusMessage] = useState(
     initialStatusMessage ?? "Slice 3.5 advanced rendering ready."
   );
