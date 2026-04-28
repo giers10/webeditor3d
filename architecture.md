@@ -263,6 +263,7 @@ Properties:
 - disposable
 - optimized for interaction and visualization
 - may include helpers, overlays, and selection visuals
+- may also host a derived editor-time simulation view that stays separate from canonical document state
 
 Contains:
 - preview meshes
@@ -291,6 +292,7 @@ Contains:
 - animation mixers
 - audio emitters
 - navigation/controller systems
+- runtime schedule/control resolution state
 
 These three representations must remain conceptually separate.
 
@@ -557,6 +559,8 @@ Responsibilities:
 - manage editor cameras and view modes
 - render helper visuals
 - support high-frequency tool feedback
+- host incremental editor-time simulation presentation for project-time playback
+- keep editor overlays and excluded visuals separate from AO/post-effect world rendering
 
 Suggested internal subsystems:
 
@@ -573,8 +577,8 @@ Suggested internal subsystems:
 
 Target minimum by milestone:
 
-- perspective in early slices
-- top/front/side orthographic views when the viewport-layout slice lands
+- perspective views
+- top/front/side orthographic views
 
 ---
 
@@ -592,6 +596,7 @@ Responsibilities:
 - play animations
 - manage audio
 - expose embeddable runtime APIs
+- keep runtime ticking and schedule/control synchronization imperative and outside React
 
 ### Major subsystems
 
@@ -603,6 +608,7 @@ Responsibilities:
 - `AudioSystem`
 - `AnimationSystem`
 - `RuntimeUIBridge`
+- shared runtime schedule-sync helpers reused by runner and editor simulation
 
 ### Collision strategy progression
 
@@ -996,6 +1002,7 @@ Recommended separation:
 - search queries
 - dialog state
 - viewport mode/layout
+- coarse editor simulation UI snapshots such as play/pause and visible clock readout
 
 ### Ephemeral viewport state
 
@@ -1015,6 +1022,7 @@ Recommended separation:
 - active dialogue overlay state
 - resolved scheduler/control state
 - transient sequence/scheduler impulse state
+- editor simulation controller snapshots and frame versions
 
 Keep ephemeral rendering and interaction state out of the serialized document.
 
@@ -1238,11 +1246,18 @@ interface InteractionLink {
   trigger: "enter" | "exit" | "click";
   action:
     | { type: "teleportPlayer"; targetEntityId: string }
-    | { type: "toggleVisibility"; targetId: string; visible?: boolean }
-    | { type: "playAnimation"; targetModelInstanceId: string; clipName: string }
-    | { type: "stopAnimation"; targetModelInstanceId: string; clipName?: string }
-    | { type: "playSound"; targetEntityId: string }
-    | { type: "stopSound"; targetEntityId: string };
+    | { type: "toggleVisibility"; targetBrushId: string; visible?: boolean }
+    | {
+        type: "playAnimation";
+        targetModelInstanceId: string;
+        clipName: string;
+        loop?: boolean;
+      }
+    | { type: "stopAnimation"; targetModelInstanceId: string }
+    | { type: "playSound"; targetSoundEmitterId: string }
+    | { type: "stopSound"; targetSoundEmitterId: string }
+    | { type: "runSequence"; sequenceId: string }
+    | { type: "control"; effect: ControlEffect };
 }
 ```
 
@@ -1250,7 +1265,57 @@ Rules:
 
 - trigger kinds are only valid for compatible entity types
 - keep link validation explicit
-- do not activate sound or animation actions before those systems exist
+- prefer reusable control-surface effects for newly schedulable or steerable runtime behavior instead of inventing one-off action families
+
+---
+
+## Editor simulation and runtime schedule sync
+
+Editor project-time playback should follow the same broad runtime direction as the runner:
+
+- imperative ticking owned by a dedicated controller or host
+- canonical document state remains unchanged
+- derived runtime/editor simulation state is rebuilt only when document/assets materially change
+- schedule and control resolution advance against a live clock without routing every frame through React
+
+Current direction:
+
+- the runner owns ticking inside `RuntimeHost`
+- the editor owns ticking inside a dedicated `EditorSimulationController`
+- both rely on shared runtime schedule-sync helpers to resolve NPC presence/path/animation and control-surface effects against the current clock
+
+This is important because editor-time playback must not regress into:
+
+- per-frame React state updates for the clock
+- per-frame document-scale runtime scene rebuilds
+- per-frame viewport-side rebuilds of simulation memberships when only time changed
+
+Shared schedule-sync helpers are the correct seam for keeping runner and editor simulation aligned while still allowing each host to own its own render/update loop.
+
+---
+
+## Advanced rendering layers
+
+Advanced rendering now depends on explicit render categories/layers rather than assuming one monolithic scene pass.
+
+Current categories:
+
+- `ao-world`
+- `post-ao-transparent`
+- `overlay`
+
+Direction:
+
+- AO-eligible opaque world geometry belongs in the AO/world path
+- transparent or post-AO visuals render in the post-AO transparent path
+- helpers, gizmos, and explicit overlay visuals render in the overlay path
+
+This separation matters for:
+
+- ambient occlusion correctness
+- future screen-space effects
+- editor helper readability
+- keeping viewport overlays out of world-space post effects
 
 ---
 

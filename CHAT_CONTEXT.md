@@ -35,6 +35,12 @@ Broadly implemented already:
 - scheduler/notebook foundation with authored routines over global time
 - scheduler-driven NPC presence, path-following, and animation triggering
 - first dialogue foundations with runtime dialogue overlay and dialogue-start interaction links
+- dedicated editor simulation controller for editor-time playback
+- incremental viewport simulation sync using base-scene and frame updates
+- richer Player Start input authoring for keyboard, mouse, and gamepad
+- Player Start interaction reach/angle and gameplay targeting-related input settings
+- advanced rendering layer/category separation for AO-world, post-AO transparent, and overlay visuals
+- viewport time transport controls for editor project-time playback
 
 Important consequence:
 
@@ -81,6 +87,7 @@ Treat current box-brush structures as the starting point for whitebox solids unl
 - local authored lights stay in typed entities
 - project save/load and runner export are separate concerns
 - project time is global, not per scene
+- editor project-time playback is driven by a dedicated simulation controller rather than per-frame React clock state
 - project-global day/night, control-surface, and scheduler/notebook foundations already exist and should be extended rather than reinvented
 - scheduler/notebook work should sit on top of a shared control surface, not a growing pile of one-off scheduler-only effect types
 - when a new capability is added that is meaningfully steerable over time, prefer making it control-surface-addressable and scheduler-available instead of adding isolated time fields

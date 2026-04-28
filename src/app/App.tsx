@@ -3062,6 +3062,24 @@ export function App({ store, initialStatusMessage }: AppProps) {
     )
   );
   const [
+    advancedRenderingDynamicGlobalIlluminationIntensityDraft,
+    setAdvancedRenderingDynamicGlobalIlluminationIntensityDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.dynamicGlobalIllumination
+        .intensity
+    )
+  );
+  const [
+    advancedRenderingDynamicGlobalIlluminationRadiusDraft,
+    setAdvancedRenderingDynamicGlobalIlluminationRadiusDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.dynamicGlobalIllumination
+        .radius
+    )
+  );
+  const [
     advancedRenderingBloomIntensityDraft,
     setAdvancedRenderingBloomIntensityDraft
   ] = useState(
@@ -4126,6 +4144,12 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
     setAdvancedRenderingAmbientOcclusionSamplesDraft(
       String(advancedRendering.ambientOcclusion.samples)
+    );
+    setAdvancedRenderingDynamicGlobalIlluminationIntensityDraft(
+      String(advancedRendering.dynamicGlobalIllumination.intensity)
+    );
+    setAdvancedRenderingDynamicGlobalIlluminationRadiusDraft(
+      String(advancedRendering.dynamicGlobalIllumination.radius)
     );
     setAdvancedRenderingBloomIntensityDraft(
       String(advancedRendering.bloom.intensity)

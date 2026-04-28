@@ -32,6 +32,24 @@ If a roadmap item is too large for one implementation pass, split it into smalle
 
 ---
 
+## Recently landed foundations
+
+The roadmap below still contains a lot of historical milestone context. Recent code has already moved some foundational areas forward materially.
+
+Examples already present in the repo:
+
+- dedicated editor simulation playback via `EditorSimulationController`
+- incremental viewport simulation sync using base-scene and frame updates instead of document-scale rebuilds every clock tick
+- shared runtime schedule synchronization helpers reused by runner and editor simulation
+- richer Player Start input authoring for keyboard, mouse, and gamepad
+- Player Start interaction reach/angle and targeting-related input settings
+- viewport time transport controls for editor project-time playback
+- advanced rendering layer/category separation for AO-world, post-AO transparent, and overlay visuals
+
+When roadmap wording below sounds more primitive than the current code, trust the code and treat the older roadmap text as historical context.
+
+---
+
 ## Product north star
 
 A browser-based engine/editor with a built-in runner, enabling users to quickly create and share lightweight interactive 3D spaces with:
@@ -629,6 +647,7 @@ The time/living-world direction should stay closer to Majora's Mask than to a fu
 - deterministic resolution from time + flags + scene context
 - unloaded scenes reconstructed on demand instead of fully simulated all the time
 - authored day/night came before the current scheduler/notebook foundation; next work should build on that shared time/control path rather than add one-off per-system timers
+- runner and editor simulation now already share a dedicated runtime schedule-sync direction; future time slices should extend that path instead of reintroducing document-scale rebuilds or React-driven per-frame clocks
 
 ### Candidate slices
 

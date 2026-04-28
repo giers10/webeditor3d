@@ -48,9 +48,10 @@ Highest-priority confidence areas:
 10. spatial audio and interaction basics
 11. critical regressions caught in CI
 12. project-time/day-phase determinism where time-driven runtime systems exist
-13. control-surface effect resolution and execution across actor/entity/interaction/scene targets
-14. scheduler/routine resolution from time + authored rules, and later from time + flags + scene context
-15. dialogue library, dialogue start sources, and runtime dialogue overlay correctness
+13. editor simulation controller and viewport simulation frame/base synchronization correctness
+14. control-surface effect resolution and execution across actor/entity/interaction/scene targets
+15. scheduler/routine resolution from time + authored rules, and later from time + flags + scene context
+16. dialogue library, dialogue start sources, and runtime dialogue overlay correctness
 
 ---
 
@@ -261,6 +262,7 @@ Use for:
 - browser API edge behavior
 - audio unlock flows where practical
 - pointer lock flows where practical
+- viewport overlay transport controls and hold-to-repeat behavior where practical
 
 Examples:
 
@@ -361,6 +363,8 @@ Manual QA is required for:
 - transform ergonomics
 - texture workflow speed
 - runtime movement feel
+- pointer lock and targeting feel
+- editor project-time playback responsiveness
 - browser UX polish
 - spatial audio perception
 
