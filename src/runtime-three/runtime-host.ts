@@ -87,6 +87,10 @@ import {
 } from "../rendering/advanced-rendering";
 import { applyAdvancedRenderingPerspectiveCameraFar } from "../rendering/distance-fog-pass";
 import {
+  createScreenSpaceGodRaysLightSource,
+  syncScreenSpaceGodRaysLightSource
+} from "../rendering/screen-space-god-rays";
+import {
   fitCelestialDirectionalShadow,
   resolveDominantCelestialShadowCaster
 } from "../rendering/celestial-shadows";
@@ -641,6 +645,7 @@ export class RuntimeHost {
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
   private readonly moonLight = new DirectionalLight();
+  private readonly godRaysLightSource = createScreenSpaceGodRaysLightSource();
   private readonly localLightGroup = new Group();
   private readonly lightVolumeGroup = new Group();
   private readonly brushGroup = new Group();
@@ -2910,11 +2915,15 @@ export class RuntimeHost {
 
     this.ambientLight.color.set(resolvedWorld.ambientLight.colorHex);
     this.ambientLight.intensity = resolvedWorld.ambientLight.intensity;
-    this.currentCelestialShadowCaster =
-      resolveDominantCelestialShadowCaster(
-        resolvedWorld.sunLight,
-        resolvedWorld.moonLight
-      )?.key ?? null;
+    const dominantCelestialLight = resolveDominantCelestialShadowCaster(
+      resolvedWorld.sunLight,
+      resolvedWorld.moonLight
+    );
+    this.currentCelestialShadowCaster = dominantCelestialLight?.key ?? null;
+    syncScreenSpaceGodRaysLightSource(
+      this.godRaysLightSource,
+      dominantCelestialLight?.light ?? null
+    );
     this.sunLight.color.set(resolvedWorld.sunLight.colorHex);
     this.sunLight.intensity = resolvedWorld.sunLight.intensity;
     this.sunLight.visible = resolvedWorld.sunLight.intensity > 1e-4;
@@ -3021,7 +3030,8 @@ export class RuntimeHost {
       this.scene,
       this.camera,
       settings,
-      this.worldBackgroundRenderer.scene
+      this.worldBackgroundRenderer.scene,
+      this.godRaysLightSource
     );
     this.currentAdvancedRenderingSettings =
       cloneAdvancedRenderingSettings(settings);
