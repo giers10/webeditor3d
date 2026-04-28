@@ -249,12 +249,15 @@ function maybeWarnForHighFrequencyUpdates(
       };
     });
 
-  console.groupCollapsed("[update-loop-trace] high frequency updates", {
-    triggerLabel,
-    triggerLabelCount,
-    totalCount: traceEvents.length,
-    windowMs: TRACE_WINDOW_MS
-  });
+  const warningTitle =
+    `[update-loop-trace] high frequency updates ` +
+    `trigger=${triggerLabel} ` +
+    `triggerCount=${triggerLabelCount} ` +
+    `totalCount=${traceEvents.length} ` +
+    `windowMs=${TRACE_WINDOW_MS}`;
+
+  console.groupCollapsed(warningTitle);
+  console.warn(warningTitle);
   console.table(rows);
   console.log(
     "Last payloads",
