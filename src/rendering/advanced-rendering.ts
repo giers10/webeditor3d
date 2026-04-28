@@ -394,7 +394,9 @@ export function createAdvancedRenderingComposer(
               strength: distanceFogParameters.strength,
               horizonStrength: distanceFogParameters.horizonStrength
             }
-          : null
+          : null,
+        scene,
+        AO_WORLD_RENDER_LAYER_MASK
       )
     );
   }
