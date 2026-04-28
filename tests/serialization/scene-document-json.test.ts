@@ -17,6 +17,7 @@ import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createTerrain } from "../../src/document/terrains";
 import {
+  ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION,
   AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
   AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
   CAMERA_RIG_MAPPED_RAIL_SCENE_DOCUMENT_VERSION,
@@ -27,6 +28,7 @@ import {
   DISTANCE_FOG_SCENE_DOCUMENT_VERSION,
   DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION,
   FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION,
+  GOD_RAYS_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -813,7 +815,10 @@ describe("scene document JSON", () => {
         nearDistance: 45,
         farDistance: 140,
         strength: 0.72,
-        renderDistance: 160
+        renderDistance: 160,
+        skyBlend: 0.42,
+        horizonStrength: 0.62,
+        heightFalloff: 0.018
       },
       godRays: {
         enabled: true,
@@ -966,6 +971,49 @@ describe("scene document JSON", () => {
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.world.advancedRendering.godRays).toEqual(
       emptyScene.world.advancedRendering.godRays
+    );
+  });
+
+  it("migrates v87 scene documents without atmosphere polish settings to defaults", () => {
+    const emptyScene = createEmptySceneDocument({
+      name: "Legacy Atmosphere Polish Scene"
+    });
+    const {
+      skyBlend: _skyBlend,
+      horizonStrength: _horizonStrength,
+      heightFalloff: _heightFalloff,
+      ...legacyDistanceFog
+    } = emptyScene.world.advancedRendering.distanceFog;
+
+    const migratedDocument = migrateSceneDocument({
+      version: GOD_RAYS_SCENE_DOCUMENT_VERSION,
+      name: emptyScene.name,
+      time: emptyScene.time,
+      scheduler: emptyScene.scheduler,
+      world: {
+        ...emptyScene.world,
+        advancedRendering: {
+          ...emptyScene.world.advancedRendering,
+          distanceFog: legacyDistanceFog
+        }
+      },
+      materials: emptyScene.materials,
+      textures: emptyScene.textures,
+      assets: emptyScene.assets,
+      brushes: emptyScene.brushes,
+      terrains: emptyScene.terrains,
+      paths: emptyScene.paths,
+      modelInstances: emptyScene.modelInstances,
+      entities: emptyScene.entities,
+      interactionLinks: emptyScene.interactionLinks
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.version).toBe(
+      ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION
+    );
+    expect(migratedDocument.world.advancedRendering.distanceFog).toEqual(
+      emptyScene.world.advancedRendering.distanceFog
     );
   });
 
