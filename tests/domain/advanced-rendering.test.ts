@@ -150,6 +150,7 @@ import {
   createAdvancedRenderingComposer,
   resolveBoxVolumeRenderPaths
 } from "../../src/rendering/advanced-rendering";
+import { resolveDynamicGlobalIlluminationParameters } from "../../src/rendering/screen-space-global-illumination";
 import {
   ALL_RENDER_LAYER_MASK,
   AO_WORLD_RENDER_LAYER_MASK,
