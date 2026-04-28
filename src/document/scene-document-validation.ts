@@ -1145,6 +1145,100 @@ function validateWorldSettings(
     );
   }
 
+  if (!isBoolean(advancedRendering.distanceFog.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-distance-fog-enabled",
+        "Advanced rendering distance fog enabled must be a boolean.",
+        "world.advancedRendering.distanceFog.enabled"
+      )
+    );
+  }
+
+  if (!isHexColorString(advancedRendering.distanceFog.colorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-distance-fog-color",
+        "Advanced rendering distance fog color must use a #RRGGBB color.",
+        "world.advancedRendering.distanceFog.colorHex"
+      )
+    );
+  }
+
+  if (
+    !isNonNegativeFiniteNumber(advancedRendering.distanceFog.nearDistance)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-distance-fog-near-distance",
+        "Advanced rendering distance fog near distance must be a non-negative finite number.",
+        "world.advancedRendering.distanceFog.nearDistance"
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(advancedRendering.distanceFog.farDistance)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-distance-fog-far-distance",
+        "Advanced rendering distance fog far distance must be a positive finite number.",
+        "world.advancedRendering.distanceFog.farDistance"
+      )
+    );
+  } else if (
+    isNonNegativeFiniteNumber(advancedRendering.distanceFog.nearDistance) &&
+    advancedRendering.distanceFog.farDistance <=
+      advancedRendering.distanceFog.nearDistance
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-distance-fog-range",
+        "Advanced rendering distance fog far distance must be greater than near distance.",
+        "world.advancedRendering.distanceFog.farDistance"
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(advancedRendering.distanceFog.strength, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-distance-fog-strength",
+        "Advanced rendering distance fog strength must be a finite number between 0 and 1.",
+        "world.advancedRendering.distanceFog.strength"
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(advancedRendering.distanceFog.renderDistance)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-distance-fog-render-distance",
+        "Advanced rendering distance fog render distance must be a positive finite number.",
+        "world.advancedRendering.distanceFog.renderDistance"
+      )
+    );
+  } else if (
+    isNonNegativeFiniteNumber(advancedRendering.distanceFog.nearDistance) &&
+    advancedRendering.distanceFog.renderDistance <=
+      advancedRendering.distanceFog.nearDistance
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-distance-fog-render-range",
+        "Advanced rendering distance fog render distance must be greater than near distance.",
+        "world.advancedRendering.distanceFog.renderDistance"
+      )
+    );
+  }
+
   if (!isBoxVolumeRenderPath(advancedRendering.fogPath)) {
     diagnostics.push(
       createDiagnostic(
