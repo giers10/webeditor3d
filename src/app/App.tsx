@@ -3185,6 +3185,28 @@ export function App({ store, initialStatusMessage }: AppProps) {
     String(editorState.document.world.advancedRendering.distanceFog.strength)
   );
   const [
+    advancedRenderingDistanceFogSkyBlendDraft,
+    setAdvancedRenderingDistanceFogSkyBlendDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.distanceFog.skyBlend)
+  );
+  const [
+    advancedRenderingDistanceFogHorizonStrengthDraft,
+    setAdvancedRenderingDistanceFogHorizonStrengthDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.distanceFog.horizonStrength
+    )
+  );
+  const [
+    advancedRenderingDistanceFogHeightFalloffDraft,
+    setAdvancedRenderingDistanceFogHeightFalloffDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.distanceFog.heightFalloff
+    )
+  );
+  const [
     advancedRenderingDistanceFogRenderDistanceDraft,
     setAdvancedRenderingDistanceFogRenderDistanceDraft
   ] = useState(
@@ -4269,6 +4291,15 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
     setAdvancedRenderingDistanceFogStrengthDraft(
       String(advancedRendering.distanceFog.strength)
+    );
+    setAdvancedRenderingDistanceFogSkyBlendDraft(
+      String(advancedRendering.distanceFog.skyBlend)
+    );
+    setAdvancedRenderingDistanceFogHorizonStrengthDraft(
+      String(advancedRendering.distanceFog.horizonStrength)
+    );
+    setAdvancedRenderingDistanceFogHeightFalloffDraft(
+      String(advancedRendering.distanceFog.heightFalloff)
     );
     setAdvancedRenderingDistanceFogRenderDistanceDraft(
       String(advancedRendering.distanceFog.renderDistance)
@@ -12399,6 +12430,59 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyAdvancedRenderingDistanceFogSkyBlend = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set distance fog sky blend",
+        "Updated the distance fog sky blend.",
+        (advancedRendering) => {
+          advancedRendering.distanceFog.skyBlend = readUnitIntervalNumberDraft(
+            advancedRenderingDistanceFogSkyBlendDraft,
+            "Distance fog sky blend"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingDistanceFogHorizonStrength = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set distance fog horizon strength",
+        "Updated the distance fog horizon strength.",
+        (advancedRendering) => {
+          advancedRendering.distanceFog.horizonStrength =
+            readUnitIntervalNumberDraft(
+              advancedRenderingDistanceFogHorizonStrengthDraft,
+              "Distance fog horizon strength"
+            );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingDistanceFogHeightFalloff = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set distance fog height falloff",
+        "Updated the distance fog height falloff.",
+        (advancedRendering) => {
+          advancedRendering.distanceFog.heightFalloff =
+            readNonNegativeNumberDraft(
+              advancedRenderingDistanceFogHeightFalloffDraft,
+              "Distance fog height falloff"
+            );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyAdvancedRenderingDistanceFogRenderDistance = () => {
     try {
       applyAdvancedRenderingSettings(
@@ -18472,6 +18556,122 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               />
                             </label>
                           </div>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Sky Blend</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                max="1"
+                                step="0.05"
+                                value={advancedRenderingDistanceFogSkyBlendDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingDistanceFogSkyBlendDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingDistanceFogSkyBlend
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogSkyBlend
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogSkyBlend
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogSkyBlend
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Horizon Haze</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                max="1"
+                                step="0.05"
+                                value={
+                                  advancedRenderingDistanceFogHorizonStrengthDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingDistanceFogHorizonStrengthDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingDistanceFogHorizonStrength
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogHorizonStrength
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogHorizonStrength
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogHorizonStrength
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <label className="form-field">
+                            <span className="label">Height Falloff</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0"
+                              step="0.001"
+                              value={
+                                advancedRenderingDistanceFogHeightFalloffDraft
+                              }
+                              onChange={(event) =>
+                                setAdvancedRenderingDistanceFogHeightFalloffDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={
+                                applyAdvancedRenderingDistanceFogHeightFalloff
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyAdvancedRenderingDistanceFogHeightFalloff
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyAdvancedRenderingDistanceFogHeightFalloff
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyAdvancedRenderingDistanceFogHeightFalloff
+                                )
+                              }
+                            />
+                          </label>
                           <label className="form-field">
                             <span className="label">Render Distance</span>
                             <input
