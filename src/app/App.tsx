@@ -18893,40 +18893,81 @@ export function App({ store, initialStatusMessage }: AppProps) {
                               />
                             </label>
                           </div>
-                          <label className="form-field">
-                            <span className="label">Samples</span>
-                            <input
-                              className="text-input"
-                              type="number"
-                              min="1"
-                              step="1"
-                              value={advancedRenderingGodRaysSamplesDraft}
-                              onChange={(event) =>
-                                setAdvancedRenderingGodRaysSamplesDraft(
-                                  event.currentTarget.value
-                                )
-                              }
-                              onBlur={applyAdvancedRenderingGodRaysSamples}
-                              onKeyDown={(event) =>
-                                handleDraftVectorKeyDown(
-                                  event,
-                                  applyAdvancedRenderingGodRaysSamples
-                                )
-                              }
-                              onKeyUp={(event) =>
-                                handleNumberInputKeyUp(
-                                  event,
-                                  applyAdvancedRenderingGodRaysSamples
-                                )
-                              }
-                              onPointerUp={(event) =>
-                                handleNumberInputPointerUp(
-                                  event,
-                                  applyAdvancedRenderingGodRaysSamples
-                                )
-                              }
-                            />
-                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Source Size</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0.25"
+                                max="3"
+                                step="0.05"
+                                value={
+                                  advancedRenderingGodRaysSourceSizeDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingGodRaysSourceSizeDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingGodRaysSourceSize
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingGodRaysSourceSize
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysSourceSize
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysSourceSize
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Samples</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={advancedRenderingGodRaysSamplesDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingGodRaysSamplesDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={applyAdvancedRenderingGodRaysSamples}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingGodRaysSamples
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysSamples
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysSamples
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
                         </div>
 
                         <div className="form-section">
