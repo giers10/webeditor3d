@@ -2175,7 +2175,7 @@ export class ViewportHost {
         );
       }
 
-	      this.worldBackgroundRenderer.update(
+      this.worldBackgroundRenderer.update(
         displayedBackground,
         backgroundTexture,
         backgroundOverlayState,

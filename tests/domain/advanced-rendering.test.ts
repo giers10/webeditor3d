@@ -160,6 +160,7 @@ import {
   GOD_RAYS_SOURCE_MASK_RADII,
   createScreenSpaceGodRaysLightSource,
   projectScreenSpaceGodRaysLight,
+  resolveDominantScreenSpaceGodRaysLightInput,
   resolveGodRaysParameters,
   resolveGodRaysSourceMask,
   syncScreenSpaceGodRaysLightSource
@@ -407,6 +408,35 @@ describe("god rays parameters", () => {
       intensity: 0,
       direction: null
     });
+  });
+
+  it("uses only rendered celestial bodies as god rays sources", () => {
+    const visibleSun = {
+      colorHex: "#ffd8aa",
+      intensity: 1.1,
+      direction: {
+        x: 0.1,
+        y: 0.15,
+        z: -0.98
+      }
+    };
+    const hiddenMoon = {
+      colorHex: "#ccd8ff",
+      intensity: 2.4,
+      direction: {
+        x: -0.2,
+        y: 0.1,
+        z: -0.9
+      }
+    };
+
+    expect(
+      resolveDominantScreenSpaceGodRaysLightInput(visibleSun, null)
+    ).toBe(visibleSun);
+    expect(
+      resolveDominantScreenSpaceGodRaysLightInput(visibleSun, hiddenMoon)
+    ).toBe(hiddenMoon);
+    expect(resolveDominantScreenSpaceGodRaysLightInput(null, null)).toBeNull();
   });
 
   it("projects the celestial light direction and rejects behind-camera lights", () => {
