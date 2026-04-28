@@ -88,6 +88,7 @@ import {
 import { applyAdvancedRenderingPerspectiveCameraFar } from "../rendering/distance-fog-pass";
 import {
   createScreenSpaceGodRaysLightSource,
+  resolveDominantScreenSpaceGodRaysLightInput,
   syncScreenSpaceGodRaysLightSource
 } from "../rendering/screen-space-god-rays";
 import {
@@ -2901,6 +2902,32 @@ export class RuntimeHost {
       celestialBodiesState,
       shaderSkyState
     );
+    const godRaysLightInput =
+      shaderSkyState !== null
+        ? resolveDominantScreenSpaceGodRaysLightInput(
+            shaderSkyState.celestial.sunVisible
+              ? {
+                  colorHex: shaderSkyState.celestial.sunColorHex,
+                  intensity: shaderSkyState.celestial.sunIntensity,
+                  direction: shaderSkyState.celestial.sunDirection
+                }
+              : null,
+            shaderSkyState.celestial.moonVisible
+              ? {
+                  colorHex: shaderSkyState.celestial.moonColorHex,
+                  intensity: shaderSkyState.celestial.moonIntensity,
+                  direction: shaderSkyState.celestial.moonDirection
+                }
+              : null
+          )
+        : resolveDominantScreenSpaceGodRaysLightInput(
+            celestialBodiesState.sun,
+            celestialBodiesState.moon
+          );
+    syncScreenSpaceGodRaysLightSource(
+      this.godRaysLightSource,
+      godRaysLightInput
+    );
     const environmentState = resolveWorldEnvironmentState(
       resolvedWorld.background,
       backgroundTexture,
@@ -2920,10 +2947,6 @@ export class RuntimeHost {
       resolvedWorld.moonLight
     );
     this.currentCelestialShadowCaster = dominantCelestialLight?.key ?? null;
-    syncScreenSpaceGodRaysLightSource(
-      this.godRaysLightSource,
-      dominantCelestialLight?.light ?? null
-    );
     this.sunLight.color.set(resolvedWorld.sunLight.colorHex);
     this.sunLight.intensity = resolvedWorld.sunLight.intensity;
     this.sunLight.visible = resolvedWorld.sunLight.intensity > 1e-4;
