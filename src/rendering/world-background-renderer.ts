@@ -463,6 +463,14 @@ float glowMask(vec3 direction, vec3 lightDirection, float sizeDegrees, float rad
   return smoothstep(outerCos, innerCos, alignment);
 }
 
+float celestialHorizonFade(float directionY) {
+  return smoothstep(
+    uHorizonHeight + ${CELESTIAL_BODY_HORIZON_FADE_START_OFFSET.toFixed(2)},
+    uHorizonHeight + ${CELESTIAL_BODY_HORIZON_FADE_END_OFFSET.toFixed(2)},
+    directionY
+  );
+}
+
 vec3 starTint(float seed) {
   vec3 cool = vec3(0.58, 0.7, 1.0);
   vec3 warm = vec3(1.0, 0.9, 0.64);
@@ -516,8 +524,8 @@ void main() {
   float horizonMask = pow(clamp(1.0 - abs(shiftedY), 0.0, 1.0), 2.6);
   skyColor += mix(uSkyBottomColor, vec3(1.0), 0.1 + uTwilightFactor * 0.18) * horizonMask * 0.04;
 
-  float sunHorizonFade = smoothstep(uHorizonHeight - 0.14, uHorizonHeight + 0.03, uSunDirection.y);
-  float moonHorizonFade = smoothstep(uHorizonHeight - 0.14, uHorizonHeight + 0.03, uMoonDirection.y);
+  float sunHorizonFade = celestialHorizonFade(uSunDirection.y);
+  float moonHorizonFade = celestialHorizonFade(uMoonDirection.y);
   float sunDisc = uSunVisible * sunHorizonFade * discMask(direction, uSunDirection, uSunDiscSizeDegrees, 0.42);
   float sunGlow = uSunVisible * sunHorizonFade * glowMask(direction, uSunDirection, uSunDiscSizeDegrees, 4.8);
   float moonDisc = uMoonVisible * moonHorizonFade * discMask(direction, uMoonDirection, uMoonDiscSizeDegrees, 0.5);
