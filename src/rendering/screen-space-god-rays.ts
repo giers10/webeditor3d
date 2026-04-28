@@ -36,6 +36,13 @@ const LIGHT_OFFSCREEN_FADE_START = 0.92;
 const LIGHT_OFFSCREEN_FADE_END = 1;
 const MASK_RESOLUTION_SCALE = 0.5;
 
+export const GOD_RAYS_SOURCE_MASK_RADII = {
+  coreInner: 0.004,
+  coreOuter: 0.02,
+  haloInner: 0.018,
+  haloOuter: 0.095
+} as const;
+
 export interface ResolvedGodRaysParameters {
   enabled: boolean;
   intensity: number;
@@ -77,6 +84,10 @@ function finiteOr(value: number, fallback: number) {
 function smoothstep(edge0: number, edge1: number, value: number) {
   const t = clampNumber((value - edge0) / (edge1 - edge0), 0, 1);
   return t * t * (3 - 2 * t);
+}
+
+function formatGlslFloat(value: number): string {
+  return value.toFixed(4);
 }
 
 function isFiniteVec3(vector: Vec3 | null): vector is Vec3 {
@@ -164,6 +175,29 @@ export function resolveGodRaysParameters(
 
 export function shouldApplyGodRays(settings: AdvancedRenderingSettings) {
   return settings.enabled && resolveGodRaysParameters(settings.godRays).enabled;
+}
+
+export function resolveGodRaysSourceMask(sourceDistance: number): number {
+  if (!Number.isFinite(sourceDistance)) {
+    return 0;
+  }
+
+  const core =
+    1 -
+    smoothstep(
+      GOD_RAYS_SOURCE_MASK_RADII.coreInner,
+      GOD_RAYS_SOURCE_MASK_RADII.coreOuter,
+      sourceDistance
+    );
+  const halo =
+    1 -
+    smoothstep(
+      GOD_RAYS_SOURCE_MASK_RADII.haloInner,
+      GOD_RAYS_SOURCE_MASK_RADII.haloOuter,
+      sourceDistance
+    );
+
+  return clampNumber(core * 1.15 + halo * 0.55, 0, 1);
 }
 
 export function projectScreenSpaceGodRaysLight(
@@ -263,8 +297,8 @@ void main() {
   vec2 safeResolution = max(resolution, vec2(1.0));
   vec2 aspectScale = vec2(safeResolution.x / safeResolution.y, 1.0);
   float sourceDistance = length((vUv - lightPosition) * aspectScale);
-  float core = 1.0 - smoothstep(0.006, 0.035, sourceDistance);
-  float halo = 1.0 - smoothstep(0.025, 0.18, sourceDistance);
+  float core = 1.0 - smoothstep(${formatGlslFloat(GOD_RAYS_SOURCE_MASK_RADII.coreInner)}, ${formatGlslFloat(GOD_RAYS_SOURCE_MASK_RADII.coreOuter)}, sourceDistance);
+  float halo = 1.0 - smoothstep(${formatGlslFloat(GOD_RAYS_SOURCE_MASK_RADII.haloInner)}, ${formatGlslFloat(GOD_RAYS_SOURCE_MASK_RADII.haloOuter)}, sourceDistance);
   float sourceMask = clamp(core * 1.15 + halo * 0.55, 0.0, 1.0);
 
   gl_FragColor = vec4(vec3(sourceMask * sourceIntensity), 1.0);
