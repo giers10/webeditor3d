@@ -29,6 +29,7 @@ import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 import type { EditorSimulationController } from "../runtime-three/editor-simulation-controller";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
+import { traceUpdateLoopEvent } from "../debug/update-loop-trace";
 import {
   getViewportPanelLabel,
   type ViewportDisplayMode,
@@ -308,6 +309,7 @@ export function ViewportCanvas({
   const [hoveredWhiteboxLabel, setHoveredWhiteboxLabel] = useState<
     string | null
   >(null);
+  const hoveredWhiteboxLabelTraceRef = useRef<string | null>(null);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -440,10 +442,20 @@ export function ViewportCanvas({
   }, [onTerrainBrushCommit]);
 
   useEffect(() => {
-    hostRef.current?.setWhiteboxHoverLabelChangeHandler(
-      setHoveredWhiteboxLabel
-    );
-  }, []);
+    hostRef.current?.setWhiteboxHoverLabelChangeHandler((nextLabel) => {
+      const previousLabel = hoveredWhiteboxLabelTraceRef.current;
+
+      traceUpdateLoopEvent("ViewportCanvas.setWhiteboxHoverLabel", {
+        panelId,
+        previousLabel,
+        nextLabel,
+        labelChanged: previousLabel !== nextLabel
+      });
+
+      hoveredWhiteboxLabelTraceRef.current = nextLabel;
+      setHoveredWhiteboxLabel(nextLabel);
+    });
+  }, [panelId]);
 
   useEffect(() => {
     hostRef.current?.setCameraStateChangeHandler(onCameraStateChange);
