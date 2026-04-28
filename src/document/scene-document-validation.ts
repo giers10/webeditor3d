@@ -1329,6 +1329,17 @@ function validateWorldSettings(
     );
   }
 
+  if (!isPositiveFiniteNumber(advancedRendering.godRays.sourceSize)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-god-rays-source-size",
+        "Advanced rendering god rays source size must be a positive finite number.",
+        "world.advancedRendering.godRays.sourceSize"
+      )
+    );
+  }
+
   if (!isPositiveInteger(advancedRendering.godRays.samples)) {
     diagnostics.push(
       createDiagnostic(
