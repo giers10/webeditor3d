@@ -185,8 +185,7 @@ describe("validateSceneDocument", () => {
       expect.arrayContaining([
         expect.objectContaining({
           code: "missing-control-actor-target",
-          path:
-            "sequences.sequences.sequence-missing-actor.effects.0.effect.target.actorId"
+          path: "sequences.sequences.sequence-missing-actor.effects.0.effect.target.actorId"
         }),
         expect.objectContaining({
           code: "missing-control-actor-target",

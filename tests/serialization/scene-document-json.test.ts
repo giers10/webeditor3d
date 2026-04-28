@@ -882,9 +882,7 @@ describe("scene document JSON", () => {
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(
       migratedDocument.world.advancedRendering.dynamicGlobalIllumination
-    ).toEqual(
-      emptyScene.world.advancedRendering.dynamicGlobalIllumination
-    );
+    ).toEqual(emptyScene.world.advancedRendering.dynamicGlobalIllumination);
   });
 
   it("defaults missing water reflection mode and clamps legacy foam limits during migration", () => {

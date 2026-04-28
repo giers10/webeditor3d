@@ -21015,9 +21015,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           <input
                             data-testid="player-start-targeting-look-switch"
                             type="checkbox"
-                            checked={
-                              playerStartAllowLookInputTargetSwitchDraft
-                            }
+                            checked={playerStartAllowLookInputTargetSwitchDraft}
                             onChange={(event) => {
                               const nextValue = event.currentTarget.checked;
                               setPlayerStartAllowLookInputTargetSwitchDraft(

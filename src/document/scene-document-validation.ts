@@ -969,7 +969,9 @@ function validateWorldSettings(
   }
 
   if (
-    !isNonNegativeFiniteNumber(advancedRendering.dynamicGlobalIllumination.radius)
+    !isNonNegativeFiniteNumber(
+      advancedRendering.dynamicGlobalIllumination.radius
+    )
   ) {
     diagnostics.push(
       createDiagnostic(
