@@ -114,15 +114,24 @@ export function cloneViewportPanelCameraState(cameraState: ViewportPanelCameraSt
   };
 }
 
+const VIEWPORT_CAMERA_STATE_EPSILON = 1e-6;
+
+function areCameraNumbersEqual(a: number, b: number): boolean {
+  return Math.abs(a - b) <= VIEWPORT_CAMERA_STATE_EPSILON;
+}
+
 export function areViewportPanelCameraStatesEqual(a: ViewportPanelCameraState, b: ViewportPanelCameraState): boolean {
   return (
-    a.target.x === b.target.x &&
-    a.target.y === b.target.y &&
-    a.target.z === b.target.z &&
-    a.perspectiveOrbit.radius === b.perspectiveOrbit.radius &&
-    a.perspectiveOrbit.theta === b.perspectiveOrbit.theta &&
-    a.perspectiveOrbit.phi === b.perspectiveOrbit.phi &&
-    a.orthographicZoom === b.orthographicZoom
+    areCameraNumbersEqual(a.target.x, b.target.x) &&
+    areCameraNumbersEqual(a.target.y, b.target.y) &&
+    areCameraNumbersEqual(a.target.z, b.target.z) &&
+    areCameraNumbersEqual(
+      a.perspectiveOrbit.radius,
+      b.perspectiveOrbit.radius
+    ) &&
+    areCameraNumbersEqual(a.perspectiveOrbit.theta, b.perspectiveOrbit.theta) &&
+    areCameraNumbersEqual(a.perspectiveOrbit.phi, b.perspectiveOrbit.phi) &&
+    areCameraNumbersEqual(a.orthographicZoom, b.orthographicZoom)
   );
 }
 
