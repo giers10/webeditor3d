@@ -56,6 +56,12 @@ import {
   ScreenSpaceGlobalIlluminationPass,
   resolveDynamicGlobalIlluminationParameters
 } from "./screen-space-global-illumination";
+import {
+  ScreenSpaceGodRaysPass,
+  resolveGodRaysParameters,
+  shouldApplyGodRays,
+  type ScreenSpaceGodRaysLightSource
+} from "./screen-space-god-rays";
 
 const AMBIENT_OCCLUSION_LUMINANCE_INFLUENCE = 0.15;
 const MIN_AMBIENT_OCCLUSION_EFFECT_RADIUS = 0.02;
@@ -257,7 +263,8 @@ export function createAdvancedRenderingComposer(
   scene: Scene,
   camera: PerspectiveCamera,
   settings: AdvancedRenderingSettings,
-  backgroundScene: Scene | null = null
+  backgroundScene: Scene | null = null,
+  godRaysLightSource: ScreenSpaceGodRaysLightSource | null = null
 ): EffectComposer {
   // The scene is always rendered into the composer's offscreen targets first,
   // so those targets need depth for correct visibility even when no effect samples it.
@@ -279,10 +286,14 @@ export function createAdvancedRenderingComposer(
     settings.distanceFog
   );
   const distanceFogEnabled = shouldApplyDistanceFog(settings);
+  const godRaysParameters = resolveGodRaysParameters(settings.godRays);
+  const godRaysEnabled =
+    shouldApplyGodRays(settings) && godRaysLightSource !== null;
   const postWorldLayerIsolationEnabled =
     settings.ambientOcclusion.enabled ||
     dynamicGlobalIlluminationEnabled ||
-    distanceFogEnabled;
+    distanceFogEnabled ||
+    godRaysEnabled;
   const mainRenderLayerMask = postWorldLayerIsolationEnabled
     ? AO_WORLD_RENDER_LAYER_MASK
     : ALL_RENDER_LAYER_MASK;
@@ -368,6 +379,12 @@ export function createAdvancedRenderingComposer(
 
   if (distanceFogEnabled) {
     composer.addPass(new DistanceFogPass(camera, distanceFogParameters));
+  }
+
+  if (godRaysEnabled && godRaysLightSource !== null) {
+    composer.addPass(
+      new ScreenSpaceGodRaysPass(camera, godRaysLightSource, godRaysParameters)
+    );
   }
 
   if (postWorldLayerIsolationEnabled) {
