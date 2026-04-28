@@ -5678,6 +5678,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== SHADER_SKY_AURORA_SCENE_DOCUMENT_VERSION &&
     source.version !== DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION &&
     source.version !== DISTANCE_FOG_SCENE_DOCUMENT_VERSION &&
+    source.version !== GOD_RAYS_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
   ) {
