@@ -22,8 +22,7 @@ import { Pass } from "postprocessing";
 import type { Vec3 } from "../core/vector";
 import type {
   AdvancedRenderingGodRaysSettings,
-  AdvancedRenderingSettings,
-  WorldSunLightSettings
+  AdvancedRenderingSettings
 } from "../document/world-settings";
 
 const MIN_CELESTIAL_LIGHT_INTENSITY = 1e-4;
@@ -57,6 +56,12 @@ export interface ResolvedGodRaysParameters {
 
 export interface ScreenSpaceGodRaysLightSource {
   direction: Vec3 | null;
+  colorHex: string;
+  intensity: number;
+}
+
+export interface ScreenSpaceGodRaysLightInput {
+  direction: Vec3;
   colorHex: string;
   intensity: number;
 }
@@ -112,7 +117,7 @@ export function createScreenSpaceGodRaysLightSource(): ScreenSpaceGodRaysLightSo
 
 export function syncScreenSpaceGodRaysLightSource(
   target: ScreenSpaceGodRaysLightSource,
-  light: WorldSunLightSettings | null
+  light: ScreenSpaceGodRaysLightInput | null
 ) {
   if (
     light === null ||
@@ -132,6 +137,34 @@ export function syncScreenSpaceGodRaysLightSource(
   };
   target.colorHex = light.colorHex;
   target.intensity = light.intensity;
+}
+
+export function resolveDominantScreenSpaceGodRaysLightInput(
+  sun: ScreenSpaceGodRaysLightInput | null,
+  moon: ScreenSpaceGodRaysLightInput | null
+): ScreenSpaceGodRaysLightInput | null {
+  const sunVisible =
+    sun !== null &&
+    sun.intensity > MIN_CELESTIAL_LIGHT_INTENSITY &&
+    isFiniteVec3(sun.direction);
+  const moonVisible =
+    moon !== null &&
+    moon.intensity > MIN_CELESTIAL_LIGHT_INTENSITY &&
+    isFiniteVec3(moon.direction);
+
+  if (sunVisible && moonVisible) {
+    return sun.intensity >= moon.intensity ? sun : moon;
+  }
+
+  if (sunVisible) {
+    return sun;
+  }
+
+  if (moonVisible) {
+    return moon;
+  }
+
+  return null;
 }
 
 export function resolveGodRaysParameters(
