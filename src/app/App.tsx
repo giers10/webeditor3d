@@ -195,6 +195,7 @@ import {
   type WorldBackgroundMode,
   type WorldBackgroundSettings,
   type AdvancedRenderingSettings,
+  type AdvancedRenderingDistanceFogSettings,
   type BoxVolumeRenderPath,
   type AdvancedRenderingWaterReflectionMode,
   type AdvancedRenderingDynamicGlobalIlluminationQuality,
