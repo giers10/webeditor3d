@@ -291,6 +291,7 @@ import {
 } from "./viewport-view-modes";
 import {
   areViewportPanelCameraStatesEqual,
+  cloneViewportPanelCameraState,
   type ViewportDisplayMode,
   type ViewportPanelCameraState,
   type ViewportPanelId
@@ -301,6 +302,12 @@ import {
   type CreationViewportToolPreview,
   type ViewportToolPreview
 } from "./viewport-transient-state";
+import {
+  summarizeUpdateLoopCameraState,
+  summarizeUpdateLoopCameraStateDeltas,
+  summarizeUpdateLoopSelection,
+  traceUpdateLoopEvent
+} from "../debug/update-loop-trace";
 
 interface BrushRenderObjects {
   mesh: Mesh<BufferGeometry, Material[]>;
@@ -850,6 +857,7 @@ export class ViewportHost {
   private whiteboxHoverLabelChangeHandler:
     | ((label: string | null) => void)
     | null = null;
+  private lastWhiteboxHoverLabelTrace: string | null = null;
   private creationPreviewChangeHandler:
     | ((toolPreview: ViewportToolPreview) => void)
     | null = null;
@@ -859,6 +867,7 @@ export class ViewportHost {
   private cameraStateChangeHandler:
     | ((cameraState: ViewportPanelCameraState) => void)
     | null = null;
+  private lastCameraStateTraceSnapshot: ViewportPanelCameraState | null = null;
   private transformSessionChangeHandler:
     | ((transformSession: TransformSessionState) => void)
     | null = null;
@@ -1742,7 +1751,32 @@ export class ViewportHost {
   }
 
   private emitCameraStateChange() {
-    this.cameraStateChangeHandler?.(this.createCameraStateSnapshot());
+    const nextCameraState = this.createCameraStateSnapshot();
+    const previousCameraState = this.lastCameraStateTraceSnapshot;
+    const cameraStatesEqual =
+      previousCameraState === null
+        ? false
+        : areViewportPanelCameraStatesEqual(
+            previousCameraState,
+            nextCameraState
+          );
+
+    traceUpdateLoopEvent("ViewportHost.emitCameraStateChange", {
+      panelId: this.panelId,
+      previousCameraState:
+        summarizeUpdateLoopCameraState(previousCameraState),
+      nextCameraState: summarizeUpdateLoopCameraState(nextCameraState),
+      equalityGuardConsideredDifferent:
+        previousCameraState === null ? null : !cameraStatesEqual,
+      deltas: summarizeUpdateLoopCameraStateDeltas(
+        previousCameraState,
+        nextCameraState
+      )
+    });
+
+    this.lastCameraStateTraceSnapshot =
+      cloneViewportPanelCameraState(nextCameraState);
+    this.cameraStateChangeHandler?.(nextCameraState);
   }
 
   private clampPerspectiveCameraRadius(radius: number) {
@@ -7814,6 +7848,7 @@ export class ViewportHost {
   }
 
   private emitWhiteboxHoverLabelChange() {
+    const previousLabel = this.lastWhiteboxHoverLabelTrace;
     const label =
       this.currentDocument === null
         ? null
@@ -7821,6 +7856,16 @@ export class ViewportHost {
             this.currentDocument,
             this.hoveredSelection
           );
+
+    traceUpdateLoopEvent("ViewportHost.emitWhiteboxHoverLabelChange", {
+      panelId: this.panelId,
+      previousLabel,
+      nextLabel: label,
+      labelChanged: previousLabel !== label,
+      hoveredSelection: summarizeUpdateLoopSelection(this.hoveredSelection)
+    });
+
+    this.lastWhiteboxHoverLabelTrace = label;
     this.whiteboxHoverLabelChangeHandler?.(label);
   }
 
@@ -7854,8 +7899,19 @@ export class ViewportHost {
 
   private setHoveredSelection(selection: EditorSelection) {
     const previousSelection = this.hoveredSelection;
+    const selectionChanged = !areEditorSelectionsEqual(
+      previousSelection,
+      selection
+    );
 
-    if (areEditorSelectionsEqual(previousSelection, selection)) {
+    traceUpdateLoopEvent("ViewportHost.setHoveredSelection", {
+      panelId: this.panelId,
+      previousSelection: summarizeUpdateLoopSelection(previousSelection),
+      nextSelection: summarizeUpdateLoopSelection(selection),
+      selectionChanged
+    });
+
+    if (!selectionChanged) {
       return;
     }
 
