@@ -40,6 +40,7 @@ import {
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INTERACTION_ANGLE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_INPUT_BINDINGS_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_MOUSE_INVERT_SCENE_DOCUMENT_VERSION,
   PLAYER_START_MOVEMENT_TEMPLATE_SCENE_DOCUMENT_VERSION,
   PLAYER_START_NAVIGATION_MODE_SCENE_DOCUMENT_VERSION,
   SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION,
@@ -782,6 +783,12 @@ describe("scene document JSON", () => {
         intensity: 1.4,
         radius: 0.75,
         samples: 16
+      },
+      dynamicGlobalIllumination: {
+        enabled: true,
+        intensity: 1.5,
+        radius: 4,
+        quality: "medium"
       },
       bloom: {
         enabled: true,
