@@ -1641,6 +1641,13 @@ describe("validateSceneDocument", () => {
         ...document.world.advancedRendering.ambientOcclusion,
         samples: 0
       },
+      dynamicGlobalIllumination: {
+        ...document.world.advancedRendering.dynamicGlobalIllumination,
+        enabled: "yes",
+        intensity: -0.25,
+        radius: Number.NaN,
+        quality: "ultra"
+      },
       bloom: {
         ...document.world.advancedRendering.bloom,
         intensity: -0.25,
@@ -1684,6 +1691,22 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-advanced-rendering-ao-samples",
           path: "world.advancedRendering.ambientOcclusion.samples"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-dynamic-gi-enabled",
+          path: "world.advancedRendering.dynamicGlobalIllumination.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-dynamic-gi-intensity",
+          path: "world.advancedRendering.dynamicGlobalIllumination.intensity"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-dynamic-gi-radius",
+          path: "world.advancedRendering.dynamicGlobalIllumination.radius"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-dynamic-gi-quality",
+          path: "world.advancedRendering.dynamicGlobalIllumination.quality"
         }),
         expect.objectContaining({
           code: "invalid-advanced-rendering-bloom-intensity",
