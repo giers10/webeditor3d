@@ -48,6 +48,11 @@ import {
   isMaterialEligibleForAmbientOcclusion
 } from "./render-layers";
 import {
+  DistanceFogPass,
+  resolveDistanceFogParameters,
+  shouldApplyDistanceFog
+} from "./distance-fog-pass";
+import {
   ScreenSpaceGlobalIlluminationPass,
   resolveDynamicGlobalIlluminationParameters
 } from "./screen-space-global-illumination";
@@ -270,8 +275,15 @@ export function createAdvancedRenderingComposer(
     );
   const dynamicGlobalIlluminationEnabled =
     settings.enabled && dynamicGlobalIlluminationParameters.enabled;
+  const distanceFogParameters = resolveDistanceFogParameters(
+    settings.distanceFog
+  );
+  const distanceFogEnabled =
+    settings.enabled && distanceFogParameters.enabled;
   const postWorldLayerIsolationEnabled =
-    settings.ambientOcclusion.enabled || dynamicGlobalIlluminationEnabled;
+    settings.ambientOcclusion.enabled ||
+    dynamicGlobalIlluminationEnabled ||
+    distanceFogEnabled;
   const mainRenderLayerMask = postWorldLayerIsolationEnabled
     ? AO_WORLD_RENDER_LAYER_MASK
     : ALL_RENDER_LAYER_MASK;
@@ -353,6 +365,13 @@ export function createAdvancedRenderingComposer(
     }
 
     composer.addPass(new ShaderPass(new CopyMaterial()));
+  }
+
+  if (distanceFogEnabled) {
+    composer.addPass(new DistanceFogPass(camera, distanceFogParameters));
+  }
+
+  if (postWorldLayerIsolationEnabled) {
     composer.addPass(
       createPostAmbientOcclusionRenderPass(
         scene,
