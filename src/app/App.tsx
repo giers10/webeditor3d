@@ -945,7 +945,7 @@ function arePlayerStartMovementTemplateNumberDraftsEqual(
 
 function summarizeEditorSimulationUiSnapshotForTrace(
   snapshot: EditorSimulationUiSnapshot
-) {
+): Record<string, unknown> {
   return {
     playing: snapshot.playing,
     overrideActive: snapshot.overrideActive,
