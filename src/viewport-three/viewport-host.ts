@@ -212,6 +212,7 @@ import {
 import { applyAdvancedRenderingPerspectiveCameraFar } from "../rendering/distance-fog-pass";
 import {
   createScreenSpaceGodRaysLightSource,
+  resolveDominantScreenSpaceGodRaysLightInput,
   syncScreenSpaceGodRaysLightSource
 } from "../rendering/screen-space-god-rays";
 import {
@@ -2093,10 +2094,6 @@ export class ViewportHost {
       displayedMoonLight
     );
     this.currentCelestialShadowCaster = dominantCelestialLight?.key ?? null;
-    syncScreenSpaceGodRaysLightSource(
-      this.godRaysLightSource,
-      dominantCelestialLight?.light ?? null
-    );
     this.sunLight.color.set(displayedSunLight.colorHex);
     this.sunLight.intensity = displayedSunLight.intensity;
     this.sunLight.position
@@ -2135,6 +2132,7 @@ export class ViewportHost {
     this.lightVolumeGroup.visible = this.displayMode !== "wireframe";
 
     if (this.displayMode !== "normal") {
+      syncScreenSpaceGodRaysLightSource(this.godRaysLightSource, null);
       this.scene.background = null;
       this.scene.environment = null;
       this.scene.environmentIntensity = 1;
@@ -2177,12 +2175,38 @@ export class ViewportHost {
         );
       }
 
-      this.worldBackgroundRenderer.update(
+	      this.worldBackgroundRenderer.update(
         displayedBackground,
         backgroundTexture,
         backgroundOverlayState,
         celestialBodiesState,
         shaderSkyState
+      );
+      const godRaysLightInput =
+        shaderSkyState !== null
+          ? resolveDominantScreenSpaceGodRaysLightInput(
+              shaderSkyState.celestial.sunVisible
+                ? {
+                    colorHex: shaderSkyState.celestial.sunColorHex,
+                    intensity: shaderSkyState.celestial.sunIntensity,
+                    direction: shaderSkyState.celestial.sunDirection
+                  }
+                : null,
+              shaderSkyState.celestial.moonVisible
+                ? {
+                    colorHex: shaderSkyState.celestial.moonColorHex,
+                    intensity: shaderSkyState.celestial.moonIntensity,
+                    direction: shaderSkyState.celestial.moonDirection
+                  }
+                : null
+            )
+          : resolveDominantScreenSpaceGodRaysLightInput(
+              celestialBodiesState.sun,
+              celestialBodiesState.moon
+            );
+      syncScreenSpaceGodRaysLightSource(
+        this.godRaysLightSource,
+        godRaysLightInput
       );
       const environmentState = resolveWorldEnvironmentState(
         displayedBackground,
