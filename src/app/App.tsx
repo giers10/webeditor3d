@@ -4287,9 +4287,31 @@ export function App({ store, initialStatusMessage }: AppProps) {
   }, [editorState.projectDocument.time]);
 
   useEffect(() => {
-    return editorSimulationController.subscribeUiSnapshot(
-      setEditorSimulationSnapshot
-    );
+    return editorSimulationController.subscribeUiSnapshot((snapshot) => {
+      const previousSnapshot = editorSimulationSnapshotTraceRef.current;
+      const clockChanged =
+        previousSnapshot.clock === null || snapshot.clock === null
+          ? previousSnapshot.clock !== snapshot.clock
+          : !areRuntimeClockStatesEqual(previousSnapshot.clock, snapshot.clock);
+
+      traceUpdateLoopEvent(
+        "App.editorSimulationController.subscribeUiSnapshot",
+        {
+          previousSnapshot:
+            summarizeEditorSimulationUiSnapshotForTrace(previousSnapshot),
+          nextSnapshot: summarizeEditorSimulationUiSnapshotForTrace(snapshot),
+          sameSnapshotObject: previousSnapshot === snapshot,
+          frameVersionChanged:
+            previousSnapshot.frameVersion !== snapshot.frameVersion,
+          sceneVersionChanged:
+            previousSnapshot.sceneVersion !== snapshot.sceneVersion,
+          clockChanged
+        }
+      );
+
+      editorSimulationSnapshotTraceRef.current = snapshot;
+      setEditorSimulationSnapshot(snapshot);
+    });
   }, [editorSimulationController]);
 
   useEffect(() => {
@@ -14933,6 +14955,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   onTerrainBrushCommit={handleCommitTerrainBrushStroke}
                   onCommitCreation={handleCommitCreation}
                   onCameraStateChange={(cameraState) => {
+                    const previousCameraState =
+                      editorState.viewportPanels[panelId].cameraState;
+                    const cameraStatesEqual =
+                      areViewportPanelCameraStatesEqual(
+                        previousCameraState,
+                        cameraState
+                      );
+
+                    traceUpdateLoopEvent("App.onCameraStateChange", {
+                      panelId,
+                      previousCameraState:
+                        summarizeUpdateLoopCameraState(previousCameraState),
+                      nextCameraState:
+                        summarizeUpdateLoopCameraState(cameraState),
+                      equalityGuardConsideredDifferent: !cameraStatesEqual,
+                      deltas: summarizeUpdateLoopCameraStateDeltas(
+                        previousCameraState,
+                        cameraState
+                      )
+                    });
                     store.setViewportPanelCameraState(panelId, cameraState);
                   }}
                   onToolPreviewChange={(toolPreview) => {
