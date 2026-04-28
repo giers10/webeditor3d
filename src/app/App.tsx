@@ -4231,6 +4231,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
     setAdvancedRenderingWhiteboxBevelNormalStrengthDraft(
       String(advancedRendering.whiteboxBevel.normalStrength)
     );
+    setAdvancedRenderingDistanceFogNearDistanceDraft(
+      String(advancedRendering.distanceFog.nearDistance)
+    );
+    setAdvancedRenderingDistanceFogFarDistanceDraft(
+      String(advancedRendering.distanceFog.farDistance)
+    );
+    setAdvancedRenderingDistanceFogStrengthDraft(
+      String(advancedRendering.distanceFog.strength)
+    );
+    setAdvancedRenderingDistanceFogRenderDistanceDraft(
+      String(advancedRendering.distanceFog.renderDistance)
+    );
   }, [editorState.document.world.advancedRendering]);
 
   useEffect(() => {
