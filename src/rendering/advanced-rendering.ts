@@ -383,7 +383,19 @@ export function createAdvancedRenderingComposer(
 
   if (godRaysEnabled && godRaysLightSource !== null) {
     composer.addPass(
-      new ScreenSpaceGodRaysPass(camera, godRaysLightSource, godRaysParameters)
+      new ScreenSpaceGodRaysPass(
+        camera,
+        godRaysLightSource,
+        godRaysParameters,
+        distanceFogEnabled
+          ? {
+              nearDistance: distanceFogParameters.nearDistance,
+              farDistance: distanceFogParameters.farDistance,
+              strength: distanceFogParameters.strength,
+              horizonStrength: distanceFogParameters.horizonStrength
+            }
+          : null
+      )
     );
   }
 

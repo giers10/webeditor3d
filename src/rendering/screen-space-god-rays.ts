@@ -4,6 +4,7 @@ import {
   ShaderMaterial,
   Texture,
   Uniform,
+  Vector4,
   Vector2,
   Vector3,
   type DepthPackingStrategies,
@@ -19,6 +20,7 @@ import type {
   AdvancedRenderingSettings,
   WorldSunLightSettings
 } from "../document/world-settings";
+import type { ResolvedDistanceFogParameters } from "./distance-fog-pass";
 
 const MIN_CELESTIAL_LIGHT_INTENSITY = 1e-4;
 const MAX_GOD_RAYS_INTENSITY = 3;
@@ -50,6 +52,13 @@ export interface ScreenSpaceGodRaysLightProjection {
     y: number;
   };
   visibility: number;
+}
+
+export interface ResolvedGodRaysAtmosphereParameters {
+  nearDistance: number;
+  farDistance: number;
+  strength: number;
+  horizonStrength: number;
 }
 
 function clampNumber(value: number, min: number, max: number) {
@@ -245,8 +254,10 @@ const fragmentShader = `
 
 uniform sampler2D inputBuffer;
 uniform sampler2D depthBuffer;
+uniform vec2 cameraNearFar;
 uniform vec2 lightPosition;
 uniform vec3 lightColor;
+uniform vec4 atmosphere;
 uniform float sourceIntensity;
 uniform float intensity;
 uniform float decay;
@@ -266,6 +277,24 @@ float readDepth(const in vec2 uv) {
 
 float readLuminance(vec3 color) {
   return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
+
+float getViewZ(const in float depth) {
+  return perspectiveDepthToViewZ(depth, cameraNearFar.x, cameraNearFar.y);
+}
+
+float getAtmosphereMask(const in float depth) {
+  if (atmosphere.z <= 0.0) {
+    return 1.0;
+  }
+
+  if (depth >= 0.9999) {
+    return 1.0;
+  }
+
+  float distanceFromCamera = max(-getViewZ(depth), 0.0);
+  float distanceMask = smoothstep(atmosphere.x, max(atmosphere.y, atmosphere.x + 0.001), distanceFromCamera);
+  return mix(0.34, 1.0, clamp(distanceMask * atmosphere.z + atmosphere.w * 0.28, 0.0, 1.0));
 }
 
 void main() {
@@ -326,6 +355,10 @@ void main() {
     intensity *
     sourceIntensity /
     max(float(sampleCount), 1.0);
+  float receiverAtmosphere = getAtmosphereMask(readDepth(vUv));
+  float baseLuminance = readLuminance(baseColor.rgb);
+  float highlightProtection = 1.0 - smoothstep(0.9, 2.2, baseLuminance) * 0.22;
+  shaftColor *= receiverAtmosphere * highlightProtection;
 
   gl_FragColor = vec4(baseColor.rgb + shaftColor, baseColor.a);
 }
@@ -335,20 +368,25 @@ export class ScreenSpaceGodRaysPass extends Pass {
   private readonly sourceCamera: PerspectiveCamera;
   private readonly lightSource: ScreenSpaceGodRaysLightSource;
   private readonly parameters: ResolvedGodRaysParameters;
+  private readonly atmosphereParameters: ResolvedGodRaysAtmosphereParameters | null;
   private readonly material: ShaderMaterial;
   private readonly lightPosition = new Vector2(0.5, 0.5);
   private readonly lightColor = new Color("#ffffff");
+  private readonly cameraNearFar = new Vector2();
+  private readonly atmosphere = new Vector4(0, 1, 0, 0);
 
   constructor(
     camera: PerspectiveCamera,
     lightSource: ScreenSpaceGodRaysLightSource,
-    parameters: ResolvedGodRaysParameters
+    parameters: ResolvedGodRaysParameters,
+    atmosphereParameters: ResolvedGodRaysAtmosphereParameters | null = null
   ) {
     super("ScreenSpaceGodRaysPass");
 
     this.sourceCamera = camera;
     this.lightSource = lightSource;
     this.parameters = parameters;
+    this.atmosphereParameters = atmosphereParameters;
     this.needsDepthTexture = true;
 
     this.material = new ShaderMaterial({
@@ -359,8 +397,10 @@ export class ScreenSpaceGodRaysPass extends Pass {
       uniforms: {
         inputBuffer: new Uniform<Texture | null>(null),
         depthBuffer: new Uniform<Texture | null>(null),
+        cameraNearFar: new Uniform(this.cameraNearFar),
         lightPosition: new Uniform(this.lightPosition),
         lightColor: new Uniform(this.lightColor),
+        atmosphere: new Uniform(this.atmosphere),
         sourceIntensity: new Uniform(0),
         intensity: new Uniform(parameters.intensity),
         decay: new Uniform(parameters.decay),
@@ -410,6 +450,17 @@ export class ScreenSpaceGodRaysPass extends Pass {
       );
     }
 
+    this.cameraNearFar.set(this.sourceCamera.near, this.sourceCamera.far);
+    if (this.atmosphereParameters === null) {
+      this.atmosphere.set(0, 1, 0, 0);
+    } else {
+      this.atmosphere.set(
+        this.atmosphereParameters.nearDistance,
+        this.atmosphereParameters.farDistance,
+        this.atmosphereParameters.strength,
+        this.atmosphereParameters.horizonStrength
+      );
+    }
     this.lightColor.set(this.lightSource.colorHex);
     this.material.uniforms.inputBuffer.value = inputBuffer.texture;
     this.material.uniforms.sourceIntensity.value = sourceIntensity;
