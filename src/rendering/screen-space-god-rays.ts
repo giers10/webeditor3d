@@ -20,7 +20,6 @@ import type {
   AdvancedRenderingSettings,
   WorldSunLightSettings
 } from "../document/world-settings";
-import type { ResolvedDistanceFogParameters } from "./distance-fog-pass";
 
 const MIN_CELESTIAL_LIGHT_INTENSITY = 1e-4;
 const MAX_GOD_RAYS_INTENSITY = 3;
