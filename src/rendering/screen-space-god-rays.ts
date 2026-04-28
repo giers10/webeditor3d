@@ -30,6 +30,8 @@ const MIN_CELESTIAL_LIGHT_INTENSITY = 1e-4;
 const MAX_GOD_RAYS_INTENSITY = 3;
 const MAX_GOD_RAYS_EXPOSURE = 2;
 const MAX_GOD_RAYS_DENSITY = 1.5;
+const MIN_GOD_RAYS_SOURCE_SIZE = 0.25;
+const MAX_GOD_RAYS_SOURCE_SIZE = 3;
 const MIN_GOD_RAYS_SAMPLES = 8;
 const MAX_GOD_RAYS_SAMPLES = 64;
 const LIGHT_OFFSCREEN_FADE_START = 0.92;
@@ -49,6 +51,7 @@ export interface ResolvedGodRaysParameters {
   decay: number;
   exposure: number;
   density: number;
+  sourceSize: number;
   samples: number;
 }
 
@@ -150,6 +153,11 @@ export function resolveGodRaysParameters(
     0,
     MAX_GOD_RAYS_DENSITY
   );
+  const sourceSize = clampNumber(
+    finiteOr(settings.sourceSize, 1),
+    MIN_GOD_RAYS_SOURCE_SIZE,
+    MAX_GOD_RAYS_SOURCE_SIZE
+  );
   const samples = Math.round(
     clampNumber(
       finiteOr(settings.samples, MIN_GOD_RAYS_SAMPLES),
@@ -169,6 +177,7 @@ export function resolveGodRaysParameters(
     decay,
     exposure,
     density,
+    sourceSize,
     samples
   };
 }
@@ -177,24 +186,29 @@ export function shouldApplyGodRays(settings: AdvancedRenderingSettings) {
   return settings.enabled && resolveGodRaysParameters(settings.godRays).enabled;
 }
 
-export function resolveGodRaysSourceMask(sourceDistance: number): number {
-  if (!Number.isFinite(sourceDistance)) {
+export function resolveGodRaysSourceMask(
+  sourceDistance: number,
+  sourceSize: number = 1
+): number {
+  if (!Number.isFinite(sourceDistance) || !Number.isFinite(sourceSize)) {
     return 0;
   }
 
+  const scaledSourceDistance =
+    sourceDistance / Math.max(sourceSize, MIN_GOD_RAYS_SOURCE_SIZE);
   const core =
     1 -
     smoothstep(
       GOD_RAYS_SOURCE_MASK_RADII.coreInner,
       GOD_RAYS_SOURCE_MASK_RADII.coreOuter,
-      sourceDistance
+      scaledSourceDistance
     );
   const halo =
     1 -
     smoothstep(
       GOD_RAYS_SOURCE_MASK_RADII.haloInner,
       GOD_RAYS_SOURCE_MASK_RADII.haloOuter,
-      sourceDistance
+      scaledSourceDistance
     );
 
   return clampNumber(core * 1.15 + halo * 0.55, 0, 1);
@@ -290,13 +304,14 @@ const sourceMaskFragmentShader = `
 uniform vec2 resolution;
 uniform vec2 lightPosition;
 uniform float sourceIntensity;
+uniform float sourceSize;
 
 varying vec2 vUv;
 
 void main() {
   vec2 safeResolution = max(resolution, vec2(1.0));
   vec2 aspectScale = vec2(safeResolution.x / safeResolution.y, 1.0);
-  float sourceDistance = length((vUv - lightPosition) * aspectScale);
+  float sourceDistance = length((vUv - lightPosition) * aspectScale) / max(sourceSize, ${formatGlslFloat(MIN_GOD_RAYS_SOURCE_SIZE)});
   float core = 1.0 - smoothstep(${formatGlslFloat(GOD_RAYS_SOURCE_MASK_RADII.coreInner)}, ${formatGlslFloat(GOD_RAYS_SOURCE_MASK_RADII.coreOuter)}, sourceDistance);
   float halo = 1.0 - smoothstep(${formatGlslFloat(GOD_RAYS_SOURCE_MASK_RADII.haloInner)}, ${formatGlslFloat(GOD_RAYS_SOURCE_MASK_RADII.haloOuter)}, sourceDistance);
   float sourceMask = clamp(core * 1.15 + halo * 0.55, 0.0, 1.0);
@@ -474,7 +489,8 @@ export class ScreenSpaceGodRaysPass extends Pass {
       uniforms: {
         resolution: new Uniform(this.maskResolution),
         lightPosition: new Uniform(this.lightPosition),
-        sourceIntensity: new Uniform(0)
+        sourceIntensity: new Uniform(0),
+        sourceSize: new Uniform(parameters.sourceSize)
       },
       vertexShader,
       fragmentShader: sourceMaskFragmentShader,
@@ -544,6 +560,8 @@ export class ScreenSpaceGodRaysPass extends Pass {
     renderer.clear(true, true, false);
 
     this.sourceMaskMaterial.uniforms.sourceIntensity.value = sourceIntensity;
+    this.sourceMaskMaterial.uniforms.sourceSize.value =
+      this.parameters.sourceSize;
     this.fullscreenMaterial = this.sourceMaskMaterial;
     renderer.render(this.scene, this.camera);
 
