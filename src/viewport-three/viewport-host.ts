@@ -211,6 +211,10 @@ import {
 } from "../rendering/advanced-rendering";
 import { applyAdvancedRenderingPerspectiveCameraFar } from "../rendering/distance-fog-pass";
 import {
+  createScreenSpaceGodRaysLightSource,
+  syncScreenSpaceGodRaysLightSource
+} from "../rendering/screen-space-god-rays";
+import {
   fitCelestialDirectionalShadow,
   resolveDominantCelestialShadowCaster
 } from "../rendering/celestial-shadows";
@@ -712,6 +716,7 @@ export class ViewportHost {
   private readonly ambientLight = new AmbientLight();
   private readonly sunLight = new DirectionalLight();
   private readonly moonLight = new DirectionalLight();
+  private readonly godRaysLightSource = createScreenSpaceGodRaysLightSource();
   private readonly localLightGroup = new Group();
   private readonly lightVolumeGroup = new Group();
   private readonly brushGroup = new Group();
