@@ -416,6 +416,49 @@ describe("createAdvancedRenderingComposer", () => {
       6
     );
   });
+
+  it("shares one normal pass between SSAO and dynamic GI", () => {
+    postprocessingState.composerOptions.length = 0;
+    postprocessingState.composerPasses.length = 0;
+    postprocessingState.normalPassTextures.length = 0;
+    postprocessingState.ssaoCalls.length = 0;
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.ambientOcclusion.enabled = true;
+    settings.dynamicGlobalIllumination.enabled = true;
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(postprocessingState.normalPassTextures).toHaveLength(1);
+    expect(
+      postprocessingState.composerPasses.map(
+        (pass) => (pass as { name: string }).name
+      )
+    ).toEqual([
+      "RenderPass",
+      "NormalPass",
+      "ScreenSpaceGlobalIlluminationPass",
+      "EffectPass",
+      "ShaderPass",
+      "RenderPass",
+      "RenderPass",
+      "EffectPass"
+    ]);
+    expect(postprocessingState.ssaoCalls).toHaveLength(2);
+    expect(postprocessingState.ssaoCalls[0].normalBuffer).toBe(
+      postprocessingState.normalPassTextures[0]
+    );
+  });
 });
 
 describe("whitebox bevel materials", () => {
