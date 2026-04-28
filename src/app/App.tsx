@@ -3326,6 +3326,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
     useRef<EditorSimulationController | null>(null);
   const lastAutosaveErrorRef = useRef<string | null>(null);
   const viewportQuadSplitRef = useRef(editorState.viewportQuadSplit);
+  const hoveredViewportPanelIdRef = useRef<ViewportPanelId | null>(null);
   const lastPointerPositionRef = useRef<HierarchicalMenuPosition>({
     x: Math.round(window.innerWidth * 0.5),
     y: Math.round(window.innerHeight * 0.5)
@@ -4749,15 +4750,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
           : null;
       const hoveredPanelId =
         hoveredViewportPanelElement?.dataset.viewportPanelId;
-
-      setHoveredViewportPanelId(
+      const nextHoveredViewportPanelId =
         hoveredPanelId === "topLeft" ||
-          hoveredPanelId === "topRight" ||
-          hoveredPanelId === "bottomLeft" ||
-          hoveredPanelId === "bottomRight"
+        hoveredPanelId === "topRight" ||
+        hoveredPanelId === "bottomLeft" ||
+        hoveredPanelId === "bottomRight"
           ? hoveredPanelId
-          : null
-      );
+          : null;
+
+      if (hoveredViewportPanelIdRef.current !== nextHoveredViewportPanelId) {
+        hoveredViewportPanelIdRef.current = nextHoveredViewportPanelId;
+        setHoveredViewportPanelId(nextHoveredViewportPanelId);
+      }
     };
 
     const handleWindowKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -4996,7 +5000,6 @@ export function App({ store, initialStatusMessage }: AppProps) {
     editorState.selection,
     editorState.toolMode,
     entityList.length,
-    hoveredViewportPanelId,
     layoutMode,
     projectAssetStorage,
     projectAssetStorageReady,
