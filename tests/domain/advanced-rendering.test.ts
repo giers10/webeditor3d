@@ -59,7 +59,7 @@ vi.mock("postprocessing", () => {
   class MockNormalPass extends MockPass {
     texture: Record<string, unknown>;
 
-    constructor(_scene: unknown, _camera: unknown) {
+    constructor() {
       super("NormalPass");
       this.texture = {
         kind: "normal-pass-texture",
@@ -104,19 +104,19 @@ vi.mock("postprocessing", () => {
   }
 
   class MockBloomEffect {
-    constructor(_options: Record<string, unknown>) {}
+    constructor() {}
   }
 
   class MockDepthOfFieldEffect {
-    constructor(_camera: unknown, _options: Record<string, unknown>) {}
+    constructor() {}
   }
 
   class MockToneMappingEffect {
-    constructor(_options: Record<string, unknown>) {}
+    constructor() {}
   }
 
   class MockSMAAEffect {
-    constructor(_options: Record<string, unknown>) {}
+    constructor() {}
   }
 
   return {
