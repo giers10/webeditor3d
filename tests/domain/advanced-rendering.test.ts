@@ -150,6 +150,11 @@ import {
   createAdvancedRenderingComposer,
   resolveBoxVolumeRenderPaths
 } from "../../src/rendering/advanced-rendering";
+import {
+  applyAdvancedRenderingPerspectiveCameraFar,
+  resolveAdvancedRenderingPerspectiveCameraFar,
+  resolveDistanceFogParameters
+} from "../../src/rendering/distance-fog-pass";
 import { resolveDynamicGlobalIlluminationParameters } from "../../src/rendering/screen-space-global-illumination";
 import {
   ALL_RENDER_LAYER_MASK,
@@ -238,6 +243,64 @@ describe("resolveDynamicGlobalIlluminationParameters", () => {
   });
 });
 
+describe("distance fog parameters", () => {
+  it("keeps the pass disabled by default", () => {
+    const settings = createDefaultWorldSettings().advancedRendering;
+
+    expect(resolveDistanceFogParameters(settings.distanceFog)).toMatchObject({
+      enabled: false
+    });
+    expect(
+      resolveAdvancedRenderingPerspectiveCameraFar(settings, 1000, 0.1)
+    ).toBe(1000);
+  });
+
+  it("resolves a bounded fog range and perspective render-distance clamp", () => {
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.distanceFog = {
+      enabled: true,
+      colorHex: "#aabbcc",
+      nearDistance: 40,
+      farDistance: 400,
+      strength: 2,
+      renderDistance: 180
+    };
+
+    expect(resolveDistanceFogParameters(settings.distanceFog)).toMatchObject({
+      enabled: true,
+      colorHex: "#aabbcc",
+      nearDistance: 40,
+      farDistance: 180,
+      strength: 1,
+      renderDistance: 180
+    });
+    expect(
+      resolveAdvancedRenderingPerspectiveCameraFar(settings, 1000, 0.1)
+    ).toBe(180);
+  });
+
+  it("applies and resets the perspective camera far clamp", () => {
+    const settings = createDefaultWorldSettings().advancedRendering;
+    const camera = new PerspectiveCamera(60, 1, 0.1, 1000);
+    settings.enabled = true;
+    settings.distanceFog.enabled = true;
+    settings.distanceFog.renderDistance = 125;
+
+    expect(
+      applyAdvancedRenderingPerspectiveCameraFar(camera, settings, 1000)
+    ).toBe(true);
+    expect(camera.far).toBe(125);
+
+    settings.distanceFog.enabled = false;
+
+    expect(
+      applyAdvancedRenderingPerspectiveCameraFar(camera, settings, 1000)
+    ).toBe(true);
+    expect(camera.far).toBe(1000);
+  });
+});
+
 describe("createAdvancedRenderingComposer", () => {
   it("keeps depth buffering enabled when the post stack only uses color effects", () => {
     postprocessingState.composerOptions.length = 0;
@@ -276,6 +339,56 @@ describe("createAdvancedRenderingComposer", () => {
         .renderLayerMask
     ).toBe(ALL_RENDER_LAYER_MASK);
     expect(postprocessingState.ssaoCalls).toHaveLength(0);
+  });
+
+  it("adds distance fog before post-world overlay layers", () => {
+    postprocessingState.composerOptions.length = 0;
+    postprocessingState.composerPasses.length = 0;
+    postprocessingState.normalPassTextures.length = 0;
+    postprocessingState.ssaoCalls.length = 0;
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.distanceFog.enabled = true;
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(
+      postprocessingState.composerPasses.map(
+        (pass) => (pass as { name: string }).name
+      )
+    ).toEqual([
+      "RenderPass",
+      "DistanceFogPass",
+      "RenderPass",
+      "RenderPass",
+      "EffectPass"
+    ]);
+    expect(
+      (postprocessingState.composerPasses[0] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(AO_WORLD_RENDER_LAYER_MASK);
+    expect(
+      (postprocessingState.composerPasses[1] as { needsDepthTexture?: boolean })
+        .needsDepthTexture
+    ).toBe(true);
+    expect(
+      (postprocessingState.composerPasses[2] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(POST_AO_TRANSPARENT_RENDER_LAYER_MASK);
+    expect(
+      (postprocessingState.composerPasses[3] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(OVERLAY_RENDER_LAYER_MASK);
   });
 
   it("adds the dynamic GI pass only when dynamic GI is enabled", () => {
