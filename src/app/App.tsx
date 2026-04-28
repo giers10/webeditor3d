@@ -3166,6 +3166,32 @@ export function App({ store, initialStatusMessage }: AppProps) {
       editorState.document.world.advancedRendering.whiteboxBevel.normalStrength
     )
   );
+  const [
+    advancedRenderingDistanceFogNearDistanceDraft,
+    setAdvancedRenderingDistanceFogNearDistanceDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.distanceFog.nearDistance)
+  );
+  const [
+    advancedRenderingDistanceFogFarDistanceDraft,
+    setAdvancedRenderingDistanceFogFarDistanceDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.distanceFog.farDistance)
+  );
+  const [
+    advancedRenderingDistanceFogStrengthDraft,
+    setAdvancedRenderingDistanceFogStrengthDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.distanceFog.strength)
+  );
+  const [
+    advancedRenderingDistanceFogRenderDistanceDraft,
+    setAdvancedRenderingDistanceFogRenderDistanceDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.distanceFog.renderDistance
+    )
+  );
   const [statusMessage, setStatusMessage] = useState(
     initialStatusMessage ?? "Slice 3.5 advanced rendering ready."
   );
