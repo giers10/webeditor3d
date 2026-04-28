@@ -228,6 +228,7 @@ import {
 } from "../rendering/terrain-layer-material";
 import {
   resolveWorldCelestialBodiesState,
+  resolveWorldCelestialHorizonVisibility,
   resolveWorldEnvironmentState,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
@@ -2188,21 +2189,47 @@ export class ViewportHost {
               shaderSkyState.celestial.sunVisible
                 ? {
                     colorHex: shaderSkyState.celestial.sunColorHex,
-                    intensity: shaderSkyState.celestial.sunIntensity,
+                    intensity:
+                      shaderSkyState.celestial.sunIntensity *
+                      resolveWorldCelestialHorizonVisibility(
+                        shaderSkyState.celestial.sunDirection.y,
+                        shaderSkyState.sky.horizonHeight
+                      ),
                     direction: shaderSkyState.celestial.sunDirection
                   }
                 : null,
               shaderSkyState.celestial.moonVisible
                 ? {
                     colorHex: shaderSkyState.celestial.moonColorHex,
-                    intensity: shaderSkyState.celestial.moonIntensity,
+                    intensity:
+                      shaderSkyState.celestial.moonIntensity *
+                      resolveWorldCelestialHorizonVisibility(
+                        shaderSkyState.celestial.moonDirection.y,
+                        shaderSkyState.sky.horizonHeight
+                      ),
                     direction: shaderSkyState.celestial.moonDirection
                   }
                 : null
             )
           : resolveDominantScreenSpaceGodRaysLightInput(
-              celestialBodiesState.sun,
-              celestialBodiesState.moon
+              celestialBodiesState.sun === null
+                ? null
+                : {
+                    colorHex: celestialBodiesState.sun.colorHex,
+                    direction: celestialBodiesState.sun.direction,
+                    intensity:
+                      celestialBodiesState.sun.intensity *
+                      celestialBodiesState.sun.horizonVisibility
+                  },
+              celestialBodiesState.moon === null
+                ? null
+                : {
+                    colorHex: celestialBodiesState.moon.colorHex,
+                    direction: celestialBodiesState.moon.direction,
+                    intensity:
+                      celestialBodiesState.moon.intensity *
+                      celestialBodiesState.moon.horizonVisibility
+                  }
             );
       syncScreenSpaceGodRaysLightSource(
         this.godRaysLightSource,
