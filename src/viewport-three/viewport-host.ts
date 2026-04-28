@@ -209,6 +209,7 @@ import {
   createAdvancedRenderingComposer,
   resolveBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
+import { applyAdvancedRenderingPerspectiveCameraFar } from "../rendering/distance-fog-pass";
 import {
   fitCelestialDirectionalShadow,
   resolveDominantCelestialShadowCaster
@@ -425,6 +426,7 @@ const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
 const PLACEMENT_PREVIEW_COLOR_HEX = "#89b6ff";
 const MIN_CAMERA_DISTANCE = 1.5;
 const MAX_CAMERA_DISTANCE = 400;
+const VIEWPORT_PERSPECTIVE_CAMERA_FAR = 1000;
 const ORBIT_ROTATION_SPEED = 0.0085;
 const ZOOM_SPEED = 0.0014;
 const SMOOTH_ZOOM_RESPONSE = 22;
@@ -661,7 +663,12 @@ export class ViewportHost {
   private readonly scene = new Scene();
   private readonly worldBackgroundRenderer = new WorldBackgroundRenderer();
   private readonly axesHelper = new AxesHelper(2);
-  private readonly perspectiveCamera = new PerspectiveCamera(60, 1, 0.1, 1000);
+  private readonly perspectiveCamera = new PerspectiveCamera(
+    60,
+    1,
+    0.1,
+    VIEWPORT_PERSPECTIVE_CAMERA_FAR
+  );
   private readonly orthographicCamera = new OrthographicCamera(
     -10,
     10,
