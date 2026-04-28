@@ -179,6 +179,7 @@ import {
   DISTANCE_FOG_SCENE_DOCUMENT_VERSION,
   DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION,
   GOD_RAYS_SCENE_DOCUMENT_VERSION,
+  GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
   DEFAULT_PROJECT_SCENE_ID,
   SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION,
@@ -1062,6 +1063,11 @@ function readAdvancedRenderingSettings(
         godRays?.density,
         "world.advancedRendering.godRays.density",
         defaults.godRays.density
+      ),
+      sourceSize: readOptionalPositiveFiniteNumber(
+        godRays?.sourceSize,
+        "world.advancedRendering.godRays.sourceSize",
+        defaults.godRays.sourceSize
       ),
       samples: readOptionalPositiveIntegerWithMax(
         godRays?.samples,
@@ -5695,6 +5701,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION &&
     source.version !== DISTANCE_FOG_SCENE_DOCUMENT_VERSION &&
     source.version !== GOD_RAYS_SCENE_DOCUMENT_VERSION &&
+    source.version !== GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION &&
     source.version !== ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
