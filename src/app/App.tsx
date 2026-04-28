@@ -18514,6 +18514,197 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         </div>
 
                         <div className="form-section">
+                          <div className="label">God Rays</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={advancedRendering.godRays.enabled}
+                              onChange={(event) =>
+                                applyAdvancedRenderingGodRaysEnabled(
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Intensity</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.05"
+                                value={advancedRenderingGodRaysIntensityDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingGodRaysIntensityDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={applyAdvancedRenderingGodRaysIntensity}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingGodRaysIntensity
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysIntensity
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysIntensity
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Exposure</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.05"
+                                value={advancedRenderingGodRaysExposureDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingGodRaysExposureDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={applyAdvancedRenderingGodRaysExposure}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingGodRaysExposure
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysExposure
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysExposure
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Decay</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                value={advancedRenderingGodRaysDecayDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingGodRaysDecayDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={applyAdvancedRenderingGodRaysDecay}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingGodRaysDecay
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysDecay
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysDecay
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Density</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.05"
+                                value={advancedRenderingGodRaysDensityDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingGodRaysDensityDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={applyAdvancedRenderingGodRaysDensity}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingGodRaysDensity
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysDensity
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingGodRaysDensity
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <label className="form-field">
+                            <span className="label">Samples</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={advancedRenderingGodRaysSamplesDraft}
+                              onChange={(event) =>
+                                setAdvancedRenderingGodRaysSamplesDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={applyAdvancedRenderingGodRaysSamples}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyAdvancedRenderingGodRaysSamples
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyAdvancedRenderingGodRaysSamples
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyAdvancedRenderingGodRaysSamples
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <div className="form-section">
                           <div className="label">Volume Rendering Paths</div>
                           <div className="vector-inputs vector-inputs--two">
                             <label className="form-field">
