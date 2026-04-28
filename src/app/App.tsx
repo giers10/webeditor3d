@@ -18189,6 +18189,190 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         </div>
 
                         <div className="form-section">
+                          <div className="label">Distance Fog</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={advancedRendering.distanceFog.enabled}
+                              onChange={(event) =>
+                                applyAdvancedRenderingDistanceFogEnabled(
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Color</span>
+                              <input
+                                className="color-input"
+                                type="color"
+                                value={advancedRendering.distanceFog.colorHex}
+                                onChange={(event) =>
+                                  applyAdvancedRenderingDistanceFogColor(
+                                    event.currentTarget.value
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Strength</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                max="1"
+                                step="0.05"
+                                value={advancedRenderingDistanceFogStrengthDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingDistanceFogStrengthDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingDistanceFogStrength
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogStrength
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogStrength
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogStrength
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Near Distance</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={
+                                  advancedRenderingDistanceFogNearDistanceDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingDistanceFogNearDistanceDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingDistanceFogNearDistance
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogNearDistance
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogNearDistance
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogNearDistance
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Far Distance</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0.1"
+                                step="1"
+                                value={
+                                  advancedRenderingDistanceFogFarDistanceDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingDistanceFogFarDistanceDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingDistanceFogFarDistance
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogFarDistance
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogFarDistance
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingDistanceFogFarDistance
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <label className="form-field">
+                            <span className="label">Render Distance</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="1"
+                              value={
+                                advancedRenderingDistanceFogRenderDistanceDraft
+                              }
+                              onChange={(event) =>
+                                setAdvancedRenderingDistanceFogRenderDistanceDraft(
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={
+                                applyAdvancedRenderingDistanceFogRenderDistance
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyAdvancedRenderingDistanceFogRenderDistance
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyAdvancedRenderingDistanceFogRenderDistance
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyAdvancedRenderingDistanceFogRenderDistance
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <div className="form-section">
                           <div className="label">Volume Rendering Paths</div>
                           <div className="vector-inputs vector-inputs--two">
                             <label className="form-field">
