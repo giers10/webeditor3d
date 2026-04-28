@@ -2821,6 +2821,7 @@ export class RuntimeHost {
     this.scene.environmentIntensity = 1;
 
     this.applyDayNightLighting();
+    this.applyAdvancedRenderingCameraFar(world.advancedRendering);
 
     if (this.renderer !== null) {
       configureAdvancedRenderingRenderer(
@@ -2968,6 +2969,14 @@ export class RuntimeHost {
     }
 
     return nextCollisionWorld;
+  }
+
+  private applyAdvancedRenderingCameraFar(settings: AdvancedRenderingSettings) {
+    applyAdvancedRenderingPerspectiveCameraFar(
+      this.camera,
+      settings,
+      RUNTIME_PERSPECTIVE_CAMERA_FAR
+    );
   }
 
   private clearCollisionWorld() {
