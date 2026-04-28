@@ -82,6 +82,7 @@ import {
 } from "./terrains";
 import {
   isAdvancedRenderingWaterReflectionMode,
+  isAdvancedRenderingDynamicGlobalIlluminationQuality,
   isAdvancedRenderingShadowMapSize,
   isAdvancedRenderingShadowType,
   isBoxVolumeRenderPath,
@@ -937,6 +938,60 @@ function validateWorldSettings(
         "invalid-advanced-rendering-ao-samples",
         "Advanced rendering ambient occlusion samples must be a positive integer.",
         "world.advancedRendering.ambientOcclusion.samples"
+      )
+    );
+  }
+
+  if (!isBoolean(advancedRendering.dynamicGlobalIllumination.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-dynamic-gi-enabled",
+        "Advanced rendering dynamic global illumination enabled must be a boolean.",
+        "world.advancedRendering.dynamicGlobalIllumination.enabled"
+      )
+    );
+  }
+
+  if (
+    !isNonNegativeFiniteNumber(
+      advancedRendering.dynamicGlobalIllumination.intensity
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-dynamic-gi-intensity",
+        "Advanced rendering dynamic global illumination intensity must be a non-negative finite number.",
+        "world.advancedRendering.dynamicGlobalIllumination.intensity"
+      )
+    );
+  }
+
+  if (
+    !isNonNegativeFiniteNumber(advancedRendering.dynamicGlobalIllumination.radius)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-dynamic-gi-radius",
+        "Advanced rendering dynamic global illumination radius must be a non-negative finite number.",
+        "world.advancedRendering.dynamicGlobalIllumination.radius"
+      )
+    );
+  }
+
+  if (
+    !isAdvancedRenderingDynamicGlobalIlluminationQuality(
+      advancedRendering.dynamicGlobalIllumination.quality
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-dynamic-gi-quality",
+        "Advanced rendering dynamic global illumination quality must be low or medium.",
+        "world.advancedRendering.dynamicGlobalIllumination.quality"
       )
     );
   }
