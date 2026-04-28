@@ -176,6 +176,15 @@ export interface AdvancedRenderingDistanceFogSettings {
   renderDistance: number;
 }
 
+export interface AdvancedRenderingGodRaysSettings {
+  enabled: boolean;
+  intensity: number;
+  decay: number;
+  exposure: number;
+  density: number;
+  samples: number;
+}
+
 export interface AdvancedRenderingSettings {
   enabled: boolean;
   shadows: AdvancedRenderingShadowsSettings;
@@ -186,6 +195,7 @@ export interface AdvancedRenderingSettings {
   depthOfField: AdvancedRenderingDepthOfFieldSettings;
   whiteboxBevel: AdvancedRenderingWhiteboxBevelSettings;
   distanceFog: AdvancedRenderingDistanceFogSettings;
+  godRays: AdvancedRenderingGodRaysSettings;
   fogPath: BoxVolumeRenderPath;
   waterPath: BoxVolumeRenderPath;
   waterReflectionMode: AdvancedRenderingWaterReflectionMode;
@@ -281,6 +291,11 @@ const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_NEAR_DISTANCE = 70;
 const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_FAR_DISTANCE = 180;
 const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_STRENGTH = 0.85;
 const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_RENDER_DISTANCE = 220;
+const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_INTENSITY = 0.35;
+const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_DECAY = 0.92;
+const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_EXPOSURE = 0.28;
+const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_DENSITY = 0.72;
+const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SAMPLES = 48;
 const DEFAULT_BOX_VOLUME_RENDER_PATH: BoxVolumeRenderPath = "performance";
 const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE: AdvancedRenderingWaterReflectionMode =
   "none";
@@ -542,6 +557,14 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
       farDistance: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_FAR_DISTANCE,
       strength: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_STRENGTH,
       renderDistance: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_RENDER_DISTANCE
+    },
+    godRays: {
+      enabled: false,
+      intensity: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_INTENSITY,
+      decay: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_DECAY,
+      exposure: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_EXPOSURE,
+      density: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_DENSITY,
+      samples: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SAMPLES
     },
     fogPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
     waterPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
@@ -868,6 +891,9 @@ export function cloneAdvancedRenderingSettings(
     distanceFog: {
       ...settings.distanceFog
     },
+    godRays: {
+      ...settings.godRays
+    },
     fogPath: settings.fogPath,
     waterPath: settings.waterPath,
     waterReflectionMode: settings.waterReflectionMode
@@ -1061,6 +1087,12 @@ export function areAdvancedRenderingSettingsEqual(
     left.distanceFog.farDistance === right.distanceFog.farDistance &&
     left.distanceFog.strength === right.distanceFog.strength &&
     left.distanceFog.renderDistance === right.distanceFog.renderDistance &&
+    left.godRays.enabled === right.godRays.enabled &&
+    left.godRays.intensity === right.godRays.intensity &&
+    left.godRays.decay === right.godRays.decay &&
+    left.godRays.exposure === right.godRays.exposure &&
+    left.godRays.density === right.godRays.density &&
+    left.godRays.samples === right.godRays.samples &&
     left.fogPath === right.fogPath &&
     left.waterPath === right.waterPath &&
     left.waterReflectionMode === right.waterReflectionMode
