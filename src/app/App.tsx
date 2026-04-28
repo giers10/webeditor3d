@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -2363,8 +2364,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       : (editorState.document.materials[selectedBrushSharedMaterialId] ?? null);
   const selectedBrushHasMixedFaceMaterials =
     selectedBrush !== null && selectedBrushSharedMaterialId === undefined;
-  const selectedBrushFaceIds =
-    selectedBrush === null ? [] : getBrushFaceIds(selectedBrush);
+  const selectedBrushFaceIds = useMemo(
+    () => (selectedBrush === null ? [] : getBrushFaceIds(selectedBrush)),
+    [selectedBrush]
+  );
   const selectedBrushHasMixedFaceUvs =
     selectedBrush !== null
       ? selectedBrushFaceIds
