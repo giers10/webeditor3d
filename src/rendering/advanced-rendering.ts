@@ -1,6 +1,9 @@
 import {
   BasicShadowMap,
+  DepthStencilFormat,
+  DepthTexture,
   DirectionalLight,
+  FloatType,
   HalfFloatType,
   Mesh,
   NoToneMapping,
@@ -13,7 +16,8 @@ import {
   type Material,
   type PerspectiveCamera,
   type Scene,
-  type WebGLRenderTarget,
+  UnsignedInt248Type,
+  WebGLRenderTarget,
   type WebGLRenderer,
   UnsignedByteType
 } from "three";
@@ -258,6 +262,49 @@ function getAmbientOcclusionSampleCount(samples: number) {
   return Math.max(samples, MIN_AMBIENT_OCCLUSION_SAMPLES);
 }
 
+interface EffectComposerDepthTextureInternals extends EffectComposer {
+  depthTexture: DepthTexture | null;
+  depthRenderTarget: WebGLRenderTarget | null;
+  createDepthTexture(): DepthTexture;
+}
+
+function configureEffectComposerDepthTextureIsolation(
+  composer: EffectComposer
+) {
+  const composerInternals = composer as EffectComposerDepthTextureInternals;
+
+  composerInternals.createDepthTexture = function createDepthTexture() {
+    const inputBuffer = this.inputBuffer;
+    const sourceDepthTexture = new DepthTexture();
+    const stableDepthTexture = new DepthTexture();
+
+    this.depthTexture = sourceDepthTexture;
+
+    if (inputBuffer.stencilBuffer) {
+      sourceDepthTexture.format = DepthStencilFormat;
+      sourceDepthTexture.type = UnsignedInt248Type;
+      stableDepthTexture.format = DepthStencilFormat;
+      stableDepthTexture.type = UnsignedInt248Type;
+    } else {
+      sourceDepthTexture.type = FloatType;
+      stableDepthTexture.type = FloatType;
+    }
+
+    stableDepthTexture.name = "EffectComposer.StableDepth";
+    this.depthRenderTarget = new WebGLRenderTarget(
+      inputBuffer.width,
+      inputBuffer.height,
+      {
+        depthBuffer: true,
+        stencilBuffer: inputBuffer.stencilBuffer,
+        depthTexture: stableDepthTexture
+      }
+    );
+
+    return stableDepthTexture;
+  };
+}
+
 export function createAdvancedRenderingComposer(
   renderer: WebGLRenderer,
   scene: Scene,
@@ -276,6 +323,7 @@ export function createAdvancedRenderingComposer(
       ? HalfFloatType
       : UnsignedByteType
   });
+  configureEffectComposerDepthTextureIsolation(composer);
   const dynamicGlobalIlluminationParameters =
     resolveDynamicGlobalIlluminationParameters(
       settings.dynamicGlobalIllumination
