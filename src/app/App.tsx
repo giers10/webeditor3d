@@ -12421,6 +12421,101 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyAdvancedRenderingGodRaysEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set god rays",
+      enabled ? "God rays enabled." : "God rays disabled.",
+      (advancedRendering) => {
+        advancedRendering.godRays.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingGodRaysIntensity = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set god rays intensity",
+        "Updated the god rays intensity.",
+        (advancedRendering) => {
+          advancedRendering.godRays.intensity = readNonNegativeNumberDraft(
+            advancedRenderingGodRaysIntensityDraft,
+            "God rays intensity"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingGodRaysDecay = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set god rays decay",
+        "Updated the god rays decay.",
+        (advancedRendering) => {
+          advancedRendering.godRays.decay = readUnitIntervalNumberDraft(
+            advancedRenderingGodRaysDecayDraft,
+            "God rays decay"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingGodRaysExposure = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set god rays exposure",
+        "Updated the god rays exposure.",
+        (advancedRendering) => {
+          advancedRendering.godRays.exposure = readNonNegativeNumberDraft(
+            advancedRenderingGodRaysExposureDraft,
+            "God rays exposure"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingGodRaysDensity = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set god rays density",
+        "Updated the god rays density.",
+        (advancedRendering) => {
+          advancedRendering.godRays.density = readNonNegativeNumberDraft(
+            advancedRenderingGodRaysDensityDraft,
+            "God rays density"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingGodRaysSamples = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set god rays samples",
+        "Updated the god rays samples.",
+        (advancedRendering) => {
+          advancedRendering.godRays.samples = readPositiveIntegerDraft(
+            advancedRenderingGodRaysSamplesDraft,
+            "God rays samples"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyAdvancedRenderingFogPath = (path: BoxVolumeRenderPath) => {
     applyAdvancedRenderingSettings(
       "Set fog render path",
