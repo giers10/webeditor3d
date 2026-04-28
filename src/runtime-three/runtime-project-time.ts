@@ -993,7 +993,12 @@ export function resolveRuntimeDayNightWorldState(
       timeOfDay.dusk.lightIntensityFactor,
       0,
       phaseWeights
-    ) * smoothstep(-0.16, 0.18, sunDirection.y);
+    ) *
+    smoothstep(
+      CELESTIAL_LIGHT_HORIZON_FADE_START,
+      CELESTIAL_LIGHT_HORIZON_FADE_END,
+      sunDirection.y
+    );
   const ambientFactor = blendScalarByWeights(
     1,
     timeOfDay.dawn.ambientIntensityFactor,
