@@ -11951,6 +11951,68 @@ export function App({ store, initialStatusMessage }: AppProps) {
     }
   };
 
+  const applyAdvancedRenderingDynamicGlobalIlluminationEnabled = (
+    enabled: boolean
+  ) => {
+    applyAdvancedRenderingSettings(
+      "Set dynamic global illumination",
+      enabled
+        ? "Dynamic global illumination enabled."
+        : "Dynamic global illumination disabled.",
+      (advancedRendering) => {
+        advancedRendering.dynamicGlobalIllumination.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingDynamicGlobalIlluminationIntensity = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set dynamic global illumination intensity",
+        "Updated the dynamic global illumination intensity.",
+        (advancedRendering) => {
+          advancedRendering.dynamicGlobalIllumination.intensity =
+            readNonNegativeNumberDraft(
+              advancedRenderingDynamicGlobalIlluminationIntensityDraft,
+              "Dynamic global illumination intensity"
+            );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingDynamicGlobalIlluminationRadius = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set dynamic global illumination radius",
+        "Updated the dynamic global illumination radius.",
+        (advancedRendering) => {
+          advancedRendering.dynamicGlobalIllumination.radius =
+            readNonNegativeNumberDraft(
+              advancedRenderingDynamicGlobalIlluminationRadiusDraft,
+              "Dynamic global illumination radius"
+            );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingDynamicGlobalIlluminationQuality = (
+    quality: AdvancedRenderingDynamicGlobalIlluminationQuality
+  ) => {
+    applyAdvancedRenderingSettings(
+      "Set dynamic global illumination quality",
+      `Dynamic global illumination quality set to ${formatAdvancedRenderingDynamicGlobalIlluminationQualityLabel(quality)}.`,
+      (advancedRendering) => {
+        advancedRendering.dynamicGlobalIllumination.quality = quality;
+      }
+    );
+  };
+
   const applyAdvancedRenderingBloomEnabled = (enabled: boolean) => {
     applyAdvancedRenderingSettings(
       "Set bloom",
