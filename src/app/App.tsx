@@ -3856,7 +3856,36 @@ export function App({ store, initialStatusMessage }: AppProps) {
   ]);
 
   useEffect(() => {
+    const previousDraftSyncTrace = selectedEntityDraftSyncTraceRef.current;
+    const selectedEntityDependencyObjectIdentityChanged =
+      previousDraftSyncTrace === null ||
+      previousDraftSyncTrace.selectedEntity !== selectedEntity;
+    const projectDocumentDependencyIdentityChanged =
+      previousDraftSyncTrace === null ||
+      previousDraftSyncTrace.projectDocument !== editorState.projectDocument;
+
+    traceUpdateLoopEvent("App.selectedEntityDraftSync.effect", {
+      selectedEntityId: selectedEntity?.id ?? null,
+      selectedEntityKind: selectedEntity?.kind ?? null,
+      previousSelectedEntityId:
+        previousDraftSyncTrace?.selectedEntity?.id ?? null,
+      previousSelectedEntityKind:
+        previousDraftSyncTrace?.selectedEntity?.kind ?? null,
+      selectedEntityDependencyObjectIdentityChanged,
+      selectedEntityIdChanged:
+        (previousDraftSyncTrace?.selectedEntity?.id ?? null) !==
+        (selectedEntity?.id ?? null),
+      selectedEntityKindChanged:
+        (previousDraftSyncTrace?.selectedEntity?.kind ?? null) !==
+        (selectedEntity?.kind ?? null),
+      projectDocumentDependencyIdentityChanged
+    });
+
     if (selectedEntity === null) {
+      const nextMovementTemplate = createPlayerStartMovementTemplate();
+      const nextMovementTemplateNumberDraft =
+        createPlayerStartMovementTemplateNumberDraft(nextMovementTemplate);
+
       setEntityPositionDraft(createVec3Draft(DEFAULT_ENTITY_POSITION));
       setCameraRigRigTypeDraft("fixed");
       setCameraRigPathIdDraft("");
@@ -3924,11 +3953,33 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setPlayerStartTargetButtonCyclesActiveTargetDraft(
         DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET_VALUE
       );
-      setPlayerStartMovementTemplateDraft(createPlayerStartMovementTemplate());
+      traceUpdateLoopEvent(
+        "App.selectedEntityDraftSync.setPlayerStartMovementTemplateDraft",
+        {
+          selectedEntityId: null,
+          selectedEntityKind: null,
+          nextTemplateKind: nextMovementTemplate.kind,
+          valuesEqualToCurrentDraft: arePlayerStartMovementTemplatesEqual(
+            playerStartMovementTemplateDraft,
+            nextMovementTemplate
+          )
+        }
+      );
+      setPlayerStartMovementTemplateDraft(nextMovementTemplate);
+      traceUpdateLoopEvent(
+        "App.selectedEntityDraftSync.setPlayerStartMovementTemplateNumberDraft",
+        {
+          selectedEntityId: null,
+          selectedEntityKind: null,
+          valuesEqualToCurrentDraft:
+            arePlayerStartMovementTemplateNumberDraftsEqual(
+              playerStartMovementTemplateNumberDraft,
+              nextMovementTemplateNumberDraft
+            )
+        }
+      );
       setPlayerStartMovementTemplateNumberDraft(
-        createPlayerStartMovementTemplateNumberDraft(
-          createPlayerStartMovementTemplate()
-        )
+        nextMovementTemplateNumberDraft
       );
       setPlayerStartColliderModeDraft("capsule");
       setPlayerStartEyeHeightDraft(String(DEFAULT_PLAYER_START_EYE_HEIGHT));
@@ -3972,6 +4023,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
       setInteractableRadiusDraft(String(DEFAULT_INTERACTABLE_RADIUS));
       setInteractablePromptDraft(DEFAULT_INTERACTABLE_PROMPT);
       setInteractableEnabledDraft(true);
+      selectedEntityDraftSyncTraceRef.current = {
+        selectedEntity,
+        projectDocument: editorState.projectDocument
+      };
       return;
     }
 
@@ -4093,14 +4148,44 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setPlayerStartTargetButtonCyclesActiveTargetDraft(
           selectedEntity.targetButtonCyclesActiveTarget
         );
-        setPlayerStartMovementTemplateDraft(
-          clonePlayerStartMovementTemplate(selectedEntity.movementTemplate)
-        );
-        setPlayerStartMovementTemplateNumberDraft(
-          createPlayerStartMovementTemplateNumberDraft(
+        {
+          const nextMovementTemplate = clonePlayerStartMovementTemplate(
             selectedEntity.movementTemplate
-          )
-        );
+          );
+          const nextMovementTemplateNumberDraft =
+            createPlayerStartMovementTemplateNumberDraft(
+              selectedEntity.movementTemplate
+            );
+
+          traceUpdateLoopEvent(
+            "App.selectedEntityDraftSync.setPlayerStartMovementTemplateDraft",
+            {
+              selectedEntityId: selectedEntity.id,
+              selectedEntityKind: selectedEntity.kind,
+              nextTemplateKind: nextMovementTemplate.kind,
+              valuesEqualToCurrentDraft: arePlayerStartMovementTemplatesEqual(
+                playerStartMovementTemplateDraft,
+                nextMovementTemplate
+              )
+            }
+          );
+          setPlayerStartMovementTemplateDraft(nextMovementTemplate);
+          traceUpdateLoopEvent(
+            "App.selectedEntityDraftSync.setPlayerStartMovementTemplateNumberDraft",
+            {
+              selectedEntityId: selectedEntity.id,
+              selectedEntityKind: selectedEntity.kind,
+              valuesEqualToCurrentDraft:
+                arePlayerStartMovementTemplateNumberDraftsEqual(
+                  playerStartMovementTemplateNumberDraft,
+                  nextMovementTemplateNumberDraft
+                )
+            }
+          );
+          setPlayerStartMovementTemplateNumberDraft(
+            nextMovementTemplateNumberDraft
+          );
+        }
         setPlayerStartColliderModeDraft(selectedEntity.collider.mode);
         setPlayerStartEyeHeightDraft(String(selectedEntity.collider.eyeHeight));
         setPlayerStartCapsuleRadiusDraft(
@@ -4149,6 +4234,10 @@ export function App({ store, initialStatusMessage }: AppProps) {
         setInteractableEnabledDraft(selectedEntity.interactionEnabled);
         break;
     }
+    selectedEntityDraftSyncTraceRef.current = {
+      selectedEntity,
+      projectDocument: editorState.projectDocument
+    };
   }, [editorState.projectDocument, selectedEntity]);
 
   useEffect(() => {
