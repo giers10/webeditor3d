@@ -177,6 +177,7 @@ import {
   CONTROL_SURFACE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   DISTANCE_FOG_SCENE_DOCUMENT_VERSION,
   DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION,
+  GOD_RAYS_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
   DEFAULT_PROJECT_SCENE_ID,
   SCENE_EDITOR_PREFERENCES_SCENE_DOCUMENT_VERSION,
@@ -792,6 +793,10 @@ function readAdvancedRenderingSettings(
     throw new Error("world.advancedRendering.distanceFog must be an object.");
   }
 
+  if (value.godRays !== undefined && !isRecord(value.godRays)) {
+    throw new Error("world.advancedRendering.godRays must be an object.");
+  }
+
   const shadows = value.shadows as Record<string, unknown> | undefined;
   const ambientOcclusion = value.ambientOcclusion as
     | Record<string, unknown>
@@ -808,6 +813,7 @@ function readAdvancedRenderingSettings(
     | Record<string, unknown>
     | undefined;
   const distanceFog = value.distanceFog as Record<string, unknown> | undefined;
+  const godRays = value.godRays as Record<string, unknown> | undefined;
 
   const shadowsMapSize = readOptionalAllowedValue(
     shadows?.mapSize,
@@ -1013,6 +1019,39 @@ function readAdvancedRenderingSettings(
         distanceFog?.renderDistance,
         "world.advancedRendering.distanceFog.renderDistance",
         defaults.distanceFog.renderDistance
+      )
+    },
+    godRays: {
+      enabled: readOptionalBoolean(
+        godRays?.enabled,
+        "world.advancedRendering.godRays.enabled",
+        defaults.godRays.enabled
+      ),
+      intensity: readOptionalNonNegativeFiniteNumber(
+        godRays?.intensity,
+        "world.advancedRendering.godRays.intensity",
+        defaults.godRays.intensity
+      ),
+      decay: readOptionalNonNegativeFiniteNumber(
+        godRays?.decay,
+        "world.advancedRendering.godRays.decay",
+        defaults.godRays.decay
+      ),
+      exposure: readOptionalNonNegativeFiniteNumber(
+        godRays?.exposure,
+        "world.advancedRendering.godRays.exposure",
+        defaults.godRays.exposure
+      ),
+      density: readOptionalNonNegativeFiniteNumber(
+        godRays?.density,
+        "world.advancedRendering.godRays.density",
+        defaults.godRays.density
+      ),
+      samples: readOptionalPositiveIntegerWithMax(
+        godRays?.samples,
+        "world.advancedRendering.godRays.samples",
+        defaults.godRays.samples,
+        64
       )
     },
     fogPath,

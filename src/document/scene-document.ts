@@ -29,7 +29,8 @@ import {
 } from "../sequencer/project-sequences";
 import type { Terrain } from "./terrains";
 
-export const SCENE_DOCUMENT_VERSION = 86 as const;
+export const SCENE_DOCUMENT_VERSION = 87 as const;
+export const GOD_RAYS_SCENE_DOCUMENT_VERSION = 87 as const;
 export const DISTANCE_FOG_SCENE_DOCUMENT_VERSION = 86 as const;
 export const DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION = 85 as const;
 export const PLAYER_START_MOUSE_INVERT_SCENE_DOCUMENT_VERSION = 84 as const;
