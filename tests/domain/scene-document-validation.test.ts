@@ -1668,6 +1668,15 @@ describe("validateSceneDocument", () => {
         ...document.world.advancedRendering.whiteboxBevel,
         edgeWidth: -0.1,
         normalStrength: Number.NaN
+      },
+      distanceFog: {
+        ...document.world.advancedRendering.distanceFog,
+        enabled: "yes",
+        colorHex: "mist",
+        nearDistance: Number.NaN,
+        farDistance: 0,
+        strength: 1.5,
+        renderDistance: -2
       }
     } as any;
 
@@ -1742,6 +1751,30 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-advanced-rendering-whitebox-bevel-normal-strength",
           path: "world.advancedRendering.whiteboxBevel.normalStrength"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-distance-fog-enabled",
+          path: "world.advancedRendering.distanceFog.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-distance-fog-color",
+          path: "world.advancedRendering.distanceFog.colorHex"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-distance-fog-near-distance",
+          path: "world.advancedRendering.distanceFog.nearDistance"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-distance-fog-far-distance",
+          path: "world.advancedRendering.distanceFog.farDistance"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-distance-fog-strength",
+          path: "world.advancedRendering.distanceFog.strength"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-distance-fog-render-distance",
+          path: "world.advancedRendering.distanceFog.renderDistance"
         }),
         expect.objectContaining({
           code: "invalid-advanced-rendering-fog-path",
