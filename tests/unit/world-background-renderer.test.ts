@@ -233,7 +233,7 @@ describe("resolveWorldCelestialBodiesState", () => {
         colorHex: "#ffddaa",
         intensity: 1.8,
         direction: {
-          x: 0.2,
+          x: 0.98,
           y: -0.16,
           z: -0.1
         }
