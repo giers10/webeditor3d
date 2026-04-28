@@ -226,9 +226,11 @@ describe("runtime project time", () => {
     });
 
     expect(midDawn.sunLight.direction.y).toBeLessThan(-0.05);
+    expect(midDawn.sunLight.intensity).toBeGreaterThan(0);
     expect(Math.abs(dawnEnd.sunLight.direction.y)).toBeLessThan(0.05);
     expect(Math.abs(duskEnd.sunLight.direction.y)).toBeLessThan(0.05);
     expect(lateDusk.sunLight.direction.y).toBeLessThan(-0.05);
+    expect(lateDusk.sunLight.intensity).toBeGreaterThan(0);
     expect(midDawn.moonLight?.direction.y ?? 0).toBeGreaterThan(0.05);
     expect(Math.abs(preDawnEnd.moonLight?.direction.y ?? 1)).toBeLessThan(0.05);
     expect(Math.abs(duskEnd.moonLight?.direction.y ?? 1)).toBeLessThan(0.05);
