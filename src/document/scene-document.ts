@@ -29,7 +29,8 @@ import {
 } from "../sequencer/project-sequences";
 import type { Terrain } from "./terrains";
 
-export const SCENE_DOCUMENT_VERSION = 88 as const;
+export const SCENE_DOCUMENT_VERSION = 89 as const;
+export const GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION = 89 as const;
 export const ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION = 88 as const;
 export const GOD_RAYS_SCENE_DOCUMENT_VERSION = 87 as const;
 export const DISTANCE_FOG_SCENE_DOCUMENT_VERSION = 86 as const;
