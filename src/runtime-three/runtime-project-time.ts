@@ -26,6 +26,8 @@ const UP_AXIS: Vec3 = {
   y: 1,
   z: 0
 };
+const CELESTIAL_LIGHT_HORIZON_FADE_START = -0.28;
+const CELESTIAL_LIGHT_HORIZON_FADE_END = 0.04;
 export interface RuntimeClockState {
   timeOfDayHours: number;
   dayCount: number;
