@@ -27,8 +27,8 @@ const MAX_GOD_RAYS_EXPOSURE = 2;
 const MAX_GOD_RAYS_DENSITY = 1.5;
 const MIN_GOD_RAYS_SAMPLES = 8;
 const MAX_GOD_RAYS_SAMPLES = 64;
-const LIGHT_OFFSCREEN_FADE_START = 0.98;
-const LIGHT_OFFSCREEN_FADE_END = 1.12;
+const LIGHT_OFFSCREEN_FADE_START = 0.92;
+const LIGHT_OFFSCREEN_FADE_END = 1;
 
 export interface ResolvedGodRaysParameters {
   enabled: boolean;
@@ -301,9 +301,9 @@ float getSunSourceMask(const in vec2 sampleUv) {
   vec2 safeResolution = max(resolution, vec2(1.0));
   vec2 aspectScale = vec2(safeResolution.x / safeResolution.y, 1.0);
   float sourceDistance = length((sampleUv - lightPosition) * aspectScale);
-  float core = 1.0 - smoothstep(0.015, 0.085, sourceDistance);
-  float halo = 1.0 - smoothstep(0.04, 0.42, sourceDistance);
-  return clamp(core * 1.35 + halo * 0.42, 0.0, 1.0);
+  float core = 1.0 - smoothstep(0.01, 0.05, sourceDistance);
+  float halo = 1.0 - smoothstep(0.035, 0.2, sourceDistance);
+  return clamp(core * 1.25 + halo * 0.32, 0.0, 1.0);
 }
 
 void main() {
@@ -324,6 +324,7 @@ void main() {
   vec2 sampleUv = vUv;
   vec3 accumulatedLight = vec3(0.0);
   float illuminationDecay = 1.0;
+  float transmittance = 1.0;
 
   for (int sampleIndex = 0; sampleIndex < MAX_GOD_RAYS_SAMPLES; ++sampleIndex) {
     if (sampleIndex >= sampleCount) {
@@ -344,9 +345,12 @@ void main() {
 
     float depth = readDepth(sampleUv);
     float backgroundMask = smoothstep(0.9975, 1.0, depth);
+    float occluderMask = 1.0 - backgroundMask;
     float sourceMask = getSunSourceMask(sampleUv);
 
-    if (backgroundMask <= 0.0 || sourceMask <= 0.0) {
+    transmittance *= mix(1.0, 0.58, occluderMask);
+
+    if (backgroundMask <= 0.0 || sourceMask <= 0.0 || transmittance <= 0.02) {
       illuminationDecay *= decay;
       continue;
     }
@@ -358,6 +362,7 @@ void main() {
       backgroundMask *
       sourceMask *
       (0.22 + brightness * 0.78) *
+      transmittance *
       illuminationDecay;
     accumulatedLight += mix(lightColor, sampleColor, 0.28) * contribution;
     illuminationDecay *= decay;
