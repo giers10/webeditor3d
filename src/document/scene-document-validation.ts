@@ -1239,6 +1239,72 @@ function validateWorldSettings(
     );
   }
 
+  if (!isBoolean(advancedRendering.godRays.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-god-rays-enabled",
+        "Advanced rendering god rays enabled must be a boolean.",
+        "world.advancedRendering.godRays.enabled"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.godRays.intensity)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-god-rays-intensity",
+        "Advanced rendering god rays intensity must be a non-negative finite number.",
+        "world.advancedRendering.godRays.intensity"
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(advancedRendering.godRays.decay, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-god-rays-decay",
+        "Advanced rendering god rays decay must be a finite number between 0 and 1.",
+        "world.advancedRendering.godRays.decay"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.godRays.exposure)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-god-rays-exposure",
+        "Advanced rendering god rays exposure must be a non-negative finite number.",
+        "world.advancedRendering.godRays.exposure"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.godRays.density)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-god-rays-density",
+        "Advanced rendering god rays density must be a non-negative finite number.",
+        "world.advancedRendering.godRays.density"
+      )
+    );
+  }
+
+  if (!isPositiveInteger(advancedRendering.godRays.samples)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-god-rays-samples",
+        "Advanced rendering god rays samples must be a positive integer.",
+        "world.advancedRendering.godRays.samples"
+      )
+    );
+  }
+
   if (!isBoxVolumeRenderPath(advancedRendering.fogPath)) {
     diagnostics.push(
       createDiagnostic(
