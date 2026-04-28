@@ -191,6 +191,53 @@ describe("resolveBoxVolumeRenderPaths", () => {
   });
 });
 
+describe("resolveDynamicGlobalIlluminationParameters", () => {
+  it("uses bounded low-cost parameters by default", () => {
+    const settings =
+      createDefaultWorldSettings().advancedRendering.dynamicGlobalIllumination;
+    settings.enabled = true;
+
+    expect(resolveDynamicGlobalIlluminationParameters(settings)).toMatchObject({
+      enabled: true,
+      intensity: 1.25,
+      radius: 3.5,
+      quality: "low",
+      sliceCount: 1,
+      stepCount: 6,
+      maxLuminance: 7
+    });
+  });
+
+  it("clamps authored intensity and radius to bounded renderer values", () => {
+    const settings =
+      createDefaultWorldSettings().advancedRendering.dynamicGlobalIllumination;
+    settings.enabled = true;
+    settings.intensity = 25;
+    settings.radius = 100;
+    settings.quality = "medium";
+
+    expect(resolveDynamicGlobalIlluminationParameters(settings)).toMatchObject({
+      enabled: true,
+      intensity: 4,
+      radius: 8,
+      quality: "medium",
+      sliceCount: 2,
+      stepCount: 8
+    });
+  });
+
+  it("disables the pass when the authored intensity is zero", () => {
+    const settings =
+      createDefaultWorldSettings().advancedRendering.dynamicGlobalIllumination;
+    settings.enabled = true;
+    settings.intensity = 0;
+
+    expect(resolveDynamicGlobalIlluminationParameters(settings).enabled).toBe(
+      false
+    );
+  });
+});
+
 describe("createAdvancedRenderingComposer", () => {
   it("keeps depth buffering enabled when the post stack only uses color effects", () => {
     postprocessingState.composerOptions.length = 0;
