@@ -278,8 +278,7 @@ export function createAdvancedRenderingComposer(
   const distanceFogParameters = resolveDistanceFogParameters(
     settings.distanceFog
   );
-  const distanceFogEnabled =
-    settings.enabled && distanceFogParameters.enabled;
+  const distanceFogEnabled = shouldApplyDistanceFog(settings);
   const postWorldLayerIsolationEnabled =
     settings.ambientOcclusion.enabled ||
     dynamicGlobalIlluminationEnabled ||
