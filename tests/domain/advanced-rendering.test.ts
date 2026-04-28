@@ -267,9 +267,60 @@ describe("createAdvancedRenderingComposer", () => {
       frameBufferType: UnsignedByteType
     });
     expect(
+      postprocessingState.composerPasses.map(
+        (pass) => (pass as { name: string }).name
+      )
+    ).toEqual(["RenderPass", "EffectPass"]);
+    expect(
       (postprocessingState.composerPasses[0] as { renderLayerMask?: number })
         .renderLayerMask
     ).toBe(ALL_RENDER_LAYER_MASK);
+    expect(postprocessingState.ssaoCalls).toHaveLength(0);
+  });
+
+  it("adds the dynamic GI pass only when dynamic GI is enabled", () => {
+    postprocessingState.composerOptions.length = 0;
+    postprocessingState.composerPasses.length = 0;
+    postprocessingState.normalPassTextures.length = 0;
+    postprocessingState.ssaoCalls.length = 0;
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.dynamicGlobalIllumination.enabled = true;
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(postprocessingState.normalPassTextures).toHaveLength(1);
+    expect(
+      postprocessingState.composerPasses.map(
+        (pass) => (pass as { name: string }).name
+      )
+    ).toEqual([
+      "RenderPass",
+      "NormalPass",
+      "ScreenSpaceGlobalIlluminationPass",
+      "ShaderPass",
+      "RenderPass",
+      "RenderPass",
+      "EffectPass"
+    ]);
+    expect(
+      (postprocessingState.composerPasses[0] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(AO_WORLD_RENDER_LAYER_MASK);
+    expect(
+      (postprocessingState.composerPasses[2] as { needsDepthTexture?: boolean })
+        .needsDepthTexture
+    ).toBe(true);
     expect(postprocessingState.ssaoCalls).toHaveLength(0);
   });
 
