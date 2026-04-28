@@ -1676,7 +1676,10 @@ describe("validateSceneDocument", () => {
         nearDistance: Number.NaN,
         farDistance: 0,
         strength: 1.5,
-        renderDistance: -2
+        renderDistance: -2,
+        skyBlend: 1.5,
+        horizonStrength: -0.2,
+        heightFalloff: Number.NaN
       },
       godRays: {
         ...document.world.advancedRendering.godRays,
@@ -1784,6 +1787,18 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-advanced-rendering-distance-fog-render-distance",
           path: "world.advancedRendering.distanceFog.renderDistance"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-distance-fog-sky-blend",
+          path: "world.advancedRendering.distanceFog.skyBlend"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-distance-fog-horizon-strength",
+          path: "world.advancedRendering.distanceFog.horizonStrength"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-distance-fog-height-falloff",
+          path: "world.advancedRendering.distanceFog.heightFalloff"
         }),
         expect.objectContaining({
           code: "invalid-advanced-rendering-god-rays-enabled",
