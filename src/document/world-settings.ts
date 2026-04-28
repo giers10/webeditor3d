@@ -167,6 +167,15 @@ export interface AdvancedRenderingWhiteboxBevelSettings {
   normalStrength: number;
 }
 
+export interface AdvancedRenderingDistanceFogSettings {
+  enabled: boolean;
+  colorHex: string;
+  nearDistance: number;
+  farDistance: number;
+  strength: number;
+  renderDistance: number;
+}
+
 export interface AdvancedRenderingSettings {
   enabled: boolean;
   shadows: AdvancedRenderingShadowsSettings;
@@ -176,6 +185,7 @@ export interface AdvancedRenderingSettings {
   toneMapping: AdvancedRenderingToneMappingSettings;
   depthOfField: AdvancedRenderingDepthOfFieldSettings;
   whiteboxBevel: AdvancedRenderingWhiteboxBevelSettings;
+  distanceFog: AdvancedRenderingDistanceFogSettings;
   fogPath: BoxVolumeRenderPath;
   waterPath: BoxVolumeRenderPath;
   waterReflectionMode: AdvancedRenderingWaterReflectionMode;
@@ -266,6 +276,11 @@ const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCAL_LENGTH = 0.03;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_BOKEH_SCALE = 1.5;
 const DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_EDGE_WIDTH = 0.14;
 const DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_NORMAL_STRENGTH = 0.75;
+const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_COLOR = "#b7c8dc";
+const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_NEAR_DISTANCE = 70;
+const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_FAR_DISTANCE = 180;
+const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_STRENGTH = 0.85;
+const DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_RENDER_DISTANCE = 220;
 const DEFAULT_BOX_VOLUME_RENDER_PATH: BoxVolumeRenderPath = "performance";
 const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE: AdvancedRenderingWaterReflectionMode =
   "none";
@@ -519,6 +534,14 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
       enabled: false,
       edgeWidth: DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_EDGE_WIDTH,
       normalStrength: DEFAULT_ADVANCED_RENDERING_WHITEBOX_BEVEL_NORMAL_STRENGTH
+    },
+    distanceFog: {
+      enabled: false,
+      colorHex: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_COLOR,
+      nearDistance: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_NEAR_DISTANCE,
+      farDistance: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_FAR_DISTANCE,
+      strength: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_STRENGTH,
+      renderDistance: DEFAULT_ADVANCED_RENDERING_DISTANCE_FOG_RENDER_DISTANCE
     },
     fogPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
     waterPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
@@ -842,6 +865,9 @@ export function cloneAdvancedRenderingSettings(
     whiteboxBevel: {
       ...settings.whiteboxBevel
     },
+    distanceFog: {
+      ...settings.distanceFog
+    },
     fogPath: settings.fogPath,
     waterPath: settings.waterPath,
     waterReflectionMode: settings.waterReflectionMode
@@ -1029,6 +1055,12 @@ export function areAdvancedRenderingSettingsEqual(
     left.whiteboxBevel.enabled === right.whiteboxBevel.enabled &&
     left.whiteboxBevel.edgeWidth === right.whiteboxBevel.edgeWidth &&
     left.whiteboxBevel.normalStrength === right.whiteboxBevel.normalStrength &&
+    left.distanceFog.enabled === right.distanceFog.enabled &&
+    left.distanceFog.colorHex === right.distanceFog.colorHex &&
+    left.distanceFog.nearDistance === right.distanceFog.nearDistance &&
+    left.distanceFog.farDistance === right.distanceFog.farDistance &&
+    left.distanceFog.strength === right.distanceFog.strength &&
+    left.distanceFog.renderDistance === right.distanceFog.renderDistance &&
     left.fogPath === right.fogPath &&
     left.waterPath === right.waterPath &&
     left.waterReflectionMode === right.waterReflectionMode
