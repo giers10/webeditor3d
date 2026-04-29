@@ -34,6 +34,7 @@ const FORWARD_INPUT: PlayerStartActionInputState = {
   jump: 0,
   sprint: 0,
   crouch: 0,
+  climb: 0,
   interact: 0,
   clearTarget: 0,
   pauseTime: 0
