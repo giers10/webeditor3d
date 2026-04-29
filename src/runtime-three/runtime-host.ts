@@ -239,6 +239,19 @@ interface CachedMaterialTexture {
   textureSet: StarterMaterialTextureSet;
 }
 
+interface RuntimeTerrainRenderChunkObjects {
+  levels: Mesh<BufferGeometry, Material>[];
+  activeLevelIndex: number;
+  worldCenter: Vector3;
+  diagonal: number;
+}
+
+interface RuntimeTerrainRenderObjects {
+  group: Group;
+  chunks: RuntimeTerrainRenderChunkObjects[];
+  material: Material;
+}
+
 function createRuntimeGeometryBrush(brush: RuntimeBoxBrushInstance): Brush {
   const faces = Object.fromEntries(
     Object.entries(brush.faces).map(([faceId, face]) => [
