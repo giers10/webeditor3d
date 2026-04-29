@@ -4,7 +4,8 @@ import { createTerrain } from "../../src/document/terrains";
 import {
   buildTerrainDerivedMeshData,
   buildTerrainLodMeshData,
-  resolveTerrainLodLevelIndex
+  resolveTerrainLodLevelIndex,
+  resolveTerrainLodLevelIndexWithHysteresis
 } from "../../src/geometry/terrain-mesh";
 
 describe("terrain mesh generation", () => {
@@ -262,5 +263,52 @@ describe("terrain mesh generation", () => {
         perspective: true
       })
     ).toBe(4);
+  });
+
+  it("keeps terrain LoD stable near distance thresholds", () => {
+    const levelCount = 5;
+    const chunkDiagonal = 100;
+    const chunkWorldCenter = { x: 0, y: 0, z: 0 };
+
+    expect(
+      resolveTerrainLodLevelIndexWithHysteresis({
+        levelCount,
+        activeLevelIndex: 0,
+        chunkDiagonal,
+        chunkWorldCenter,
+        cameraPosition: { x: 0, y: 0, z: 80 },
+        perspective: true
+      })
+    ).toBe(0);
+    expect(
+      resolveTerrainLodLevelIndexWithHysteresis({
+        levelCount,
+        activeLevelIndex: 0,
+        chunkDiagonal,
+        chunkWorldCenter,
+        cameraPosition: { x: 0, y: 0, z: 90 },
+        perspective: true
+      })
+    ).toBe(1);
+    expect(
+      resolveTerrainLodLevelIndexWithHysteresis({
+        levelCount,
+        activeLevelIndex: 1,
+        chunkDiagonal,
+        chunkWorldCenter,
+        cameraPosition: { x: 0, y: 0, z: 132 },
+        perspective: true
+      })
+    ).toBe(1);
+    expect(
+      resolveTerrainLodLevelIndexWithHysteresis({
+        levelCount,
+        activeLevelIndex: 1,
+        chunkDiagonal,
+        chunkWorldCenter,
+        cameraPosition: { x: 0, y: 0, z: 60 },
+        perspective: true
+      })
+    ).toBe(0);
   });
 });
