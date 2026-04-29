@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createEditorStore } from "../../src/app/editor-store";
 import { createCreateBoxBrushCommand } from "../../src/commands/create-box-brush-command";
 import { createSetBoxBrushAllFaceMaterialsCommand } from "../../src/commands/set-box-brush-all-face-materials-command";
+import { createSetBoxBrushFaceClimbableCommand } from "../../src/commands/set-box-brush-face-climbable-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../../src/commands/set-box-brush-face-material-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../../src/commands/set-box-brush-face-uv-state-command";
 import { createUpdateBoxBrushAllFaceUvsCommand } from "../../src/commands/update-box-brush-all-face-uvs-command";
@@ -98,6 +99,45 @@ describe("box brush face editing commands", () => {
     expect(store.redo()).toBe(true);
     expect(store.getState().document.brushes[createdBrush.id].faces.posY.uv.rotationQuarterTurns).toBe(1);
     expect(store.getState().document.brushes[createdBrush.id].faces.posY.uv.flipU).toBe(true);
+  });
+
+  it("marks one face climbable and supports undo/redo", () => {
+    const store = createEditorStore();
+
+    store.executeCommand(createCreateBoxBrushCommand());
+
+    const createdBrush = Object.values(store.getState().document.brushes)[0];
+
+    expect(
+      store.getState().document.brushes[createdBrush.id].faces.posZ.climbable
+    ).toBe(false);
+
+    store.executeCommand(
+      createSetBoxBrushFaceClimbableCommand({
+        brushId: createdBrush.id,
+        faceId: "posZ",
+        climbable: true
+      })
+    );
+
+    expect(
+      store.getState().document.brushes[createdBrush.id].faces.posZ.climbable
+    ).toBe(true);
+    expect(store.getState().selection).toEqual({
+      kind: "brushFace",
+      brushId: createdBrush.id,
+      faceId: "posZ"
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(
+      store.getState().document.brushes[createdBrush.id].faces.posZ.climbable
+    ).toBe(false);
+
+    expect(store.redo()).toBe(true);
+    expect(
+      store.getState().document.brushes[createdBrush.id].faces.posZ.climbable
+    ).toBe(true);
   });
 
   it("applies one material across all box faces and restores prior face materials on undo", () => {
