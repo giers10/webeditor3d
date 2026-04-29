@@ -4059,7 +4059,8 @@ export class RuntimeHost {
         enabled: true
       };
       const lodMeshData = buildTerrainLodMeshData(terrainForLod);
-      const material = this.createRuntimeTerrainMaterial(terrain);
+      const detailMaterial = this.createRuntimeTerrainMaterial(terrain);
+      const distantMaterial = this.createRuntimeTerrainDistantMaterial(terrain);
       const group = new Group();
       const chunks: RuntimeTerrainRenderChunkObjects[] = [];
 
@@ -4068,7 +4069,7 @@ export class RuntimeHost {
 
       for (const chunk of lodMeshData.chunks) {
         const levelGeometries = chunk.levels.map((level) => level.geometry);
-        const mesh = new Mesh(levelGeometries[0]!, material);
+        const mesh = new Mesh(levelGeometries[0]!, detailMaterial);
         mesh.castShadow = false;
         mesh.receiveShadow = true;
         mesh.userData.terrainLodLevel = 0;
@@ -4092,7 +4093,8 @@ export class RuntimeHost {
       this.terrainMeshes.set(terrain.id, {
         group,
         chunks,
-        material
+        detailMaterial,
+        distantMaterial
       });
     }
 
