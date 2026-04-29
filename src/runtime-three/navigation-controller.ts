@@ -13,6 +13,7 @@ import type {
   RuntimeSceneDefinition,
   RuntimeSpawnPoint
 } from "./runtime-scene-build";
+import type { RuntimePlayerClimbSurface } from "./player-climbing";
 
 export interface RuntimeMovementTransitionSignals {
   jumpStarted: boolean;
@@ -81,7 +82,8 @@ export type RuntimeLocomotionMode =
   | "airborne"
   | "flying"
   | "swimming"
-  | "diving";
+  | "diving"
+  | "climbing";
 export type RuntimeAirborneKind = "jumping" | "falling" | null;
 export type RuntimeLocomotionGait =
   | "idle"
@@ -155,6 +157,12 @@ export interface RuntimeControllerContext {
     feetPosition: Vec3,
     shape: FirstPersonPlayerShape
   ): boolean;
+  resolvePlayerClimbSurface?(
+    feetPosition: Vec3,
+    facingDirection: Vec3,
+    shape: FirstPersonPlayerShape,
+    previousSurface?: RuntimePlayerClimbSurface | null
+  ): RuntimePlayerClimbSurface | null;
   resolvePlayerVolumeState(feetPosition: Vec3): RuntimePlayerVolumeState;
   resolveThirdPersonCameraCollision(
     pivot: Vec3,
