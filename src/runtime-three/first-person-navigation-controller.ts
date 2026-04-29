@@ -425,6 +425,238 @@ export class FirstPersonNavigationController implements NavigationController {
     this.publishTelemetry();
   }
 
+  private resolveClimbProbeDirection(movementYawRadians: number): Vec3 {
+    if (this.climbSurface !== null) {
+      return {
+        x: -this.climbSurface.normal.x,
+        y: -this.climbSurface.normal.y,
+        z: -this.climbSurface.normal.z
+      };
+    }
+
+    return {
+      x: Math.sin(movementYawRadians),
+      y: 0,
+      z: Math.cos(movementYawRadians)
+    };
+  }
+
+  private createClimbingLocomotionState(options: {
+    inputMagnitude: number;
+    displacement: Vec3;
+    dt: number;
+    collisionCount: number;
+    collidedAxes: { x: boolean; y: boolean; z: boolean };
+  }): RuntimeLocomotionState {
+    const speed =
+      options.dt > 0
+        ? Math.hypot(
+            options.displacement.x,
+            options.displacement.y,
+            options.displacement.z
+          ) / options.dt
+        : 0;
+
+    return {
+      locomotionMode: "climbing",
+      airborneKind: null,
+      gait: options.inputMagnitude > 0 ? "walk" : "idle",
+      grounded: false,
+      crouched: false,
+      sprinting: false,
+      inputMagnitude: options.inputMagnitude,
+      requestedPlanarSpeed: CLIMB_SPEED_METERS_PER_SECOND,
+      planarSpeed: speed,
+      verticalVelocity: 0,
+      contact: {
+        collisionCount: options.collisionCount,
+        collidedAxes: options.collidedAxes,
+        groundNormal: null,
+        groundDistance: null,
+        slopeDegrees: null
+      }
+    };
+  }
+
+  private stepClimbing(
+    dt: number,
+    inputState: ReturnType<typeof resolvePlayerStartActionInputs>,
+    playerMovement: RuntimePlayerMovement,
+    movementYawRadians: number
+  ): boolean {
+    if (this.context === null) {
+      return false;
+    }
+
+    const climbPressed = inputState.climb > CLIMB_INPUT_ACTIVE_THRESHOLD;
+    const jumpPressed = inputState.jump > CLIMB_INPUT_ACTIVE_THRESHOLD;
+
+    if (!climbPressed) {
+      this.climbLatchBlocked = false;
+    }
+
+    const climbSurface =
+      this.context.resolvePlayerClimbSurface?.(
+        this.feetPosition,
+        this.resolveClimbProbeDirection(movementYawRadians),
+        this.standingPlayerShape,
+        this.climbSurface
+      ) ?? null;
+
+    if (
+      this.climbSurface !== null &&
+      shouldExitClimbing({
+        climbInput: inputState.climb,
+        surface: climbSurface,
+        jumpPressed
+      })
+    ) {
+      const exitSurface = this.climbSurface;
+      this.climbSurface = null;
+
+      if (jumpPressed && playerMovement.capabilities.jump) {
+        const detachMotion = {
+          x: exitSurface.normal.x * 0.25,
+          y: Math.max(0.05, playerMovement.jump.speed * 0.05),
+          z: exitSurface.normal.z * 0.25
+        };
+        const resolvedMotion =
+          this.context.resolveFirstPersonMotion(
+            this.feetPosition,
+            detachMotion,
+            this.standingPlayerShape
+          ) ?? null;
+        const nextFeetPosition =
+          resolvedMotion?.feetPosition ?? {
+            x: this.feetPosition.x + detachMotion.x,
+            y: this.feetPosition.y + detachMotion.y,
+            z: this.feetPosition.z + detachMotion.z
+          };
+        const displacement = {
+          x: nextFeetPosition.x - this.feetPosition.x,
+          y: nextFeetPosition.y - this.feetPosition.y,
+          z: nextFeetPosition.z - this.feetPosition.z
+        };
+
+        this.feetPosition = nextFeetPosition;
+        this.activePlayerShape = cloneFirstPersonPlayerShape(
+          this.standingPlayerShape
+        );
+        this.verticalVelocity = playerMovement.jump.speed;
+        this.jumpBufferRemainingMs = 0;
+        this.coyoteTimeRemainingMs = 0;
+        this.jumpHoldRemainingMs = playerMovement.jump.variableHeight
+          ? playerMovement.jump.maxHoldMs
+          : 0;
+        this.jumpPressed = true;
+        this.latestJumpStarted = true;
+        this.latestHeadBump = false;
+        this.climbLatchBlocked = true;
+        this.previousPlanarDisplacement = displacement;
+        this.grounded = false;
+        this.inWaterVolume = false;
+        this.inFogVolume =
+          this.context.resolvePlayerVolumeState(this.feetPosition).inFog;
+        this.smoothedFeetY = this.feetPosition.y;
+        this.locomotionState = {
+          ...createIdleRuntimeLocomotionState("airborne"),
+          airborneKind: "jumping",
+          verticalVelocity: this.verticalVelocity,
+          inputMagnitude: 0,
+          requestedPlanarSpeed: playerMovement.moveSpeed,
+          planarSpeed:
+            dt > 0 ? Math.hypot(displacement.x, displacement.z) / dt : 0
+        };
+        this.updateCameraTransform();
+        this.publishTelemetry();
+        return true;
+      }
+
+      if (climbSurface === null && climbPressed) {
+        this.climbLatchBlocked = true;
+      }
+
+      return false;
+    }
+
+    if (
+      this.climbSurface === null &&
+      (this.climbLatchBlocked ||
+        !shouldEnterClimbing({
+          climbInput: inputState.climb,
+          surface: climbSurface,
+          jumpPressed
+        }))
+    ) {
+      return false;
+    }
+
+    const activeSurface = climbSurface ?? this.climbSurface;
+
+    if (activeSurface === null) {
+      return false;
+    }
+
+    this.climbSurface = activeSurface;
+
+    const climbMovement = computeClimbPlaneMovement({
+      normal: activeSurface.normal,
+      input: inputState,
+      speedMetersPerSecond: CLIMB_SPEED_METERS_PER_SECOND,
+      dt
+    });
+    const resolvedMotion =
+      this.context.resolveFirstPersonMotion(
+        this.feetPosition,
+        climbMovement.motion,
+        this.standingPlayerShape
+      ) ?? null;
+    const nextFeetPosition =
+      resolvedMotion?.feetPosition ?? {
+        x: this.feetPosition.x + climbMovement.motion.x,
+        y: this.feetPosition.y + climbMovement.motion.y,
+        z: this.feetPosition.z + climbMovement.motion.z
+      };
+    const displacement = {
+      x: nextFeetPosition.x - this.feetPosition.x,
+      y: nextFeetPosition.y - this.feetPosition.y,
+      z: nextFeetPosition.z - this.feetPosition.z
+    };
+    const volumeState = this.context.resolvePlayerVolumeState(nextFeetPosition);
+
+    this.feetPosition = nextFeetPosition;
+    this.activePlayerShape = cloneFirstPersonPlayerShape(
+      this.standingPlayerShape
+    );
+    this.verticalVelocity = 0;
+    this.jumpBufferRemainingMs = 0;
+    this.coyoteTimeRemainingMs = 0;
+    this.jumpHoldRemainingMs = 0;
+    this.jumpPressed = jumpPressed;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
+    this.previousPlanarDisplacement = displacement;
+    this.grounded = false;
+    this.inWaterVolume = volumeState.inWater;
+    this.inFogVolume = volumeState.inFog;
+    this.smoothedFeetY = this.feetPosition.y;
+    this.locomotionState = this.createClimbingLocomotionState({
+      inputMagnitude: climbMovement.inputMagnitude,
+      displacement,
+      dt,
+      collisionCount: resolvedMotion?.collisionCount ?? 0,
+      collidedAxes: resolvedMotion?.collidedAxes ?? {
+        x: false,
+        y: false,
+        z: false
+      }
+    });
+
+    this.updateCameraTransform();
+    this.publishTelemetry();
+    return true;
+  }
+
   private updateCameraTransform() {
     if (this.context === null) {
       return;
