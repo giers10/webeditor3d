@@ -7,9 +7,28 @@ import { createSetBoxBrushFaceClimbableCommand } from "../../src/commands/set-bo
 import { createSetBoxBrushFaceMaterialCommand } from "../../src/commands/set-box-brush-face-material-command";
 import { createSetBoxBrushFaceUvStateCommand } from "../../src/commands/set-box-brush-face-uv-state-command";
 import { createUpdateBoxBrushAllFaceUvsCommand } from "../../src/commands/update-box-brush-all-face-uvs-command";
-import { BOX_FACE_IDS } from "../../src/document/brushes";
+import {
+  BOX_FACE_IDS,
+  cloneBoxBrushFaces,
+  createBoxBrush
+} from "../../src/document/brushes";
 
 describe("box brush face editing commands", () => {
+  it("defaults and clones per-face climbable metadata", () => {
+    const brush = createBoxBrush();
+
+    expect(brush.faces.posZ.climbable).toBe(false);
+
+    brush.faces.posZ.climbable = true;
+    const clonedFaces = cloneBoxBrushFaces(brush.faces);
+
+    expect(clonedFaces.posZ.climbable).toBe(true);
+
+    brush.faces.posZ.climbable = false;
+
+    expect(clonedFaces.posZ.climbable).toBe(true);
+  });
+
   it("applies a material to one box face and supports undo/redo", () => {
     const store = createEditorStore();
 
