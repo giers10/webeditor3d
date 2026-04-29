@@ -358,6 +358,12 @@ describe("Player Start inspector", () => {
       screen.getByTestId("player-start-gamepad-binding-crouch")
     ).toHaveValue("buttonEast");
     expect(
+      screen.getByTestId("player-start-keyboard-binding-climb")
+    ).toHaveTextContent("E");
+    expect(
+      screen.getByTestId("player-start-gamepad-binding-climb")
+    ).toHaveValue("rightShoulder");
+    expect(
       screen.getByTestId("player-start-keyboard-binding-interact")
     ).toHaveTextContent("Left Mouse");
     expect(
