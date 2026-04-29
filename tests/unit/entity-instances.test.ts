@@ -83,6 +83,7 @@ describe("entity registry defaults", () => {
           jump: "Space",
           sprint: "ShiftLeft",
           crouch: "ControlLeft",
+          climb: "KeyE",
           interact: "MouseLeft",
           clearTarget: "KeyQ",
           pauseTime: "KeyP"
@@ -95,6 +96,7 @@ describe("entity registry defaults", () => {
           jump: "buttonSouth",
           sprint: "leftStickPress",
           crouch: "buttonEast",
+          climb: "rightShoulder",
           interact: "buttonWest",
           clearTarget: "buttonNorth",
           pauseTime: "buttonMenu",
