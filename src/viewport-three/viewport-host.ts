@@ -229,6 +229,7 @@ import { createFogQualityMaterial } from "../rendering/fog-material";
 import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import {
   createTerrainLayerBlendMaterial,
+  createTerrainLayerColorBlendMaterial,
   getTerrainLayerPreviewColor,
   getTerrainLayerTexture
 } from "../rendering/terrain-layer-material";
@@ -340,7 +341,8 @@ interface PathRenderObjects {
 interface TerrainRenderObjects {
   group: Group;
   chunks: TerrainRenderChunkObjects[];
-  material: Material;
+  detailMaterial: Material;
+  distantMaterial: Material;
   debugMaterials: MeshBasicMaterial[];
   pickMeshes: Mesh<BufferGeometry, Material>[];
 }
