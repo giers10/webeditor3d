@@ -6386,6 +6386,28 @@ export class ViewportHost {
     });
   }
 
+  private createTerrainDistantMaterial(terrain: Terrain): Material {
+    const active = this.currentActiveSelectionId === terrain.id;
+    const selected = isTerrainSelected(this.currentSelection, terrain.id);
+    const hovered = isTerrainSelected(this.hoveredSelection, terrain.id);
+    const layerColors = terrain.layers.map((layer) =>
+      getTerrainLayerPreviewColor(this.resolveTerrainLayerMaterial(layer.materialId))
+    ) as [number, number, number, number];
+
+    return createTerrainLayerColorBlendMaterial({
+      layerColors,
+      emissiveHex: active
+        ? TERRAIN_ACTIVE_EMISSIVE
+        : selected
+          ? TERRAIN_SELECTED_EMISSIVE
+          : hovered
+            ? TERRAIN_HOVERED_EMISSIVE
+            : 0x000000,
+      emissiveIntensity: active ? 0.26 : selected ? 0.18 : hovered ? 0.08 : 0,
+      wireframe: this.displayMode === "wireframe"
+    });
+  }
+
   private rebuildTerrains(
     document: SceneDocument,
     _selection: EditorSelection,
@@ -6506,6 +6528,10 @@ export class ViewportHost {
           chunk.activeLevelIndex = nextLevelIndex;
           chunk.mesh.geometry = chunk.levelGeometries[nextLevelIndex]!;
           chunk.mesh.userData.terrainLodLevel = nextLevelIndex;
+          chunk.mesh.material =
+            nextLevelIndex >= 2
+              ? renderObjects.distantMaterial
+              : renderObjects.detailMaterial;
           chunk.debugMesh.geometry = chunk.levelGeometries[nextLevelIndex]!;
           chunk.debugMesh.material =
             renderObjects.debugMaterials[nextLevelIndex] ??
