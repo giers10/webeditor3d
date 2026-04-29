@@ -634,11 +634,13 @@ describe("scene document JSON", () => {
       id: "brush-legacy-climbable-default"
     });
     const legacyFaces = Object.fromEntries(
-      Object.entries(brush.faces).map(([faceId, face]) => {
-        const { climbable: _climbable, ...legacyFace } = face;
-
-        return [faceId, legacyFace];
-      })
+      Object.entries(brush.faces).map(([faceId, face]) => [
+        faceId,
+        {
+          materialId: face.materialId,
+          uv: face.uv
+        }
+      ])
     );
     const legacyDocument = {
       ...createEmptySceneDocument({ name: "Legacy Face Climbable Scene" }),
