@@ -6412,7 +6412,8 @@ export class ViewportHost {
   }
 
   private createTerrainRenderObjects(terrain: Terrain): TerrainRenderObjects {
-    const material = this.createTerrainMaterial(terrain);
+    const detailMaterial = this.createTerrainMaterial(terrain);
+    const distantMaterial = this.createTerrainDistantMaterial(terrain);
     const debugMaterials = TERRAIN_LOD_DEBUG_COLORS.map(
       (color) =>
         new MeshBasicMaterial({
@@ -6433,7 +6434,7 @@ export class ViewportHost {
 
     for (const chunk of lodMeshData.chunks) {
       const levelGeometries = chunk.levels.map((level) => level.geometry);
-      const mesh = new Mesh(levelGeometries[0]!, material);
+      const mesh = new Mesh(levelGeometries[0]!, detailMaterial);
       mesh.userData.terrainId = terrain.id;
       mesh.userData.terrainLodLevel = 0;
       mesh.castShadow = false;
@@ -6450,7 +6451,7 @@ export class ViewportHost {
       applyRendererRenderCategory(debugMesh, "overlay");
       group.add(debugMesh);
 
-      const pickMesh = new Mesh(levelGeometries[0]!, material);
+      const pickMesh = new Mesh(levelGeometries[0]!, detailMaterial);
       pickMesh.visible = false;
       pickMesh.userData.terrainId = terrain.id;
       group.add(pickMesh);
@@ -6473,7 +6474,8 @@ export class ViewportHost {
     return {
       group,
       chunks,
-      material,
+      detailMaterial,
+      distantMaterial,
       debugMaterials,
       pickMeshes
     };
