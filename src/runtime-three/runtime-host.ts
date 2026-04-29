@@ -73,7 +73,7 @@ import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import {
   buildTerrainDerivedMeshData,
   buildTerrainLodMeshData,
-  resolveTerrainLodLevelIndex
+  resolveTerrainLodLevelIndexWithHysteresis
 } from "../geometry/terrain-mesh";
 import {
   createStarterMaterialSignature,
@@ -143,6 +143,7 @@ import {
   enableCameraRendererRenderCategories,
   enableObjectForAllRendererRenderCategories
 } from "../rendering/render-layers";
+import { getRendererPixelRatio } from "../rendering/renderer-pixel-ratio";
 import {
   areAdvancedRenderingSettingsEqual,
   cloneAdvancedRenderingSettings,
@@ -895,13 +896,17 @@ export class RuntimeHost {
     this.underwaterSceneFog.density = 0;
     this.scene.fog = this.underwaterSceneFog;
     this.renderer = enableRendering
-      ? new WebGLRenderer({ antialias: false, alpha: true })
+      ? new WebGLRenderer({
+          antialias: false,
+          alpha: true,
+          powerPreference: "high-performance"
+        })
       : null;
     this.domElement =
       this.renderer?.domElement ?? document.createElement("canvas");
 
     if (this.renderer !== null) {
-      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      this.renderer.setPixelRatio(getRendererPixelRatio());
       this.renderer.setClearAlpha(0);
     } else {
       this.domElement.className = "runner-canvas__surface";
@@ -4111,8 +4116,9 @@ export class RuntimeHost {
 
     for (const renderObjects of this.terrainMeshes.values()) {
       for (const chunk of renderObjects.chunks) {
-        const nextLevelIndex = resolveTerrainLodLevelIndex({
+        const nextLevelIndex = resolveTerrainLodLevelIndexWithHysteresis({
           levelCount: chunk.levelGeometries.length,
+          activeLevelIndex: chunk.activeLevelIndex,
           chunkDiagonal: chunk.diagonal,
           cameraPosition,
           chunkWorldCenter: {
