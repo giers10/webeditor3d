@@ -346,8 +346,9 @@ interface TerrainRenderObjects {
 }
 
 interface TerrainRenderChunkObjects {
-  levels: Mesh<BufferGeometry, Material>[];
-  debugLevels: Mesh<BufferGeometry, MeshBasicMaterial>[];
+  mesh: Mesh<BufferGeometry, Material>;
+  debugMesh: Mesh<BufferGeometry, MeshBasicMaterial>;
+  levelGeometries: BufferGeometry[];
   activeLevelIndex: number;
   worldCenter: Vec3;
   diagonal: number;
@@ -6429,39 +6430,34 @@ export class ViewportHost {
     group.position.set(terrain.position.x, terrain.position.y, terrain.position.z);
 
     for (const chunk of lodMeshData.chunks) {
-      const levels: Mesh<BufferGeometry, Material>[] = [];
-      const debugLevels: Mesh<BufferGeometry, MeshBasicMaterial>[] = [];
+      const levelGeometries = chunk.levels.map((level) => level.geometry);
+      const mesh = new Mesh(levelGeometries[0]!, material);
+      mesh.userData.terrainId = terrain.id;
+      mesh.userData.terrainLodLevel = 0;
+      mesh.castShadow = false;
+      mesh.receiveShadow = true;
+      applyRendererRenderCategory(mesh, "ao-world");
+      group.add(mesh);
 
-      for (const level of chunk.levels) {
-        const mesh = new Mesh(level.geometry, material);
-        mesh.userData.terrainId = terrain.id;
-        mesh.userData.terrainLodLevel = level.level;
-        mesh.castShadow = false;
-        mesh.receiveShadow = true;
-        mesh.visible = level.level === 0;
-        applyRendererRenderCategory(mesh, "ao-world");
-        group.add(mesh);
-        levels.push(mesh);
+      const debugMaterial = debugMaterials[0]!;
+      const debugMesh = new Mesh(levelGeometries[0]!, debugMaterial);
+      debugMesh.visible = false;
+      debugMesh.renderOrder = 20;
+      debugMesh.userData.selectionIgnored = true;
+      debugMesh.userData.nonPickable = true;
+      applyRendererRenderCategory(debugMesh, "overlay");
+      group.add(debugMesh);
 
-        const debugMaterial =
-          debugMaterials[level.level] ??
-          debugMaterials[debugMaterials.length - 1]!;
-        const debugMesh = new Mesh(level.geometry, debugMaterial);
-        debugMesh.visible = false;
-        debugMesh.renderOrder = 20;
-        debugMesh.userData.selectionIgnored = true;
-        applyRendererRenderCategory(debugMesh, "overlay");
-        group.add(debugMesh);
-        debugLevels.push(debugMesh);
-      }
-
-      if (levels[0] !== undefined) {
-        pickMeshes.push(levels[0]);
-      }
+      const pickMesh = new Mesh(levelGeometries[0]!, material);
+      pickMesh.visible = false;
+      pickMesh.userData.terrainId = terrain.id;
+      group.add(pickMesh);
+      pickMeshes.push(pickMesh);
 
       chunks.push({
-        levels,
-        debugLevels,
+        mesh,
+        debugMesh,
+        levelGeometries,
         activeLevelIndex: 0,
         worldCenter: {
           x: terrain.position.x + chunk.localCenter.x,
@@ -6495,7 +6491,7 @@ export class ViewportHost {
 
       for (const chunk of renderObjects.chunks) {
         const nextLevelIndex = resolveTerrainLodLevelIndex({
-          levelCount: chunk.levels.length,
+          levelCount: chunk.levelGeometries.length,
           chunkDiagonal: chunk.diagonal,
           cameraPosition,
           chunkWorldCenter: chunk.worldCenter,
@@ -6504,13 +6500,17 @@ export class ViewportHost {
 
         if (chunk.activeLevelIndex !== nextLevelIndex) {
           chunk.activeLevelIndex = nextLevelIndex;
+          chunk.mesh.geometry = chunk.levelGeometries[nextLevelIndex]!;
+          chunk.mesh.userData.terrainLodLevel = nextLevelIndex;
+          chunk.debugMesh.geometry = chunk.levelGeometries[nextLevelIndex]!;
+          chunk.debugMesh.material =
+            renderObjects.debugMaterials[nextLevelIndex] ??
+            renderObjects.debugMaterials[
+              renderObjects.debugMaterials.length - 1
+            ]!;
         }
 
-        for (let levelIndex = 0; levelIndex < chunk.levels.length; levelIndex += 1) {
-          const active = levelIndex === chunk.activeLevelIndex;
-          chunk.levels[levelIndex]!.visible = active;
-          chunk.debugLevels[levelIndex]!.visible = selected && active;
-        }
+        chunk.debugMesh.visible = selected;
       }
     }
   }
