@@ -4130,6 +4130,10 @@ export class RuntimeHost {
         chunk.activeLevelIndex = nextLevelIndex;
         chunk.mesh.geometry = chunk.levelGeometries[nextLevelIndex]!;
         chunk.mesh.userData.terrainLodLevel = nextLevelIndex;
+        chunk.mesh.material =
+          nextLevelIndex >= 2
+            ? renderObjects.distantMaterial
+            : renderObjects.detailMaterial;
       }
     }
   }
@@ -4144,6 +4148,16 @@ export class RuntimeHost {
 
     return createTerrainLayerBlendMaterial({
       layerTextures
+    });
+  }
+
+  private createRuntimeTerrainDistantMaterial(terrain: RuntimeTerrain): Material {
+    const layerColors = terrain.layers.map((layer) =>
+      getTerrainLayerPreviewColor(layer.material)
+    ) as [number, number, number, number];
+
+    return createTerrainLayerColorBlendMaterial({
+      layerColors
     });
   }
 
@@ -4952,7 +4966,8 @@ export class RuntimeHost {
         geometry.dispose();
       }
 
-      renderObjects.material.dispose();
+      renderObjects.detailMaterial.dispose();
+      renderObjects.distantMaterial.dispose();
     }
 
     this.terrainMeshes.clear();
