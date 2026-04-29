@@ -1014,7 +1014,7 @@ export class ViewportHost {
     this.boxCreatePreviewEdges.visible = false;
     this.scene.add(this.boxCreatePreviewMesh);
     this.scene.add(this.boxCreatePreviewEdges);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(getRendererPixelRatio());
     this.renderer.setClearAlpha(0);
     this.environmentBlendCache = createRendererQuantizedEnvironmentBlendCache(
       this.renderer,
@@ -6518,8 +6518,9 @@ export class ViewportHost {
       const selected = isTerrainSelected(this.currentSelection, terrainId);
 
       for (const chunk of renderObjects.chunks) {
-        const nextLevelIndex = resolveTerrainLodLevelIndex({
+        const nextLevelIndex = resolveTerrainLodLevelIndexWithHysteresis({
           levelCount: chunk.levelGeometries.length,
+          activeLevelIndex: chunk.activeLevelIndex,
           chunkDiagonal: chunk.diagonal,
           cameraPosition,
           chunkWorldCenter: chunk.worldCenter,
