@@ -14,6 +14,8 @@ import type {
 } from "./runtime-scene-build";
 
 export const CLIMB_INPUT_ACTIVE_THRESHOLD = 0.5;
+export const CLIMB_AUTO_LATCH_INPUT_THRESHOLD = 0.25;
+export const CLIMB_AUTO_LATCH_MIN_INTO_SURFACE_DOT = 0.35;
 export const CLIMB_SPEED_METERS_PER_SECOND = 2.4;
 export const CLIMB_DETECT_DISTANCE_METERS = 0.85;
 export const CLIMB_KEEP_DISTANCE_METERS = 1.05;
@@ -187,25 +189,97 @@ export function isClimbableWallNormal(normal: Vec3): boolean {
 
 export function shouldEnterClimbing(options: {
   climbInput: number;
+  movementIntoSurface: boolean;
   surface: RuntimePlayerClimbSurface | null;
   jumpPressed: boolean;
 }): boolean {
   return (
-    options.climbInput > CLIMB_INPUT_ACTIVE_THRESHOLD &&
     options.surface !== null &&
-    !options.jumpPressed
+    !options.jumpPressed &&
+    (options.climbInput > CLIMB_INPUT_ACTIVE_THRESHOLD ||
+      options.movementIntoSurface)
   );
 }
 
 export function shouldExitClimbing(options: {
-  climbInput: number;
   surface: RuntimePlayerClimbSurface | null;
   jumpPressed: boolean;
 }): boolean {
+  return options.surface === null || options.jumpPressed;
+}
+
+export function resolveClimbPlanarInputDirection(
+  input: PlayerStartActionInputState,
+  movementYawRadians: number
+): { direction: Vec3 | null; inputMagnitude: number } {
+  const inputX = input.moveRight - input.moveLeft;
+  const inputZ = input.moveForward - input.moveBackward;
+  const rawMagnitude = Math.hypot(inputX, inputZ);
+  const inputMagnitude = Math.min(1, rawMagnitude);
+
+  if (rawMagnitude <= VECTOR_EPSILON) {
+    return {
+      direction: null,
+      inputMagnitude
+    };
+  }
+
+  const normalizedInputX = inputX / rawMagnitude;
+  const normalizedInputZ = inputZ / rawMagnitude;
+  const forwardX = Math.sin(movementYawRadians);
+  const forwardZ = Math.cos(movementYawRadians);
+  const rightX = -Math.cos(movementYawRadians);
+  const rightZ = Math.sin(movementYawRadians);
+  const directionX =
+    forwardX * normalizedInputZ + rightX * normalizedInputX;
+  const directionZ =
+    forwardZ * normalizedInputZ + rightZ * normalizedInputX;
+  const directionMagnitude = Math.hypot(directionX, directionZ);
+
+  if (directionMagnitude <= VECTOR_EPSILON) {
+    return {
+      direction: null,
+      inputMagnitude
+    };
+  }
+
+  return {
+    direction: {
+      x: directionX / directionMagnitude,
+      y: 0,
+      z: directionZ / directionMagnitude
+    },
+    inputMagnitude
+  };
+}
+
+export function isClimbMovementIntoSurface(options: {
+  input: PlayerStartActionInputState;
+  movementYawRadians: number;
+  surface: RuntimePlayerClimbSurface | null;
+}): boolean {
+  if (options.surface === null) {
+    return false;
+  }
+
+  const inputDirection = resolveClimbPlanarInputDirection(
+    options.input,
+    options.movementYawRadians
+  );
+
+  if (
+    inputDirection.direction === null ||
+    inputDirection.inputMagnitude < CLIMB_AUTO_LATCH_INPUT_THRESHOLD
+  ) {
+    return false;
+  }
+
+  const normal = normalizeVec3(options.surface.normal);
+
   return (
-    options.climbInput <= CLIMB_INPUT_ACTIVE_THRESHOLD ||
-    options.surface === null ||
-    options.jumpPressed
+    normal !== null &&
+    dotVec3(inputDirection.direction, normal) <=
+      -CLIMB_AUTO_LATCH_MIN_INTO_SURFACE_DOT
   );
 }
 
