@@ -4097,6 +4097,40 @@ export class RuntimeHost {
     this.updateTerrainLodVisibility();
   }
 
+  private updateTerrainLodVisibility() {
+    const cameraPosition = {
+      x: this.camera.position.x,
+      y: this.camera.position.y,
+      z: this.camera.position.z
+    };
+
+    for (const renderObjects of this.terrainMeshes.values()) {
+      for (const chunk of renderObjects.chunks) {
+        const nextLevelIndex = resolveTerrainLodLevelIndex({
+          levelCount: chunk.levels.length,
+          chunkDiagonal: chunk.diagonal,
+          cameraPosition,
+          chunkWorldCenter: {
+            x: chunk.worldCenter.x,
+            y: chunk.worldCenter.y,
+            z: chunk.worldCenter.z
+          },
+          perspective: true
+        });
+
+        if (chunk.activeLevelIndex === nextLevelIndex) {
+          continue;
+        }
+
+        chunk.activeLevelIndex = nextLevelIndex;
+
+        for (let levelIndex = 0; levelIndex < chunk.levels.length; levelIndex += 1) {
+          chunk.levels[levelIndex]!.visible = levelIndex === nextLevelIndex;
+        }
+      }
+    }
+  }
+
   private createRuntimeTerrainMaterial(terrain: RuntimeTerrain): Material {
     const layerTextures = terrain.layers.map((layer) =>
       getTerrainLayerTexture(
@@ -4901,10 +4935,16 @@ export class RuntimeHost {
   }
 
   private clearTerrainMeshes() {
-    for (const mesh of this.terrainMeshes.values()) {
-      this.terrainGroup.remove(mesh);
-      mesh.geometry.dispose();
-      mesh.material.dispose();
+    for (const renderObjects of this.terrainMeshes.values()) {
+      this.terrainGroup.remove(renderObjects.group);
+
+      for (const chunk of renderObjects.chunks) {
+        for (const mesh of chunk.levels) {
+          mesh.geometry.dispose();
+        }
+      }
+
+      renderObjects.material.dispose();
     }
 
     this.terrainMeshes.clear();
@@ -5237,6 +5277,7 @@ export class RuntimeHost {
       this.updateRuntimeWaterReflections();
     }
 
+    this.updateTerrainLodVisibility();
     this.updateUnderwaterSceneFog();
     this.syncCelestialShadowState();
 
