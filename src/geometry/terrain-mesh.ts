@@ -39,6 +39,8 @@ export const TERRAIN_LOD_DEBUG_COLORS = [
   0x4ee06f,
   0x4ba3ff
 ] as const;
+const TERRAIN_LOD_DISTANCE_MULTIPLIERS = [0.75, 1.5, 3, 6] as const;
+const TERRAIN_LOD_HYSTERESIS_RATIO = 0.16;
 
 export interface TerrainLodLevelMeshData {
   level: number;
@@ -677,21 +679,73 @@ export function resolveTerrainLodLevelIndex(options: {
   );
   const baseDistance = Math.max(options.chunkDiagonal, 1);
 
-  if (distance < baseDistance * 0.75) {
-    return 0;
-  }
-
-  if (distance < baseDistance * 1.5) {
-    return Math.min(1, options.levelCount - 1);
-  }
-
-  if (distance < baseDistance * 3) {
-    return Math.min(2, options.levelCount - 1);
-  }
-
-  if (distance < baseDistance * 6) {
-    return Math.min(3, options.levelCount - 1);
+  for (
+    let thresholdIndex = 0;
+    thresholdIndex < TERRAIN_LOD_DISTANCE_MULTIPLIERS.length;
+    thresholdIndex += 1
+  ) {
+    if (
+      distance <
+      baseDistance * TERRAIN_LOD_DISTANCE_MULTIPLIERS[thresholdIndex]!
+    ) {
+      return Math.min(thresholdIndex, options.levelCount - 1);
+    }
   }
 
   return options.levelCount - 1;
+}
+
+export function resolveTerrainLodLevelIndexWithHysteresis(options: {
+  levelCount: number;
+  activeLevelIndex: number;
+  chunkDiagonal: number;
+  cameraPosition: Vec3;
+  chunkWorldCenter: Vec3;
+  perspective: boolean;
+}): number {
+  if (options.levelCount <= 1 || !options.perspective) {
+    return resolveTerrainLodLevelIndex(options);
+  }
+
+  const activeLevelIndex = Math.min(
+    Math.max(0, Math.trunc(options.activeLevelIndex)),
+    options.levelCount - 1
+  );
+  const distance = Math.hypot(
+    options.cameraPosition.x - options.chunkWorldCenter.x,
+    options.cameraPosition.y - options.chunkWorldCenter.y,
+    options.cameraPosition.z - options.chunkWorldCenter.z
+  );
+  const baseDistance = Math.max(options.chunkDiagonal, 1);
+  const normalizedDistance = distance / baseDistance;
+  const lowerBoundary =
+    activeLevelIndex <= 0
+      ? Number.NEGATIVE_INFINITY
+      : TERRAIN_LOD_DISTANCE_MULTIPLIERS[activeLevelIndex - 1] ??
+        TERRAIN_LOD_DISTANCE_MULTIPLIERS[
+          TERRAIN_LOD_DISTANCE_MULTIPLIERS.length - 1
+        ]!;
+  const upperBoundary =
+    activeLevelIndex >= options.levelCount - 1
+      ? Number.POSITIVE_INFINITY
+      : TERRAIN_LOD_DISTANCE_MULTIPLIERS[activeLevelIndex] ??
+        TERRAIN_LOD_DISTANCE_MULTIPLIERS[
+          TERRAIN_LOD_DISTANCE_MULTIPLIERS.length - 1
+        ]!;
+
+  if (
+    normalizedDistance >
+    upperBoundary * (1 + TERRAIN_LOD_HYSTERESIS_RATIO)
+  ) {
+    return Math.min(activeLevelIndex + 1, options.levelCount - 1);
+  }
+
+  if (
+    normalizedDistance <
+    lowerBoundary * (1 - TERRAIN_LOD_HYSTERESIS_RATIO)
+  ) {
+    return Math.max(activeLevelIndex - 1, 0);
+  }
+
+  return activeLevelIndex;
 }
