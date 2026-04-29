@@ -249,16 +249,23 @@ float getDepthEdgeMask(float centerDistance) {
   return smoothstep(0.08, 0.5, normalizedDelta);
 }
 
-vec3 sampleSkyColor(vec3 baseColor) {
-  vec2 upperUv = vec2(vUv.x, 0.96);
-  vec2 horizonUv = vec2(vUv.x, 0.58);
-  float upperSkyMask = smoothstep(BACKGROUND_DEPTH_THRESHOLD, 1.0, readDepth(upperUv));
-  float horizonSkyMask = smoothstep(BACKGROUND_DEPTH_THRESHOLD, 1.0, readDepth(horizonUv));
-  vec3 upperSky = texture2D(inputBuffer, upperUv).rgb;
-  vec3 horizonSky = texture2D(inputBuffer, horizonUv).rgb;
+vec3 sampleSkyAt(vec2 uv) {
+  float skyMask = smoothstep(BACKGROUND_DEPTH_THRESHOLD, 1.0, readDepth(uv));
+  return mix(fogColor, texture2D(inputBuffer, uv).rgb, skyMask);
+}
+
+vec3 sampleSkyRow(float y) {
+  vec3 leftSky = sampleSkyAt(vec2(0.18, y));
+  vec3 centerSky = sampleSkyAt(vec2(0.5, y));
+  vec3 rightSky = sampleSkyAt(vec2(0.82, y));
+  return (leftSky + centerSky + rightSky) / 3.0;
+}
+
+vec3 sampleSkyColor() {
+  vec3 upperSky = sampleSkyRow(0.96);
+  vec3 horizonSky = sampleSkyRow(0.58);
   vec3 sampledSky = mix(upperSky, horizonSky, 0.58);
-  float skyMask = max(upperSkyMask, horizonSkyMask);
-  return mix(fogColor, sampledSky, skyBlend * skyMask);
+  return mix(fogColor, sampledSky, skyBlend);
 }
 
 void main() {
@@ -288,7 +295,7 @@ void main() {
   float heightTerm = mix(1.0, 0.66 + lowAltitude * 0.34, clamp(heightFalloff * 32.0, 0.0, 1.0));
   float haze = max(exponentialFog * (1.0 + horizon * horizonStrength * 0.72) * heightTerm, cutoffFog * (0.78 + horizon * 0.16));
   float fogAmount = clamp(haze * strength, 0.0, 0.96);
-  vec3 atmosphereColor = sampleSkyColor(baseColor.rgb);
+  vec3 atmosphereColor = sampleSkyColor();
 
   if (isBackground) {
     float skyHaze = clamp(horizon * horizonStrength * strength * skyBlend * 0.22, 0.0, 0.32);
