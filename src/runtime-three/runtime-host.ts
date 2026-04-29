@@ -4064,18 +4064,17 @@ export class RuntimeHost {
       group.visible = terrain.visible;
 
       for (const chunk of lodMeshData.chunks) {
-        const levels = chunk.levels.map((level) => {
-          const mesh = new Mesh(level.geometry, material);
-          mesh.castShadow = false;
-          mesh.receiveShadow = true;
-          mesh.visible = level.level === 0;
-          applyRendererRenderCategory(mesh, "ao-world");
-          group.add(mesh);
-          return mesh;
-        });
+        const levelGeometries = chunk.levels.map((level) => level.geometry);
+        const mesh = new Mesh(levelGeometries[0]!, material);
+        mesh.castShadow = false;
+        mesh.receiveShadow = true;
+        mesh.userData.terrainLodLevel = 0;
+        applyRendererRenderCategory(mesh, "ao-world");
+        group.add(mesh);
 
         chunks.push({
-          levels,
+          mesh,
+          levelGeometries,
           activeLevelIndex: 0,
           worldCenter: new Vector3(
             terrain.position.x + chunk.localCenter.x,
@@ -4108,7 +4107,7 @@ export class RuntimeHost {
     for (const renderObjects of this.terrainMeshes.values()) {
       for (const chunk of renderObjects.chunks) {
         const nextLevelIndex = resolveTerrainLodLevelIndex({
-          levelCount: chunk.levels.length,
+          levelCount: chunk.levelGeometries.length,
           chunkDiagonal: chunk.diagonal,
           cameraPosition,
           chunkWorldCenter: {
@@ -4124,10 +4123,8 @@ export class RuntimeHost {
         }
 
         chunk.activeLevelIndex = nextLevelIndex;
-
-        for (let levelIndex = 0; levelIndex < chunk.levels.length; levelIndex += 1) {
-          chunk.levels[levelIndex]!.visible = levelIndex === nextLevelIndex;
-        }
+        chunk.mesh.geometry = chunk.levelGeometries[nextLevelIndex]!;
+        chunk.mesh.userData.terrainLodLevel = nextLevelIndex;
       }
     }
   }
