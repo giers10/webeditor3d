@@ -4935,11 +4935,16 @@ export class RuntimeHost {
   private clearTerrainMeshes() {
     for (const renderObjects of this.terrainMeshes.values()) {
       this.terrainGroup.remove(renderObjects.group);
+      const geometries = new Set<BufferGeometry>();
 
       for (const chunk of renderObjects.chunks) {
-        for (const mesh of chunk.levels) {
-          mesh.geometry.dispose();
+        for (const geometry of chunk.levelGeometries) {
+          geometries.add(geometry);
         }
+      }
+
+      for (const geometry of geometries) {
+        geometry.dispose();
       }
 
       renderObjects.material.dispose();
