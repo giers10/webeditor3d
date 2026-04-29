@@ -70,7 +70,11 @@ import {
   type SoundEmitterControlTargetRef
 } from "../controls/control-surface";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
-import { buildTerrainDerivedMeshData } from "../geometry/terrain-mesh";
+import {
+  buildTerrainDerivedMeshData,
+  buildTerrainLodMeshData,
+  resolveTerrainLodLevelIndex
+} from "../geometry/terrain-mesh";
 import {
   createStarterMaterialSignature,
   createStarterMaterialTextureSet,
