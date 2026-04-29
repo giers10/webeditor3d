@@ -179,11 +179,17 @@ import {
   transformBrushWorldVectorToLocal
 } from "../geometry/whitebox-brush";
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
-import { buildTerrainDerivedMeshData } from "../geometry/terrain-mesh";
+import {
+  buildTerrainDerivedMeshData,
+  buildTerrainLodMeshData,
+  resolveTerrainLodLevelIndex,
+  TERRAIN_LOD_DEBUG_COLORS
+} from "../geometry/terrain-mesh";
 import {
   applyTerrainBrushStamp,
   createTerrainBrushPreviewPoints,
-  getTerrainBrushStrokeSpacing
+  getTerrainBrushStrokeSpacing,
+  sampleTerrainHeightAtWorldPosition
 } from "../geometry/terrain-brush";
 import {
   getBrushEdgeIds,
@@ -332,7 +338,19 @@ interface PathRenderObjects {
 }
 
 interface TerrainRenderObjects {
-  mesh: Mesh<BufferGeometry, Material>;
+  group: Group;
+  chunks: TerrainRenderChunkObjects[];
+  material: Material;
+  debugMaterials: MeshBasicMaterial[];
+  pickMeshes: Mesh<BufferGeometry, Material>[];
+}
+
+interface TerrainRenderChunkObjects {
+  levels: Mesh<BufferGeometry, Material>[];
+  debugLevels: Mesh<BufferGeometry, MeshBasicMaterial>[];
+  activeLevelIndex: number;
+  worldCenter: Vec3;
+  diagonal: number;
 }
 
 interface TerrainBrushHit {
@@ -6380,29 +6398,87 @@ export class ViewportHost {
         continue;
       }
 
-      const derivedMesh = buildTerrainDerivedMeshData(displayedTerrain);
-      const mesh = new Mesh(
-        derivedMesh.geometry,
-        this.createTerrainMaterial(displayedTerrain)
-      );
-
-      mesh.position.set(
-        displayedTerrain.position.x,
-        displayedTerrain.position.y,
-        displayedTerrain.position.z
-      );
-      mesh.userData.terrainId = displayedTerrain.id;
-      mesh.castShadow = false;
-      mesh.receiveShadow = true;
-      applyRendererRenderCategory(mesh, "ao-world");
-      this.terrainGroup.add(mesh);
-      this.terrainRenderObjects.set(displayedTerrain.id, {
-        mesh
-      });
+      const renderObjects = this.createTerrainRenderObjects(displayedTerrain);
+      this.terrainGroup.add(renderObjects.group);
+      this.terrainRenderObjects.set(displayedTerrain.id, renderObjects);
     }
 
     this.applyShadowState();
+    this.updateTerrainLodVisibility();
     this.syncTerrainBrushPreview();
+  }
+
+  private createTerrainRenderObjects(terrain: Terrain): TerrainRenderObjects {
+    const material = this.createTerrainMaterial(terrain);
+    const debugMaterials = TERRAIN_LOD_DEBUG_COLORS.map(
+      (color) =>
+        new MeshBasicMaterial({
+          color,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.92,
+          depthTest: false,
+          depthWrite: false
+        })
+    );
+    const group = new Group();
+    const chunks: TerrainRenderChunkObjects[] = [];
+    const pickMeshes: Mesh<BufferGeometry, Material>[] = [];
+    const lodMeshData = buildTerrainLodMeshData(terrain);
+
+    group.position.set(terrain.position.x, terrain.position.y, terrain.position.z);
+
+    for (const chunk of lodMeshData.chunks) {
+      const levels: Mesh<BufferGeometry, Material>[] = [];
+      const debugLevels: Mesh<BufferGeometry, MeshBasicMaterial>[] = [];
+
+      for (const level of chunk.levels) {
+        const mesh = new Mesh(level.geometry, material);
+        mesh.userData.terrainId = terrain.id;
+        mesh.userData.terrainLodLevel = level.level;
+        mesh.castShadow = false;
+        mesh.receiveShadow = true;
+        mesh.visible = level.level === 0;
+        applyRendererRenderCategory(mesh, "ao-world");
+        group.add(mesh);
+        levels.push(mesh);
+
+        const debugMaterial =
+          debugMaterials[level.level] ??
+          debugMaterials[debugMaterials.length - 1]!;
+        const debugMesh = new Mesh(level.geometry, debugMaterial);
+        debugMesh.visible = false;
+        debugMesh.renderOrder = 20;
+        debugMesh.userData.selectionIgnored = true;
+        applyRendererRenderCategory(debugMesh, "overlay");
+        group.add(debugMesh);
+        debugLevels.push(debugMesh);
+      }
+
+      if (levels[0] !== undefined) {
+        pickMeshes.push(levels[0]);
+      }
+
+      chunks.push({
+        levels,
+        debugLevels,
+        activeLevelIndex: 0,
+        worldCenter: {
+          x: terrain.position.x + chunk.localCenter.x,
+          y: terrain.position.y + chunk.localCenter.y,
+          z: terrain.position.z + chunk.localCenter.z
+        },
+        diagonal: chunk.diagonal
+      });
+    }
+
+    return {
+      group,
+      chunks,
+      material,
+      debugMaterials,
+      pickMeshes
+    };
   }
 
   private createPathLineGeometry(path: ScenePath): BufferGeometry {
