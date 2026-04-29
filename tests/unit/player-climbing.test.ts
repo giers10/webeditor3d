@@ -143,7 +143,7 @@ describe("player climbing helpers", () => {
       isClimbMovementIntoSurface({
         input: createInputState({ moveForward: 1 }),
         movementYawRadians: 0,
-        surface,
+        surface
       })
     ).toBe(true);
     expect(

@@ -15,6 +15,8 @@ import {
   CLIMB_INPUT_ACTIVE_THRESHOLD,
   CLIMB_SPEED_METERS_PER_SECOND,
   computeClimbPlaneMovement,
+  isClimbMovementIntoSurface,
+  resolveClimbPlanarInputDirection,
   shouldEnterClimbing,
   shouldExitClimbing,
   type RuntimePlayerClimbSurface
@@ -665,13 +667,25 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.publishTelemetry();
   }
 
-  private resolveClimbProbeDirection(movementYawRadians: number): Vec3 {
+  private resolveClimbProbeDirection(
+    movementYawRadians: number,
+    inputState: ReturnType<typeof resolvePlayerStartActionInputs>
+  ): Vec3 {
     if (this.climbSurface !== null) {
       return {
         x: -this.climbSurface.normal.x,
         y: -this.climbSurface.normal.y,
         z: -this.climbSurface.normal.z
       };
+    }
+
+    const inputDirection = resolveClimbPlanarInputDirection(
+      inputState,
+      movementYawRadians
+    );
+
+    if (inputDirection.direction !== null) {
+      return inputDirection.direction;
     }
 
     return {
@@ -731,22 +745,27 @@ export class ThirdPersonNavigationController implements NavigationController {
     const climbPressed = inputState.climb > CLIMB_INPUT_ACTIVE_THRESHOLD;
     const jumpPressed = inputState.jump > CLIMB_INPUT_ACTIVE_THRESHOLD;
 
-    if (!climbPressed) {
-      this.climbLatchBlocked = false;
-    }
-
     const climbSurface =
       this.context.resolvePlayerClimbSurface?.(
         this.feetPosition,
-        this.resolveClimbProbeDirection(movementYawRadians),
+        this.resolveClimbProbeDirection(movementYawRadians, inputState),
         this.standingPlayerShape,
         this.climbSurface
       ) ?? null;
+    const movementIntoSurface = isClimbMovementIntoSurface({
+      input: inputState,
+      movementYawRadians,
+      surface: climbSurface
+    });
+    const climbIntentActive = climbPressed || movementIntoSurface;
+
+    if (!climbIntentActive) {
+      this.climbLatchBlocked = false;
+    }
 
     if (
       this.climbSurface !== null &&
       shouldExitClimbing({
-        climbInput: inputState.climb,
         surface: climbSurface,
         jumpPressed
       })
@@ -812,10 +831,6 @@ export class ThirdPersonNavigationController implements NavigationController {
         return true;
       }
 
-      if (climbSurface === null && climbPressed) {
-        this.climbLatchBlocked = true;
-      }
-
       return false;
     }
 
@@ -824,6 +839,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       (this.climbLatchBlocked ||
         !shouldEnterClimbing({
           climbInput: inputState.climb,
+          movementIntoSurface,
           surface: climbSurface,
           jumpPressed
         }))
