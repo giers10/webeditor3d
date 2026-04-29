@@ -9145,7 +9145,7 @@ export class ViewportHost {
     }
 
     for (const renderObjects of this.terrainRenderObjects.values()) {
-      raycastObjects.push(renderObjects.mesh);
+      raycastObjects.push(...renderObjects.pickMeshes);
     }
 
     for (const renderGroup of this.modelRenderObjects.values()) {
@@ -9186,11 +9186,25 @@ export class ViewportHost {
       return null;
     }
 
+    const terrain = this.getDisplayedTerrainState(terrainId);
+    const sourceHeight =
+      terrain === null
+        ? null
+        : sampleTerrainHeightAtWorldPosition(
+            terrain,
+            hit.point.x,
+            hit.point.z,
+            true
+          );
+
     return {
       terrainId,
       point: {
         x: hit.point.x,
-        y: hit.point.y,
+        y:
+          terrain === null || sourceHeight === null
+            ? hit.point.y
+            : terrain.position.y + sourceHeight,
         z: hit.point.z
       }
     };
@@ -9871,8 +9885,8 @@ export class ViewportHost {
         ]).flat(),
         ...Array.from(
           this.terrainRenderObjects.values(),
-          (renderObjects) => renderObjects.mesh
-        ),
+          (renderObjects) => renderObjects.pickMeshes
+        ).flat(),
         ...Array.from(this.modelRenderObjects.values()),
         ...this.getBrushPickableObjects()
       ],
