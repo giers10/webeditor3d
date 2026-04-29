@@ -182,7 +182,7 @@ import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import {
   buildTerrainDerivedMeshData,
   buildTerrainLodMeshData,
-  resolveTerrainLodLevelIndex,
+  resolveTerrainLodLevelIndexWithHysteresis,
   TERRAIN_LOD_DEBUG_COLORS
 } from "../geometry/terrain-mesh";
 import {
@@ -263,6 +263,7 @@ import {
   enableCameraRendererRenderCategories,
   enableObjectForAllRendererRenderCategories
 } from "../rendering/render-layers";
+import { getRendererPixelRatio } from "../rendering/renderer-pixel-ratio";
 import {
   collectWaterContactPatches,
   createWaterMaterial
@@ -713,7 +714,8 @@ export class ViewportHost {
   );
   private readonly renderer = new WebGLRenderer({
     antialias: false,
-    alpha: true
+    alpha: true,
+    powerPreference: "high-performance"
   });
   private readonly cameraTarget = new Vector3(0, 0, 0);
   private readonly cameraOffset = new Vector3();
