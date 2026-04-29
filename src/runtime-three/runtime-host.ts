@@ -240,7 +240,8 @@ interface CachedMaterialTexture {
 }
 
 interface RuntimeTerrainRenderChunkObjects {
-  levels: Mesh<BufferGeometry, Material>[];
+  mesh: Mesh<BufferGeometry, Material>;
+  levelGeometries: BufferGeometry[];
   activeLevelIndex: number;
   worldCenter: Vector3;
   diagonal: number;

@@ -8965,9 +8965,11 @@ export class ViewportHost {
     const nextMaterial = this.createTerrainMaterial(displayedTerrain);
 
     for (const chunk of renderObjects.chunks) {
-      for (const mesh of chunk.levels) {
-        mesh.material = nextMaterial;
-      }
+      chunk.mesh.material = nextMaterial;
+    }
+
+    for (const pickMesh of renderObjects.pickMeshes) {
+      pickMesh.material = nextMaterial;
     }
 
     renderObjects.material = nextMaterial;
@@ -9602,11 +9604,16 @@ export class ViewportHost {
   private clearTerrains() {
     for (const renderObjects of this.terrainRenderObjects.values()) {
       this.terrainGroup.remove(renderObjects.group);
+      const geometries = new Set<BufferGeometry>();
 
       for (const chunk of renderObjects.chunks) {
-        for (const mesh of chunk.levels) {
-          mesh.geometry.dispose();
+        for (const geometry of chunk.levelGeometries) {
+          geometries.add(geometry);
         }
+      }
+
+      for (const geometry of geometries) {
+        geometry.dispose();
       }
 
       renderObjects.material.dispose();
