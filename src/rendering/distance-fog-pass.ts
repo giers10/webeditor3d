@@ -199,6 +199,8 @@ uniform float heightFalloff;
 
 varying vec2 vUv;
 
+const float BACKGROUND_DEPTH_THRESHOLD = 0.9999999;
+
 float readDepth(const in vec2 uv) {
 #if DEPTH_PACKING == 3201
   return unpackRGBAToDepth(texture2D(depthBuffer, uv));
@@ -226,7 +228,7 @@ vec3 getViewPosition(
 float readViewDistance(const in vec2 uv, const in float fallbackDistance) {
   float sampleDepth = readDepth(clamp(uv, vec2(0.0), vec2(1.0)));
 
-  if (sampleDepth >= 0.9999) {
+  if (sampleDepth >= BACKGROUND_DEPTH_THRESHOLD) {
     return fallbackDistance;
   }
 
@@ -250,8 +252,8 @@ float getDepthEdgeMask(float centerDistance) {
 vec3 sampleSkyColor(vec3 baseColor) {
   vec2 upperUv = vec2(vUv.x, 0.96);
   vec2 horizonUv = vec2(vUv.x, 0.58);
-  float upperSkyMask = smoothstep(0.999, 1.0, readDepth(upperUv));
-  float horizonSkyMask = smoothstep(0.999, 1.0, readDepth(horizonUv));
+  float upperSkyMask = smoothstep(BACKGROUND_DEPTH_THRESHOLD, 1.0, readDepth(upperUv));
+  float horizonSkyMask = smoothstep(BACKGROUND_DEPTH_THRESHOLD, 1.0, readDepth(horizonUv));
   vec3 upperSky = texture2D(inputBuffer, upperUv).rgb;
   vec3 horizonSky = texture2D(inputBuffer, horizonUv).rgb;
   vec3 sampledSky = mix(upperSky, horizonSky, 0.58);
@@ -268,8 +270,8 @@ void main() {
     return;
   }
 
-  bool isBackground = depth >= 0.9999;
-  float positionDepth = isBackground ? 0.9999 : depth;
+  bool isBackground = depth >= BACKGROUND_DEPTH_THRESHOLD;
+  float positionDepth = isBackground ? BACKGROUND_DEPTH_THRESHOLD : depth;
   float viewZ = getViewZ(positionDepth);
   vec3 viewPosition = getViewPosition(vUv, positionDepth, viewZ);
   vec3 worldPosition = (cameraWorldMatrix * vec4(viewPosition, 1.0)).xyz;
