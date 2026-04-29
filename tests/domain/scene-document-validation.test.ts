@@ -658,6 +658,7 @@ describe("validateSceneDocument", () => {
     brush.rotationDegrees.y = Number.NaN;
     brush.size.x = 0;
     brush.faces.posZ.materialId = "material-that-does-not-exist";
+    brush.faces.negZ.climbable = "yes" as unknown as boolean;
 
     const validation = validateSceneDocument({
       ...createEmptySceneDocument(),
@@ -679,6 +680,10 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "missing-material-ref",
           path: "brushes.brush-invalid.faces.posZ.materialId"
+        }),
+        expect.objectContaining({
+          code: "invalid-brush-face-climbable",
+          path: "brushes.brush-invalid.faces.negZ.climbable"
         })
       ])
     );
@@ -738,6 +743,7 @@ describe("validateSceneDocument", () => {
               jump: "",
               sprint: "",
               crouch: "",
+              climb: "",
               interact: "",
               clearTarget: "",
               pauseTime: ""
@@ -747,6 +753,7 @@ describe("validateSceneDocument", () => {
               jump: "invalidButton",
               sprint: "invalidButton",
               crouch: "invalidButton",
+              climb: "invalidButton",
               interact: "invalidButton",
               clearTarget: "invalidButton",
               pauseTime: "invalidButton"
