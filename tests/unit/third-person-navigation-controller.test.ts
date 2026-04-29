@@ -623,6 +623,44 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(context);
   });
 
+  it("enters climbing when third-person movement runs into a climbable face", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-third-person-climb",
+      inputBindings: {
+        keyboard: {
+          moveForward: "ArrowUp",
+          moveBackward: "ArrowDown",
+          moveLeft: "ArrowLeft",
+          moveRight: "ArrowRight"
+        }
+      }
+    });
+    const { context } = createRuntimeControllerContext(playerStart);
+    Object.assign(context, {
+      resolvePlayerClimbSurface: vi.fn(() => ({
+        brushId: "brush-climbable-wall",
+        faceId: "negZ",
+        point: { x: 0, y: 1, z: 0.75 },
+        normal: { x: 0, y: 0, z: -1 },
+        distance: 0.75
+      }))
+    });
+    const controller = new ThirdPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowUp" }));
+    controller.update(1);
+
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.locomotionState.locomotionMode).toBe("climbing");
+    expect(telemetry?.feetPosition.y).toBeCloseTo(2.4);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "ArrowUp" }));
+    controller.deactivate(context);
+  });
+
   it("uses sprint input to raise gait and planar travel speed when grounded", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-third-person-sprint",
