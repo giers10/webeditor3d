@@ -129,6 +129,8 @@ import { createFogQualityMaterial } from "../rendering/fog-material";
 import { updatePlanarReflectionCamera } from "../rendering/planar-reflection";
 import {
   createTerrainLayerBlendMaterial,
+  createTerrainLayerColorBlendMaterial,
+  getTerrainLayerPreviewColor,
   getTerrainLayerTexture
 } from "../rendering/terrain-layer-material";
 import {

@@ -9651,7 +9651,8 @@ export class ViewportHost {
         geometry.dispose();
       }
 
-      renderObjects.material.dispose();
+      renderObjects.detailMaterial.dispose();
+      renderObjects.distantMaterial.dispose();
 
       for (const material of renderObjects.debugMaterials) {
         material.dispose();
