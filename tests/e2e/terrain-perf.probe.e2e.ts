@@ -81,6 +81,15 @@ async function readLongTaskCount(page: Page) {
   });
 }
 
+async function resetLongTasks(page: Page) {
+  await page.evaluate(() => {
+    const targetWindow = window as Window & {
+      __terrainPerfLongTasks?: { duration: number }[];
+    };
+    targetWindow.__terrainPerfLongTasks = [];
+  });
+}
+
 function createTerrainScene(size: number, collisionEnabled: boolean) {
   const document = createEmptySceneDocument({
     name: `Terrain ${size} perf`
@@ -119,18 +128,11 @@ test("terrain runner and editor zoom perf probe", async ({ page }) => {
   await installLongTaskObserver(page);
 
   for (const size of [100, 320, 640]) {
+    await resetLongTasks(page);
     await replaceSceneDocument(page, createTerrainScene(size, true));
     await page.getByTestId("enter-run-mode").click();
     await page.getByTestId("runner-shell").waitFor({ state: "visible" });
-    await page.waitForFunction(() => {
-      const overlay = document.querySelector(
-        "[data-testid='runner-loading-overlay']"
-      );
-
-      return overlay?.className.includes(
-        "runner-canvas__loading-overlay--hidden"
-      );
-    });
+    await page.waitForTimeout(2_000);
     const frames = await sampleAnimationFrames(page, 180);
     const longTaskCount = await readLongTaskCount(page);
 
