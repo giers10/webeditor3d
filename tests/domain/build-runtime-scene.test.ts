@@ -1177,6 +1177,47 @@ describe("buildRuntimeSceneFromDocument", () => {
     });
   });
 
+  it("carries climbable whitebox face metadata into runtime brush colliders", () => {
+    const brush = createBoxBrush({
+      id: "brush-climbable-wall"
+    });
+    brush.faces.posZ.climbable = true;
+
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Climbable Runtime Scene" }),
+      brushes: {
+        [brush.id]: brush
+      }
+    });
+    const runtimeBrush = runtimeScene.brushes[0];
+
+    expect(runtimeBrush?.faces.posZ.climbable).toBe(true);
+    expect(runtimeBrush?.faces.negZ.climbable).toBe(false);
+
+    const brushCollider = runtimeScene.staticColliders.find(
+      (collider) => collider.source === "brush" && collider.brushId === brush.id
+    );
+
+    expect(brushCollider?.source).toBe("brush");
+
+    if (brushCollider?.source !== "brush") {
+      throw new Error("Expected a runtime brush collider.");
+    }
+
+    expect(
+      brushCollider.faces.find((face) => face.faceId === "posZ")
+    ).toMatchObject({
+      faceId: "posZ",
+      climbable: true
+    });
+    expect(
+      brushCollider.faces.find((face) => face.faceId === "negZ")
+    ).toMatchObject({
+      faceId: "negZ",
+      climbable: false
+    });
+  });
+
   it("filters active NPCs from the project scheduler against the current runtime clock", () => {
     const alwaysNpc = createNpcEntity({
       id: "entity-npc-always",
