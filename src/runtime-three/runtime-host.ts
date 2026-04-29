@@ -236,6 +236,7 @@ import {
   resolvePlayerStartLookInput,
   resolvePlayerStartPauseInput
 } from "./player-input-bindings";
+import { resolvePlayerClimbSurface } from "./player-climbing";
 
 interface CachedMaterialTexture {
   signature: string;
@@ -972,6 +973,21 @@ export class RuntimeHost {
         },
       canOccupyPlayerShape: (feetPosition, shape) =>
         this.collisionWorld?.canOccupyPlayerShape(feetPosition, shape) ?? true,
+      resolvePlayerClimbSurface: (
+        feetPosition,
+        facingDirection,
+        shape,
+        previousSurface
+      ) =>
+        this.runtimeScene === null
+          ? null
+          : resolvePlayerClimbSurface({
+              runtimeScene: this.runtimeScene,
+              feetPosition,
+              facingDirection,
+              shape,
+              previousSurface
+            }),
       resolvePlayerVolumeState: (feetPosition) =>
         this.resolvePlayerVolumeState(feetPosition),
       resolveThirdPersonCameraCollision: (
