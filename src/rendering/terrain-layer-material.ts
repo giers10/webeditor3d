@@ -21,6 +21,13 @@ interface TerrainLayerBlendMaterialOptions {
   wireframe?: boolean;
 }
 
+interface TerrainLayerColorBlendMaterialOptions {
+  layerColors: readonly [number, number, number, number];
+  emissiveHex?: number;
+  emissiveIntensity?: number;
+  wireframe?: boolean;
+}
+
 let fallbackTerrainLayerTexture: Texture | null = null;
 
 function createFallbackTerrainLayerTexture(): Texture {
@@ -139,6 +146,88 @@ diffuseColor *= terrainLayerColor;`
   };
 
   material.customProgramCacheKey = () => "terrain-layer-blend-v1";
+  material.needsUpdate = true;
+  return material;
+}
+
+export function createTerrainLayerColorBlendMaterial(
+  options: TerrainLayerColorBlendMaterialOptions
+): Material {
+  if (options.wireframe === true) {
+    return new MeshBasicMaterial({
+      color: 0xf2ece2,
+      wireframe: true
+    });
+  }
+
+  const material = new MeshStandardMaterial({
+    color: 0xffffff,
+    emissive: options.emissiveHex ?? 0x000000,
+    emissiveIntensity: options.emissiveIntensity ?? 0,
+    roughness: 1,
+    metalness: 0
+  });
+  const layerColors = options.layerColors.map((color) => new Color(color)) as [
+    Color,
+    Color,
+    Color,
+    Color
+  ];
+
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.terrainLayerColor0 = { value: layerColors[0] };
+    shader.uniforms.terrainLayerColor1 = { value: layerColors[1] };
+    shader.uniforms.terrainLayerColor2 = { value: layerColors[2] };
+    shader.uniforms.terrainLayerColor3 = { value: layerColors[3] };
+
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+attribute vec4 terrainLayerWeights;
+varying vec4 vTerrainLayerWeights;`
+      )
+      .replace(
+        "#include <uv_vertex>",
+        `#include <uv_vertex>
+vTerrainLayerWeights = terrainLayerWeights;`
+      );
+
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+varying vec4 vTerrainLayerWeights;
+uniform vec3 terrainLayerColor0;
+uniform vec3 terrainLayerColor1;
+uniform vec3 terrainLayerColor2;
+uniform vec3 terrainLayerColor3;`
+      )
+      .replace(
+        "#include <map_fragment>",
+        `vec4 terrainWeights = max(vTerrainLayerWeights, 0.0);
+float terrainWeightSum =
+  terrainWeights.x +
+  terrainWeights.y +
+  terrainWeights.z +
+  terrainWeights.w;
+
+if (terrainWeightSum <= 0.0) {
+  terrainWeights = vec4(1.0, 0.0, 0.0, 0.0);
+} else {
+  terrainWeights /= terrainWeightSum;
+}
+
+vec3 terrainLayerColor =
+  terrainLayerColor0 * terrainWeights.x +
+  terrainLayerColor1 * terrainWeights.y +
+  terrainLayerColor2 * terrainWeights.z +
+  terrainLayerColor3 * terrainWeights.w;
+diffuseColor.rgb *= terrainLayerColor;`
+      );
+  };
+
+  material.customProgramCacheKey = () => "terrain-layer-color-blend-v1";
   material.needsUpdate = true;
   return material;
 }
