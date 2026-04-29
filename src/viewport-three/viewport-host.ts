@@ -2382,7 +2382,7 @@ export class ViewportHost {
 
     for (const renderObjects of this.terrainRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(
-        renderObjects.mesh,
+        renderObjects.group,
         shadowsEnabled
       );
     }
