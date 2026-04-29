@@ -244,6 +244,7 @@ import {
   DAWN_DUSK_BACKGROUND_IMAGE_SCENE_DOCUMENT_VERSION,
   WHITEBOX_PRIMITIVES_SCENE_DOCUMENT_VERSION,
   WHITEBOX_BEVEL_SCENE_DOCUMENT_VERSION,
+  WHITEBOX_FACE_CLIMBABLE_SCENE_DOCUMENT_VERSION,
   WHITEBOX_BOX_VOLUME_SCENE_DOCUMENT_VERSION,
   WHITEBOX_FLOAT_TRANSFORM_SCENE_DOCUMENT_VERSION,
   WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
@@ -2475,7 +2476,8 @@ function readBrushFace(
     uv:
       value.uv === undefined && allowMissingUvState
         ? createDefaultFaceUvState()
-        : readFaceUvState(value.uv, `${label}.uv`)
+        : readFaceUvState(value.uv, `${label}.uv`),
+    climbable: readOptionalBoolean(value.climbable, `${label}.climbable`, false)
   };
 }
 
@@ -5704,6 +5706,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION &&
     source.version !== ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_DOCUMENT_VERSION &&
+    source.version !== WHITEBOX_FACE_CLIMBABLE_SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(

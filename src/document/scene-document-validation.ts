@@ -6874,7 +6874,21 @@ export function validateSceneDocument(
     }
 
     for (const faceId of getBrushFaceIds(brush)) {
-      const materialId = brush.faces[faceId].materialId;
+      const face = brush.faces[faceId];
+
+      if (face === undefined) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "missing-brush-face",
+            `Whitebox face ${faceId} must exist in brush face data.`,
+            `${path}.faces.${faceId}`
+          )
+        );
+        continue;
+      }
+
+      const materialId = face.materialId;
 
       if (materialId !== null && document.materials[materialId] === undefined) {
         diagnostics.push(
@@ -6883,6 +6897,17 @@ export function validateSceneDocument(
             "missing-material-ref",
             `Face material reference ${materialId} does not exist in the document material registry.`,
             `${path}.faces.${faceId}.materialId`
+          )
+        );
+      }
+
+      if (!isBoolean(face.climbable)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-brush-face-climbable",
+            "Whitebox face climbable must remain a boolean.",
+            `${path}.faces.${faceId}.climbable`
           )
         );
       }
