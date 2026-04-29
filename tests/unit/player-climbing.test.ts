@@ -5,7 +5,9 @@ import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { FIRST_PERSON_PLAYER_SHAPE } from "../../src/runtime-three/player-collision";
 import {
   computeClimbPlaneMovement,
+  isClimbMovementIntoSurface,
   isClimbableWallNormal,
+  resolveClimbPlanarInputDirection,
   resolvePlayerClimbSurface,
   shouldEnterClimbing,
   shouldExitClimbing
@@ -79,6 +81,7 @@ describe("player climbing helpers", () => {
     expect(
       shouldEnterClimbing({
         climbInput: 1,
+        movementIntoSurface: false,
         surface,
         jumpPressed: false
       })
@@ -86,24 +89,70 @@ describe("player climbing helpers", () => {
     expect(
       shouldEnterClimbing({
         climbInput: 0,
+        movementIntoSurface: true,
+        surface,
+        jumpPressed: false
+      })
+    ).toBe(true);
+    expect(
+      shouldEnterClimbing({
+        climbInput: 0,
+        movementIntoSurface: false,
         surface,
         jumpPressed: false
       })
     ).toBe(false);
     expect(
       shouldExitClimbing({
-        climbInput: 1,
         surface,
         jumpPressed: true
       })
     ).toBe(true);
     expect(
       shouldExitClimbing({
-        climbInput: 0,
         surface,
         jumpPressed: false
       })
+    ).toBe(false);
+    expect(
+      shouldExitClimbing({
+        surface: null,
+        jumpPressed: false
+      })
     ).toBe(true);
+  });
+
+  it("treats movement into a climbable face as climb intent", () => {
+    const surface = {
+      brushId: "brush-wall",
+      faceId: "negZ",
+      point: { x: 0, y: 1, z: 0.75 },
+      normal: { x: 0, y: 0, z: -1 },
+      distance: 0.75
+    };
+
+    expect(
+      resolveClimbPlanarInputDirection(createInputState({ moveForward: 1 }), 0)
+        .direction
+    ).toMatchObject({
+      x: 0,
+      y: 0,
+      z: 1
+    });
+    expect(
+      isClimbMovementIntoSurface({
+        input: createInputState({ moveForward: 1 }),
+        movementYawRadians: 0,
+        surface,
+      })
+    ).toBe(true);
+    expect(
+      isClimbMovementIntoSurface({
+        input: createInputState({ moveBackward: 1 }),
+        movementYawRadians: 0,
+        surface
+      })
+    ).toBe(false);
   });
 
   it("resolves only authored climbable whitebox faces in front of the player", () => {
