@@ -102,7 +102,8 @@ export function replaceBoxBrushFace(document: SceneDocument, brushId: string, fa
         ...brush.faces,
         [faceId]: {
           materialId: face.materialId,
-          uv: cloneFaceUvState(face.uv)
+          uv: cloneFaceUvState(face.uv),
+          climbable: face.climbable
         }
       } as typeof brush.faces,
       geometry: cloneBrushGeometry(brush.geometry)
