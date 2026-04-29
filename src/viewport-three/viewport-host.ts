@@ -6481,6 +6481,40 @@ export class ViewportHost {
     };
   }
 
+  private updateTerrainLodVisibility() {
+    const activeCamera = this.getActiveCamera();
+    const perspective = activeCamera === this.perspectiveCamera;
+    const cameraPosition = {
+      x: activeCamera.position.x,
+      y: activeCamera.position.y,
+      z: activeCamera.position.z
+    };
+
+    for (const [terrainId, renderObjects] of this.terrainRenderObjects) {
+      const selected = isTerrainSelected(this.currentSelection, terrainId);
+
+      for (const chunk of renderObjects.chunks) {
+        const nextLevelIndex = resolveTerrainLodLevelIndex({
+          levelCount: chunk.levels.length,
+          chunkDiagonal: chunk.diagonal,
+          cameraPosition,
+          chunkWorldCenter: chunk.worldCenter,
+          perspective
+        });
+
+        if (chunk.activeLevelIndex !== nextLevelIndex) {
+          chunk.activeLevelIndex = nextLevelIndex;
+        }
+
+        for (let levelIndex = 0; levelIndex < chunk.levels.length; levelIndex += 1) {
+          const active = levelIndex === chunk.activeLevelIndex;
+          chunk.levels[levelIndex]!.visible = active;
+          chunk.debugLevels[levelIndex]!.visible = selected && active;
+        }
+      }
+    }
+  }
+
   private createPathLineGeometry(path: ScenePath): BufferGeometry {
     const points = path.points.map(
       (point) =>
@@ -9544,9 +9578,19 @@ export class ViewportHost {
 
   private clearTerrains() {
     for (const renderObjects of this.terrainRenderObjects.values()) {
-      this.terrainGroup.remove(renderObjects.mesh);
-      renderObjects.mesh.geometry.dispose();
-      renderObjects.mesh.material.dispose();
+      this.terrainGroup.remove(renderObjects.group);
+
+      for (const chunk of renderObjects.chunks) {
+        for (const mesh of chunk.levels) {
+          mesh.geometry.dispose();
+        }
+      }
+
+      renderObjects.material.dispose();
+
+      for (const material of renderObjects.debugMaterials) {
+        material.dispose();
+      }
     }
 
     this.terrainRenderObjects.clear();
