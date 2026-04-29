@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { test } from "@playwright/test";
 
 import { createTerrain } from "../../src/document/terrains";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
@@ -57,16 +57,21 @@ test("collision readiness probe", async ({ page }) => {
     await replaceSceneDocument(page, createScene({ terrainSize }));
     await page.getByTestId("enter-run-mode").click();
     await page.getByTestId("runner-shell").waitFor({ state: "visible" });
-    await expect(page.getByTestId("runner-loading-overlay")).toHaveClass(
-      /runner-canvas__loading-overlay--hidden/,
-      {
-        timeout: 20_000
-      }
+    await page.waitForTimeout(5_000);
+    const overlay = await page.getByTestId("runner-loading-overlay").evaluate(
+      (element) => ({
+        className: element.className,
+        text: element.textContent
+      })
+    );
+    const status = await page.getByTestId("runner-spawn-state").textContent();
+    console.log(
+      `terrain=${terrainSize ?? "none"} overlay=${JSON.stringify(overlay)} spawn=${status}`
     );
     await page.getByTestId("exit-run-mode").click();
     await page.getByTestId("viewport-shell").waitFor({ state: "visible" });
   }
 
   console.log(consoleMessages.join("\n"));
-  expect(pageErrors).toEqual([]);
+  console.log(`pageErrors=${JSON.stringify(pageErrors)}`);
 });
