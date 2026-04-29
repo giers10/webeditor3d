@@ -667,7 +667,7 @@ export function resolveTerrainLodLevelIndex(options: {
   }
 
   if (!options.perspective) {
-    return Math.min(1, options.levelCount - 1);
+    return Math.min(2, options.levelCount - 1);
   }
 
   const distance = Math.hypot(
@@ -677,19 +677,19 @@ export function resolveTerrainLodLevelIndex(options: {
   );
   const baseDistance = Math.max(options.chunkDiagonal, 1);
 
-  if (distance < baseDistance * 2) {
+  if (distance < baseDistance * 0.75) {
     return 0;
   }
 
-  if (distance < baseDistance * 4) {
+  if (distance < baseDistance * 1.5) {
     return Math.min(1, options.levelCount - 1);
   }
 
-  if (distance < baseDistance * 8) {
+  if (distance < baseDistance * 3) {
     return Math.min(2, options.levelCount - 1);
   }
 
-  if (distance < baseDistance * 16) {
+  if (distance < baseDistance * 6) {
     return Math.min(3, options.levelCount - 1);
   }
 
