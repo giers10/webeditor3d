@@ -731,10 +731,7 @@ export class RuntimeHost {
     string,
     Mesh<BufferGeometry, Material[]>
   >();
-  private readonly terrainMeshes = new Map<
-    string,
-    Mesh<BufferGeometry, Material>
-  >();
+  private readonly terrainMeshes = new Map<string, RuntimeTerrainRenderObjects>();
   private volumeTime = 0;
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
   private readonly runtimeWaterContactUniforms: RuntimeWaterContactUniformBinding[] =
@@ -3118,8 +3115,11 @@ export class RuntimeHost {
       applyAdvancedRenderingRenderableShadowFlags(mesh, shadowsEnabled);
     }
 
-    for (const mesh of this.terrainMeshes.values()) {
-      applyAdvancedRenderingRenderableShadowFlags(mesh, shadowsEnabled);
+    for (const renderObjects of this.terrainMeshes.values()) {
+      applyAdvancedRenderingRenderableShadowFlags(
+        renderObjects.group,
+        shadowsEnabled
+      );
     }
 
     for (const renderGroup of this.modelRenderObjects.values()) {
@@ -4049,30 +4049,52 @@ export class RuntimeHost {
     this.clearTerrainMeshes();
 
     for (const terrain of terrains) {
-      const geometry = buildTerrainDerivedMeshData({
+      const terrainForLod = {
         ...terrain,
-        kind: "terrain",
+        kind: "terrain" as const,
         enabled: true
-      }).geometry;
-      const mesh = new Mesh(
-        geometry,
-        this.createRuntimeTerrainMaterial(terrain)
-      );
+      };
+      const lodMeshData = buildTerrainLodMeshData(terrainForLod);
+      const material = this.createRuntimeTerrainMaterial(terrain);
+      const group = new Group();
+      const chunks: RuntimeTerrainRenderChunkObjects[] = [];
 
-      mesh.position.set(
-        terrain.position.x,
-        terrain.position.y,
-        terrain.position.z
-      );
-      mesh.visible = terrain.visible;
-      mesh.castShadow = false;
-      mesh.receiveShadow = true;
-      applyRendererRenderCategory(mesh, "ao-world");
-      this.terrainGroup.add(mesh);
-      this.terrainMeshes.set(terrain.id, mesh);
+      group.position.set(terrain.position.x, terrain.position.y, terrain.position.z);
+      group.visible = terrain.visible;
+
+      for (const chunk of lodMeshData.chunks) {
+        const levels = chunk.levels.map((level) => {
+          const mesh = new Mesh(level.geometry, material);
+          mesh.castShadow = false;
+          mesh.receiveShadow = true;
+          mesh.visible = level.level === 0;
+          applyRendererRenderCategory(mesh, "ao-world");
+          group.add(mesh);
+          return mesh;
+        });
+
+        chunks.push({
+          levels,
+          activeLevelIndex: 0,
+          worldCenter: new Vector3(
+            terrain.position.x + chunk.localCenter.x,
+            terrain.position.y + chunk.localCenter.y,
+            terrain.position.z + chunk.localCenter.z
+          ),
+          diagonal: chunk.diagonal
+        });
+      }
+
+      this.terrainGroup.add(group);
+      this.terrainMeshes.set(terrain.id, {
+        group,
+        chunks,
+        material
+      });
     }
 
     this.applyShadowState();
+    this.updateTerrainLodVisibility();
   }
 
   private createRuntimeTerrainMaterial(terrain: RuntimeTerrain): Material {
