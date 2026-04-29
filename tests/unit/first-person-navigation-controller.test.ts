@@ -309,6 +309,54 @@ describe("FirstPersonNavigationController", () => {
     });
   });
 
+  it("enters climbing when first-person movement runs into a climbable face", () => {
+    const { context } = createRuntimeControllerContext(
+      createPlayerStartEntity({
+        id: "entity-player-start-first-person-climb"
+      }),
+      (feetPosition, motion) => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      })
+    );
+    Object.assign(context, {
+      resolvePlayerClimbSurface: vi.fn(() => ({
+        brushId: "brush-climbable-wall",
+        faceId: "negZ",
+        point: { x: 0, y: 1, z: 0.75 },
+        normal: { x: 0, y: 0, z: -1 },
+        distance: 0.75
+      }))
+    });
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+    controller.update(1);
+
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.locomotionState.locomotionMode).toBe("climbing");
+    expect(telemetry?.feetPosition.y).toBeCloseTo(2.4);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
   it("uses the gamepad right stick for camera look without requiring pointer lock", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new FirstPersonNavigationController();
