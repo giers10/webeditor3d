@@ -8991,19 +8991,24 @@ export class ViewportHost {
     }
 
     const displayedTerrain = this.getDisplayedTerrainState(terrainId) ?? terrain;
-    const previousMaterial = renderObjects.material;
-    const nextMaterial = this.createTerrainMaterial(displayedTerrain);
+    const previousDetailMaterial = renderObjects.detailMaterial;
+    const previousDistantMaterial = renderObjects.distantMaterial;
+    const nextDetailMaterial = this.createTerrainMaterial(displayedTerrain);
+    const nextDistantMaterial = this.createTerrainDistantMaterial(displayedTerrain);
 
     for (const chunk of renderObjects.chunks) {
-      chunk.mesh.material = nextMaterial;
+      chunk.mesh.material =
+        chunk.activeLevelIndex >= 2 ? nextDistantMaterial : nextDetailMaterial;
     }
 
     for (const pickMesh of renderObjects.pickMeshes) {
-      pickMesh.material = nextMaterial;
+      pickMesh.material = nextDetailMaterial;
     }
 
-    renderObjects.material = nextMaterial;
-    previousMaterial.dispose();
+    renderObjects.detailMaterial = nextDetailMaterial;
+    renderObjects.distantMaterial = nextDistantMaterial;
+    previousDetailMaterial.dispose();
+    previousDistantMaterial.dispose();
     this.updateTerrainLodVisibility();
   }
 
