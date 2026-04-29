@@ -10953,6 +10953,7 @@ export class ViewportHost {
     this.updateSmoothZoom(dt);
     this.updateGridPositioning();
     this.updateTransformGizmoPose();
+    this.updateTerrainLodVisibility();
     this.volumeTime += dt;
 
     for (const uniform of this.volumeAnimatedUniforms) {
