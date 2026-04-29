@@ -156,6 +156,7 @@ export interface FaceUvState {
 export interface BrushFace {
   materialId: string | null;
   uv: FaceUvState;
+  climbable: boolean;
 }
 
 export interface BoxBrushWaterSettings {
@@ -384,7 +385,8 @@ export function isTorusBrush(brush: Brush): brush is TorusBrush {
 function cloneBrushFace(face: BrushFace): BrushFace {
   return {
     materialId: face.materialId,
-    uv: cloneFaceUvState(face.uv)
+    uv: cloneFaceUvState(face.uv),
+    climbable: face.climbable
   };
 }
 
@@ -943,7 +945,8 @@ export function createDefaultBrushFaces<FaceId extends WhiteboxFaceId>(
       faceId,
       {
         materialId: null,
-        uv: createDefaultFaceUvState()
+        uv: createDefaultFaceUvState(),
+        climbable: false
       }
     ])
   ) as Record<FaceId, BrushFace>;
