@@ -222,7 +222,7 @@ describe("terrain mesh generation", () => {
         levelCount,
         chunkDiagonal,
         chunkWorldCenter,
-        cameraPosition: { x: 0, y: 0, z: 150 },
+        cameraPosition: { x: 0, y: 0, z: 50 },
         perspective: true
       })
     ).toBe(0);
@@ -231,7 +231,25 @@ describe("terrain mesh generation", () => {
         levelCount,
         chunkDiagonal,
         chunkWorldCenter,
-        cameraPosition: { x: 0, y: 0, z: 900 },
+        cameraPosition: { x: 0, y: 0, z: 120 },
+        perspective: true
+      })
+    ).toBe(1);
+    expect(
+      resolveTerrainLodLevelIndex({
+        levelCount,
+        chunkDiagonal,
+        chunkWorldCenter,
+        cameraPosition: { x: 0, y: 0, z: 250 },
+        perspective: true
+      })
+    ).toBe(2);
+    expect(
+      resolveTerrainLodLevelIndex({
+        levelCount,
+        chunkDiagonal,
+        chunkWorldCenter,
+        cameraPosition: { x: 0, y: 0, z: 500 },
         perspective: true
       })
     ).toBe(3);
