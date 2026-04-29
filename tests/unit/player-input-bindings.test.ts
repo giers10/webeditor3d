@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createPlayerStartInputBindings } from "../../src/entities/entity-instances";
 import {
   resolvePlayerStartClearTargetInput,
+  resolvePlayerStartClimbInput,
   resolvePlayerStartInteractInput,
   resolvePlayerStartPauseInput
 } from "../../src/runtime-three/player-input-bindings";
@@ -113,6 +114,33 @@ describe("player-input-bindings clear-target input", () => {
     expect(
       resolvePlayerStartClearTargetInput(new Set<string>(), bindings, [
         createMockGamepad([3])
+      ])
+    ).toBe(1);
+  });
+});
+
+describe("player-input-bindings climb input", () => {
+  it("resolves authored keyboard climb bindings", () => {
+    const bindings = createPlayerStartInputBindings({
+      keyboard: {
+        climb: "KeyR"
+      }
+    });
+
+    expect(resolvePlayerStartClimbInput(new Set(["KeyE"]), bindings, [])).toBe(
+      0
+    );
+    expect(resolvePlayerStartClimbInput(new Set(["KeyR"]), bindings, [])).toBe(
+      1
+    );
+  });
+
+  it("resolves the default gamepad climb binding from the standard right shoulder button", () => {
+    const bindings = createPlayerStartInputBindings();
+
+    expect(
+      resolvePlayerStartClimbInput(new Set<string>(), bindings, [
+        createMockGamepad([5])
       ])
     ).toBe(1);
   });
