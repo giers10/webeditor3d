@@ -375,6 +375,8 @@ uniform int sampleCount;
 
 varying vec2 vUv;
 
+const float BACKGROUND_DEPTH_THRESHOLD = 0.9999999;
+
 float readDepth(const in vec2 uv) {
 #if DEPTH_PACKING == 3201
   return unpackRGBAToDepth(texture2D(depthBuffer, uv));
@@ -396,7 +398,7 @@ float getAtmosphereMask(const in float depth) {
     return 1.0;
   }
 
-  if (depth >= 0.9999) {
+  if (depth >= BACKGROUND_DEPTH_THRESHOLD) {
     return 1.0;
   }
 
