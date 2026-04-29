@@ -3296,6 +3296,17 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (!isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.climb)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-climb-keyboard-binding",
+        "Player Start climb keyboard binding must be a supported key code.",
+        `${path}.inputBindings.keyboard.climb`
+      )
+    );
+  }
+
   if (
     !isPlayerStartKeyboardBindingCode(entity.inputBindings?.keyboard.interact)
   ) {
@@ -3429,6 +3440,19 @@ function validatePlayerStartEntity(
         "invalid-player-start-crouch-gamepad-binding",
         "Player Start crouch gamepad binding must be a supported standard-gamepad action input.",
         `${path}.inputBindings.gamepad.crouch`
+      )
+    );
+  }
+
+  if (
+    !isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.climb)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-climb-gamepad-binding",
+        "Player Start climb gamepad binding must be a supported standard-gamepad action input.",
+        `${path}.inputBindings.gamepad.climb`
       )
     );
   }

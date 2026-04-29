@@ -1826,6 +1826,11 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
         `${label}.keyboard.crouch`,
         DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.crouch
       ),
+      climb: readPlayerStartKeyboardBindingCode(
+        keyboard?.climb,
+        `${label}.keyboard.climb`,
+        DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.climb
+      ),
       interact: readPlayerStartKeyboardBindingCode(
         keyboard?.interact,
         `${label}.keyboard.interact`,
@@ -1877,6 +1882,11 @@ function readPlayerStartInputBindings(value: unknown, label: string) {
         gamepad?.crouch,
         `${label}.gamepad.crouch`,
         DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.crouch
+      ),
+      climb: readPlayerStartGamepadActionBinding(
+        gamepad?.climb,
+        `${label}.gamepad.climb`,
+        DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.climb
       ),
       interact: readPlayerStartGamepadActionBinding(
         gamepad?.interact,

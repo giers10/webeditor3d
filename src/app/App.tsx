@@ -673,6 +673,8 @@ function getPlayerStartInputActionLabel(
       return "Sprint";
     case "crouch":
       return "Crouch";
+    case "climb":
+      return "Climb";
     case "interact":
       return "Interact";
     case "clearTarget":

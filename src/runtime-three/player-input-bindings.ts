@@ -18,6 +18,7 @@ export interface PlayerStartActionInputState extends PlayerStartMovementActionSt
   jump: number;
   sprint: number;
   crouch: number;
+  climb: number;
   interact: number;
   clearTarget: number;
   pauseTime: number;
@@ -316,6 +317,10 @@ export function resolvePlayerStartActionInputs(
       pressedKeys.has(bindings.keyboard.crouch) ? 1 : 0,
       readGamepadActionBindingStrength(gamepads, bindings.gamepad.crouch)
     ),
+    climb: Math.max(
+      pressedKeys.has(bindings.keyboard.climb) ? 1 : 0,
+      readGamepadActionBindingStrength(gamepads, bindings.gamepad.climb)
+    ),
     interact: Math.max(
       pressedKeys.has(bindings.keyboard.interact) ? 1 : 0,
       readGamepadActionBindingStrength(gamepads, bindings.gamepad.interact)
@@ -353,6 +358,17 @@ export function resolvePlayerStartInteractInput(
 ): number {
   return resolvePlayerStartActionInputs(pressedKeys, bindings, gamepads)
     .interact;
+}
+
+export function resolvePlayerStartClimbInput(
+  pressedKeys: ReadonlySet<string>,
+  bindings: PlayerStartInputBindings,
+  gamepads:
+    | ArrayLike<Gamepad | null>
+    | null
+    | undefined = getAvailableGamepads()
+): number {
+  return resolvePlayerStartActionInputs(pressedKeys, bindings, gamepads).climb;
 }
 
 export function resolvePlayerStartClearTargetInput(

@@ -1159,6 +1159,7 @@ export function clonePlayerStartInputBindings(
       jump: bindings.keyboard.jump,
       sprint: bindings.keyboard.sprint,
       crouch: bindings.keyboard.crouch,
+      climb: bindings.keyboard.climb,
       interact: bindings.keyboard.interact,
       clearTarget: bindings.keyboard.clearTarget,
       pauseTime: bindings.keyboard.pauseTime
@@ -1171,6 +1172,7 @@ export function clonePlayerStartInputBindings(
       jump: bindings.gamepad.jump,
       sprint: bindings.gamepad.sprint,
       crouch: bindings.gamepad.crouch,
+      climb: bindings.gamepad.climb,
       interact: bindings.gamepad.interact,
       clearTarget: bindings.gamepad.clearTarget,
       pauseTime: bindings.gamepad.pauseTime,
@@ -1203,6 +1205,9 @@ export function createPlayerStartInputBindings(
     crouch:
       overrides.keyboard?.crouch ??
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.crouch,
+    climb:
+      overrides.keyboard?.climb ??
+      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.climb,
     interact:
       overrides.keyboard?.interact ??
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.interact,
@@ -1231,6 +1236,8 @@ export function createPlayerStartInputBindings(
       overrides.gamepad?.sprint ?? DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.sprint,
     crouch:
       overrides.gamepad?.crouch ?? DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.crouch,
+    climb:
+      overrides.gamepad?.climb ?? DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.climb,
     interact:
       overrides.gamepad?.interact ??
       DEFAULT_PLAYER_START_GAMEPAD_BINDINGS.interact,
@@ -1279,6 +1286,10 @@ export function createPlayerStartInputBindings(
 
   if (!isPlayerStartKeyboardBindingCode(keyboard.crouch)) {
     throw new Error("Player Start crouch keyboard binding must be supported.");
+  }
+
+  if (!isPlayerStartKeyboardBindingCode(keyboard.climb)) {
+    throw new Error("Player Start climb keyboard binding must be supported.");
   }
 
   if (!isPlayerStartKeyboardBindingCode(keyboard.interact)) {
@@ -1331,6 +1342,10 @@ export function createPlayerStartInputBindings(
 
   if (!isPlayerStartGamepadActionBinding(gamepad.crouch)) {
     throw new Error("Player Start crouch gamepad binding must be supported.");
+  }
+
+  if (!isPlayerStartGamepadActionBinding(gamepad.climb)) {
+    throw new Error("Player Start climb gamepad binding must be supported.");
   }
 
   if (!isPlayerStartGamepadActionBinding(gamepad.interact)) {
@@ -1587,6 +1602,7 @@ export function arePlayerStartInputBindingsEqual(
     left.keyboard.jump === right.keyboard.jump &&
     left.keyboard.sprint === right.keyboard.sprint &&
     left.keyboard.crouch === right.keyboard.crouch &&
+    left.keyboard.climb === right.keyboard.climb &&
     left.keyboard.interact === right.keyboard.interact &&
     left.keyboard.clearTarget === right.keyboard.clearTarget &&
     left.keyboard.pauseTime === right.keyboard.pauseTime &&
@@ -1597,6 +1613,7 @@ export function arePlayerStartInputBindingsEqual(
     left.gamepad.jump === right.gamepad.jump &&
     left.gamepad.sprint === right.gamepad.sprint &&
     left.gamepad.crouch === right.gamepad.crouch &&
+    left.gamepad.climb === right.gamepad.climb &&
     left.gamepad.interact === right.gamepad.interact &&
     left.gamepad.clearTarget === right.gamepad.clearTarget &&
     left.gamepad.pauseTime === right.gamepad.pauseTime &&
