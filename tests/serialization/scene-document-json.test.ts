@@ -1080,9 +1080,6 @@ describe("scene document JSON", () => {
     });
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(migratedDocument.version).toBe(
-      GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION
-    );
     expect(migratedDocument.world.advancedRendering.godRays).toEqual(
       emptyScene.world.advancedRendering.godRays
     );
