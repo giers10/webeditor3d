@@ -46,6 +46,7 @@ import {
   type BoxBrushLightFalloffMode,
   type BoxBrushVolumeSettings,
   type WhiteboxFaceId,
+  type WhiteboxVertexId,
   type FaceUvState
 } from "../document/brushes";
 import type { ProjectDocument, SceneDocument } from "../document/scene-document";
@@ -142,6 +143,16 @@ export interface RuntimeBrushFace {
   materialId: string | null;
   material: MaterialDef | null;
   uv: FaceUvState;
+  climbable: boolean;
+}
+
+export interface RuntimeBrushColliderFace {
+  faceId: WhiteboxFaceId;
+  climbable: boolean;
+  normal: Vec3;
+  vertexIds: readonly WhiteboxVertexId[];
+  vertices: Vec3[];
+  triangles: Array<readonly [number, number, number]>;
 }
 
 export interface RuntimeBoxBrushInstance {
@@ -241,6 +252,7 @@ export interface RuntimeBrushTriMeshCollider {
   rotationDegrees: Vec3;
   vertices: Float32Array;
   indices: Uint32Array;
+  faces: RuntimeBrushColliderFace[];
   worldBounds: {
     min: Vec3;
     max: Vec3;
@@ -768,7 +780,8 @@ function buildRuntimeBrush(
           {
             materialId: face.materialId,
             material: resolveRuntimeMaterial(document, face.materialId),
-            uv: cloneFaceUvState(face.uv)
+            uv: cloneFaceUvState(face.uv),
+            climbable: face.climbable
           }
         ];
       })
@@ -848,6 +861,16 @@ function buildRuntimeCollider(brush: Brush): RuntimeBrushTriMeshCollider {
     rotationDegrees: cloneVec3(brush.rotationDegrees),
     vertices: derivedMesh.colliderVertices,
     indices: derivedMesh.colliderIndices,
+    faces: derivedMesh.faceSurfaces.map((surface) => ({
+      faceId: surface.faceId,
+      climbable: brush.faces[surface.faceId]?.climbable ?? false,
+      normal: cloneVec3(surface.normal),
+      vertexIds: surface.vertexIds,
+      vertices: surface.vertexIds.map((vertexId) =>
+        cloneVec3(brush.geometry.vertices[vertexId])
+      ),
+      triangles: surface.triangles
+    })),
     worldBounds: {
       min: cloneVec3(bounds.min),
       max: cloneVec3(bounds.max)

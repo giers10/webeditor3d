@@ -217,7 +217,8 @@ export type PlayerStartMovementAction =
 export const PLAYER_START_LOCOMOTION_ACTIONS = [
   "jump",
   "sprint",
-  "crouch"
+  "crouch",
+  "climb"
 ] as const;
 export type PlayerStartLocomotionAction =
   (typeof PLAYER_START_LOCOMOTION_ACTIONS)[number];
@@ -283,6 +284,7 @@ export interface PlayerStartKeyboardBindings {
   jump: PlayerStartKeyboardBindingCode;
   sprint: PlayerStartKeyboardBindingCode;
   crouch: PlayerStartKeyboardBindingCode;
+  climb: PlayerStartKeyboardBindingCode;
   interact: PlayerStartKeyboardBindingCode;
   clearTarget: PlayerStartKeyboardBindingCode;
   pauseTime: PlayerStartKeyboardBindingCode;
@@ -296,6 +298,7 @@ export interface PlayerStartGamepadBindings {
   jump: PlayerStartGamepadActionBinding;
   sprint: PlayerStartGamepadActionBinding;
   crouch: PlayerStartGamepadActionBinding;
+  climb: PlayerStartGamepadActionBinding;
   interact: PlayerStartGamepadActionBinding;
   clearTarget: PlayerStartGamepadActionBinding;
   pauseTime: PlayerStartGamepadActionBinding;
@@ -551,6 +554,7 @@ export const DEFAULT_PLAYER_START_KEYBOARD_BINDINGS: PlayerStartKeyboardBindings
     jump: "Space",
     sprint: "ShiftLeft",
     crouch: "ControlLeft",
+    climb: "KeyE",
     interact: "MouseLeft",
     clearTarget: "KeyQ",
     pauseTime: "KeyP"
@@ -564,6 +568,7 @@ export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
     jump: "buttonSouth",
     sprint: "leftStickPress",
     crouch: "buttonEast",
+    climb: "rightShoulder",
     interact: "buttonWest",
     clearTarget: "buttonNorth",
     pauseTime: "buttonMenu",

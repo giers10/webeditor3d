@@ -263,7 +263,8 @@ function createRuntimeGeometryBrush(brush: RuntimeBoxBrushInstance): Brush {
       faceId,
       {
         materialId: face.materialId,
-        uv: cloneFaceUvState(face.uv)
+        uv: cloneFaceUvState(face.uv),
+        climbable: face.climbable
       }
     ])
   );

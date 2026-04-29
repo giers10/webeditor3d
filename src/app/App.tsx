@@ -34,6 +34,7 @@ import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
 import { createRotateBoxBrushCommand } from "../commands/rotate-box-brush-command";
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
 import { createSetBoxBrushAllFaceMaterialsCommand } from "../commands/set-box-brush-all-face-materials-command";
+import { createSetBoxBrushFaceClimbableCommand } from "../commands/set-box-brush-face-climbable-command";
 import { createSetBoxBrushFaceMaterialCommand } from "../commands/set-box-brush-face-material-command";
 import { createSetBoxBrushAuthoredStateCommand } from "../commands/set-box-brush-authored-state-command";
 import { createSetBoxBrushNameCommand } from "../commands/set-box-brush-name-command";
@@ -13380,6 +13381,43 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const handleFaceClimbableChange = (climbable: boolean) => {
+    if (
+      selectedBrush === null ||
+      selectedFaceId === null ||
+      selectedFace === null
+    ) {
+      setStatusMessage("Select a single box face before editing climbability.");
+      return;
+    }
+
+    if (selectedFace.climbable === climbable) {
+      setStatusMessage(
+        `${getBrushFaceLabel(selectedBrush, selectedFaceId)} is already ${
+          climbable ? "climbable" : "not climbable"
+        }.`
+      );
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createSetBoxBrushFaceClimbableCommand({
+          brushId: selectedBrush.id,
+          faceId: selectedFaceId,
+          climbable
+        })
+      );
+      setStatusMessage(
+        climbable
+          ? `Marked ${getBrushFaceLabel(selectedBrush, selectedFaceId)} climbable.`
+          : `Cleared climbable from ${getBrushFaceLabel(selectedBrush, selectedFaceId)}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyFaceUvState = (
     uvState: FaceUvState,
     label: string,
@@ -25229,6 +25267,25 @@ export function App({ store, initialStatusMessage }: AppProps) {
                           </div>
                         ) : null}
                       </div>
+
+                      {materialInspectorScope === "face" &&
+                      selectedFace !== null ? (
+                        <div className="form-section">
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Climbable</span>
+                            <input
+                              data-testid="face-climbable"
+                              type="checkbox"
+                              checked={selectedFace.climbable}
+                              onChange={(event) =>
+                                handleFaceClimbableChange(
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      ) : null}
 
                       <div className="form-section">
                         <div className="label">Material</div>
