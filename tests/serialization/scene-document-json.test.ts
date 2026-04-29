@@ -586,7 +586,7 @@ describe("scene document JSON", () => {
     );
   });
 
-  it("round-trips per-face material and UV state", () => {
+  it("round-trips per-face material, UV, and climbable state", () => {
     const brush = createBoxBrush({
       id: "brush-face-room",
       center: {
@@ -615,6 +615,7 @@ describe("scene document JSON", () => {
       flipU: true,
       flipV: true
     };
+    brush.faces.posZ.climbable = true;
 
     const document = {
       ...createEmptySceneDocument({ name: "Face UV Scene" }),
@@ -626,6 +627,36 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
       document
     );
+  });
+
+  it("migrates old brush faces to default non-climbable state", () => {
+    const brush = createBoxBrush({
+      id: "brush-legacy-climbable-default"
+    });
+    const legacyFaces = Object.fromEntries(
+      Object.entries(brush.faces).map(([faceId, face]) => {
+        const { climbable: _climbable, ...legacyFace } = face;
+
+        return [faceId, legacyFace];
+      })
+    );
+    const legacyDocument = {
+      ...createEmptySceneDocument({ name: "Legacy Face Climbable Scene" }),
+      version: GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION,
+      brushes: {
+        [brush.id]: {
+          ...brush,
+          faces: legacyFaces
+        }
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(
+      migratedDocument.brushes[brush.id].faces.posZ.climbable
+    ).toBe(false);
   });
 
   it("round-trips whitebox box volume settings", () => {
