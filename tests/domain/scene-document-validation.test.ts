@@ -854,6 +854,9 @@ describe("validateSceneDocument", () => {
           code: "invalid-player-start-crouch-keyboard-binding"
         }),
         expect.objectContaining({
+          code: "invalid-player-start-climb-keyboard-binding"
+        }),
+        expect.objectContaining({
           code: "invalid-player-start-interact-keyboard-binding"
         }),
         expect.objectContaining({
@@ -870,6 +873,9 @@ describe("validateSceneDocument", () => {
         }),
         expect.objectContaining({
           code: "invalid-player-start-crouch-gamepad-binding"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-climb-gamepad-binding"
         }),
         expect.objectContaining({
           code: "invalid-player-start-interact-gamepad-binding"
