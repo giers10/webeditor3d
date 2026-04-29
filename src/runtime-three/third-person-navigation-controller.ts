@@ -12,6 +12,14 @@ import {
   resolvePlayerStartLookInput,
 } from "./player-input-bindings";
 import {
+  CLIMB_INPUT_ACTIVE_THRESHOLD,
+  CLIMB_SPEED_METERS_PER_SECOND,
+  computeClimbPlaneMovement,
+  shouldEnterClimbing,
+  shouldExitClimbing,
+  type RuntimePlayerClimbSurface
+} from "./player-climbing";
+import {
   createIdleRuntimeLocomotionState,
   stepPlayerLocomotion
 } from "./player-locomotion";
@@ -199,6 +207,8 @@ export class ThirdPersonNavigationController implements NavigationController {
   private jumpBufferRemainingMs = 0;
   private coyoteTimeRemainingMs = 0;
   private jumpHoldRemainingMs = 0;
+  private climbSurface: RuntimePlayerClimbSurface | null = null;
+  private climbLatchBlocked = false;
 
   activate(ctx: RuntimeControllerContext): void {
     this.context = ctx;
@@ -319,6 +329,8 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.jumpBufferRemainingMs = 0;
     this.coyoteTimeRemainingMs = 0;
     this.jumpHoldRemainingMs = 0;
+    this.climbSurface = null;
+    this.climbLatchBlocked = false;
     this.previousTelemetry = null;
     this.smoothedCameraCollisionDistance = null;
     this.pointerLookInputPending = false;
@@ -373,6 +385,8 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.jumpBufferRemainingMs = 0;
     this.coyoteTimeRemainingMs = 0;
     this.jumpHoldRemainingMs = 0;
+    this.climbSurface = null;
+    this.climbLatchBlocked = false;
   }
 
   update(dt: number): void {
@@ -515,6 +529,17 @@ export class ThirdPersonNavigationController implements NavigationController {
         ? this.context.getCameraYawRadians()
         : this.cameraYawRadians;
 
+    if (
+      this.stepClimbing(
+        dt,
+        inputState,
+        playerMovement,
+        movementYawRadians
+      )
+    ) {
+      return;
+    }
+
     const locomotionStep = stepPlayerLocomotion(
       {
         dt,
@@ -632,6 +657,8 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.jumpBufferRemainingMs = 0;
     this.coyoteTimeRemainingMs = 0;
     this.jumpHoldRemainingMs = 0;
+    this.climbSurface = null;
+    this.climbLatchBlocked = false;
     this.inWaterVolume = false;
     this.inFogVolume = false;
     this.updateCameraTransform(0);
