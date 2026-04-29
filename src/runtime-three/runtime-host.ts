@@ -252,7 +252,8 @@ interface RuntimeTerrainRenderChunkObjects {
 interface RuntimeTerrainRenderObjects {
   group: Group;
   chunks: RuntimeTerrainRenderChunkObjects[];
-  material: Material;
+  detailMaterial: Material;
+  distantMaterial: Material;
 }
 
 function createRuntimeGeometryBrush(brush: RuntimeBoxBrushInstance): Brush {
