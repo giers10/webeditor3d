@@ -2002,6 +2002,10 @@ function formatRunnerLocomotionMode(
       return "Flying";
     case "swimming":
       return "Swimming";
+    case "diving":
+      return "Diving";
+    case "climbing":
+      return "Climbing";
     default:
       return "n/a";
   }
@@ -2132,6 +2136,10 @@ function formatRunnerAnimationHook(
 
   if (animationHook.locomotionMode === "swimming") {
     return `swim ${animationHook.movementAmount.toFixed(2)}`;
+  }
+
+  if (animationHook.locomotionMode === "climbing") {
+    return `climb ${animationHook.movementAmount.toFixed(2)}`;
   }
 
   return animationHook.moving
