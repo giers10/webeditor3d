@@ -104,7 +104,6 @@ import {
   type ScenePath
 } from "../document/paths";
 import {
-  areTerrainsEqual,
   cloneTerrain,
   getTerrains,
   type Terrain
@@ -181,15 +180,17 @@ import {
 import { buildBoxBrushDerivedMeshData } from "../geometry/box-brush-mesh";
 import {
   buildTerrainDerivedMeshData,
+  buildTerrainLodChunkMeshData,
   buildTerrainLodMeshData,
   resolveTerrainLodLevelIndexWithHysteresis,
   TERRAIN_LOD_DEBUG_COLORS
 } from "../geometry/terrain-mesh";
 import {
-  applyTerrainBrushStamp,
+  applyTerrainBrushStampInPlace,
   createTerrainBrushPreviewPoints,
   getTerrainBrushStrokeSpacing,
-  sampleTerrainHeightAtWorldPosition
+  sampleTerrainHeightAtWorldPosition,
+  type TerrainBrushDirtySampleBounds
 } from "../geometry/terrain-brush";
 import {
   getBrushEdgeIds,
@@ -356,8 +357,13 @@ interface TerrainRenderObjects {
 interface TerrainRenderChunkObjects {
   mesh: Mesh<BufferGeometry, Material>;
   debugMesh: Mesh<BufferGeometry, MeshBasicMaterial>;
+  pickMesh: Mesh<BufferGeometry, Material>;
   levelGeometries: BufferGeometry[];
   activeLevelIndex: number;
+  startSampleX: number;
+  startSampleZ: number;
+  endSampleX: number;
+  endSampleZ: number;
   worldCenter: Vec3;
   diagonal: number;
 }
@@ -375,6 +381,7 @@ interface LightVolumeRenderObjects {
 interface ActiveTerrainBrushStroke {
   pointerId: number;
   previewTerrain: Terrain;
+  changed: boolean;
   referenceHeight: number | null;
   lastAppliedPoint: {
     x: number;
@@ -6523,8 +6530,13 @@ export class ViewportHost {
       chunks.push({
         mesh,
         debugMesh,
+        pickMesh,
         levelGeometries,
         activeLevelIndex: 0,
+        startSampleX: chunk.startSampleX,
+        startSampleZ: chunk.startSampleZ,
+        endSampleX: chunk.endSampleX,
+        endSampleZ: chunk.endSampleZ,
         worldCenter: {
           x: terrain.position.x + chunk.localCenter.x,
           y: terrain.position.y + chunk.localCenter.y,
