@@ -1805,6 +1805,11 @@ export class ViewportHost {
       )
     });
 
+    if (cameraStatesEqual) {
+      this.pendingSmoothZoomCameraStateCommit = false;
+      return;
+    }
+
     this.lastCameraStateTraceSnapshot =
       cloneViewportPanelCameraState(nextCameraState);
     this.pendingSmoothZoomCameraStateCommit = false;
