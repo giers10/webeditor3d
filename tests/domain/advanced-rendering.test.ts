@@ -152,9 +152,11 @@ import {
 } from "../../src/rendering/advanced-rendering";
 import {
   applyAdvancedRenderingPerspectiveCameraFar,
+  createDistanceFogSkyColorSource,
   resolveAdvancedRenderingPerspectiveCameraFar,
   resolveDistanceFogFadeMargin,
-  resolveDistanceFogParameters
+  resolveDistanceFogParameters,
+  syncDistanceFogSkyColorSource
 } from "../../src/rendering/distance-fog-pass";
 import {
   GOD_RAYS_SOURCE_MASK_RADII,
@@ -179,6 +181,7 @@ import {
   applyWhiteboxBevelToMaterial,
   shouldApplyWhiteboxBevel
 } from "../../src/rendering/whitebox-bevel-material";
+import { resolveWorldBackgroundSkyColorState } from "../../src/rendering/world-background-renderer";
 
 describe("resolveBoxVolumeRenderPaths", () => {
   it("uses authored fog and water paths when advanced rendering is enabled", () => {
@@ -337,6 +340,26 @@ describe("distance fog parameters", () => {
       applyAdvancedRenderingPerspectiveCameraFar(camera, settings, 1000)
     ).toBe(true);
     expect(camera.far).toBe(1000);
+  });
+
+  it("syncs stable distance-fog sky colors from the world background", () => {
+    const world = createDefaultWorldSettings();
+    world.background = {
+      mode: "verticalGradient",
+      topColorHex: "#7ea7df",
+      bottomColorHex: "#d9c2a4"
+    };
+    const skyColorSource = createDistanceFogSkyColorSource();
+
+    syncDistanceFogSkyColorSource(
+      skyColorSource,
+      resolveWorldBackgroundSkyColorState(world.background)
+    );
+
+    expect(skyColorSource).toEqual({
+      topColorHex: "#7ea7df",
+      horizonColorHex: "#d9c2a4"
+    });
   });
 });
 
@@ -532,6 +555,8 @@ describe("createAdvancedRenderingComposer", () => {
     settings.enabled = true;
     settings.distanceFog.enabled = true;
 
+    const skyColorSource = createDistanceFogSkyColorSource();
+
     createAdvancedRenderingComposer(
       {
         capabilities: {
@@ -540,7 +565,10 @@ describe("createAdvancedRenderingComposer", () => {
       } as unknown as never,
       new Scene(),
       new PerspectiveCamera(),
-      settings
+      settings,
+      null,
+      null,
+      skyColorSource
     );
 
     expect(
@@ -562,6 +590,13 @@ describe("createAdvancedRenderingComposer", () => {
       (postprocessingState.composerPasses[1] as { needsDepthTexture?: boolean })
         .needsDepthTexture
     ).toBe(true);
+    expect(
+      (
+        postprocessingState.composerPasses[1] as {
+          skyColorSource?: unknown;
+        }
+      ).skyColorSource
+    ).toBe(skyColorSource);
     expect(
       (postprocessingState.composerPasses[2] as { renderLayerMask?: number })
         .renderLayerMask
