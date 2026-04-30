@@ -917,6 +917,7 @@ export class ViewportHost {
   private panelId: ViewportPanelId = "topLeft";
   private targetPerspectiveCameraRadius: number | null = null;
   private targetOrthographicCameraZoom: number | null = null;
+  private pendingSmoothZoomCameraStateCommit = false;
   private creationPreview: CreationViewportToolPreview | null = null;
   private currentTerrainBrushState: ArmedTerrainBrushState | null = null;
   private terrainBrushHover: TerrainBrushHit | null = null;
@@ -1806,6 +1807,7 @@ export class ViewportHost {
 
     this.lastCameraStateTraceSnapshot =
       cloneViewportPanelCameraState(nextCameraState);
+    this.pendingSmoothZoomCameraStateCommit = false;
     this.cameraStateChangeHandler?.(nextCameraState);
   }
 
@@ -1823,9 +1825,12 @@ export class ViewportHost {
   private cancelSmoothZoom() {
     this.targetPerspectiveCameraRadius = null;
     this.targetOrthographicCameraZoom = null;
+    this.pendingSmoothZoomCameraStateCommit = false;
   }
 
   private finishSmoothZoom() {
+    const shouldCommitCameraState = this.pendingSmoothZoomCameraStateCommit;
+
     if (this.targetPerspectiveCameraRadius !== null) {
       this.cameraSpherical.radius = this.targetPerspectiveCameraRadius;
       this.targetPerspectiveCameraRadius = null;
@@ -1834,6 +1839,11 @@ export class ViewportHost {
     if (this.targetOrthographicCameraZoom !== null) {
       this.orthographicCamera.zoom = this.targetOrthographicCameraZoom;
       this.targetOrthographicCameraZoom = null;
+    }
+
+    if (shouldCommitCameraState) {
+      this.applyViewModePose();
+      this.emitCameraStateChange();
     }
   }
 
@@ -1876,11 +1886,13 @@ export class ViewportHost {
 
   private updateSmoothZoom(dt: number) {
     const response = this.getSmoothZoomFrameResponse(dt);
+    let zoomWasActive = false;
 
     if (
       this.viewMode === "perspective" &&
       this.targetPerspectiveCameraRadius !== null
     ) {
+      zoomWasActive = true;
       const nextRadius = this.stepSmoothZoomValue(
         this.cameraSpherical.radius,
         this.targetPerspectiveCameraRadius,
@@ -1897,6 +1909,7 @@ export class ViewportHost {
       isOrthographicViewportViewMode(this.viewMode) &&
       this.targetOrthographicCameraZoom !== null
     ) {
+      zoomWasActive = true;
       const nextZoom = this.stepSmoothZoomValue(
         this.orthographicCamera.zoom,
         this.targetOrthographicCameraZoom,
@@ -1907,6 +1920,15 @@ export class ViewportHost {
         this.targetOrthographicCameraZoom = null;
       }
       this.applyOrthographicCameraPose();
+    }
+
+    if (
+      zoomWasActive &&
+      this.pendingSmoothZoomCameraStateCommit &&
+      this.targetPerspectiveCameraRadius === null &&
+      this.targetOrthographicCameraZoom === null
+    ) {
+      this.emitCameraStateChange();
     }
   }
 
@@ -10347,6 +10369,7 @@ export class ViewportHost {
 
   private handleWheel = (event: WheelEvent) => {
     event.preventDefault();
+    this.pendingSmoothZoomCameraStateCommit = true;
 
     if (this.viewMode === "perspective") {
       this.targetPerspectiveCameraRadius = this.clampPerspectiveCameraRadius(
@@ -10363,7 +10386,11 @@ export class ViewportHost {
         this.targetPerspectiveCameraRadius = null;
       }
       this.applyPerspectiveCameraPose();
-      this.emitCameraStateChange();
+
+      if (this.targetPerspectiveCameraRadius === null) {
+        this.emitCameraStateChange();
+      }
+
       return;
     }
 
@@ -10381,7 +10408,10 @@ export class ViewportHost {
       this.targetOrthographicCameraZoom = null;
     }
     this.applyOrthographicCameraPose();
-    this.emitCameraStateChange();
+
+    if (this.targetOrthographicCameraZoom === null) {
+      this.emitCameraStateChange();
+    }
   };
 
   private handleAuxClick = (event: MouseEvent) => {
