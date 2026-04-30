@@ -9089,6 +9089,99 @@ export class ViewportHost {
     );
   }
 
+  private terrainChunkOverlapsDirtySampleBounds(
+    chunk: TerrainRenderChunkObjects,
+    bounds: TerrainBrushDirtySampleBounds
+  ): boolean {
+    return (
+      chunk.startSampleX <= bounds.maxSampleX &&
+      chunk.endSampleX >= bounds.minSampleX &&
+      chunk.startSampleZ <= bounds.maxSampleZ &&
+      chunk.endSampleZ >= bounds.minSampleZ
+    );
+  }
+
+  private refreshDisplayedTerrainDirtyBounds(
+    terrainId: string,
+    bounds: TerrainBrushDirtySampleBounds | null
+  ) {
+    if (bounds === null) {
+      return;
+    }
+
+    const terrain = this.getDisplayedTerrainState(terrainId);
+    const renderObjects = this.terrainRenderObjects.get(terrainId);
+
+    if (terrain === null || renderObjects === undefined) {
+      this.rebuildDisplayedTerrainState();
+      return;
+    }
+
+    let refreshedAnyChunk = false;
+
+    for (const chunk of renderObjects.chunks) {
+      if (!this.terrainChunkOverlapsDirtySampleBounds(chunk, bounds)) {
+        continue;
+      }
+
+      const nextChunk = buildTerrainLodChunkMeshData(
+        terrain,
+        chunk.startSampleX,
+        chunk.startSampleZ
+      );
+
+      if (nextChunk === null) {
+        this.rebuildDisplayedTerrainState();
+        return;
+      }
+
+      const previousGeometries = new Set(chunk.levelGeometries);
+      const nextLevelGeometries = nextChunk.levels.map(
+        (level) => level.geometry
+      );
+      const nextActiveLevelIndex = Math.min(
+        chunk.activeLevelIndex,
+        nextLevelGeometries.length - 1
+      );
+
+      chunk.levelGeometries = nextLevelGeometries;
+      chunk.activeLevelIndex = nextActiveLevelIndex;
+      chunk.startSampleX = nextChunk.startSampleX;
+      chunk.startSampleZ = nextChunk.startSampleZ;
+      chunk.endSampleX = nextChunk.endSampleX;
+      chunk.endSampleZ = nextChunk.endSampleZ;
+      chunk.worldCenter = {
+        x: terrain.position.x + nextChunk.localCenter.x,
+        y: terrain.position.y + nextChunk.localCenter.y,
+        z: terrain.position.z + nextChunk.localCenter.z
+      };
+      chunk.diagonal = nextChunk.diagonal;
+      chunk.mesh.geometry = nextLevelGeometries[nextActiveLevelIndex]!;
+      chunk.mesh.material =
+        nextActiveLevelIndex >= 2
+          ? renderObjects.distantMaterial
+          : renderObjects.detailMaterial;
+      chunk.debugMesh.geometry = nextLevelGeometries[nextActiveLevelIndex]!;
+      chunk.debugMesh.material =
+        renderObjects.debugMaterials[nextActiveLevelIndex] ??
+        renderObjects.debugMaterials[renderObjects.debugMaterials.length - 1]!;
+      chunk.pickMesh.geometry = nextLevelGeometries[0]!;
+
+      for (const geometry of previousGeometries) {
+        geometry.dispose();
+      }
+
+      refreshedAnyChunk = true;
+    }
+
+    if (!refreshedAnyChunk) {
+      return;
+    }
+
+    this.updateTerrainLodVisibility();
+    this.syncTerrainBrushPreview();
+  }
+
   private isTerrainBrushActive(): boolean {
     return (
       this.toolMode === "select" &&
@@ -9309,8 +9402,8 @@ export class ViewportHost {
     },
     toolState: ArmedTerrainBrushState,
     referenceHeight: number | null
-  ): Terrain {
-    return applyTerrainBrushStamp({
+  ): ReturnType<typeof applyTerrainBrushStampInPlace> {
+    return applyTerrainBrushStampInPlace({
       terrain,
       center: point,
       settings: toolState,
@@ -9333,7 +9426,8 @@ export class ViewportHost {
     toolState: ArmedTerrainBrushState,
     referenceHeight: number | null
   ): {
-    terrain: Terrain;
+    changed: boolean;
+    dirtyBounds: TerrainBrushDirtySampleBounds | null;
     lastAppliedPoint: {
       x: number;
       z: number;
@@ -9346,14 +9440,43 @@ export class ViewportHost {
 
     if (distance < spacing) {
       return {
-        terrain,
+        changed: false,
+        dirtyBounds: null,
         lastAppliedPoint: from
       };
     }
 
-    let nextTerrain = terrain;
+    let changed = false;
+    let dirtyBounds: TerrainBrushDirtySampleBounds | null = null;
     let lastAppliedPoint = from;
     const stepCount = Math.floor(distance / spacing);
+    const mergeDirtyBounds = (nextBounds: TerrainBrushDirtySampleBounds | null) => {
+      if (nextBounds === null) {
+        return;
+      }
+
+      if (dirtyBounds === null) {
+        dirtyBounds = { ...nextBounds };
+        return;
+      }
+
+      dirtyBounds.minSampleX = Math.min(
+        dirtyBounds.minSampleX,
+        nextBounds.minSampleX
+      );
+      dirtyBounds.maxSampleX = Math.max(
+        dirtyBounds.maxSampleX,
+        nextBounds.maxSampleX
+      );
+      dirtyBounds.minSampleZ = Math.min(
+        dirtyBounds.minSampleZ,
+        nextBounds.minSampleZ
+      );
+      dirtyBounds.maxSampleZ = Math.max(
+        dirtyBounds.maxSampleZ,
+        nextBounds.maxSampleZ
+      );
+    };
 
     for (let stepIndex = 1; stepIndex <= stepCount; stepIndex += 1) {
       const t = Math.min(1, (stepIndex * spacing) / distance);
@@ -9361,17 +9484,20 @@ export class ViewportHost {
         x: from.x + deltaX * t,
         z: from.z + deltaZ * t
       };
-      nextTerrain = this.applyTerrainBrushPoint(
-        nextTerrain,
+      const result = this.applyTerrainBrushPoint(
+        terrain,
         point,
         toolState,
         referenceHeight
       );
+      changed ||= result.changed;
+      mergeDirtyBounds(result.dirtyBounds);
       lastAppliedPoint = point;
     }
 
     return {
-      terrain: nextTerrain,
+      changed,
+      dirtyBounds,
       lastAppliedPoint
     };
   }
