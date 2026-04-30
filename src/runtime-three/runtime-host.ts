@@ -2952,7 +2952,10 @@ export class RuntimeHost {
     );
     syncDistanceFogSkyColorSource(
       this.distanceFogSkyColorSource,
-      resolveWorldBackgroundSkyColorState(resolvedWorld.background, shaderSkyState)
+      resolveWorldBackgroundSkyColorState(
+        resolvedWorld.background,
+        shaderSkyState
+      )
     );
     const godRaysLightInput =
       shaderSkyState !== null
