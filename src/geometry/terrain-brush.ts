@@ -19,6 +19,25 @@ export interface TerrainBrushPoint {
   z: number;
 }
 
+export interface TerrainBrushDirtySampleBounds {
+  minSampleX: number;
+  maxSampleX: number;
+  minSampleZ: number;
+  maxSampleZ: number;
+}
+
+export interface TerrainBrushStampMutationResult {
+  changed: boolean;
+  dirtyBounds: TerrainBrushDirtySampleBounds | null;
+}
+
+interface TerrainSmoothHeightSource {
+  minSampleX: number;
+  minSampleZ: number;
+  width: number;
+  heights: number[];
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
@@ -128,9 +147,50 @@ export function createTerrainBrushPreviewPoints(
   return points;
 }
 
+function readSmoothHeightSource(
+  source: TerrainSmoothHeightSource,
+  sampleX: number,
+  sampleZ: number
+): number {
+  return (
+    source.heights[
+      (sampleZ - source.minSampleZ) * source.width +
+        (sampleX - source.minSampleX)
+    ] ?? 0
+  );
+}
+
+function createTerrainSmoothHeightSource(
+  terrain: Terrain,
+  bounds: TerrainBrushDirtySampleBounds
+): TerrainSmoothHeightSource {
+  const minSampleX = Math.max(0, bounds.minSampleX - 1);
+  const maxSampleX = Math.min(terrain.sampleCountX - 1, bounds.maxSampleX + 1);
+  const minSampleZ = Math.max(0, bounds.minSampleZ - 1);
+  const maxSampleZ = Math.min(terrain.sampleCountZ - 1, bounds.maxSampleZ + 1);
+  const width = maxSampleX - minSampleX + 1;
+  const heights = new Array<number>(
+    width * (maxSampleZ - minSampleZ + 1)
+  );
+
+  for (let sampleZ = minSampleZ; sampleZ <= maxSampleZ; sampleZ += 1) {
+    for (let sampleX = minSampleX; sampleX <= maxSampleX; sampleX += 1) {
+      heights[(sampleZ - minSampleZ) * width + (sampleX - minSampleX)] =
+        getTerrainHeightAtSample(terrain, sampleX, sampleZ);
+    }
+  }
+
+  return {
+    minSampleX,
+    minSampleZ,
+    width,
+    heights
+  };
+}
+
 function getTerrainSmoothTargetHeight(
   terrain: Terrain,
-  sourceHeights: readonly number[],
+  source: TerrainSmoothHeightSource,
   sampleX: number,
   sampleZ: number
 ): number {
@@ -147,14 +207,13 @@ function getTerrainSmoothTargetHeight(
       neighborX <= Math.min(terrain.sampleCountX - 1, sampleX + 1);
       neighborX += 1
     ) {
-      total +=
-        sourceHeights[getTerrainSampleIndex(terrain, neighborX, neighborZ)] ?? 0;
+      total += readSmoothHeightSource(source, neighborX, neighborZ);
       count += 1;
     }
   }
 
   return count === 0
-    ? sourceHeights[getTerrainSampleIndex(terrain, sampleX, sampleZ)] ?? 0
+    ? readSmoothHeightSource(source, sampleX, sampleZ)
     : total / count;
 }
 
@@ -198,6 +257,23 @@ export function applyTerrainBrushStamp(options: {
   referenceHeight?: number | null;
   layerIndex?: number | null;
 }): Terrain {
+  const nextTerrain = createTerrain(options.terrain);
+  const result = applyTerrainBrushStampInPlace({
+    ...options,
+    terrain: nextTerrain
+  });
+
+  return result.changed ? nextTerrain : options.terrain;
+}
+
+export function applyTerrainBrushStampInPlace(options: {
+  terrain: Terrain;
+  center: TerrainBrushPoint;
+  settings: TerrainBrushSettings;
+  tool: TerrainBrushTool;
+  referenceHeight?: number | null;
+  layerIndex?: number | null;
+}): TerrainBrushStampMutationResult {
   const {
     terrain,
     center,
@@ -223,12 +299,35 @@ export function applyTerrainBrushStamp(options: {
     terrain.sampleCountZ - 1,
     Math.ceil((center.z - terrain.position.z + radius) / terrain.cellSize)
   );
-  const sourceHeights = terrain.heights;
-  const sourcePaintWeights = terrain.paintWeights;
-  const nextHeights = [...sourceHeights];
-  const nextPaintWeights = [...sourcePaintWeights];
+  const stampBounds = {
+    minSampleX,
+    maxSampleX,
+    minSampleZ,
+    maxSampleZ
+  };
+  const smoothHeightSource =
+    tool === "smooth"
+      ? createTerrainSmoothHeightSource(terrain, stampBounds)
+      : null;
   const smoothingStrength = clamp01(strength);
-  let changed = false;
+  let dirtyBounds: TerrainBrushDirtySampleBounds | null = null;
+
+  const markDirty = (sampleX: number, sampleZ: number) => {
+    if (dirtyBounds === null) {
+      dirtyBounds = {
+        minSampleX: sampleX,
+        maxSampleX: sampleX,
+        minSampleZ: sampleZ,
+        maxSampleZ: sampleZ
+      };
+      return;
+    }
+
+    dirtyBounds.minSampleX = Math.min(dirtyBounds.minSampleX, sampleX);
+    dirtyBounds.maxSampleX = Math.max(dirtyBounds.maxSampleX, sampleX);
+    dirtyBounds.minSampleZ = Math.min(dirtyBounds.minSampleZ, sampleZ);
+    dirtyBounds.maxSampleZ = Math.max(dirtyBounds.maxSampleZ, sampleZ);
+  };
 
   for (let sampleZ = minSampleZ; sampleZ <= maxSampleZ; sampleZ += 1) {
     for (let sampleX = minSampleX; sampleX <= maxSampleX; sampleX += 1) {
@@ -242,7 +341,7 @@ export function applyTerrainBrushStamp(options: {
       }
 
       const sampleIndex = getTerrainSampleIndex(terrain, sampleX, sampleZ);
-      const currentHeight = sourceHeights[sampleIndex] ?? 0;
+      const currentHeight = terrain.heights[sampleIndex] ?? 0;
       let nextHeight = currentHeight;
 
       switch (tool) {
@@ -255,7 +354,7 @@ export function applyTerrainBrushStamp(options: {
         case "smooth": {
           const smoothTargetHeight = getTerrainSmoothTargetHeight(
             terrain,
-            sourceHeights,
+            smoothHeightSource!,
             sampleX,
             sampleZ
           );
@@ -304,32 +403,29 @@ export function applyTerrainBrushStamp(options: {
             nextWeights[3] !== currentWeights[3]
           ) {
             setTerrainSamplePaintWeights(
-              nextPaintWeights,
+              terrain.paintWeights,
               terrain,
               sampleX,
               sampleZ,
               nextWeights
             );
-            changed = true;
+            markDirty(sampleX, sampleZ);
           }
           continue;
         }
       }
 
       if (nextHeight !== currentHeight) {
-        nextHeights[sampleIndex] = nextHeight;
-        changed = true;
+        terrain.heights[sampleIndex] = nextHeight;
+        markDirty(sampleX, sampleZ);
       }
     }
   }
 
-  return changed
-    ? createTerrain({
-        ...terrain,
-        heights: nextHeights,
-        paintWeights: nextPaintWeights
-      })
-    : terrain;
+  return {
+    changed: dirtyBounds !== null,
+    dirtyBounds
+  };
 }
 
 export function getTerrainBrushStrokeSpacing(
