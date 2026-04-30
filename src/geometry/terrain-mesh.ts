@@ -596,56 +596,24 @@ export function buildTerrainLodMeshData(
       startSampleX < maxCellX;
       startSampleX += chunkSizeCells, chunkX += 1
     ) {
-      const endSampleX = Math.min(startSampleX + chunkSizeCells, maxCellX);
-      const endSampleZ = Math.min(startSampleZ + chunkSizeCells, maxCellZ);
-      const cellCountX = endSampleX - startSampleX;
-      const cellCountZ = endSampleZ - startSampleZ;
-      const chunkBounds = buildTerrainChunkSourceBounds(
+      const chunk = buildTerrainLodChunkMeshData(
         terrain,
         startSampleX,
         startSampleZ,
-        endSampleX,
-        endSampleZ
-      );
-      const strides = getUsefulTerrainLodStrides(cellCountX, cellCountZ);
-      const levels = strides.map((stride, level) =>
-        buildTerrainLodLevelMeshData(
-          terrain,
-          startSampleX,
-          startSampleZ,
-          endSampleX,
-          endSampleZ,
-          level,
-          stride
-        )
-      );
-      const localCenter = {
-        x: (chunkBounds.min.x + chunkBounds.max.x) * 0.5,
-        y: (chunkBounds.min.y + chunkBounds.max.y) * 0.5,
-        z: (chunkBounds.min.z + chunkBounds.max.z) * 0.5
-      };
-      const diagonal = Math.hypot(
-        chunkBounds.max.x - chunkBounds.min.x,
-        chunkBounds.max.y - chunkBounds.min.y,
-        chunkBounds.max.z - chunkBounds.min.z
+        chunkSizeCells
       );
 
-      includePointInBounds(localBounds, chunkBounds.min);
-      includePointInBounds(localBounds, chunkBounds.max);
+      if (chunk === null) {
+        continue;
+      }
+
+      includePointInBounds(localBounds, chunk.localBounds.min);
+      includePointInBounds(localBounds, chunk.localBounds.max);
 
       chunks.push({
+        ...chunk,
         chunkX,
-        chunkZ,
-        startSampleX,
-        startSampleZ,
-        endSampleX,
-        endSampleZ,
-        cellCountX,
-        cellCountZ,
-        levels,
-        localBounds: cloneBounds(chunkBounds),
-        localCenter,
-        diagonal
+        chunkZ
       });
     }
   }
@@ -654,6 +622,74 @@ export function buildTerrainLodMeshData(
     chunkSizeCells,
     chunks,
     localBounds: cloneBounds(localBounds)
+  };
+}
+
+export function buildTerrainLodChunkMeshData(
+  terrain: Terrain,
+  startSampleX: number,
+  startSampleZ: number,
+  chunkSizeCells = TERRAIN_LOD_CHUNK_SIZE_CELLS
+): TerrainLodChunkMeshData | null {
+  const maxCellX = terrain.sampleCountX - 1;
+  const maxCellZ = terrain.sampleCountZ - 1;
+
+  if (
+    startSampleX < 0 ||
+    startSampleZ < 0 ||
+    startSampleX >= maxCellX ||
+    startSampleZ >= maxCellZ
+  ) {
+    return null;
+  }
+
+  const endSampleX = Math.min(startSampleX + chunkSizeCells, maxCellX);
+  const endSampleZ = Math.min(startSampleZ + chunkSizeCells, maxCellZ);
+  const cellCountX = endSampleX - startSampleX;
+  const cellCountZ = endSampleZ - startSampleZ;
+  const chunkBounds = buildTerrainChunkSourceBounds(
+    terrain,
+    startSampleX,
+    startSampleZ,
+    endSampleX,
+    endSampleZ
+  );
+  const strides = getUsefulTerrainLodStrides(cellCountX, cellCountZ);
+  const levels = strides.map((stride, level) =>
+    buildTerrainLodLevelMeshData(
+      terrain,
+      startSampleX,
+      startSampleZ,
+      endSampleX,
+      endSampleZ,
+      level,
+      stride
+    )
+  );
+  const localCenter = {
+    x: (chunkBounds.min.x + chunkBounds.max.x) * 0.5,
+    y: (chunkBounds.min.y + chunkBounds.max.y) * 0.5,
+    z: (chunkBounds.min.z + chunkBounds.max.z) * 0.5
+  };
+  const diagonal = Math.hypot(
+    chunkBounds.max.x - chunkBounds.min.x,
+    chunkBounds.max.y - chunkBounds.min.y,
+    chunkBounds.max.z - chunkBounds.min.z
+  );
+
+  return {
+    chunkX: Math.floor(startSampleX / chunkSizeCells),
+    chunkZ: Math.floor(startSampleZ / chunkSizeCells),
+    startSampleX,
+    startSampleZ,
+    endSampleX,
+    endSampleZ,
+    cellCountX,
+    cellCountZ,
+    levels,
+    localBounds: cloneBounds(chunkBounds),
+    localCenter,
+    diagonal
   };
 }
 
