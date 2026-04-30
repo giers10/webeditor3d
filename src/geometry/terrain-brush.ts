@@ -299,6 +299,14 @@ export function applyTerrainBrushStampInPlace(options: {
     terrain.sampleCountZ - 1,
     Math.ceil((center.z - terrain.position.z + radius) / terrain.cellSize)
   );
+
+  if (minSampleX > maxSampleX || minSampleZ > maxSampleZ) {
+    return {
+      changed: false,
+      dirtyBounds: null
+    };
+  }
+
   const stampBounds = {
     minSampleX,
     maxSampleX,
