@@ -215,7 +215,11 @@ import {
   createAdvancedRenderingComposer,
   resolveBoxVolumeRenderPaths
 } from "../rendering/advanced-rendering";
-import { applyAdvancedRenderingPerspectiveCameraFar } from "../rendering/distance-fog-pass";
+import {
+  applyAdvancedRenderingPerspectiveCameraFar,
+  createDistanceFogSkyColorSource,
+  syncDistanceFogSkyColorSource
+} from "../rendering/distance-fog-pass";
 import {
   createScreenSpaceGodRaysLightSource,
   resolveDominantScreenSpaceGodRaysLightInput,
@@ -236,6 +240,7 @@ import {
 import {
   resolveWorldCelestialBodiesState,
   resolveWorldCelestialHorizonVisibility,
+  resolveWorldBackgroundSkyColorState,
   resolveWorldEnvironmentState,
   WorldBackgroundRenderer
 } from "../rendering/world-background-renderer";
@@ -749,6 +754,8 @@ export class ViewportHost {
   private readonly sunLight = new DirectionalLight();
   private readonly moonLight = new DirectionalLight();
   private readonly godRaysLightSource = createScreenSpaceGodRaysLightSource();
+  private readonly distanceFogSkyColorSource =
+    createDistanceFogSkyColorSource();
   private readonly localLightGroup = new Group();
   private readonly lightVolumeGroup = new Group();
   private readonly brushGroup = new Group();
@@ -2240,6 +2247,10 @@ export class ViewportHost {
         celestialBodiesState,
         shaderSkyState
       );
+      syncDistanceFogSkyColorSource(
+        this.distanceFogSkyColorSource,
+        resolveWorldBackgroundSkyColorState(displayedBackground, shaderSkyState)
+      );
       const godRaysLightInput =
         shaderSkyState !== null
           ? resolveDominantScreenSpaceGodRaysLightInput(
@@ -2360,7 +2371,8 @@ export class ViewportHost {
       this.perspectiveCamera,
       settings,
       this.worldBackgroundRenderer.scene,
-      this.godRaysLightSource
+      this.godRaysLightSource,
+      this.distanceFogSkyColorSource
     );
     this.currentAdvancedRenderingSettings =
       cloneAdvancedRenderingSettings(settings);
