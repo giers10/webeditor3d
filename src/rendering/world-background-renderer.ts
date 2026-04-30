@@ -19,6 +19,7 @@ import type {
   WorldBackgroundSettings,
   WorldSunLightSettings
 } from "../document/world-settings";
+import type { DistanceFogSkyColorSource } from "./distance-fog-pass";
 import type { WorldShaderSkyRenderState } from "./world-shader-sky";
 
 const BACKGROUND_SPHERE_RADIUS = 320;
@@ -66,6 +67,25 @@ function resolveGradientColors(background: WorldBackgroundSettings) {
   return {
     topColorHex: DEFAULT_IMAGE_BACKGROUND_FALLBACK_COLOR,
     bottomColorHex: DEFAULT_IMAGE_BACKGROUND_FALLBACK_COLOR
+  };
+}
+
+export function resolveWorldBackgroundSkyColorState(
+  background: WorldBackgroundSettings,
+  shaderSkyState: WorldShaderSkyRenderState | null = null
+): DistanceFogSkyColorSource {
+  if (background.mode === "shader" && shaderSkyState !== null) {
+    return {
+      topColorHex: shaderSkyState.sky.topColorHex,
+      horizonColorHex: shaderSkyState.sky.bottomColorHex
+    };
+  }
+
+  const gradientColors = resolveGradientColors(background);
+
+  return {
+    topColorHex: gradientColors.topColorHex,
+    horizonColorHex: gradientColors.bottomColorHex
   };
 }
 

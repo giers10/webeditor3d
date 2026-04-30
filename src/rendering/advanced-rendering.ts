@@ -54,7 +54,8 @@ import {
 import {
   DistanceFogPass,
   resolveDistanceFogParameters,
-  shouldApplyDistanceFog
+  shouldApplyDistanceFog,
+  type DistanceFogSkyColorSource
 } from "./distance-fog-pass";
 import {
   ScreenSpaceGlobalIlluminationPass,
@@ -314,7 +315,8 @@ export function createAdvancedRenderingComposer(
   camera: PerspectiveCamera,
   settings: AdvancedRenderingSettings,
   backgroundScene: Scene | null = null,
-  godRaysLightSource: ScreenSpaceGodRaysLightSource | null = null
+  godRaysLightSource: ScreenSpaceGodRaysLightSource | null = null,
+  distanceFogSkyColorSource: DistanceFogSkyColorSource | null = null
 ): EffectComposer {
   // The scene is always rendered into the composer's offscreen targets first,
   // so those targets need depth for correct visibility even when no effect samples it.
@@ -429,7 +431,13 @@ export function createAdvancedRenderingComposer(
   }
 
   if (distanceFogEnabled) {
-    composer.addPass(new DistanceFogPass(camera, distanceFogParameters));
+    composer.addPass(
+      new DistanceFogPass(
+        camera,
+        distanceFogParameters,
+        distanceFogSkyColorSource
+      )
+    );
   }
 
   if (godRaysEnabled && godRaysLightSource !== null) {
