@@ -38,6 +38,11 @@ export interface ResolvedDistanceFogParameters {
   fadeMargin: number;
 }
 
+export interface DistanceFogSkyColorSource {
+  topColorHex: string;
+  horizonColorHex: string;
+}
+
 function clampNumber(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
@@ -120,6 +125,21 @@ export function shouldApplyDistanceFog(settings: AdvancedRenderingSettings) {
   );
 }
 
+export function createDistanceFogSkyColorSource(): DistanceFogSkyColorSource {
+  return {
+    topColorHex: "#ffffff",
+    horizonColorHex: "#ffffff"
+  };
+}
+
+export function syncDistanceFogSkyColorSource(
+  target: DistanceFogSkyColorSource,
+  source: DistanceFogSkyColorSource
+) {
+  target.topColorHex = source.topColorHex;
+  target.horizonColorHex = source.horizonColorHex;
+}
+
 export function resolveAdvancedRenderingPerspectiveCameraFar(
   settings: AdvancedRenderingSettings | null,
   defaultFar: number,
@@ -189,6 +209,8 @@ uniform mat4 cameraProjectionMatrixInverse;
 uniform mat4 cameraWorldMatrix;
 uniform vec3 cameraWorldPosition;
 uniform vec3 fogColor;
+uniform vec3 skyTopColor;
+uniform vec3 skyHorizonColor;
 uniform float nearDistance;
 uniform float farDistance;
 uniform float renderDistance;
@@ -249,23 +271,10 @@ float getDepthEdgeMask(float centerDistance) {
   return smoothstep(0.08, 0.5, normalizedDelta);
 }
 
-vec3 sampleSkyAt(vec2 uv) {
-  float skyMask = smoothstep(BACKGROUND_DEPTH_THRESHOLD, 1.0, readDepth(uv));
-  return mix(fogColor, texture2D(inputBuffer, uv).rgb, skyMask);
-}
-
-vec3 sampleSkyRow(float y) {
-  vec3 leftSky = sampleSkyAt(vec2(0.18, y));
-  vec3 centerSky = sampleSkyAt(vec2(0.5, y));
-  vec3 rightSky = sampleSkyAt(vec2(0.82, y));
-  return (leftSky + centerSky + rightSky) / 3.0;
-}
-
-vec3 sampleSkyColor() {
-  vec3 upperSky = sampleSkyRow(0.96);
-  vec3 horizonSky = sampleSkyRow(0.58);
-  vec3 sampledSky = mix(upperSky, horizonSky, 0.58);
-  return mix(fogColor, sampledSky, skyBlend);
+vec3 sampleSkyColor(float horizon) {
+  vec3 generalSkyColor = mix(skyTopColor, skyHorizonColor, 0.72);
+  vec3 hazeSkyColor = mix(generalSkyColor, skyHorizonColor, horizon * 0.35);
+  return mix(fogColor, hazeSkyColor, skyBlend);
 }
 
 void main() {
@@ -295,7 +304,7 @@ void main() {
   float heightTerm = mix(1.0, 0.66 + lowAltitude * 0.34, clamp(heightFalloff * 32.0, 0.0, 1.0));
   float haze = max(exponentialFog * (1.0 + horizon * horizonStrength * 0.72) * heightTerm, cutoffFog * (0.78 + horizon * 0.16));
   float fogAmount = clamp(haze * strength, 0.0, 0.96);
-  vec3 atmosphereColor = sampleSkyColor();
+  vec3 atmosphereColor = sampleSkyColor(horizon);
 
   if (isBackground) {
     float skyHaze = clamp(horizon * horizonStrength * strength * skyBlend * 0.22, 0.0, 0.32);
@@ -314,6 +323,7 @@ export class DistanceFogPass extends Pass {
   private readonly sourceCamera: PerspectiveCamera;
   private readonly material: ShaderMaterial;
   private readonly parameters: ResolvedDistanceFogParameters;
+  private readonly skyColorSource: DistanceFogSkyColorSource | null;
   private readonly cameraNearFar = new Vector2();
   private readonly texelSize = new Vector2(1, 1);
   private readonly cameraProjectionMatrix = new Matrix4();
@@ -321,17 +331,25 @@ export class DistanceFogPass extends Pass {
   private readonly cameraWorldMatrix = new Matrix4();
   private readonly cameraWorldPosition = new Vector3();
   private readonly fogColor = new Color();
+  private readonly skyTopColor = new Color();
+  private readonly skyHorizonColor = new Color();
 
   constructor(
     camera: PerspectiveCamera,
-    parameters: ResolvedDistanceFogParameters
+    parameters: ResolvedDistanceFogParameters,
+    skyColorSource: DistanceFogSkyColorSource | null = null
   ) {
     super("DistanceFogPass");
 
     this.sourceCamera = camera;
     this.parameters = parameters;
+    this.skyColorSource = skyColorSource;
     this.needsDepthTexture = true;
     this.fogColor.set(parameters.colorHex);
+    this.skyTopColor.set(skyColorSource?.topColorHex ?? parameters.colorHex);
+    this.skyHorizonColor.set(
+      skyColorSource?.horizonColorHex ?? parameters.colorHex
+    );
 
     this.material = new ShaderMaterial({
       name: "DistanceFogMaterial",
@@ -350,6 +368,8 @@ export class DistanceFogPass extends Pass {
         cameraWorldMatrix: new Uniform(this.cameraWorldMatrix),
         cameraWorldPosition: new Uniform(this.cameraWorldPosition),
         fogColor: new Uniform(this.fogColor),
+        skyTopColor: new Uniform(this.skyTopColor),
+        skyHorizonColor: new Uniform(this.skyHorizonColor),
         nearDistance: new Uniform(parameters.nearDistance),
         farDistance: new Uniform(parameters.farDistance),
         renderDistance: new Uniform(parameters.renderDistance),
@@ -398,6 +418,12 @@ export class DistanceFogPass extends Pass {
     this.cameraWorldMatrix.copy(this.sourceCamera.matrixWorld);
     this.cameraWorldPosition.setFromMatrixPosition(
       this.sourceCamera.matrixWorld
+    );
+    this.skyTopColor.set(
+      this.skyColorSource?.topColorHex ?? this.parameters.colorHex
+    );
+    this.skyHorizonColor.set(
+      this.skyColorSource?.horizonColorHex ?? this.parameters.colorHex
     );
     this.material.uniforms.inputBuffer.value = inputBuffer.texture;
     this.material.uniforms.nearDistance.value = this.parameters.nearDistance;
