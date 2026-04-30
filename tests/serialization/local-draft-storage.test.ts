@@ -10,6 +10,7 @@ import {
   createEmptySceneDocument,
   createProjectDocumentFromSceneDocument
 } from "../../src/document/scene-document";
+import { createTerrain } from "../../src/document/terrains";
 import { serializeSceneDocument } from "../../src/serialization/scene-document-json";
 import {
   DEFAULT_SCENE_DRAFT_STORAGE_KEY,
@@ -244,6 +245,38 @@ describe("local draft storage", () => {
       headline: "Crossing over",
       description: "Preparing the next hallway scene."
     });
+  });
+
+  it("skips oversized terrain-heavy autosaves and clears stale drafts", () => {
+    const storage = new MemoryStorage();
+    storage.setItem(DEFAULT_SCENE_DRAFT_STORAGE_KEY, "stale draft");
+    const terrain = createTerrain({
+      id: "terrain-large-draft",
+      sampleCountX: 17,
+      sampleCountZ: 17
+    });
+    const document = {
+      ...createEmptyProjectDocument(),
+      scenes: {
+        "scene-main": {
+          ...createEmptyProjectScene({
+            id: "scene-main",
+            name: "Terrain Draft"
+          }),
+          terrains: {
+            [terrain.id]: terrain
+          }
+        }
+      }
+    };
+
+    const result = saveSceneDocumentDraft(storage, document, null, undefined, {
+      maxSerializedBytes: 512
+    });
+
+    expect(result.status).toBe("skipped");
+    expect(result.message).toContain("Autosave skipped");
+    expect(storage.getItem(DEFAULT_SCENE_DRAFT_STORAGE_KEY)).toBeNull();
   });
 
   it("loads older raw scene-document drafts without requiring viewport layout state", () => {

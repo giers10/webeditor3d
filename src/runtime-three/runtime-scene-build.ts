@@ -891,12 +891,12 @@ function buildRuntimeTerrain(
     sampleCountX: terrain.sampleCountX,
     sampleCountZ: terrain.sampleCountZ,
     cellSize: terrain.cellSize,
-    heights: [...terrain.heights],
+    heights: terrain.heights,
     layers: terrain.layers.map((layer) => ({
       materialId: layer.materialId,
       material: resolveRuntimeMaterial(document, layer.materialId)
     })),
-    paintWeights: [...terrain.paintWeights]
+    paintWeights: terrain.paintWeights
   };
 }
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createTerrain } from "../../src/document/terrains";
 import {
   buildTerrainDerivedMeshData,
+  buildTerrainLodChunkMeshData,
   buildTerrainLodMeshData,
   resolveTerrainLodLevelIndex,
   resolveTerrainLodLevelIndexWithHysteresis
@@ -129,6 +130,25 @@ describe("terrain mesh generation", () => {
       endSampleX: 129,
       endSampleZ: 69
     });
+  });
+
+  it("can rebuild one terrain LoD chunk from its starting sample", () => {
+    const terrain = createTerrain({
+      sampleCountX: 130,
+      sampleCountZ: 70
+    });
+
+    const chunk = buildTerrainLodChunkMeshData(terrain, 64, 0);
+
+    expect(chunk).toMatchObject({
+      chunkX: 1,
+      chunkZ: 0,
+      startSampleX: 64,
+      startSampleZ: 0,
+      endSampleX: 128,
+      endSampleZ: 64
+    });
+    expect(chunk?.levels.length).toBeGreaterThan(1);
   });
 
   it("generates smaller terrain LoD levels as stride increases", () => {

@@ -6,6 +6,7 @@ import {
   getTerrainSampleLayerWeights
 } from "../../src/document/terrains";
 import {
+  applyTerrainBrushStampInPlace,
   applyTerrainBrushStamp,
   getTerrainBrushWeight,
   sampleTerrainHeightAtWorldPosition
@@ -110,6 +111,41 @@ describe("terrain brush geometry", () => {
 
   it("returns zero influence outside the brush radius", () => {
     expect(getTerrainBrushWeight(2, 1, 0.5)).toBe(0);
+  });
+
+  it("can stamp terrain in place and report dirty sample bounds", () => {
+    const terrain = createTerrain({
+      id: "terrain-stamp-in-place",
+      position: { x: 0, y: 0, z: 0 },
+      sampleCountX: 5,
+      sampleCountZ: 5,
+      cellSize: 1,
+      heights: new Array(25).fill(0)
+    });
+    const originalHeights = terrain.heights;
+    const originalPaintWeights = terrain.paintWeights;
+
+    const result = applyTerrainBrushStampInPlace({
+      terrain,
+      center: { x: 2, z: 2 },
+      settings: {
+        radius: 0.6,
+        strength: 0.5,
+        falloff: 0
+      },
+      tool: "raise"
+    });
+
+    expect(result.changed).toBe(true);
+    expect(result.dirtyBounds).toEqual({
+      minSampleX: 2,
+      maxSampleX: 2,
+      minSampleZ: 2,
+      maxSampleZ: 2
+    });
+    expect(terrain.heights).toBe(originalHeights);
+    expect(terrain.paintWeights).toBe(originalPaintWeights);
+    expect(terrain.heights[2 + 2 * 5]).toBeCloseTo(0.5);
   });
 
   it("paints terrain layer weights toward the active layer while preserving a normalized blend", () => {
