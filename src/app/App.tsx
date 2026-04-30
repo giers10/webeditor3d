@@ -4555,6 +4555,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
     autosaveControllerRef.current = new EditorAutosaveController({
       saveDraft: () => store.saveDraft(),
       onComplete: (result) => {
+        if (result.status === "skipped") {
+          if (lastAutosaveErrorRef.current !== result.message) {
+            lastAutosaveErrorRef.current = result.message;
+            setStatusMessage(result.message);
+          }
+          return;
+        }
+
         if (result.status === "error") {
           if (lastAutosaveErrorRef.current !== result.message) {
             lastAutosaveErrorRef.current = result.message;

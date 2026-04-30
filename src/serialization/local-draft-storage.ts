@@ -14,9 +14,9 @@ import {
 
 import {
   parseSceneDocumentJson,
-  parseProjectDocumentJson,
-  serializeProjectDocument
+  parseProjectDocumentJson
 } from "./scene-document-json";
+import { assertProjectDocumentIsValid } from "../document/scene-document-validation";
 
 export interface KeyValueStorage {
   getItem(key: string): string | null;
@@ -31,6 +31,7 @@ export interface BrowserStorageAccessResult {
 
 export type SaveSceneDocumentDraftResult =
   | { status: "saved"; message: string }
+  | { status: "skipped"; message: string }
   | { status: "error"; message: string };
 
 export type LoadSceneDocumentDraftResult =
@@ -45,7 +46,14 @@ export interface LoadOrCreateSceneDocumentResult {
 }
 
 export const DEFAULT_SCENE_DRAFT_STORAGE_KEY = "webeditor3d.scene-document-draft";
+export const DEFAULT_SCENE_DRAFT_MAX_SERIALIZED_BYTES = 4 * 1024 * 1024;
+const ESTIMATED_TERRAIN_SAMPLE_JSON_BYTES = 8;
+const ESTIMATED_PROJECT_DRAFT_BASE_BYTES = 64 * 1024;
 const EDITOR_DRAFT_ENVELOPE_FORMAT = "webeditor3d.editor-draft.v1";
+
+export interface SaveSceneDocumentDraftOptions {
+  maxSerializedBytes?: number;
+}
 
 interface StoredEditorDraftEnvelope {
   format: typeof EDITOR_DRAFT_ENVELOPE_FORMAT;
@@ -63,6 +71,48 @@ function getErrorDetail(error: unknown): string {
 
 function formatStorageDiagnostic(prefix: string, error: unknown): string {
   return `${prefix} ${getErrorDetail(error)}`;
+}
+
+function formatByteSize(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getAutosaveTooLargeMessage(sizeBytes: number, maxBytes: number): string {
+  return `Autosave skipped because this project draft is about ${formatByteSize(sizeBytes)}, above the ${formatByteSize(maxBytes)} browser autosave limit. Use project save/export for terrain-heavy scenes.`;
+}
+
+function getTerrainDraftSampleValueCount(document: ProjectDocument): number {
+  let sampleValueCount = 0;
+
+  for (const scene of Object.values(document.scenes)) {
+    for (const terrain of Object.values(scene.terrains)) {
+      sampleValueCount += terrain.heights.length + terrain.paintWeights.length;
+    }
+  }
+
+  return sampleValueCount;
+}
+
+export function estimateProjectDraftSerializedBytes(
+  document: ProjectDocument,
+  viewportLayoutState: ViewportLayoutState | null = null
+): number {
+  const terrainSampleValueCount = getTerrainDraftSampleValueCount(document);
+  const viewportBytes = viewportLayoutState === null ? 0 : 16 * 1024;
+
+  return (
+    ESTIMATED_PROJECT_DRAFT_BASE_BYTES +
+    viewportBytes +
+    terrainSampleValueCount * ESTIMATED_TERRAIN_SAMPLE_JSON_BYTES
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -199,18 +249,55 @@ export function saveSceneDocumentDraft(
   storage: KeyValueStorage,
   document: ProjectDocument,
   viewportLayoutState: ViewportLayoutState | null = null,
-  key = DEFAULT_SCENE_DRAFT_STORAGE_KEY
+  key = DEFAULT_SCENE_DRAFT_STORAGE_KEY,
+  options: SaveSceneDocumentDraftOptions = {}
 ): SaveSceneDocumentDraftResult {
   try {
-    const rawDocument = serializeProjectDocument(document);
-    storage.setItem(
-      key,
-      JSON.stringify({
-        format: EDITOR_DRAFT_ENVELOPE_FORMAT,
-        document: JSON.parse(rawDocument),
-        viewportLayoutState: viewportLayoutState === null ? null : cloneViewportLayoutState(viewportLayoutState)
-      } satisfies StoredEditorDraftEnvelope)
+    assertProjectDocumentIsValid(document);
+
+    const maxSerializedBytes =
+      options.maxSerializedBytes ?? DEFAULT_SCENE_DRAFT_MAX_SERIALIZED_BYTES;
+    const estimatedDraftBytes = estimateProjectDraftSerializedBytes(
+      document,
+      viewportLayoutState
     );
+
+    if (
+      Number.isFinite(maxSerializedBytes) &&
+      maxSerializedBytes > 0 &&
+      estimatedDraftBytes > maxSerializedBytes
+    ) {
+      storage.removeItem(key);
+
+      return {
+        status: "skipped",
+        message: getAutosaveTooLargeMessage(
+          estimatedDraftBytes,
+          maxSerializedBytes
+        )
+      };
+    }
+
+    const rawDraft = JSON.stringify({
+        format: EDITOR_DRAFT_ENVELOPE_FORMAT,
+        document,
+        viewportLayoutState: viewportLayoutState === null ? null : cloneViewportLayoutState(viewportLayoutState)
+      } satisfies StoredEditorDraftEnvelope);
+
+    if (
+      Number.isFinite(maxSerializedBytes) &&
+      maxSerializedBytes > 0 &&
+      rawDraft.length > maxSerializedBytes
+    ) {
+      storage.removeItem(key);
+
+      return {
+        status: "skipped",
+        message: getAutosaveTooLargeMessage(rawDraft.length, maxSerializedBytes)
+      };
+    }
+
+    storage.setItem(key, rawDraft);
 
     return {
       status: "saved",

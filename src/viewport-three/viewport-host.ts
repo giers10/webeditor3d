@@ -9531,8 +9531,9 @@ export class ViewportHost {
       this.currentTerrainBrushState.tool === "flatten"
         ? hit.point.y - terrain.position.y
         : null;
-    const previewTerrain = this.applyTerrainBrushPoint(
-      terrain,
+    const previewTerrain = cloneTerrain(terrain);
+    const initialStamp = this.applyTerrainBrushPoint(
+      previewTerrain,
       {
         x: hit.point.x,
         z: hit.point.z
@@ -9544,6 +9545,7 @@ export class ViewportHost {
     this.activeTerrainBrushStroke = {
       pointerId: event.pointerId,
       previewTerrain,
+      changed: initialStamp.changed,
       referenceHeight,
       lastAppliedPoint: {
         x: hit.point.x,
@@ -9552,7 +9554,10 @@ export class ViewportHost {
       toolState: this.currentTerrainBrushState
     };
     this.renderer.domElement.setPointerCapture(event.pointerId);
-    this.rebuildDisplayedTerrainState();
+    this.refreshDisplayedTerrainDirtyBounds(
+      previewTerrain.id,
+      initialStamp.dirtyBounds
+    );
     return true;
   }
 
@@ -9586,10 +9591,7 @@ export class ViewportHost {
     );
 
     if (
-      !areTerrainsEqual(
-        segmentResult.terrain,
-        this.activeTerrainBrushStroke.previewTerrain
-      ) ||
+      segmentResult.changed ||
       segmentResult.lastAppliedPoint.x !==
         this.activeTerrainBrushStroke.lastAppliedPoint.x ||
       segmentResult.lastAppliedPoint.z !==
@@ -9597,10 +9599,17 @@ export class ViewportHost {
     ) {
       this.activeTerrainBrushStroke = {
         ...this.activeTerrainBrushStroke,
-        previewTerrain: segmentResult.terrain,
+        changed:
+          this.activeTerrainBrushStroke.changed || segmentResult.changed,
         lastAppliedPoint: segmentResult.lastAppliedPoint
       };
-      this.rebuildDisplayedTerrainState();
+
+      if (segmentResult.changed) {
+        this.refreshDisplayedTerrainDirtyBounds(
+          this.activeTerrainBrushStroke.previewTerrain.id,
+          segmentResult.dirtyBounds
+        );
+      }
     }
 
     return true;
@@ -9634,6 +9643,7 @@ export class ViewportHost {
 
     const cancelled = event.type === "pointercancel";
     let finalPreviewTerrain = this.activeTerrainBrushStroke.previewTerrain;
+    let changed = this.activeTerrainBrushStroke.changed;
 
     if (!cancelled) {
       const hit = this.getTerrainBrushHitAtClientPosition(
@@ -9652,13 +9662,13 @@ export class ViewportHost {
           this.activeTerrainBrushStroke.toolState,
           this.activeTerrainBrushStroke.referenceHeight
         );
-        finalPreviewTerrain = segmentResult.terrain;
+        changed ||= segmentResult.changed;
 
         if (
           segmentResult.lastAppliedPoint.x !== hit.point.x ||
           segmentResult.lastAppliedPoint.z !== hit.point.z
         ) {
-          finalPreviewTerrain = this.applyTerrainBrushPoint(
+          const pointResult = this.applyTerrainBrushPoint(
             finalPreviewTerrain,
             {
               x: hit.point.x,
@@ -9667,6 +9677,7 @@ export class ViewportHost {
             this.activeTerrainBrushStroke.toolState,
             this.activeTerrainBrushStroke.referenceHeight
           );
+          changed ||= pointResult.changed;
         }
       }
     }
@@ -9678,7 +9689,7 @@ export class ViewportHost {
     const commit =
       !cancelled &&
       baseTerrain !== null &&
-      !areTerrainsEqual(baseTerrain, finalPreviewTerrain);
+      changed;
     const toolState = this.activeTerrainBrushStroke.toolState;
     this.activeTerrainBrushStroke = null;
     this.terrainBrushPreviewGroup.visible = false;
