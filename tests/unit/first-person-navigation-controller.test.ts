@@ -622,6 +622,37 @@ describe("FirstPersonNavigationController", () => {
     });
   });
 
+  it("enters ledge grab instead of getting stuck when climbing reaches a high lip", () => {
+    const { context } = createFirstPersonLedgeGrabContext();
+
+    Object.assign(context, {
+      resolvePlayerClimbSurface: vi.fn(() => ({
+        brushId: "brush-climbable-wall",
+        faceId: "negZ",
+        point: { x: 0, y: 1, z: 0.75 },
+        normal: { x: 0, y: 0, z: -1 },
+        distance: 0.75
+      }))
+    });
+
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+    controller.update(0.05);
+
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.locomotionState.locomotionMode).toBe("ledgeGrab");
+    expect(telemetry?.locomotionState.verticalVelocity).toBe(0);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
   it("uses the gamepad right stick for camera look without requiring pointer lock", () => {
     const { context } = createRuntimeControllerContext();
     const controller = new FirstPersonNavigationController();
