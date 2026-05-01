@@ -22,8 +22,10 @@ import {
   type RuntimePlayerClimbSurface
 } from "./player-climbing";
 import {
+  resolvePlayerLedgeGrabTarget,
   resolvePlayerEdgeAssistTopOut,
-  shouldAttemptPlayerEdgeAssist
+  shouldAttemptPlayerEdgeAssist,
+  type RuntimePlayerLedgeGrabTarget
 } from "./player-edge-assist";
 import {
   createIdleRuntimeLocomotionState,
@@ -58,6 +60,10 @@ function toEyePosition(feetPosition: Vec3, eyeHeight: number): Vec3 {
     y: feetPosition.y + eyeHeight,
     z: feetPosition.z
   };
+}
+
+function dotPlanarVec3(left: Vec3, right: Vec3): number {
+  return left.x * right.x + left.z * right.z;
 }
 
 function cloneRuntimePlayerMovement(
@@ -141,6 +147,7 @@ export class FirstPersonNavigationController implements NavigationController {
   private jumpHoldRemainingMs = 0;
   private climbSurface: RuntimePlayerClimbSurface | null = null;
   private climbLatchBlocked = false;
+  private ledgeGrabTarget: RuntimePlayerLedgeGrabTarget | null = null;
 
   activate(ctx: RuntimeControllerContext): void {
     this.context = ctx;
@@ -247,6 +254,7 @@ export class FirstPersonNavigationController implements NavigationController {
     this.jumpHoldRemainingMs = 0;
     this.climbSurface = null;
     this.climbLatchBlocked = false;
+    this.ledgeGrabTarget = null;
     this.previousTelemetry = null;
     ctx.setRuntimeMessage(null);
     ctx.setPlayerControllerTelemetry(null);
@@ -291,6 +299,7 @@ export class FirstPersonNavigationController implements NavigationController {
     this.jumpHoldRemainingMs = 0;
     this.climbSurface = null;
     this.climbLatchBlocked = false;
+    this.ledgeGrabTarget = null;
   }
 
   update(dt: number): void {
@@ -319,6 +328,12 @@ export class FirstPersonNavigationController implements NavigationController {
       this.pitchRadians = clampPitch(
         this.pitchRadians + lookInput.vertical * GAMEPAD_LOOK_SPEED * dt
       );
+    }
+
+    if (
+      this.stepLedgeGrab(dt, inputState, playerMovement, this.yawRadians)
+    ) {
+      return;
     }
 
     if (
@@ -376,7 +391,7 @@ export class FirstPersonNavigationController implements NavigationController {
       inputState,
       this.yawRadians
     );
-    const edgeAssist =
+    const shouldTryEdgeAssist =
       edgeInputDirection.direction !== null &&
       shouldAttemptPlayerEdgeAssist({
         enabled: playerMovement.edgeAssist.enabled,
@@ -387,7 +402,9 @@ export class FirstPersonNavigationController implements NavigationController {
         planarSpeed: locomotionStep.locomotionState.planarSpeed,
         collisionCount: locomotionStep.locomotionState.contact.collisionCount,
         airborne: locomotionStep.locomotionState.locomotionMode === "airborne"
-      })
+      });
+    const edgeAssist =
+      shouldTryEdgeAssist && edgeInputDirection.direction !== null
         ? resolvePlayerEdgeAssistTopOut({
             feetPosition: locomotionStep.feetPosition,
             shape: locomotionStep.activeShape,
@@ -409,6 +426,40 @@ export class FirstPersonNavigationController implements NavigationController {
               }
           })
         : null;
+
+    if (
+      edgeAssist === null &&
+      shouldTryEdgeAssist &&
+      edgeInputDirection.direction !== null
+    ) {
+      const ledgeGrabTarget = resolvePlayerLedgeGrabTarget({
+        feetPosition: locomotionStep.feetPosition,
+        shape: locomotionStep.activeShape,
+        direction: edgeInputDirection.direction,
+        pushToTopHeight: playerMovement.edgeAssist.pushToTopHeight,
+        canOccupyShape: (feetPosition, shape) =>
+          this.context?.canOccupyPlayerShape?.(feetPosition, shape) ?? true,
+        probeGround: (feetPosition, shape, maxDistance) =>
+          this.context?.probePlayerGround?.(
+            feetPosition,
+            shape,
+            maxDistance
+          ) ?? {
+            grounded: false,
+            distance: null,
+            normal: null,
+            slopeDegrees: null
+          }
+      });
+
+      if (ledgeGrabTarget !== null) {
+        this.enterLedgeGrab(ledgeGrabTarget, edgeInputDirection.inputMagnitude);
+        this.updateCameraTransform();
+        this.publishTelemetry();
+        return;
+      }
+    }
+
     const nextFeetPosition =
       edgeAssist === null ? locomotionStep.feetPosition : edgeAssist.feetPosition;
     const nextLocomotionState =
@@ -496,6 +547,7 @@ export class FirstPersonNavigationController implements NavigationController {
     this.jumpHoldRemainingMs = 0;
     this.climbSurface = null;
     this.climbLatchBlocked = false;
+    this.ledgeGrabTarget = null;
     this.inWaterVolume = false;
     this.inFogVolume = false;
     this.updateCameraTransform();
