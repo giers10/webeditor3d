@@ -1027,6 +1027,47 @@ export class FirstPersonNavigationController implements NavigationController {
               }
           })
         : null;
+
+    if (
+      climbTopOutAssist === null &&
+      playerMovement.edgeAssist.enabled &&
+      climbMovement.motion.y > 0
+    ) {
+      const climbLedgeGrabTarget = resolvePlayerLedgeGrabTarget({
+        feetPosition: this.feetPosition,
+        shape: this.standingPlayerShape,
+        direction: {
+          x: -activeSurface.normal.x,
+          y: 0,
+          z: -activeSurface.normal.z
+        },
+        pushToTopHeight: playerMovement.edgeAssist.pushToTopHeight,
+        canOccupyShape: (feetPosition, shape) =>
+          this.context?.canOccupyPlayerShape?.(feetPosition, shape) ?? true,
+        probeGround: (feetPosition, shape, maxDistance) =>
+          this.context?.probePlayerGround?.(
+            feetPosition,
+            shape,
+            maxDistance
+          ) ?? {
+            grounded: false,
+            distance: null,
+            normal: null,
+            slopeDegrees: null
+          }
+      });
+
+      if (climbLedgeGrabTarget !== null) {
+        this.enterLedgeGrab(
+          climbLedgeGrabTarget,
+          climbMovement.inputMagnitude
+        );
+        this.updateCameraTransform();
+        this.publishTelemetry();
+        return true;
+      }
+    }
+
     this.climbSurface = climbTopOutAssist === null ? activeSurface : null;
 
     const resolvedMotion =
