@@ -22284,7 +22284,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                                       sprint:
                                         playerStartMovementTemplateDraft.sprint,
                                       crouch:
-                                        playerStartMovementTemplateDraft.crouch
+                                        playerStartMovementTemplateDraft.crouch,
+                                      edgeAssist:
+                                        playerStartMovementTemplateDraft.edgeAssist
                                     })
                                   : createPlayerStartMovementTemplate({
                                       kind: nextKind
