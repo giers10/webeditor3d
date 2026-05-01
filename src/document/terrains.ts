@@ -27,6 +27,13 @@ export interface TerrainHeightPatchEntry {
   after: number;
 }
 
+export interface TerrainSampleBounds {
+  minSampleX: number;
+  maxSampleX: number;
+  minSampleZ: number;
+  maxSampleZ: number;
+}
+
 interface TerrainBoundsCacheEntry {
   heights: number[];
   position: Vec3;
@@ -39,6 +46,16 @@ interface TerrainBoundsCacheEntry {
     min: Vec3;
     max: Vec3;
   };
+}
+
+interface TerrainRenderDirtyHistoryEntry {
+  revision: number;
+  bounds: TerrainSampleBounds;
+}
+
+interface TerrainRenderDirtyState {
+  revision: number;
+  entries: TerrainRenderDirtyHistoryEntry[];
 }
 
 export const DEFAULT_TERRAIN_VISIBLE = true;
@@ -383,6 +400,8 @@ export function getTerrainFootprintDepth(
 }
 
 const terrainBoundsCache = new WeakMap<Terrain, TerrainBoundsCacheEntry>();
+const terrainRenderDirtyState = new WeakMap<Terrain, TerrainRenderDirtyState>();
+const MAX_TERRAIN_RENDER_DIRTY_HISTORY = 64;
 
 function createTerrainBoundsCacheEntry(
   terrain: Terrain,
@@ -489,6 +508,118 @@ export function updateTerrainBoundsCacheAfterHeightPatch(
     terrain,
     createTerrainBoundsCacheEntry(terrain, minHeight, maxHeight)
   );
+}
+
+function cloneTerrainSampleBounds(bounds: TerrainSampleBounds): TerrainSampleBounds {
+  return {
+    minSampleX: bounds.minSampleX,
+    maxSampleX: bounds.maxSampleX,
+    minSampleZ: bounds.minSampleZ,
+    maxSampleZ: bounds.maxSampleZ
+  };
+}
+
+function mergeTerrainSampleBounds(
+  currentBounds: TerrainSampleBounds | null,
+  nextBounds: TerrainSampleBounds
+): TerrainSampleBounds {
+  if (currentBounds === null) {
+    return cloneTerrainSampleBounds(nextBounds);
+  }
+
+  return {
+    minSampleX: Math.min(currentBounds.minSampleX, nextBounds.minSampleX),
+    maxSampleX: Math.max(currentBounds.maxSampleX, nextBounds.maxSampleX),
+    minSampleZ: Math.min(currentBounds.minSampleZ, nextBounds.minSampleZ),
+    maxSampleZ: Math.max(currentBounds.maxSampleZ, nextBounds.maxSampleZ)
+  };
+}
+
+export function getFullTerrainSampleBounds(
+  terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ">
+): TerrainSampleBounds {
+  return {
+    minSampleX: 0,
+    maxSampleX: terrain.sampleCountX - 1,
+    minSampleZ: 0,
+    maxSampleZ: terrain.sampleCountZ - 1
+  };
+}
+
+export function markTerrainRenderSamplesDirty(
+  terrain: Terrain,
+  bounds: TerrainSampleBounds | null
+) {
+  if (bounds === null) {
+    return;
+  }
+
+  const currentState = terrainRenderDirtyState.get(terrain) ?? {
+    revision: 0,
+    entries: []
+  };
+  const nextRevision = currentState.revision + 1;
+  const nextEntries = [
+    ...currentState.entries,
+    {
+      revision: nextRevision,
+      bounds: cloneTerrainSampleBounds(bounds)
+    }
+  ];
+
+  if (nextEntries.length > MAX_TERRAIN_RENDER_DIRTY_HISTORY) {
+    nextEntries.splice(0, nextEntries.length - MAX_TERRAIN_RENDER_DIRTY_HISTORY);
+  }
+
+  terrainRenderDirtyState.set(terrain, {
+    revision: nextRevision,
+    entries: nextEntries
+  });
+}
+
+export function getTerrainRenderDirtyRevision(terrain: Terrain): number {
+  return terrainRenderDirtyState.get(terrain)?.revision ?? 0;
+}
+
+export function getTerrainRenderDirtyBoundsSince(
+  terrain: Terrain,
+  revision: number
+): {
+  revision: number;
+  dirtyBounds: TerrainSampleBounds | null;
+} {
+  const state = terrainRenderDirtyState.get(terrain);
+
+  if (state === undefined || revision >= state.revision) {
+    return {
+      revision: state?.revision ?? 0,
+      dirtyBounds: null
+    };
+  }
+
+  const firstEntry = state.entries[0];
+
+  if (firstEntry === undefined || revision < firstEntry.revision - 1) {
+    return {
+      revision: state.revision,
+      dirtyBounds: getFullTerrainSampleBounds(terrain)
+    };
+  }
+
+  let dirtyBounds: TerrainSampleBounds | null = null;
+
+  for (const entry of state.entries) {
+    if (entry.revision <= revision) {
+      continue;
+    }
+
+    dirtyBounds = mergeTerrainSampleBounds(dirtyBounds, entry.bounds);
+  }
+
+  return {
+    revision: state.revision,
+    dirtyBounds
+  };
 }
 
 export function getTerrainBounds(terrain: Terrain): { min: Vec3; max: Vec3 } {
