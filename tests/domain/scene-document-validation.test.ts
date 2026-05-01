@@ -733,6 +733,10 @@ describe("validateSceneDocument", () => {
             },
             crouch: {
               speedMultiplier: 0
+            },
+            edgeAssist: {
+              enabled: "yes",
+              pushToTopHeight: -1
             }
           } as unknown as ReturnType<
             typeof createPlayerStartEntity
