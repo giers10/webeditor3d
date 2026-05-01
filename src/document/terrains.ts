@@ -21,6 +21,26 @@ export interface Terrain {
   paintWeights: number[];
 }
 
+export interface TerrainHeightPatchEntry {
+  index: number;
+  before: number;
+  after: number;
+}
+
+interface TerrainBoundsCacheEntry {
+  heights: number[];
+  position: Vec3;
+  sampleCountX: number;
+  sampleCountZ: number;
+  cellSize: number;
+  minHeight: number;
+  maxHeight: number;
+  bounds: {
+    min: Vec3;
+    max: Vec3;
+  };
+}
+
 export const DEFAULT_TERRAIN_VISIBLE = true;
 export const DEFAULT_TERRAIN_ENABLED = true;
 export const DEFAULT_TERRAIN_COLLISION_ENABLED = true;
@@ -42,6 +62,16 @@ function cloneVec3(vector: Vec3): Vec3 {
     x: vector.x,
     y: vector.y,
     z: vector.z
+  };
+}
+
+function cloneTerrainBounds(bounds: { min: Vec3; max: Vec3 }): {
+  min: Vec3;
+  max: Vec3;
+} {
+  return {
+    min: cloneVec3(bounds.min),
+    max: cloneVec3(bounds.max)
   };
 }
 
@@ -352,9 +382,125 @@ export function getTerrainFootprintDepth(
   return (terrain.sampleCountZ - 1) * terrain.cellSize;
 }
 
-export function getTerrainBounds(terrain: Terrain): { min: Vec3; max: Vec3 } {
+const terrainBoundsCache = new WeakMap<Terrain, TerrainBoundsCacheEntry>();
+
+function createTerrainBoundsCacheEntry(
+  terrain: Terrain,
+  minHeight: number,
+  maxHeight: number
+): TerrainBoundsCacheEntry {
   const width = getTerrainFootprintWidth(terrain);
   const depth = getTerrainFootprintDepth(terrain);
+  const bounds = {
+    min: {
+      x: terrain.position.x,
+      y: terrain.position.y + minHeight,
+      z: terrain.position.z
+    },
+    max: {
+      x: terrain.position.x + width,
+      y: terrain.position.y + maxHeight,
+      z: terrain.position.z + depth
+    }
+  };
+
+  return {
+    heights: terrain.heights,
+    position: cloneVec3(terrain.position),
+    sampleCountX: terrain.sampleCountX,
+    sampleCountZ: terrain.sampleCountZ,
+    cellSize: terrain.cellSize,
+    minHeight,
+    maxHeight,
+    bounds
+  };
+}
+
+function isTerrainBoundsCacheEntryCurrent(
+  terrain: Terrain,
+  entry: TerrainBoundsCacheEntry
+): boolean {
+  return (
+    entry.heights === terrain.heights &&
+    entry.sampleCountX === terrain.sampleCountX &&
+    entry.sampleCountZ === terrain.sampleCountZ &&
+    entry.cellSize === terrain.cellSize &&
+    areVec3Equal(entry.position, terrain.position)
+  );
+}
+
+export function invalidateTerrainBoundsCache(terrain: Terrain) {
+  terrainBoundsCache.delete(terrain);
+}
+
+export function updateTerrainBoundsCacheAfterHeightPatch(
+  terrain: Terrain,
+  patch: readonly TerrainHeightPatchEntry[]
+) {
+  if (patch.length === 0) {
+    return;
+  }
+
+  const cachedEntry = terrainBoundsCache.get(terrain);
+
+  if (
+    cachedEntry === undefined ||
+    !isTerrainBoundsCacheEntryCurrent(terrain, cachedEntry)
+  ) {
+    return;
+  }
+
+  let minHeight = cachedEntry.minHeight;
+  let maxHeight = cachedEntry.maxHeight;
+  let requiresRescan = false;
+
+  for (const entry of patch) {
+    if (
+      !Number.isInteger(entry.index) ||
+      entry.index < 0 ||
+      entry.index >= terrain.heights.length ||
+      !Number.isFinite(entry.before) ||
+      !Number.isFinite(entry.after)
+    ) {
+      requiresRescan = true;
+      break;
+    }
+
+    if (entry.before === minHeight && entry.after > entry.before) {
+      requiresRescan = true;
+      break;
+    }
+
+    if (entry.before === maxHeight && entry.after < entry.before) {
+      requiresRescan = true;
+      break;
+    }
+
+    minHeight = Math.min(minHeight, entry.after);
+    maxHeight = Math.max(maxHeight, entry.after);
+  }
+
+  if (requiresRescan) {
+    invalidateTerrainBoundsCache(terrain);
+    return;
+  }
+
+  terrainBoundsCache.set(
+    terrain,
+    createTerrainBoundsCacheEntry(terrain, minHeight, maxHeight)
+  );
+}
+
+export function getTerrainBounds(terrain: Terrain): { min: Vec3; max: Vec3 } {
+  const cachedEntry = terrainBoundsCache.get(terrain);
+
+  if (
+    cachedEntry !== undefined &&
+    isTerrainBoundsCacheEntryCurrent(terrain, cachedEntry)
+  ) {
+    return cloneTerrainBounds(cachedEntry.bounds);
+  }
+
   let minHeight = Number.POSITIVE_INFINITY;
   let maxHeight = Number.NEGATIVE_INFINITY;
 
@@ -368,18 +514,14 @@ export function getTerrainBounds(terrain: Terrain): { min: Vec3; max: Vec3 } {
     maxHeight = 0;
   }
 
-  return {
-    min: {
-      x: terrain.position.x,
-      y: terrain.position.y + minHeight,
-      z: terrain.position.z
-    },
-    max: {
-      x: terrain.position.x + width,
-      y: terrain.position.y + maxHeight,
-      z: terrain.position.z + depth
-    }
-  };
+  const nextEntry = createTerrainBoundsCacheEntry(
+    terrain,
+    minHeight,
+    maxHeight
+  );
+  terrainBoundsCache.set(terrain, nextEntry);
+
+  return cloneTerrainBounds(nextEntry.bounds);
 }
 
 function clamp(value: number, min: number, max: number): number {
