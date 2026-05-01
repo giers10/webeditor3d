@@ -19592,6 +19592,26 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   </div>
 
                   <div className="form-section">
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Show LoD Grid</span>
+                      <input
+                        data-testid="terrain-lod-grid-visible"
+                        type="checkbox"
+                        checked={selectedTerrainLodGridVisible}
+                        onChange={(event) =>
+                          handleTerrainLodGridVisibleChange(
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+                    <div className="material-summary">
+                      Shows the selected terrain's active LoD chunks as a
+                      rainbow wireframe overlay in the editor viewport.
+                    </div>
+                  </div>
+
+                  <div className="form-section">
                     <div className="label">Terrain Sculpt</div>
                     <div
                       className="viewport-panel__control-group"
