@@ -252,6 +252,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       this.verticalVelocity = 0;
       this.grounded = false;
       this.jumpPressed = false;
+      this.ledgeGrabTarget = null;
       this.smoothedFeetY = this.feetPosition.y;
       this.locomotionState = createIdleRuntimeLocomotionState(
         runtimeScene.playerCollider.mode === "none" ? "flying" : "airborne"
@@ -348,6 +349,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.jumpHoldRemainingMs = 0;
     this.climbSurface = null;
     this.climbLatchBlocked = false;
+    this.ledgeGrabTarget = null;
     this.previousTelemetry = null;
     this.smoothedCameraCollisionDistance = null;
     this.pointerLookInputPending = false;
@@ -404,6 +406,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.jumpHoldRemainingMs = 0;
     this.climbSurface = null;
     this.climbLatchBlocked = false;
+    this.ledgeGrabTarget = null;
   }
 
   update(dt: number): void {
@@ -743,6 +746,7 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.jumpHoldRemainingMs = 0;
     this.climbSurface = null;
     this.climbLatchBlocked = false;
+    this.ledgeGrabTarget = null;
     this.inWaterVolume = false;
     this.inFogVolume = false;
     this.updateCameraTransform(0);
