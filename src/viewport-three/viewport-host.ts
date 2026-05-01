@@ -9835,7 +9835,6 @@ export class ViewportHost {
       dirtyBounds !== null &&
       changed &&
       (heightSampleIndices.size > 0 || paintWeightIndices.size > 0);
-    const finalDirtyBounds = dirtyBounds;
     const toolState = this.activeTerrainBrushStroke.toolState;
     this.activeTerrainBrushStroke = null;
     this.terrainBrushPreviewGroup.visible = false;
