@@ -385,6 +385,8 @@ interface ActiveTerrainBrushStroke {
   previewTerrain: Terrain;
   changed: boolean;
   dirtyBounds: TerrainBrushDirtySampleBounds | null;
+  heightSampleIndices: Set<number>;
+  paintWeightIndices: Set<number>;
   referenceHeight: number | null;
   lastAppliedPoint: {
     x: number;
@@ -9504,6 +9506,8 @@ export class ViewportHost {
   ): {
     changed: boolean;
     dirtyBounds: TerrainBrushDirtySampleBounds | null;
+    heightSampleIndices: number[];
+    paintWeightIndices: number[];
     lastAppliedPoint: {
       x: number;
       z: number;
@@ -9518,12 +9522,16 @@ export class ViewportHost {
       return {
         changed: false,
         dirtyBounds: null,
+        heightSampleIndices: [],
+        paintWeightIndices: [],
         lastAppliedPoint: from
       };
     }
 
     let changed = false;
     let dirtyBounds: TerrainBrushDirtySampleBounds | null = null;
+    const heightSampleIndices = new Set<number>();
+    const paintWeightIndices = new Set<number>();
     let lastAppliedPoint = from;
     const stepCount = Math.floor(distance / spacing);
     const mergeDirtyBounds = (nextBounds: TerrainBrushDirtySampleBounds | null) => {
@@ -9568,14 +9576,38 @@ export class ViewportHost {
       );
       changed ||= result.changed;
       mergeDirtyBounds(result.dirtyBounds);
+      for (const sampleIndex of result.heightSampleIndices) {
+        heightSampleIndices.add(sampleIndex);
+      }
+      for (const paintWeightIndex of result.paintWeightIndices) {
+        paintWeightIndices.add(paintWeightIndex);
+      }
       lastAppliedPoint = point;
     }
 
     return {
       changed,
       dirtyBounds,
+      heightSampleIndices: [...heightSampleIndices],
+      paintWeightIndices: [...paintWeightIndices],
       lastAppliedPoint
     };
+  }
+
+  private mergeTerrainBrushStampIndices(
+    stroke: ActiveTerrainBrushStroke,
+    result: Pick<
+      ReturnType<typeof applyTerrainBrushStampInPlace>,
+      "heightSampleIndices" | "paintWeightIndices"
+    >
+  ) {
+    for (const sampleIndex of result.heightSampleIndices) {
+      stroke.heightSampleIndices.add(sampleIndex);
+    }
+
+    for (const paintWeightIndex of result.paintWeightIndices) {
+      stroke.paintWeightIndices.add(paintWeightIndex);
+    }
   }
 
   private beginTerrainBrushStroke(event: PointerEvent): boolean {
@@ -9624,6 +9656,8 @@ export class ViewportHost {
       previewTerrain,
       changed: initialStamp.changed,
       dirtyBounds: initialStamp.dirtyBounds,
+      heightSampleIndices: new Set(initialStamp.heightSampleIndices),
+      paintWeightIndices: new Set(initialStamp.paintWeightIndices),
       referenceHeight,
       lastAppliedPoint: {
         x: hit.point.x,
@@ -9675,6 +9709,10 @@ export class ViewportHost {
       segmentResult.lastAppliedPoint.z !==
         this.activeTerrainBrushStroke.lastAppliedPoint.z
     ) {
+      this.mergeTerrainBrushStampIndices(
+        this.activeTerrainBrushStroke,
+        segmentResult
+      );
       this.activeTerrainBrushStroke = {
         ...this.activeTerrainBrushStroke,
         changed:
@@ -9728,6 +9766,22 @@ export class ViewportHost {
     let finalPreviewTerrain = this.activeTerrainBrushStroke.previewTerrain;
     let changed = this.activeTerrainBrushStroke.changed;
     let dirtyBounds = this.activeTerrainBrushStroke.dirtyBounds;
+    const heightSampleIndices = new Set(activeStroke.heightSampleIndices);
+    const paintWeightIndices = new Set(activeStroke.paintWeightIndices);
+    const mergeStampIndices = (
+      result: Pick<
+        ReturnType<typeof applyTerrainBrushStampInPlace>,
+        "heightSampleIndices" | "paintWeightIndices"
+      >
+    ) => {
+      for (const sampleIndex of result.heightSampleIndices) {
+        heightSampleIndices.add(sampleIndex);
+      }
+
+      for (const paintWeightIndex of result.paintWeightIndices) {
+        paintWeightIndices.add(paintWeightIndex);
+      }
+    };
 
     if (!cancelled) {
       const hit = this.getTerrainBrushHitAtClientPosition(
@@ -9747,6 +9801,7 @@ export class ViewportHost {
           this.activeTerrainBrushStroke.referenceHeight
         );
         changed ||= segmentResult.changed;
+        mergeStampIndices(segmentResult);
         dirtyBounds = this.mergeTerrainBrushDirtyBounds(
           dirtyBounds,
           segmentResult.dirtyBounds
@@ -9766,6 +9821,7 @@ export class ViewportHost {
             this.activeTerrainBrushStroke.referenceHeight
           );
           changed ||= pointResult.changed;
+          mergeStampIndices(pointResult);
           dirtyBounds = this.mergeTerrainBrushDirtyBounds(
             dirtyBounds,
             pointResult.dirtyBounds
@@ -9777,7 +9833,8 @@ export class ViewportHost {
     const commit =
       !cancelled &&
       dirtyBounds !== null &&
-      changed;
+      changed &&
+      (heightSampleIndices.size > 0 || paintWeightIndices.size > 0);
     const finalDirtyBounds = dirtyBounds;
     const toolState = this.activeTerrainBrushStroke.toolState;
     this.activeTerrainBrushStroke = null;
@@ -9791,7 +9848,8 @@ export class ViewportHost {
     const patch = createTerrainBrushPatchFromTerrains({
       before: activeStroke.baseTerrain,
       after: finalPreviewTerrain,
-      dirtyBounds: finalDirtyBounds!
+      heightSampleIndices,
+      paintWeightIndices
     });
 
     const committed =
