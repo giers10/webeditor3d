@@ -5736,6 +5736,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION &&
     source.version !== ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION &&
     source.version !== SCENE_DOCUMENT_VERSION &&
+    source.version !== PLAYER_START_EDGE_ASSIST_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_FACE_CLIMBABLE_SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
   ) {
