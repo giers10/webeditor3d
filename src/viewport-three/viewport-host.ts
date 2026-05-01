@@ -6611,7 +6611,8 @@ export class ViewportHost {
             ]!;
         }
 
-        chunk.debugMesh.visible = selected;
+        chunk.debugMesh.visible =
+          selected && this.terrainLodGridVisibleTerrainIds.has(terrainId);
       }
     }
   }
