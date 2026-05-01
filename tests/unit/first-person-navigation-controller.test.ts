@@ -167,6 +167,10 @@ function createFirstPersonLedgeGrabContext(topY = 2) {
 describe("FirstPersonNavigationController", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    Object.defineProperty(navigator, "getGamepads", {
+      configurable: true,
+      value: undefined
+    });
   });
 
   it("can deactivate during a scene transition without releasing pointer lock", () => {
