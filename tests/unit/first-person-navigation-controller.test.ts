@@ -428,6 +428,152 @@ describe("FirstPersonNavigationController", () => {
     });
   });
 
+  it("enters and holds a ledge grab when upper-body reach finds a higher edge", () => {
+    const { context } = createFirstPersonLedgeGrabContext();
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+    controller.update(0.05);
+
+    const ledgeTelemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(ledgeTelemetry?.locomotionState.locomotionMode).toBe("ledgeGrab");
+    expect(ledgeTelemetry?.locomotionState.verticalVelocity).toBe(0);
+    expect(ledgeTelemetry?.grounded).toBe(false);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    controller.update(0.5);
+
+    const heldTelemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(heldTelemetry?.locomotionState.locomotionMode).toBe("ledgeGrab");
+    expect(heldTelemetry?.locomotionState.verticalVelocity).toBe(0);
+    expect(heldTelemetry?.feetPosition.y).toBeCloseTo(
+      ledgeTelemetry?.feetPosition.y ?? 0
+    );
+
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
+  it("mantles from a first-person ledge grab when jump is pressed", () => {
+    const topY = 2;
+    const { context } = createFirstPersonLedgeGrabContext(topY);
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+    controller.update(0.05);
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
+    controller.update(0.05);
+
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.locomotionState.locomotionMode).toBe("grounded");
+    expect(telemetry?.feetPosition.y).toBeCloseTo(topY);
+    expect(telemetry?.locomotionState.verticalVelocity).toBe(0);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space" }));
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
+  it("drops from a first-person ledge grab when moving away", () => {
+    const { context } = createFirstPersonLedgeGrabContext();
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+    controller.update(0.05);
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyS" }));
+    controller.update(0.05);
+
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.locomotionState.locomotionMode).toBe("airborne");
+    expect(telemetry?.locomotionState.airborneKind).toBe("falling");
+    expect(telemetry?.locomotionState.verticalVelocity).toBe(0);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyS" }));
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
+  it("does not ledge grab when first-person movement is not blocked into the ledge", () => {
+    const topY = 2;
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-walk-off-no-ledge-grab",
+      position: {
+        x: 0,
+        y: 1,
+        z: 0
+      }
+    });
+    const { context } = createRuntimeControllerContext(
+      playerStart,
+      (feetPosition, motion) => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z
+        },
+        grounded: false,
+        collisionCount: 0,
+        groundCollisionNormal: null,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: false
+        }
+      }),
+      {
+        probePlayerGround: (feetPosition) => {
+          const distance = feetPosition.y - topY;
+
+          return feetPosition.z > 0.1 && distance >= 0 && distance <= 0.6
+            ? {
+                grounded: true,
+                distance,
+                normal: { x: 0, y: 1, z: 0 },
+                slopeDegrees: 0
+              }
+            : {
+                grounded: false,
+                distance: null,
+                normal: null,
+                slopeDegrees: null
+              };
+        },
+        canOccupyPlayerShape: () => true
+      }
+    );
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+    controller.update(0.05);
+
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.locomotionState.locomotionMode).toBe("airborne");
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
   it("enters climbing when first-person movement runs into a climbable face", () => {
     const { context } = createRuntimeControllerContext(
       createPlayerStartEntity({
