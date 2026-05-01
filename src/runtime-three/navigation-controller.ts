@@ -83,7 +83,8 @@ export type RuntimeLocomotionMode =
   | "flying"
   | "swimming"
   | "diving"
-  | "climbing";
+  | "climbing"
+  | "ledgeGrab";
 export type RuntimeAirborneKind = "jumping" | "falling" | null;
 export type RuntimeLocomotionGait =
   | "idle"
