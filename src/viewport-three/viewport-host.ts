@@ -1250,6 +1250,30 @@ export class ViewportHost {
     this.currentSimulationMembershipSignatures = nextMembershipSignatures;
   }
 
+  private canReuseTerrainRenderObjectsForDocument(
+    previousDocument: SceneDocument | null,
+    nextDocument: SceneDocument
+  ): boolean {
+    if (
+      previousDocument === null ||
+      previousDocument.materials !== nextDocument.materials
+    ) {
+      return false;
+    }
+
+    const previousTerrainIds = Object.keys(previousDocument.terrains);
+    const nextTerrainIds = Object.keys(nextDocument.terrains);
+
+    if (previousTerrainIds.length !== nextTerrainIds.length) {
+      return false;
+    }
+
+    return nextTerrainIds.every(
+      (terrainId) =>
+        previousDocument.terrains[terrainId] === nextDocument.terrains[terrainId]
+    );
+  }
+
   updateSelection(selection: EditorSelection, activeSelectionId: string | null) {
     const previousSelection = this.currentSelection;
     const selectionChanged = !areEditorSelectionsEqual(
@@ -1280,6 +1304,12 @@ export class ViewportHost {
   }
 
   updateDocument(document: SceneDocument) {
+    const reuseTerrainRenderObjects =
+      this.canReuseTerrainRenderObjectsForDocument(
+        this.currentDocument,
+        document
+      );
+
     this.activeTerrainBrushStroke = null;
     this.currentDocument = document;
     this.viewportSceneBounds = resolveViewportDocumentBounds(document);
@@ -1289,11 +1319,16 @@ export class ViewportHost {
     this.rebuildLocalLights(document);
     this.rebuildLightVolumes(document);
     this.rebuildBrushMeshes(document, this.currentSelection);
-    this.rebuildTerrains(
-      document,
-      this.currentSelection,
-      this.currentActiveSelectionId
-    );
+    if (reuseTerrainRenderObjects) {
+      this.updateTerrainLodVisibility();
+      this.syncTerrainBrushPreview();
+    } else {
+      this.rebuildTerrains(
+        document,
+        this.currentSelection,
+        this.currentActiveSelectionId
+      );
+    }
     this.rebuildPaths(document, this.currentSelection);
     this.rebuildEntityMarkers(document, this.currentSelection);
     this.rebuildModelInstances(document, this.currentSelection);
