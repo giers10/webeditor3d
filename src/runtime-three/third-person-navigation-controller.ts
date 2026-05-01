@@ -225,6 +225,7 @@ export class ThirdPersonNavigationController implements NavigationController {
   private jumpHoldRemainingMs = 0;
   private climbSurface: RuntimePlayerClimbSurface | null = null;
   private climbLatchBlocked = false;
+  private ledgeGrabTarget: RuntimePlayerLedgeGrabTarget | null = null;
 
   activate(ctx: RuntimeControllerContext): void {
     this.context = ctx;
