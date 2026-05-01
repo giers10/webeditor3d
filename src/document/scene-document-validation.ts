@@ -3203,6 +3203,32 @@ function validatePlayerStartEntity(
     );
   }
 
+  if (!isBoolean(entity.movementTemplate?.edgeAssist?.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-edge-assist-enabled",
+        "Player Start edge assist enabled setting must be a boolean.",
+        `${path}.movementTemplate.edgeAssist.enabled`
+      )
+    );
+  }
+
+  if (
+    !isNonNegativeFiniteNumber(
+      entity.movementTemplate?.edgeAssist?.pushToTopHeight
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-player-start-push-to-top-height",
+        "Player Start push-to-top height must remain a finite number zero or greater.",
+        `${path}.movementTemplate.edgeAssist.pushToTopHeight`
+      )
+    );
+  }
+
   if (
     !isPlayerStartKeyboardBindingCode(
       entity.inputBindings?.keyboard.moveForward
