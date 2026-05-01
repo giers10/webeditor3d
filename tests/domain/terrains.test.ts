@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  getTerrainBounds,
   getTerrainPaintWeightSampleOffset,
+  updateTerrainBoundsCacheAfterHeightPatch,
   resizeTerrainGrid,
   createTerrain
 } from "../../src/document/terrains";
@@ -59,5 +61,52 @@ describe("terrain grid resizing", () => {
       z: 0
     });
     expect(terrain.heights).toEqual([0, 2, 4, 6]);
+  });
+});
+
+describe("terrain bounds cache", () => {
+  it("updates cached bounds after in-place height patches", () => {
+    const terrain = createTerrain({
+      id: "terrain-bounds-cache-grow",
+      position: { x: 0, y: 1, z: 0 },
+      sampleCountX: 2,
+      sampleCountZ: 2,
+      cellSize: 1,
+      heights: [0, 1, 2, 3]
+    });
+
+    expect(getTerrainBounds(terrain).max.y).toBe(4);
+
+    terrain.heights[0] = -5;
+    terrain.heights[1] = 6;
+    updateTerrainBoundsCacheAfterHeightPatch(terrain, [
+      { index: 0, before: 0, after: -5 },
+      { index: 1, before: 1, after: 6 }
+    ]);
+
+    expect(getTerrainBounds(terrain)).toEqual({
+      min: { x: 0, y: -4, z: 0 },
+      max: { x: 1, y: 7, z: 1 }
+    });
+  });
+
+  it("rescans cached bounds when the previous extremum is reduced", () => {
+    const terrain = createTerrain({
+      id: "terrain-bounds-cache-rescan",
+      position: { x: 0, y: 0, z: 0 },
+      sampleCountX: 2,
+      sampleCountZ: 2,
+      cellSize: 1,
+      heights: [0, 1, 2, 3]
+    });
+
+    expect(getTerrainBounds(terrain).max.y).toBe(3);
+
+    terrain.heights[3] = 0.5;
+    updateTerrainBoundsCacheAfterHeightPatch(terrain, [
+      { index: 3, before: 3, after: 0.5 }
+    ]);
+
+    expect(getTerrainBounds(terrain).max.y).toBe(2);
   });
 });
