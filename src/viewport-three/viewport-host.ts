@@ -9585,8 +9585,10 @@ export class ViewportHost {
 
     this.activeTerrainBrushStroke = {
       pointerId: event.pointerId,
+      baseTerrain: terrain,
       previewTerrain,
       changed: initialStamp.changed,
+      dirtyBounds: initialStamp.dirtyBounds,
       referenceHeight,
       lastAppliedPoint: {
         x: hit.point.x,
@@ -9642,6 +9644,10 @@ export class ViewportHost {
         ...this.activeTerrainBrushStroke,
         changed:
           this.activeTerrainBrushStroke.changed || segmentResult.changed,
+        dirtyBounds: this.mergeTerrainBrushDirtyBounds(
+          this.activeTerrainBrushStroke.dirtyBounds,
+          segmentResult.dirtyBounds
+        ),
         lastAppliedPoint: segmentResult.lastAppliedPoint
       };
 
