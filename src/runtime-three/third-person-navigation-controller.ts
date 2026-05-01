@@ -550,6 +550,17 @@ export class ThirdPersonNavigationController implements NavigationController {
         : this.cameraYawRadians;
 
     if (
+      this.stepLedgeGrab(
+        dt,
+        inputState,
+        playerMovement,
+        movementYawRadians
+      )
+    ) {
+      return;
+    }
+
+    if (
       this.stepClimbing(
         dt,
         inputState,
