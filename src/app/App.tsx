@@ -9034,6 +9034,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       jump?: Partial<PlayerStartMovementTemplate["jump"]>;
       sprint?: Partial<PlayerStartMovementTemplate["sprint"]>;
       crouch?: Partial<PlayerStartMovementTemplate["crouch"]>;
+      edgeAssist?: Partial<PlayerStartMovementTemplate["edgeAssist"]>;
     } = {}
   ): PlayerStartMovementTemplate => {
     const rawTemplate = createPlayerStartMovementTemplate({
@@ -9093,6 +9094,14 @@ export function App({ store, initialStatusMessage }: AppProps) {
           playerStartMovementTemplateNumberDraft.crouchSpeedMultiplier,
           "Player Start crouch speed multiplier"
         )
+      },
+      edgeAssist: {
+        ...playerStartMovementTemplateDraft.edgeAssist,
+        ...overrides.edgeAssist,
+        pushToTopHeight: readNonNegativeNumberDraft(
+          playerStartMovementTemplateNumberDraft.pushToTopHeight,
+          "Player Start push-to-top height"
+        )
       }
     });
 
@@ -9109,6 +9118,7 @@ export function App({ store, initialStatusMessage }: AppProps) {
       jump?: Partial<PlayerStartMovementTemplate["jump"]>;
       sprint?: Partial<PlayerStartMovementTemplate["sprint"]>;
       crouch?: Partial<PlayerStartMovementTemplate["crouch"]>;
+      edgeAssist?: Partial<PlayerStartMovementTemplate["edgeAssist"]>;
     } = {},
     options: {
       schedule?: boolean;
