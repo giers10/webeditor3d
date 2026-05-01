@@ -620,7 +620,7 @@ export class ThirdPersonNavigationController implements NavigationController {
       inputState,
       movementYawRadians
     );
-    const edgeAssist =
+    const shouldTryEdgeAssist =
       edgeInputDirection.direction !== null &&
       shouldAttemptPlayerEdgeAssist({
         enabled: playerMovement.edgeAssist.enabled,
@@ -631,7 +631,9 @@ export class ThirdPersonNavigationController implements NavigationController {
         planarSpeed: locomotionStep.locomotionState.planarSpeed,
         collisionCount: locomotionStep.locomotionState.contact.collisionCount,
         airborne: locomotionStep.locomotionState.locomotionMode === "airborne"
-      })
+      });
+    const edgeAssist =
+      shouldTryEdgeAssist && edgeInputDirection.direction !== null
         ? resolvePlayerEdgeAssistTopOut({
             feetPosition: locomotionStep.feetPosition,
             shape: locomotionStep.activeShape,
@@ -653,6 +655,40 @@ export class ThirdPersonNavigationController implements NavigationController {
               }
           })
         : null;
+
+    if (
+      edgeAssist === null &&
+      shouldTryEdgeAssist &&
+      edgeInputDirection.direction !== null
+    ) {
+      const ledgeGrabTarget = resolvePlayerLedgeGrabTarget({
+        feetPosition: locomotionStep.feetPosition,
+        shape: locomotionStep.activeShape,
+        direction: edgeInputDirection.direction,
+        pushToTopHeight: playerMovement.edgeAssist.pushToTopHeight,
+        canOccupyShape: (feetPosition, shape) =>
+          this.context?.canOccupyPlayerShape?.(feetPosition, shape) ?? true,
+        probeGround: (feetPosition, shape, maxDistance) =>
+          this.context?.probePlayerGround?.(
+            feetPosition,
+            shape,
+            maxDistance
+          ) ?? {
+            grounded: false,
+            distance: null,
+            normal: null,
+            slopeDegrees: null
+          }
+      });
+
+      if (ledgeGrabTarget !== null) {
+        this.enterLedgeGrab(ledgeGrabTarget, edgeInputDirection.inputMagnitude);
+        this.updateCameraTransform(dt);
+        this.publishTelemetry();
+        return;
+      }
+    }
+
     const nextFeetPosition =
       edgeAssist === null ? locomotionStep.feetPosition : edgeAssist.feetPosition;
     const nextLocomotionState =
