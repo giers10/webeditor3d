@@ -144,12 +144,14 @@ describe("terrain brush geometry", () => {
       minSampleZ: 2,
       maxSampleZ: 2
     });
+    expect(result.heightSampleIndices).toEqual([12]);
+    expect(result.paintWeightIndices).toEqual([]);
     expect(terrain.heights).toBe(originalHeights);
     expect(terrain.paintWeights).toBe(originalPaintWeights);
     expect(terrain.heights[2 + 2 * 5]).toBeCloseTo(0.5);
   });
 
-  it("creates sparse terrain brush patches from dirty sample bounds", () => {
+  it("creates sparse terrain brush patches from exact changed indices", () => {
     const before = createTerrain({
       id: "terrain-sparse-patch",
       position: { x: 0, y: 0, z: 0 },
@@ -167,12 +169,8 @@ describe("terrain brush geometry", () => {
     const patch = createTerrainBrushPatchFromTerrains({
       before,
       after,
-      dirtyBounds: {
-        minSampleX: 1,
-        maxSampleX: 1,
-        minSampleZ: 1,
-        maxSampleZ: 1
-      }
+      heightSampleIndices: [5, 15, 5],
+      paintWeightIndices: [45]
     });
 
     expect(patch.heightSamples).toEqual([
@@ -180,9 +178,20 @@ describe("terrain brush geometry", () => {
         index: 5,
         before: 0,
         after: 2
+      },
+      {
+        index: 15,
+        before: 0,
+        after: 9
       }
     ]);
-    expect(patch.paintWeights).toEqual([]);
+    expect(patch.paintWeights).toEqual([
+      {
+        index: 45,
+        before: 0,
+        after: 0.4
+      }
+    ]);
   });
 
   it("paints terrain layer weights toward the active layer while preserving a normalized blend", () => {
