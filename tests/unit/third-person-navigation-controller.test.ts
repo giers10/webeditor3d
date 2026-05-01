@@ -803,6 +803,34 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(context);
   });
 
+  it("enters and mantles from third-person ledge grab state", () => {
+    const topY = 2;
+    const { context } = createThirdPersonLedgeGrabContext(topY);
+    const controller = new ThirdPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowUp" }));
+    controller.update(0.05);
+
+    const ledgeTelemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(ledgeTelemetry?.locomotionState.locomotionMode).toBe("ledgeGrab");
+    expect(ledgeTelemetry?.locomotionState.verticalVelocity).toBe(0);
+
+    controller.update(0.05);
+
+    const mantleTelemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(mantleTelemetry?.locomotionState.locomotionMode).toBe("grounded");
+    expect(mantleTelemetry?.feetPosition.y).toBeCloseTo(topY);
+    expect(mantleTelemetry?.locomotionState.verticalVelocity).toBe(0);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "ArrowUp" }));
+    controller.deactivate(context);
+  });
+
   it("uses sprint input to raise gait and planar travel speed when grounded", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-third-person-sprint",
