@@ -10036,6 +10036,7 @@ export class ViewportHost {
     }
 
     this.terrainRenderObjects.clear();
+    this.terrainRenderRevisions.clear();
   }
 
   private clearEntityMarkers() {
