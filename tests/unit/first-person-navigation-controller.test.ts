@@ -113,6 +113,57 @@ function createRuntimeControllerContext(
   };
 }
 
+function createFirstPersonLedgeGrabContext(topY = 2) {
+  const playerStart = createPlayerStartEntity({
+    id: "entity-player-start-ledge-grab",
+    position: {
+      x: 0,
+      y: 1,
+      z: 0
+    }
+  });
+
+  return createRuntimeControllerContext(
+    playerStart,
+    (feetPosition, motion) => ({
+      feetPosition: {
+        x: feetPosition.x + motion.x * 0.2,
+        y: feetPosition.y + motion.y,
+        z: feetPosition.z + motion.z * 0.2
+      },
+      grounded: false,
+      collisionCount: 1,
+      groundCollisionNormal: null,
+      collidedAxes: {
+        x: false,
+        y: false,
+        z: true
+      }
+    }),
+    {
+      probePlayerGround: (feetPosition) => {
+        const distance = feetPosition.y - topY;
+
+        return feetPosition.z > 0.1 && distance >= 0 && distance <= 0.6
+          ? {
+              grounded: true,
+              distance,
+              normal: { x: 0, y: 1, z: 0 },
+              slopeDegrees: 0
+            }
+          : {
+              grounded: false,
+              distance: null,
+              normal: null,
+              slopeDegrees: null
+            };
+      },
+      canOccupyPlayerShape: (feetPosition) =>
+        feetPosition.z <= 0.08 || feetPosition.y >= topY
+    }
+  );
+}
+
 describe("FirstPersonNavigationController", () => {
   afterEach(() => {
     vi.restoreAllMocks();
