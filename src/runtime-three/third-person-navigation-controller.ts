@@ -158,6 +158,10 @@ function cloneRuntimePlayerMovement(
     },
     crouch: {
       speedMultiplier: movement.crouch.speedMultiplier
+    },
+    edgeAssist: {
+      enabled: movement.edgeAssist.enabled,
+      pushToTopHeight: movement.edgeAssist.pushToTopHeight
     }
   };
 }
