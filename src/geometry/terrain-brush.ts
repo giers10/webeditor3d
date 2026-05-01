@@ -1,7 +1,7 @@
 import type { Vec3 } from "../core/vector";
 import type {
   ArmedTerrainBrushState,
-  type TerrainBrushPatch,
+  TerrainBrushPatch,
   TerrainBrushSettings,
   TerrainBrushTool
 } from "../core/terrain-brush";
