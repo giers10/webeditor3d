@@ -2009,6 +2009,8 @@ function formatRunnerLocomotionMode(
       return "Diving";
     case "climbing":
       return "Climbing";
+    case "ledgeGrab":
+      return "Ledge Grab";
     default:
       return "n/a";
   }
@@ -2143,6 +2145,10 @@ function formatRunnerAnimationHook(
 
   if (animationHook.locomotionMode === "climbing") {
     return `climb ${animationHook.movementAmount.toFixed(2)}`;
+  }
+
+  if (animationHook.locomotionMode === "ledgeGrab") {
+    return "ledge grab";
   }
 
   return animationHook.moving
