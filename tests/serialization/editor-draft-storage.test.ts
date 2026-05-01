@@ -10,7 +10,10 @@ import {
   saveSceneDocumentDraft,
   type KeyValueStorage
 } from "../../src/serialization/local-draft-storage";
-import { MemoryEditorDraftStorage } from "../../src/serialization/editor-draft-storage";
+import {
+  MemoryEditorDraftStorage,
+  createBrowserEditorDraftStorage
+} from "../../src/serialization/editor-draft-storage";
 import { createDefaultViewportLayoutState } from "../../src/viewport-three/viewport-layout";
 
 class MemoryStorage implements KeyValueStorage {
@@ -138,6 +141,36 @@ describe("editor draft storage", () => {
     expect(result.document.scenes[result.document.activeSceneId]?.name).toBe(
       "Legacy Draft"
     );
+  });
+
+  it("uses localStorage fallback storage when IndexedDB is unavailable", async () => {
+    const legacyStorage = new MemoryStorage();
+    const result = await createBrowserEditorDraftStorage({
+      legacyStorage,
+      indexedDb: null
+    });
+
+    expect(result.storage).not.toBeNull();
+    expect(result.diagnostic).toContain("IndexedDB autosave is unavailable");
+
+    await result.storage?.saveDocumentDraft(
+      createProjectDocumentFromSceneDocument(
+        createEmptySceneDocument({ name: "Fallback Draft" })
+      )
+    );
+
+    const recoveredResult = await result.storage?.loadDraft();
+
+    expect(recoveredResult?.status).toBe("loaded");
+
+    if (recoveredResult?.status !== "loaded") {
+      return;
+    }
+
+    expect(
+      recoveredResult.document.scenes[recoveredResult.document.activeSceneId]
+        ?.name
+    ).toBe("Fallback Draft");
   });
 
   it("saves viewport-only drafts without requiring document validation", async () => {
