@@ -849,6 +849,12 @@ describe("validateSceneDocument", () => {
           code: "invalid-player-start-crouch-speed-multiplier"
         }),
         expect.objectContaining({
+          code: "invalid-player-start-edge-assist-enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-player-start-push-to-top-height"
+        }),
+        expect.objectContaining({
           code: "invalid-player-start-jump-keyboard-binding"
         }),
         expect.objectContaining({
