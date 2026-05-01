@@ -22,8 +22,10 @@ import {
   type RuntimePlayerClimbSurface
 } from "./player-climbing";
 import {
+  resolvePlayerLedgeGrabTarget,
   resolvePlayerEdgeAssistTopOut,
-  shouldAttemptPlayerEdgeAssist
+  shouldAttemptPlayerEdgeAssist,
+  type RuntimePlayerLedgeGrabTarget
 } from "./player-edge-assist";
 import {
   createIdleRuntimeLocomotionState,
@@ -126,6 +128,10 @@ function toEyePosition(feetPosition: Vec3, eyeHeight: number): Vec3 {
     y: feetPosition.y + eyeHeight,
     z: feetPosition.z
   };
+}
+
+function dotPlanarVec3(left: Vec3, right: Vec3): number {
+  return left.x * right.x + left.z * right.z;
 }
 
 function cloneRuntimePlayerMovement(
