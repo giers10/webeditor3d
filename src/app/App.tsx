@@ -2337,7 +2337,7 @@ function createProjectDownloadName(projectName: string): string {
   return `${slug.length > 0 ? slug : "project"}${PROJECT_PACKAGE_FILE_EXTENSION}`;
 }
 
-export function App({ store, initialStatusMessage }: AppProps) {
+export function App({ store, draftStorage = null, initialStatusMessage }: AppProps) {
   const editorState = useEditorStoreState(store);
   const sceneList = Object.values(editorState.projectDocument.scenes);
   const activeProjectScene =
@@ -2356,6 +2356,8 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const activePanelId = editorState.activeViewportPanelId;
   const viewportToolPreview = editorState.viewportTransientState.toolPreview;
   const transformSession = editorState.viewportTransientState.transformSession;
+  const autosaveAvailable =
+    draftStorage !== null || editorState.storageAvailable;
   const latestActiveTransformSessionRef = useRef<ActiveTransformSession | null>(
     null
   );
