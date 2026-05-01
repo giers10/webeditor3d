@@ -7374,9 +7374,13 @@ export function assertSceneDocumentIsValid(document: SceneDocument) {
 }
 
 export function validateSceneDocumentLocalBuildContent(
-  document: SceneDocument
+  document: SceneDocument,
+  options: Omit<ValidateSceneDocumentOptions, "projectScheduling"> = {}
 ): SceneDocumentValidationResult {
-  return validateSceneDocument(document, { projectScheduling: "skip" });
+  return validateSceneDocument(document, {
+    ...options,
+    projectScheduling: "skip"
+  });
 }
 
 export function assertSceneDocumentLocalBuildContentIsValid(
@@ -7454,7 +7458,8 @@ export function assertProjectSchedulingResourcesAreValid(
 }
 
 export function validateProjectDocument(
-  document: ProjectDocument
+  document: ProjectDocument,
+  options: ValidateSceneDocumentOptions = {}
 ): SceneDocumentValidationResult {
   const diagnostics: SceneDiagnostic[] = [];
   const projectSchedulerValidationContext =
@@ -7541,7 +7546,7 @@ export function validateProjectDocument(
     };
 
     for (const diagnostic of filterProjectSceneDiagnostics(
-      validateSceneDocument(sceneDocument).diagnostics
+      validateSceneDocument(sceneDocument, options).diagnostics
     )) {
       diagnostics.push({
         ...diagnostic,
