@@ -420,7 +420,7 @@ export function ViewportCanvas({
   }, [selection, activeSelectionId]);
 
   useLayoutEffect(() => {
-    hostRef.current?.setTerrainLodGridVisibleTerrainIds(
+    hostRef.current?.setTerrainLodGridVisibleTerrainIds?.(
       terrainLodGridVisibleTerrainIds
     );
   }, [terrainLodGridVisibleTerrainIds]);
