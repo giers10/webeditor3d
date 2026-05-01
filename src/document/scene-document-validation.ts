@@ -7220,7 +7220,7 @@ export function validateSceneDocument(
     }
 
     registerAuthoredId(terrain.id, path, seenIds, diagnostics);
-    validateTerrain(terrain, path, document, diagnostics);
+    validateTerrain(terrain, path, document, diagnostics, options);
   }
 
   for (const [modelInstanceKey, modelInstance] of Object.entries(
