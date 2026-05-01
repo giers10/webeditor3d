@@ -47,7 +47,7 @@ export interface LoadOrCreateSceneDocumentResult {
 
 export const DEFAULT_SCENE_DRAFT_STORAGE_KEY = "webeditor3d.scene-document-draft";
 export const DEFAULT_SCENE_DRAFT_MAX_SERIALIZED_BYTES = 4 * 1024 * 1024;
-const ESTIMATED_TERRAIN_SAMPLE_JSON_BYTES = 8;
+const MIN_TERRAIN_SAMPLE_JSON_BYTES = 2;
 const ESTIMATED_PROJECT_DRAFT_BASE_BYTES = 64 * 1024;
 const EDITOR_DRAFT_ENVELOPE_FORMAT = "webeditor3d.editor-draft.v1";
 
@@ -86,7 +86,7 @@ function formatByteSize(bytes: number): string {
 }
 
 function getAutosaveTooLargeMessage(sizeBytes: number, maxBytes: number): string {
-  return `Autosave skipped because this project draft is about ${formatByteSize(sizeBytes)}, above the ${formatByteSize(maxBytes)} browser autosave limit. Use project save/export for terrain-heavy scenes.`;
+  return `Autosave skipped because this project draft is about ${formatByteSize(sizeBytes)}, above the ${formatByteSize(maxBytes)} browser autosave limit. The last successful autosave was kept; use project save/export for terrain-heavy scenes.`;
 }
 
 function getTerrainDraftSampleValueCount(document: ProjectDocument): number {
@@ -111,7 +111,7 @@ export function estimateProjectDraftSerializedBytes(
   return (
     ESTIMATED_PROJECT_DRAFT_BASE_BYTES +
     viewportBytes +
-    terrainSampleValueCount * ESTIMATED_TERRAIN_SAMPLE_JSON_BYTES
+    terrainSampleValueCount * MIN_TERRAIN_SAMPLE_JSON_BYTES
   );
 }
 
@@ -265,8 +265,6 @@ export function saveSceneDocumentDraft(
       maxSerializedBytes > 0 &&
       estimatedDraftBytes > maxSerializedBytes
     ) {
-      storage.removeItem(key);
-
       return {
         status: "skipped",
         message: getAutosaveTooLargeMessage(
@@ -289,8 +287,6 @@ export function saveSceneDocumentDraft(
       maxSerializedBytes > 0 &&
       rawDraft.length > maxSerializedBytes
     ) {
-      storage.removeItem(key);
-
       return {
         status: "skipped",
         message: getAutosaveTooLargeMessage(rawDraft.length, maxSerializedBytes)
