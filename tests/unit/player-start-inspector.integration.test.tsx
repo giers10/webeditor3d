@@ -149,6 +149,12 @@ describe("Player Start inspector", () => {
     expect(
       screen.getByTestId("player-start-movement-jump-enabled")
     ).toBeChecked();
+    expect(
+      screen.getByTestId("player-start-movement-edge-assist-enabled")
+    ).toBeChecked();
+    expect(
+      screen.getByTestId("player-start-movement-push-to-top-height")
+    ).toHaveValue(0.55);
   });
 
   it("lets the inspector switch to a custom movement template and persist authored settings", async () => {
