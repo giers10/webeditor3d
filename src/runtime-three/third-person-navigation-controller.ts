@@ -924,26 +924,56 @@ export class ThirdPersonNavigationController implements NavigationController {
       return false;
     }
 
-    this.climbSurface = activeSurface;
-
     const climbMovement = computeClimbPlaneMovement({
       normal: activeSurface.normal,
       input: inputState,
       speedMetersPerSecond: CLIMB_SPEED_METERS_PER_SECOND,
       dt
     });
+    const climbTopOutAssist =
+      playerMovement.edgeAssist.enabled && climbMovement.motion.y > 0
+        ? resolvePlayerEdgeAssistTopOut({
+            feetPosition: this.feetPosition,
+            shape: this.standingPlayerShape,
+            direction: {
+              x: -activeSurface.normal.x,
+              y: 0,
+              z: -activeSurface.normal.z
+            },
+            pushToTopHeight: playerMovement.edgeAssist.pushToTopHeight,
+            canOccupyShape: (feetPosition, shape) =>
+              this.context?.canOccupyPlayerShape?.(feetPosition, shape) ??
+              true,
+            probeGround: (feetPosition, shape, maxDistance) =>
+              this.context?.probePlayerGround?.(
+                feetPosition,
+                shape,
+                maxDistance
+              ) ?? {
+                grounded: false,
+                distance: null,
+                normal: null,
+                slopeDegrees: null
+              }
+          })
+        : null;
+    this.climbSurface = climbTopOutAssist === null ? activeSurface : null;
+
     const resolvedMotion =
-      this.context.resolveFirstPersonMotion(
-        this.feetPosition,
-        climbMovement.motion,
-        this.standingPlayerShape
-      ) ?? null;
+      climbTopOutAssist === null
+        ? (this.context.resolveFirstPersonMotion(
+            this.feetPosition,
+            climbMovement.motion,
+            this.standingPlayerShape
+          ) ?? null)
+        : null;
     const nextFeetPosition =
+      climbTopOutAssist?.feetPosition ??
       resolvedMotion?.feetPosition ?? {
-        x: this.feetPosition.x + climbMovement.motion.x,
-        y: this.feetPosition.y + climbMovement.motion.y,
-        z: this.feetPosition.z + climbMovement.motion.z
-      };
+          x: this.feetPosition.x + climbMovement.motion.x,
+          y: this.feetPosition.y + climbMovement.motion.y,
+          z: this.feetPosition.z + climbMovement.motion.z
+        };
     const displacement = {
       x: nextFeetPosition.x - this.feetPosition.x,
       y: nextFeetPosition.y - this.feetPosition.y,
@@ -963,21 +993,33 @@ export class ThirdPersonNavigationController implements NavigationController {
     this.latestJumpStarted = false;
     this.latestHeadBump = false;
     this.previousPlanarDisplacement = displacement;
-    this.grounded = false;
+    this.grounded = climbTopOutAssist !== null;
     this.inWaterVolume = volumeState.inWater;
     this.inFogVolume = volumeState.inFog;
     this.smoothedFeetY = this.feetPosition.y;
-    this.locomotionState = this.createClimbingLocomotionState({
-      inputMagnitude: climbMovement.inputMagnitude,
-      displacement,
-      dt,
-      collisionCount: resolvedMotion?.collisionCount ?? 0,
-      collidedAxes: resolvedMotion?.collidedAxes ?? {
-        x: false,
-        y: false,
-        z: false
-      }
-    });
+    this.locomotionState =
+      climbTopOutAssist === null
+        ? this.createClimbingLocomotionState({
+            inputMagnitude: climbMovement.inputMagnitude,
+            displacement,
+            dt,
+            collisionCount: resolvedMotion?.collisionCount ?? 0,
+            collidedAxes: resolvedMotion?.collidedAxes ?? {
+              x: false,
+              y: false,
+              z: false
+            }
+          })
+        : {
+            ...createIdleRuntimeLocomotionState("grounded"),
+            gait: "walk",
+            inputMagnitude: climbMovement.inputMagnitude,
+            requestedPlanarSpeed: CLIMB_SPEED_METERS_PER_SECOND,
+            planarSpeed:
+              dt > 0
+                ? Math.hypot(displacement.x, displacement.z) / dt
+                : 0
+          };
 
     this.updateCameraTransform(dt);
     this.publishTelemetry();
