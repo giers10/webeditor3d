@@ -131,7 +131,7 @@ function parseViewportPanelId(value: unknown): ViewportPanelId | null {
   return typeof value === "string" && (VIEWPORT_PANEL_IDS as readonly string[]).includes(value) ? (value as ViewportPanelId) : null;
 }
 
-function parseViewportLayoutState(value: unknown): ViewportLayoutState | null {
+export function parseViewportLayoutState(value: unknown): ViewportLayoutState | null {
   if (!isRecord(value)) {
     return null;
   }
