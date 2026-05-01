@@ -1935,6 +1935,7 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
   const jump = value.jump;
   const sprint = value.sprint;
   const crouch = value.crouch;
+  const edgeAssist = value.edgeAssist;
 
   if (capabilities !== undefined && !isRecord(capabilities)) {
     throw new Error(`${label}.capabilities must be an object.`);
@@ -1950,6 +1951,10 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
 
   if (crouch !== undefined && !isRecord(crouch)) {
     throw new Error(`${label}.crouch must be an object.`);
+  }
+
+  if (edgeAssist !== undefined && !isRecord(edgeAssist)) {
+    throw new Error(`${label}.edgeAssist must be an object.`);
   }
 
   return createPlayerStartMovementTemplate({
@@ -2061,6 +2066,20 @@ function readPlayerStartMovementTemplate(value: unknown, label: string) {
           : expectPositiveFiniteNumber(
               crouch.speedMultiplier,
               `${label}.crouch.speedMultiplier`
+            )
+    },
+    edgeAssist: {
+      enabled: readOptionalBoolean(
+        edgeAssist?.enabled,
+        `${label}.edgeAssist.enabled`,
+        preset.edgeAssist.enabled
+      ),
+      pushToTopHeight:
+        edgeAssist?.pushToTopHeight === undefined
+          ? preset.edgeAssist.pushToTopHeight
+          : expectNonNegativeFiniteNumber(
+              edgeAssist.pushToTopHeight,
+              `${label}.edgeAssist.pushToTopHeight`
             )
     }
   });
