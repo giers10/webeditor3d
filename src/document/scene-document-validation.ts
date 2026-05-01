@@ -130,6 +130,7 @@ export interface SceneDocumentValidationResult {
 
 export interface ValidateSceneDocumentOptions {
   projectScheduling?: "scene" | "skip";
+  terrainSampleValues?: "full" | "skip";
 }
 
 export function createDiagnostic(
@@ -2663,7 +2664,8 @@ function validateTerrain(
   terrain: Terrain,
   path: string,
   document: SceneDocument,
-  diagnostics: SceneDiagnostic[]
+  diagnostics: SceneDiagnostic[],
+  options: ValidateSceneDocumentOptions = {}
 ) {
   if (!isBoolean(terrain.visible)) {
     diagnostics.push(
@@ -2770,19 +2772,21 @@ function validateTerrain(
     );
   }
 
-  for (let index = 0; index < terrain.heights.length; index += 1) {
-    if (isFiniteNumber(terrain.heights[index])) {
-      continue;
-    }
+  if (options.terrainSampleValues !== "skip") {
+    for (let index = 0; index < terrain.heights.length; index += 1) {
+      if (isFiniteNumber(terrain.heights[index])) {
+        continue;
+      }
 
-    diagnostics.push(
-      createDiagnostic(
-        "error",
-        "invalid-terrain-height",
-        "Terrain heights must remain finite.",
-        `${path}.heights.${index}`
-      )
-    );
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-terrain-height",
+          "Terrain heights must remain finite.",
+          `${path}.heights.${index}`
+        )
+      );
+    }
   }
 
   if (terrain.layers.length !== TERRAIN_LAYER_COUNT) {
@@ -2829,21 +2833,23 @@ function validateTerrain(
     );
   }
 
-  for (let index = 0; index < terrain.paintWeights.length; index += 1) {
-    const paintWeight = terrain.paintWeights[index];
+  if (options.terrainSampleValues !== "skip") {
+    for (let index = 0; index < terrain.paintWeights.length; index += 1) {
+      const paintWeight = terrain.paintWeights[index];
 
-    if (isFiniteNumber(paintWeight) && paintWeight >= 0 && paintWeight <= 1) {
-      continue;
+      if (isFiniteNumber(paintWeight) && paintWeight >= 0 && paintWeight <= 1) {
+        continue;
+      }
+
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-terrain-paint-weight",
+          "Terrain paint weights must remain finite values between 0 and 1.",
+          `${path}.paintWeights.${index}`
+        )
+      );
     }
-
-    diagnostics.push(
-      createDiagnostic(
-        "error",
-        "invalid-terrain-paint-weight",
-        "Terrain paint weights must remain finite values between 0 and 1.",
-        `${path}.paintWeights.${index}`
-      )
-    );
   }
 }
 
