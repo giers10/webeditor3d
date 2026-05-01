@@ -1325,6 +1325,7 @@ export class ViewportHost {
     this.rebuildLightVolumes(document);
     this.rebuildBrushMeshes(document, this.currentSelection);
     if (reuseTerrainRenderObjects) {
+      this.refreshReusedTerrainRenderDirtyChunks(document);
       this.updateTerrainLodVisibility();
       this.syncTerrainBrushPreview();
     } else {
@@ -6534,6 +6535,10 @@ export class ViewportHost {
       const renderObjects = this.createTerrainRenderObjects(displayedTerrain);
       this.terrainGroup.add(renderObjects.group);
       this.terrainRenderObjects.set(displayedTerrain.id, renderObjects);
+      this.terrainRenderRevisions.set(
+        displayedTerrain.id,
+        getTerrainRenderDirtyRevision(displayedTerrain)
+      );
     }
 
     this.applyShadowState();
@@ -6657,6 +6662,30 @@ export class ViewportHost {
         chunk.debugMesh.visible =
           selected && this.terrainLodGridVisibleTerrainIds.has(terrainId);
       }
+    }
+  }
+
+  private refreshReusedTerrainRenderDirtyChunks(document: SceneDocument) {
+    for (const terrain of getTerrains(document.terrains)) {
+      const renderObjects = this.terrainRenderObjects.get(terrain.id);
+
+      if (renderObjects === undefined) {
+        continue;
+      }
+
+      const previousRevision = this.terrainRenderRevisions.get(terrain.id) ?? 0;
+      const dirtyState = getTerrainRenderDirtyBoundsSince(
+        terrain,
+        previousRevision
+      );
+
+      this.terrainRenderRevisions.set(terrain.id, dirtyState.revision);
+
+      if (dirtyState.dirtyBounds === null) {
+        continue;
+      }
+
+      this.refreshDisplayedTerrainDirtyBounds(terrain.id, dirtyState.dirtyBounds);
     }
   }
 
