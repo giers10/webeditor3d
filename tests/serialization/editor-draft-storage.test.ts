@@ -7,7 +7,6 @@ import {
   createProjectDocumentFromSceneDocument
 } from "../../src/document/scene-document";
 import {
-  DEFAULT_SCENE_DRAFT_STORAGE_KEY,
   saveSceneDocumentDraft,
   type KeyValueStorage
 } from "../../src/serialization/local-draft-storage";
