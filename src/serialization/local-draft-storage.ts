@@ -253,8 +253,6 @@ export function saveSceneDocumentDraft(
   options: SaveSceneDocumentDraftOptions = {}
 ): SaveSceneDocumentDraftResult {
   try {
-    assertProjectDocumentIsValid(document);
-
     const maxSerializedBytes =
       options.maxSerializedBytes ?? DEFAULT_SCENE_DRAFT_MAX_SERIALIZED_BYTES;
     const estimatedDraftBytes = estimateProjectDraftSerializedBytes(
@@ -277,6 +275,8 @@ export function saveSceneDocumentDraft(
         )
       };
     }
+
+    assertProjectDocumentIsValid(document);
 
     const rawDraft = JSON.stringify({
         format: EDITOR_DRAFT_ENVELOPE_FORMAT,
