@@ -4551,6 +4551,10 @@ export class ViewportHost {
       }
     }
 
+    for (const renderObjects of this.terrainRenderObjects.values()) {
+      raycastObjects.push(...renderObjects.pickMeshes);
+    }
+
     for (const [modelInstanceId, renderGroup] of this.modelRenderObjects) {
       if (excludedIds.modelInstanceIds.has(modelInstanceId)) {
         continue;
