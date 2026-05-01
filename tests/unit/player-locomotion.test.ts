@@ -23,7 +23,8 @@ const DEFAULT_MOVEMENT: RuntimePlayerMovement = {
   capabilities: movementTemplate.capabilities,
   jump: movementTemplate.jump,
   sprint: movementTemplate.sprint,
-  crouch: movementTemplate.crouch
+  crouch: movementTemplate.crouch,
+  edgeAssist: movementTemplate.edgeAssist
 };
 
 const FORWARD_INPUT: PlayerStartActionInputState = {
