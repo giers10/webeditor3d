@@ -661,6 +661,81 @@ describe("ThirdPersonNavigationController", () => {
     controller.deactivate(context);
   });
 
+  it("pushes third-person blocked airborne movement onto a nearby top surface", () => {
+    const topY = 1.35;
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-third-person-edge-assist",
+      position: {
+        x: 0,
+        y: 1,
+        z: 0
+      },
+      inputBindings: {
+        keyboard: {
+          moveForward: "ArrowUp",
+          moveBackward: "ArrowDown",
+          moveLeft: "ArrowLeft",
+          moveRight: "ArrowRight"
+        }
+      }
+    });
+    const { context } = createRuntimeControllerContext(playerStart);
+    context.resolveFirstPersonMotion = (
+      feetPosition: Vec3,
+      motion: Vec3,
+      _shape: FirstPersonPlayerShape
+    ) => ({
+      feetPosition: {
+        x: feetPosition.x + motion.x * 0.2,
+        y: feetPosition.y + motion.y,
+        z: feetPosition.z + motion.z * 0.2
+      },
+      grounded: false,
+      collisionCount: 1,
+      groundCollisionNormal: null,
+      collidedAxes: {
+        x: false,
+        y: false,
+        z: true
+      }
+    });
+    context.probePlayerGround = vi.fn((feetPosition: Vec3) => {
+      const distance = feetPosition.y - topY;
+
+      return feetPosition.z > 0.1 && distance >= 0 && distance <= 0.6
+        ? {
+            grounded: true,
+            distance,
+            normal: { x: 0, y: 1, z: 0 },
+            slopeDegrees: 0
+          }
+        : {
+            grounded: false,
+            distance: null,
+            normal: null,
+            slopeDegrees: null
+          };
+    });
+    context.canOccupyPlayerShape = vi.fn(
+      (feetPosition: Vec3) => feetPosition.y >= topY && feetPosition.z > 0.1
+    );
+    const controller = new ThirdPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowUp" }));
+    controller.update(0.05);
+
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.feetPosition.y).toBeCloseTo(topY);
+    expect(telemetry?.locomotionState.locomotionMode).toBe("grounded");
+    expect(telemetry?.locomotionState.verticalVelocity).toBe(0);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "ArrowUp" }));
+    controller.deactivate(context);
+  });
+
   it("uses sprint input to raise gait and planar travel speed when grounded", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-third-person-sprint",
