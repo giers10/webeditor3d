@@ -65,6 +65,7 @@ interface ViewportPanelProps {
   viewportGridVisible: boolean;
   selection: EditorSelection;
   activeSelectionId: string | null;
+  terrainLodGridVisibleTerrainIds?: readonly string[];
   terrainBrushState: ArmedTerrainBrushState | null;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
@@ -145,6 +146,7 @@ export function ViewportPanel({
   viewportGridVisible,
   selection,
   activeSelectionId,
+  terrainLodGridVisibleTerrainIds = [],
   terrainBrushState = null,
   toolMode,
   toolPreview,
@@ -213,6 +215,7 @@ export function ViewportPanel({
         viewportGridVisible={viewportGridVisible}
         selection={selection}
         activeSelectionId={activeSelectionId}
+        terrainLodGridVisibleTerrainIds={terrainLodGridVisibleTerrainIds}
         terrainBrushState={terrainBrushState}
         toolMode={toolMode}
         toolPreview={toolPreview}
