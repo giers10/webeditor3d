@@ -9122,6 +9122,26 @@ export class ViewportHost {
     );
   }
 
+  private mergeTerrainBrushDirtyBounds(
+    currentBounds: TerrainBrushDirtySampleBounds | null,
+    nextBounds: TerrainBrushDirtySampleBounds | null
+  ): TerrainBrushDirtySampleBounds | null {
+    if (nextBounds === null) {
+      return currentBounds;
+    }
+
+    if (currentBounds === null) {
+      return { ...nextBounds };
+    }
+
+    return {
+      minSampleX: Math.min(currentBounds.minSampleX, nextBounds.minSampleX),
+      maxSampleX: Math.max(currentBounds.maxSampleX, nextBounds.maxSampleX),
+      minSampleZ: Math.min(currentBounds.minSampleZ, nextBounds.minSampleZ),
+      maxSampleZ: Math.max(currentBounds.maxSampleZ, nextBounds.maxSampleZ)
+    };
+  }
+
   private refreshDisplayedTerrainDirtyBounds(
     terrainId: string,
     bounds: TerrainBrushDirtySampleBounds | null
