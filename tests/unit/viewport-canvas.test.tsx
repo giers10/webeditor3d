@@ -57,6 +57,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setGridVisible: ReturnType<typeof vi.fn>;
     setToolMode: ReturnType<typeof vi.fn>;
     setTerrainBrushState: ReturnType<typeof vi.fn>;
+    setTerrainLodGridVisibleTerrainIds: ReturnType<typeof vi.fn>;
     setCreationPreview: ReturnType<typeof vi.fn>;
     setTransformSession: ReturnType<typeof vi.fn>;
     setPanelId: ReturnType<typeof vi.fn>;
@@ -91,6 +92,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setGridVisible = vi.fn();
     setToolMode = vi.fn();
     setTerrainBrushState = vi.fn();
+    setTerrainLodGridVisibleTerrainIds = vi.fn();
     setCreationPreview = vi.fn();
     setTransformSession = vi.fn();
     setPanelId = vi.fn();
