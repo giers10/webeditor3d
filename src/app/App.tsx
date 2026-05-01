@@ -536,6 +536,27 @@ interface AppProps {
   initialStatusMessage?: string;
 }
 
+function mergeAutosaveResults(
+  results: SaveSceneDocumentDraftResult[]
+): SaveSceneDocumentDraftResult {
+  const errorResult = results.find((result) => result.status === "error");
+
+  if (errorResult !== undefined) {
+    return errorResult;
+  }
+
+  const skippedResult = results.find((result) => result.status === "skipped");
+
+  if (skippedResult !== undefined) {
+    return skippedResult;
+  }
+
+  return {
+    status: "saved",
+    message: "Autosave updated."
+  };
+}
+
 interface Vec2Draft {
   x: string;
   y: string;
