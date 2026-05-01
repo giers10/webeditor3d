@@ -1,6 +1,7 @@
 import type { Vec3 } from "../core/vector";
 import type {
   ArmedTerrainBrushState,
+  type TerrainBrushPatch,
   TerrainBrushSettings,
   TerrainBrushTool
 } from "../core/terrain-brush";
@@ -433,6 +434,100 @@ export function applyTerrainBrushStampInPlace(options: {
   return {
     changed: dirtyBounds !== null,
     dirtyBounds
+  };
+}
+
+export function createTerrainBrushPatchFromTerrains(options: {
+  before: Terrain;
+  after: Terrain;
+  dirtyBounds: TerrainBrushDirtySampleBounds;
+}): TerrainBrushPatch {
+  const { before, after, dirtyBounds } = options;
+
+  if (before.id !== after.id) {
+    throw new Error("Terrain brush patches require matching terrain ids.");
+  }
+
+  if (
+    before.sampleCountX !== after.sampleCountX ||
+    before.sampleCountZ !== after.sampleCountZ ||
+    before.heights.length !== after.heights.length ||
+    before.paintWeights.length !== after.paintWeights.length
+  ) {
+    throw new Error(
+      "Terrain brush patches require matching terrain sample dimensions."
+    );
+  }
+
+  const heightSamples: TerrainBrushPatch["heightSamples"] = [];
+  const paintWeights: TerrainBrushPatch["paintWeights"] = [];
+  const minSampleX = clamp(
+    Math.floor(dirtyBounds.minSampleX),
+    0,
+    before.sampleCountX - 1
+  );
+  const maxSampleX = clamp(
+    Math.ceil(dirtyBounds.maxSampleX),
+    0,
+    before.sampleCountX - 1
+  );
+  const minSampleZ = clamp(
+    Math.floor(dirtyBounds.minSampleZ),
+    0,
+    before.sampleCountZ - 1
+  );
+  const maxSampleZ = clamp(
+    Math.ceil(dirtyBounds.maxSampleZ),
+    0,
+    before.sampleCountZ - 1
+  );
+
+  for (let sampleZ = minSampleZ; sampleZ <= maxSampleZ; sampleZ += 1) {
+    for (let sampleX = minSampleX; sampleX <= maxSampleX; sampleX += 1) {
+      const sampleIndex = getTerrainSampleIndex(before, sampleX, sampleZ);
+      const beforeHeight = before.heights[sampleIndex] ?? 0;
+      const afterHeight = after.heights[sampleIndex] ?? 0;
+
+      if (beforeHeight !== afterHeight) {
+        heightSamples.push({
+          index: sampleIndex,
+          before: beforeHeight,
+          after: afterHeight
+        });
+      }
+
+      const paintOffset = getTerrainPaintWeightSampleOffset(
+        before,
+        sampleX,
+        sampleZ
+      );
+
+      for (
+        let layerOffset = 0;
+        layerOffset < TERRAIN_LAYER_COUNT - 1;
+        layerOffset += 1
+      ) {
+        const paintWeightIndex = paintOffset + layerOffset;
+        const beforeWeight = before.paintWeights[paintWeightIndex] ?? 0;
+        const afterWeight = after.paintWeights[paintWeightIndex] ?? 0;
+
+        if (beforeWeight === afterWeight) {
+          continue;
+        }
+
+        paintWeights.push({
+          index: paintWeightIndex,
+          before: beforeWeight,
+          after: afterWeight
+        });
+      }
+    }
+  }
+
+  return {
+    terrainId: before.id,
+    heightSamples,
+    paintWeights
   };
 }
 
