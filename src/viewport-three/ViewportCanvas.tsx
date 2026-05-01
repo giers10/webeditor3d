@@ -60,6 +60,7 @@ interface ViewportCanvasProps {
   viewportGridVisible: boolean;
   selection: EditorSelection;
   activeSelectionId: string | null;
+  terrainLodGridVisibleTerrainIds?: readonly string[];
   terrainBrushState: ArmedTerrainBrushState | null;
   toolMode: ToolMode;
   toolPreview: ViewportToolPreview;
@@ -278,6 +279,7 @@ export function ViewportCanvas({
   viewportGridVisible,
   selection,
   activeSelectionId,
+  terrainLodGridVisibleTerrainIds = [],
   terrainBrushState = null,
   toolMode,
   toolPreview,
@@ -416,6 +418,12 @@ export function ViewportCanvas({
   useLayoutEffect(() => {
     hostRef.current?.updateSelection(selection, activeSelectionId);
   }, [selection, activeSelectionId]);
+
+  useLayoutEffect(() => {
+    hostRef.current?.setTerrainLodGridVisibleTerrainIds(
+      terrainLodGridVisibleTerrainIds
+    );
+  }, [terrainLodGridVisibleTerrainIds]);
 
   useLayoutEffect(() => {
     hostRef.current?.updateDocument(sceneDocument);
