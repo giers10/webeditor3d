@@ -929,6 +929,7 @@ export class ViewportHost {
   private currentTerrainBrushState: ArmedTerrainBrushState | null = null;
   private terrainBrushHover: TerrainBrushHit | null = null;
   private activeTerrainBrushStroke: ActiveTerrainBrushStroke | null = null;
+  private terrainLodGridVisibleTerrainIds = new Set<string>();
   private currentTransformPreviewTargetIds: TransformPreviewTargetIds | null =
     null;
   private creationPreviewTargetKey: string | null = null;
@@ -1582,6 +1583,22 @@ export class ViewportHost {
     } else {
       this.syncTerrainBrushPreview();
     }
+  }
+
+  setTerrainLodGridVisibleTerrainIds(terrainIds: readonly string[]) {
+    const nextTerrainIds = new Set(terrainIds);
+
+    if (
+      nextTerrainIds.size === this.terrainLodGridVisibleTerrainIds.size &&
+      [...nextTerrainIds].every((terrainId) =>
+        this.terrainLodGridVisibleTerrainIds.has(terrainId)
+      )
+    ) {
+      return;
+    }
+
+    this.terrainLodGridVisibleTerrainIds = nextTerrainIds;
+    this.updateTerrainLodVisibility();
   }
 
   setViewMode(viewMode: ViewportViewMode) {
