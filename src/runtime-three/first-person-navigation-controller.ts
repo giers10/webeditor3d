@@ -169,6 +169,7 @@ export class FirstPersonNavigationController implements NavigationController {
       this.verticalVelocity = 0;
       this.grounded = false;
       this.jumpPressed = false;
+      this.ledgeGrabTarget = null;
       this.smoothedFeetY = this.feetPosition.y;
       this.locomotionState = createIdleRuntimeLocomotionState(
         runtimeScene.playerCollider.mode === "none" ? "flying" : "airborne"
