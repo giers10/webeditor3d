@@ -22453,6 +22453,78 @@ export function App({ store, initialStatusMessage }: AppProps) {
                         </div>
 
                         <div className="form-section">
+                          <div className="label">Edge Assist</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              data-testid="player-start-movement-edge-assist-enabled"
+                              type="checkbox"
+                              checked={
+                                playerStartMovementTemplateDraft.edgeAssist
+                                  .enabled
+                              }
+                              onChange={(event) =>
+                                commitPlayerStartMovementTemplateDraft(
+                                  {
+                                    edgeAssist: {
+                                      enabled: event.currentTarget.checked
+                                    }
+                                  },
+                                  {
+                                    schedule: true
+                                  }
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Push-To-Top Height</span>
+                              <input
+                                data-testid="player-start-movement-push-to-top-height"
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={
+                                  playerStartMovementTemplateNumberDraft.pushToTopHeight
+                                }
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
+                                  setPlayerStartMovementTemplateNumberDraft(
+                                    (draft) => ({
+                                      ...draft,
+                                      pushToTopHeight: nextValue
+                                    })
+                                  );
+                                }}
+                                onBlur={() =>
+                                  commitPlayerStartMovementTemplateDraft()
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    commitPlayerStartMovementTemplateDraft
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="form-section">
                           <div className="label">Jump</div>
                           <label className="form-field form-field--toggle">
                             <span className="label">Enabled</span>
