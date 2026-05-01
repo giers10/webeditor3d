@@ -342,6 +342,11 @@ export interface PlayerStartCrouchSettings {
   speedMultiplier: number;
 }
 
+export interface PlayerStartEdgeAssistSettings {
+  enabled: boolean;
+  pushToTopHeight: number;
+}
+
 export interface PlayerStartMovementTemplate {
   kind: PlayerStartMovementTemplateKind;
   moveSpeed: number;
@@ -351,6 +356,7 @@ export interface PlayerStartMovementTemplate {
   jump: PlayerStartJumpSettings;
   sprint: PlayerStartSprintSettings;
   crouch: PlayerStartCrouchSettings;
+  edgeAssist: PlayerStartEdgeAssistSettings;
 }
 
 export interface PlayerStartMovementTemplateOverrides {
@@ -362,6 +368,7 @@ export interface PlayerStartMovementTemplateOverrides {
   jump?: Partial<PlayerStartJumpSettings>;
   sprint?: Partial<PlayerStartSprintSettings>;
   crouch?: Partial<PlayerStartCrouchSettings>;
+  edgeAssist?: Partial<PlayerStartEdgeAssistSettings>;
 }
 
 export interface SoundEmitterEntity extends PositionedEntity {
@@ -506,6 +513,8 @@ export const DEFAULT_PLAYER_START_BUNNY_HOP = false;
 export const DEFAULT_PLAYER_START_BUNNY_HOP_BOOST = 0.05;
 export const DEFAULT_PLAYER_START_SPRINT_SPEED_MULTIPLIER = 1.65;
 export const DEFAULT_PLAYER_START_CROUCH_SPEED_MULTIPLIER = 0.45;
+export const DEFAULT_PLAYER_START_EDGE_ASSIST_ENABLED = true;
+export const DEFAULT_PLAYER_START_PUSH_TO_TOP_HEIGHT = 0.55;
 export const DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES: PlayerStartMovementCapabilities =
   {
     jump: true,
@@ -530,6 +539,11 @@ export const DEFAULT_PLAYER_START_SPRINT_SETTINGS: PlayerStartSprintSettings = {
 export const DEFAULT_PLAYER_START_CROUCH_SETTINGS: PlayerStartCrouchSettings = {
   speedMultiplier: DEFAULT_PLAYER_START_CROUCH_SPEED_MULTIPLIER
 };
+export const DEFAULT_PLAYER_START_EDGE_ASSIST_SETTINGS: PlayerStartEdgeAssistSettings =
+  {
+    enabled: DEFAULT_PLAYER_START_EDGE_ASSIST_ENABLED,
+    pushToTopHeight: DEFAULT_PLAYER_START_PUSH_TO_TOP_HEIGHT
+  };
 export const RESPONSIVE_PLAYER_START_JUMP_BUFFER_MS = 120;
 export const RESPONSIVE_PLAYER_START_COYOTE_TIME_MS = 120;
 export const RESPONSIVE_PLAYER_START_VARIABLE_JUMP_MAX_HOLD_MS = 180;
@@ -1132,6 +1146,15 @@ function clonePlayerStartCrouchSettings(
   };
 }
 
+function clonePlayerStartEdgeAssistSettings(
+  settings: PlayerStartEdgeAssistSettings
+): PlayerStartEdgeAssistSettings {
+  return {
+    enabled: settings.enabled,
+    pushToTopHeight: settings.pushToTopHeight
+  };
+}
+
 export function clonePlayerStartMovementTemplate(
   template: PlayerStartMovementTemplate
 ): PlayerStartMovementTemplate {
@@ -1143,7 +1166,8 @@ export function clonePlayerStartMovementTemplate(
     capabilities: clonePlayerStartMovementCapabilities(template.capabilities),
     jump: clonePlayerStartJumpSettings(template.jump),
     sprint: clonePlayerStartSprintSettings(template.sprint),
-    crouch: clonePlayerStartCrouchSettings(template.crouch)
+    crouch: clonePlayerStartCrouchSettings(template.crouch),
+    edgeAssist: clonePlayerStartEdgeAssistSettings(template.edgeAssist)
   };
 }
 
@@ -1402,7 +1426,8 @@ export function createPlayerStartMovementTemplate(
           capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
           jump: RESPONSIVE_PLAYER_START_JUMP_SETTINGS,
           sprint: DEFAULT_PLAYER_START_SPRINT_SETTINGS,
-          crouch: DEFAULT_PLAYER_START_CROUCH_SETTINGS
+          crouch: DEFAULT_PLAYER_START_CROUCH_SETTINGS,
+          edgeAssist: DEFAULT_PLAYER_START_EDGE_ASSIST_SETTINGS
         }
       : {
           moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
@@ -1411,7 +1436,8 @@ export function createPlayerStartMovementTemplate(
           capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
           jump: DEFAULT_PLAYER_START_JUMP_SETTINGS,
           sprint: DEFAULT_PLAYER_START_SPRINT_SETTINGS,
-          crouch: DEFAULT_PLAYER_START_CROUCH_SETTINGS
+          crouch: DEFAULT_PLAYER_START_CROUCH_SETTINGS,
+          edgeAssist: DEFAULT_PLAYER_START_EDGE_ASSIST_SETTINGS
         };
   const moveSpeed = overrides.moveSpeed ?? preset.moveSpeed;
   const maxSpeed = overrides.maxSpeed ?? preset.maxSpeed;
@@ -1443,6 +1469,12 @@ export function createPlayerStartMovementTemplate(
   const crouch: PlayerStartCrouchSettings = {
     speedMultiplier:
       overrides.crouch?.speedMultiplier ?? preset.crouch.speedMultiplier
+  };
+  const edgeAssist: PlayerStartEdgeAssistSettings = {
+    enabled: overrides.edgeAssist?.enabled ?? preset.edgeAssist.enabled,
+    pushToTopHeight:
+      overrides.edgeAssist?.pushToTopHeight ??
+      preset.edgeAssist.pushToTopHeight
   };
 
   assertPositiveFiniteNumber(moveSpeed, "Player Start move speed");
@@ -1499,6 +1531,11 @@ export function createPlayerStartMovementTemplate(
     crouch.speedMultiplier,
     "Player Start crouch speed multiplier"
   );
+  assertBoolean(edgeAssist.enabled, "Player Start edge assist enabled setting");
+  assertNonNegativeFiniteNumber(
+    edgeAssist.pushToTopHeight,
+    "Player Start push-to-top height"
+  );
 
   return {
     kind,
@@ -1508,7 +1545,8 @@ export function createPlayerStartMovementTemplate(
     capabilities,
     jump,
     sprint,
-    crouch
+    crouch,
+    edgeAssist
   };
 }
 
@@ -1525,7 +1563,8 @@ export function inferPlayerStartMovementTemplateKind(
     capabilities: template.capabilities,
     jump: template.jump,
     sprint: template.sprint,
-    crouch: template.crouch
+    crouch: template.crouch,
+    edgeAssist: template.edgeAssist
   });
 
   for (const presetKind of PLAYER_START_MOVEMENT_TEMPLATE_KINDS) {
@@ -1581,7 +1620,13 @@ export function inferPlayerStartMovementTemplateKind(
           .speedMultiplier &&
       candidate.crouch.speedMultiplier ===
         createPlayerStartMovementTemplate({ kind: presetKind }).crouch
-          .speedMultiplier
+          .speedMultiplier &&
+      candidate.edgeAssist.enabled ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).edgeAssist
+          .enabled &&
+      candidate.edgeAssist.pushToTopHeight ===
+        createPlayerStartMovementTemplate({ kind: presetKind }).edgeAssist
+          .pushToTopHeight
     ) {
       return presetKind;
     }
@@ -1644,7 +1689,9 @@ export function arePlayerStartMovementTemplatesEqual(
     left.jump.bunnyHop === right.jump.bunnyHop &&
     left.jump.bunnyHopBoost === right.jump.bunnyHopBoost &&
     left.sprint.speedMultiplier === right.sprint.speedMultiplier &&
-    left.crouch.speedMultiplier === right.crouch.speedMultiplier
+    left.crouch.speedMultiplier === right.crouch.speedMultiplier &&
+    left.edgeAssist.enabled === right.edgeAssist.enabled &&
+    left.edgeAssist.pushToTopHeight === right.edgeAssist.pushToTopHeight
   );
 }
 

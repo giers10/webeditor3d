@@ -97,6 +97,7 @@ import {
   type PlayerStartJumpSettings,
   type PlayerStartMovementCapabilities,
   type PlayerStartCrouchSettings,
+  type PlayerStartEdgeAssistSettings,
   type PlayerStartSprintSettings,
   type PlayerStartMovementTemplate
 } from "../entities/entity-instances";
@@ -309,6 +310,7 @@ export interface RuntimePlayerMovement {
   jump: PlayerStartJumpSettings;
   sprint: PlayerStartSprintSettings;
   crouch: PlayerStartCrouchSettings;
+  edgeAssist: PlayerStartEdgeAssistSettings;
 }
 
 export interface RuntimeSceneEntry {
@@ -700,6 +702,15 @@ function clonePlayerStartCrouchSettings(
   };
 }
 
+function clonePlayerStartEdgeAssistSettings(
+  edgeAssist: PlayerStartEdgeAssistSettings
+): PlayerStartEdgeAssistSettings {
+  return {
+    enabled: edgeAssist.enabled,
+    pushToTopHeight: edgeAssist.pushToTopHeight
+  };
+}
+
 function cloneRuntimePlayerMovement(
   movement: RuntimePlayerMovement
 ): RuntimePlayerMovement {
@@ -711,7 +722,8 @@ function cloneRuntimePlayerMovement(
     capabilities: clonePlayerStartMovementCapabilities(movement.capabilities),
     jump: clonePlayerStartJumpSettings(movement.jump),
     sprint: clonePlayerStartSprintSettings(movement.sprint),
-    crouch: clonePlayerStartCrouchSettings(movement.crouch)
+    crouch: clonePlayerStartCrouchSettings(movement.crouch),
+    edgeAssist: clonePlayerStartEdgeAssistSettings(movement.edgeAssist)
   };
 }
 
@@ -730,7 +742,10 @@ function buildRuntimePlayerMovement(
     ),
     jump: clonePlayerStartJumpSettings(resolvedTemplate.jump),
     sprint: clonePlayerStartSprintSettings(resolvedTemplate.sprint),
-    crouch: clonePlayerStartCrouchSettings(resolvedTemplate.crouch)
+    crouch: clonePlayerStartCrouchSettings(resolvedTemplate.crouch),
+    edgeAssist: clonePlayerStartEdgeAssistSettings(
+      resolvedTemplate.edgeAssist
+    )
   };
 }
 
