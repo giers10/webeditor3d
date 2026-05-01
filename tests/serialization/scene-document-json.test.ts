@@ -62,6 +62,7 @@ import {
   WHITEBOX_GEOMETRY_SCENE_DOCUMENT_VERSION,
   WORLD_TIME_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
   WORLD_ENVIRONMENT_SCENE_DOCUMENT_VERSION,
+  WHITEBOX_FACE_CLIMBABLE_SCENE_DOCUMENT_VERSION,
   createEmptySceneDocument
 } from "../../src/document/scene-document";
 import { migrateSceneDocument } from "../../src/document/migrate-scene-document";
