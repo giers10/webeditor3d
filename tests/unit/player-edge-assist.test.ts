@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { FIRST_PERSON_PLAYER_SHAPE } from "../../src/runtime-three/player-collision";
 import {
+  resolvePlayerLedgeGrabTarget,
   resolvePlayerEdgeAssistTopOut,
   shouldAttemptPlayerEdgeAssist
 } from "../../src/runtime-three/player-edge-assist";
@@ -108,6 +109,89 @@ describe("player edge assist", () => {
         normal: { x: 0, y: 1, z: 0 },
         slopeDegrees: 0
       })
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("resolves an upper-body ledge grab target above push-to-top height", () => {
+    const topY = 2;
+    const result = resolvePlayerLedgeGrabTarget({
+      feetPosition: {
+        x: 0,
+        y: 1,
+        z: 0
+      },
+      shape: FIRST_PERSON_PLAYER_SHAPE,
+      direction: {
+        x: 0,
+        y: 0,
+        z: 1
+      },
+      pushToTopHeight: 0.55,
+      canOccupyShape: (feetPosition) =>
+        feetPosition.z <= 0.08 || feetPosition.y >= topY,
+      probeGround: (feetPosition, _shape, maxDistance) => {
+        const distance = feetPosition.y - topY;
+
+        return feetPosition.z > 0.1 && distance >= 0 && distance <= maxDistance
+          ? {
+              grounded: true,
+              distance,
+              normal: { x: 0, y: 1, z: 0 },
+              slopeDegrees: 0
+            }
+          : {
+              grounded: false,
+              distance: null,
+              normal: null,
+              slopeDegrees: null
+            };
+      }
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.standFeetPosition.y).toBeCloseTo(topY);
+    expect(result?.hangFeetPosition.y).toBeLessThan(
+      result?.standFeetPosition.y ?? 0
+    );
+    expect(result?.topOutHeight).toBeGreaterThan(0.55);
+    expect(result?.forwardDistance).toBeGreaterThan(0);
+  });
+
+  it("does not turn the push-to-top height band into a ledge grab", () => {
+    const topY = 1.35;
+    const result = resolvePlayerLedgeGrabTarget({
+      feetPosition: {
+        x: 0,
+        y: 1,
+        z: 0
+      },
+      shape: FIRST_PERSON_PLAYER_SHAPE,
+      direction: {
+        x: 0,
+        y: 0,
+        z: 1
+      },
+      pushToTopHeight: 0.55,
+      canOccupyShape: () => true,
+      probeGround: (feetPosition, _shape, maxDistance) => {
+        const distance = feetPosition.y - topY;
+
+        return distance >= 0 && distance <= maxDistance
+          ? {
+              grounded: true,
+              distance,
+              normal: { x: 0, y: 1, z: 0 },
+              slopeDegrees: 0
+            }
+          : {
+              grounded: false,
+              distance: null,
+              normal: null,
+              slopeDegrees: null
+            };
+      }
     });
 
     expect(result).toBeNull();
