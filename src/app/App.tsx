@@ -15040,6 +15040,9 @@ export function App({ store, initialStatusMessage }: AppProps) {
                   viewportGridVisible={viewportGridVisible}
                   selection={editorState.selection}
                   activeSelectionId={editorState.activeSelectionId}
+                  terrainLodGridVisibleTerrainIds={
+                    terrainLodGridVisibleTerrainIds
+                  }
                   terrainBrushState={activeTerrainBrushState}
                   toolMode={editorState.toolMode}
                   toolPreview={viewportToolPreview}
