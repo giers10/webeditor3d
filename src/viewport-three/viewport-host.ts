@@ -9778,6 +9778,7 @@ export class ViewportHost {
       !cancelled &&
       dirtyBounds !== null &&
       changed;
+    const finalDirtyBounds = dirtyBounds;
     const toolState = this.activeTerrainBrushStroke.toolState;
     this.activeTerrainBrushStroke = null;
     this.terrainBrushPreviewGroup.visible = false;
@@ -9790,7 +9791,7 @@ export class ViewportHost {
     const patch = createTerrainBrushPatchFromTerrains({
       before: activeStroke.baseTerrain,
       after: finalPreviewTerrain,
-      dirtyBounds
+      dirtyBounds: finalDirtyBounds!
     });
 
     const committed =
