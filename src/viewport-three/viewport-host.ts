@@ -9689,8 +9689,10 @@ export class ViewportHost {
     }
 
     const cancelled = event.type === "pointercancel";
+    const activeStroke = this.activeTerrainBrushStroke;
     let finalPreviewTerrain = this.activeTerrainBrushStroke.previewTerrain;
     let changed = this.activeTerrainBrushStroke.changed;
+    let dirtyBounds = this.activeTerrainBrushStroke.dirtyBounds;
 
     if (!cancelled) {
       const hit = this.getTerrainBrushHitAtClientPosition(
@@ -9710,6 +9712,10 @@ export class ViewportHost {
           this.activeTerrainBrushStroke.referenceHeight
         );
         changed ||= segmentResult.changed;
+        dirtyBounds = this.mergeTerrainBrushDirtyBounds(
+          dirtyBounds,
+          segmentResult.dirtyBounds
+        );
 
         if (
           segmentResult.lastAppliedPoint.x !== hit.point.x ||
@@ -9725,17 +9731,17 @@ export class ViewportHost {
             this.activeTerrainBrushStroke.referenceHeight
           );
           changed ||= pointResult.changed;
+          dirtyBounds = this.mergeTerrainBrushDirtyBounds(
+            dirtyBounds,
+            pointResult.dirtyBounds
+          );
         }
       }
     }
 
-    const baseTerrain =
-      this.currentDocument?.terrains[
-        this.activeTerrainBrushStroke.toolState.terrainId
-      ] ?? null;
     const commit =
       !cancelled &&
-      baseTerrain !== null &&
+      dirtyBounds !== null &&
       changed;
     const toolState = this.activeTerrainBrushStroke.toolState;
     this.activeTerrainBrushStroke = null;
@@ -9746,9 +9752,16 @@ export class ViewportHost {
       return true;
     }
 
+    const patch = createTerrainBrushPatchFromTerrains({
+      before: activeStroke.baseTerrain,
+      after: finalPreviewTerrain,
+      dirtyBounds
+    });
+
     const committed =
       this.terrainBrushCommitHandler?.({
-        terrain: finalPreviewTerrain,
+        terrainId: finalPreviewTerrain.id,
+        patch,
         commandLabel: getTerrainBrushCommandLabel(toolState.tool),
         tool: toolState.tool
       }) === true;
