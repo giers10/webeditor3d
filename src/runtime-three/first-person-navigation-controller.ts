@@ -619,6 +619,260 @@ export class FirstPersonNavigationController implements NavigationController {
     };
   }
 
+  private createLedgeGrabLocomotionState(options: {
+    inputMagnitude: number;
+    direction: Vec3;
+  }): RuntimeLocomotionState {
+    return {
+      ...createIdleRuntimeLocomotionState("ledgeGrab"),
+      inputMagnitude: options.inputMagnitude,
+      contact: {
+        collisionCount: 1,
+        collidedAxes: {
+          x: Math.abs(options.direction.x) > 0.01,
+          y: false,
+          z: Math.abs(options.direction.z) > 0.01
+        },
+        groundNormal: null,
+        groundDistance: null,
+        slopeDegrees: null
+      }
+    };
+  }
+
+  private enterLedgeGrab(
+    target: RuntimePlayerLedgeGrabTarget,
+    inputMagnitude: number
+  ): void {
+    if (this.context === null) {
+      return;
+    }
+
+    const volumeState = this.context.resolvePlayerVolumeState(
+      target.hangFeetPosition
+    );
+
+    this.ledgeGrabTarget = target;
+    this.climbSurface = null;
+    this.climbLatchBlocked = false;
+    this.feetPosition = { ...target.hangFeetPosition };
+    this.activePlayerShape = cloneFirstPersonPlayerShape(
+      this.standingPlayerShape
+    );
+    this.verticalVelocity = 0;
+    this.jumpBufferRemainingMs = 0;
+    this.coyoteTimeRemainingMs = 0;
+    this.jumpHoldRemainingMs = 0;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
+    this.previousPlanarDisplacement = { x: 0, y: 0, z: 0 };
+    this.grounded = false;
+    this.inWaterVolume = volumeState.inWater;
+    this.inFogVolume = volumeState.inFog;
+    this.smoothedFeetY = this.feetPosition.y;
+    this.locomotionState = this.createLedgeGrabLocomotionState({
+      inputMagnitude,
+      direction: target.direction
+    });
+  }
+
+  private completeLedgeGrabMantle(
+    target: RuntimePlayerLedgeGrabTarget,
+    inputMagnitude: number,
+    dt: number,
+    playerMovement: RuntimePlayerMovement,
+    jumpPressed: boolean
+  ): boolean {
+    if (
+      this.context === null ||
+      !this.context.canOccupyPlayerShape(
+        target.standFeetPosition,
+        this.standingPlayerShape
+      )
+    ) {
+      return false;
+    }
+
+    const previousFeetPosition = this.feetPosition;
+    const volumeState = this.context.resolvePlayerVolumeState(
+      target.standFeetPosition
+    );
+    const displacement = {
+      x: target.standFeetPosition.x - previousFeetPosition.x,
+      y: target.standFeetPosition.y - previousFeetPosition.y,
+      z: target.standFeetPosition.z - previousFeetPosition.z
+    };
+
+    this.ledgeGrabTarget = null;
+    this.feetPosition = { ...target.standFeetPosition };
+    this.activePlayerShape = cloneFirstPersonPlayerShape(
+      this.standingPlayerShape
+    );
+    this.verticalVelocity = 0;
+    this.jumpBufferRemainingMs = 0;
+    this.coyoteTimeRemainingMs = playerMovement.jump.coyoteTimeMs;
+    this.jumpHoldRemainingMs = 0;
+    this.jumpPressed = jumpPressed;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
+    this.previousPlanarDisplacement = {
+      x: displacement.x,
+      y: 0,
+      z: displacement.z
+    };
+    this.grounded = true;
+    this.inWaterVolume = volumeState.inWater;
+    this.inFogVolume = volumeState.inFog;
+    this.smoothedFeetY = this.feetPosition.y;
+    this.locomotionState = {
+      ...createIdleRuntimeLocomotionState("grounded"),
+      gait: "walk",
+      inputMagnitude,
+      requestedPlanarSpeed: CLIMB_SPEED_METERS_PER_SECOND,
+      planarSpeed:
+        dt > 0 ? Math.hypot(displacement.x, displacement.z) / dt : 0
+    };
+
+    return true;
+  }
+
+  private releaseLedgeGrab(
+    inputMagnitude: number,
+    playerMovement: RuntimePlayerMovement,
+    jumpPressed: boolean
+  ): void {
+    if (this.context === null) {
+      return;
+    }
+
+    const volumeState = this.context.resolvePlayerVolumeState(
+      this.feetPosition
+    );
+
+    this.ledgeGrabTarget = null;
+    this.climbSurface = null;
+    this.climbLatchBlocked = true;
+    this.activePlayerShape = cloneFirstPersonPlayerShape(
+      this.standingPlayerShape
+    );
+    this.verticalVelocity = 0;
+    this.jumpBufferRemainingMs = 0;
+    this.coyoteTimeRemainingMs = 0;
+    this.jumpHoldRemainingMs = 0;
+    this.jumpPressed = jumpPressed;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
+    this.previousPlanarDisplacement = { x: 0, y: 0, z: 0 };
+    this.grounded = false;
+    this.inWaterVolume = volumeState.inWater;
+    this.inFogVolume = volumeState.inFog;
+    this.smoothedFeetY = this.feetPosition.y;
+    this.locomotionState = {
+      ...createIdleRuntimeLocomotionState("airborne"),
+      inputMagnitude,
+      requestedPlanarSpeed: playerMovement.moveSpeed * inputMagnitude,
+      verticalVelocity: 0
+    };
+  }
+
+  private stepLedgeGrab(
+    dt: number,
+    inputState: ReturnType<typeof resolvePlayerStartActionInputs>,
+    playerMovement: RuntimePlayerMovement,
+    movementYawRadians: number
+  ): boolean {
+    if (this.context === null || this.ledgeGrabTarget === null) {
+      return false;
+    }
+
+    const target = this.ledgeGrabTarget;
+    const jumpPressed = inputState.jump > CLIMB_INPUT_ACTIVE_THRESHOLD;
+    const climbPressed = inputState.climb > CLIMB_INPUT_ACTIVE_THRESHOLD;
+    const crouchPressed = inputState.crouch > CLIMB_INPUT_ACTIVE_THRESHOLD;
+    const inputDirection = resolveClimbPlanarInputDirection(
+      inputState,
+      movementYawRadians
+    );
+    const ledgeDirectionDot =
+      inputDirection.direction === null
+        ? 0
+        : dotPlanarVec3(inputDirection.direction, target.direction);
+    const movingIntoLedge =
+      inputDirection.inputMagnitude > 0.25 && ledgeDirectionDot > 0.35;
+    const movingAwayFromLedge =
+      inputDirection.inputMagnitude > 0.25 && ledgeDirectionDot < -0.35;
+
+    if (
+      !playerMovement.edgeAssist.enabled ||
+      !this.context.canOccupyPlayerShape(
+        target.hangFeetPosition,
+        this.standingPlayerShape
+      )
+    ) {
+      this.releaseLedgeGrab(
+        inputDirection.inputMagnitude,
+        playerMovement,
+        jumpPressed
+      );
+      this.updateCameraTransform();
+      this.publishTelemetry();
+      return true;
+    }
+
+    if (crouchPressed || movingAwayFromLedge) {
+      this.releaseLedgeGrab(
+        inputDirection.inputMagnitude,
+        playerMovement,
+        jumpPressed
+      );
+      this.updateCameraTransform();
+      this.publishTelemetry();
+      return true;
+    }
+
+    if (
+      (climbPressed || jumpPressed || movingIntoLedge) &&
+      this.completeLedgeGrabMantle(
+        target,
+        inputDirection.inputMagnitude,
+        dt,
+        playerMovement,
+        jumpPressed
+      )
+    ) {
+      this.updateCameraTransform();
+      this.publishTelemetry();
+      return true;
+    }
+
+    this.feetPosition = { ...target.hangFeetPosition };
+    this.activePlayerShape = cloneFirstPersonPlayerShape(
+      this.standingPlayerShape
+    );
+    this.verticalVelocity = 0;
+    this.jumpBufferRemainingMs = 0;
+    this.coyoteTimeRemainingMs = 0;
+    this.jumpHoldRemainingMs = 0;
+    this.jumpPressed = jumpPressed;
+    this.latestJumpStarted = false;
+    this.latestHeadBump = false;
+    this.previousPlanarDisplacement = { x: 0, y: 0, z: 0 };
+    this.grounded = false;
+    this.smoothedFeetY = this.feetPosition.y;
+    this.locomotionState = this.createLedgeGrabLocomotionState({
+      inputMagnitude: inputDirection.inputMagnitude,
+      direction: target.direction
+    });
+    this.inWaterVolume =
+      this.context.resolvePlayerVolumeState(this.feetPosition).inWater;
+    this.inFogVolume =
+      this.context.resolvePlayerVolumeState(this.feetPosition).inFog;
+
+    this.updateCameraTransform();
+    this.publishTelemetry();
+    return true;
+  }
+
   private stepClimbing(
     dt: number,
     inputState: ReturnType<typeof resolvePlayerStartActionInputs>,
