@@ -5,7 +5,10 @@ import { createApplyTerrainBrushPatchCommand } from "../../src/commands/apply-te
 import { createDeleteTerrainCommand } from "../../src/commands/delete-terrain-command";
 import { createUpsertTerrainCommand } from "../../src/commands/upsert-terrain-command";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
-import { createTerrain } from "../../src/document/terrains";
+import {
+  createTerrain,
+  getTerrainRenderDirtyBoundsSince
+} from "../../src/document/terrains";
 
 describe("terrain commands", () => {
   it("creates a terrain and restores it through undo and redo", () => {
@@ -177,12 +180,26 @@ describe("terrain commands", () => {
     );
 
     const patchedTerrain = store.getState().document.terrains[terrain.id];
+    const executeDirtyState = getTerrainRenderDirtyBoundsSince(
+      terrainBeforePatch!,
+      0
+    );
 
     expect(patchedTerrain).toBe(terrainBeforePatch);
     expect(patchedTerrain?.heights[4]).toBe(2);
     expect(patchedTerrain?.paintWeights[1]).toBe(0.5);
+    expect(executeDirtyState.dirtyBounds).toEqual({
+      minSampleX: 0,
+      maxSampleX: 1,
+      minSampleZ: 0,
+      maxSampleZ: 1
+    });
 
     expect(store.undo()).toBe(true);
+    const undoDirtyState = getTerrainRenderDirtyBoundsSince(
+      terrainBeforePatch!,
+      executeDirtyState.revision
+    );
     expect(store.getState().document.terrains[terrain.id]).toBe(
       terrainBeforePatch
     );
@@ -190,6 +207,12 @@ describe("terrain commands", () => {
     expect(store.getState().document.terrains[terrain.id]?.paintWeights[1]).toBe(
       0
     );
+    expect(undoDirtyState.dirtyBounds).toEqual({
+      minSampleX: 0,
+      maxSampleX: 1,
+      minSampleZ: 0,
+      maxSampleZ: 1
+    });
 
     expect(store.redo()).toBe(true);
     expect(store.getState().document.terrains[terrain.id]).toBe(
