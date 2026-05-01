@@ -309,7 +309,7 @@ export function resolvePlayerLedgeGrabTarget(options: {
       const topOutHeight = standFeetPosition.y - options.feetPosition.y;
 
       if (
-        topOutHeight <= minLedgeHeight + VECTOR_EPSILON ||
+        topOutHeight <= options.pushToTopHeight + VECTOR_EPSILON ||
         topOutHeight > maxLedgeHeight + VECTOR_EPSILON ||
         !options.canOccupyShape(standFeetPosition, options.shape)
       ) {
