@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createEditorStore } from "../../src/app/editor-store";
+import { createApplyTerrainBrushPatchCommand } from "../../src/commands/apply-terrain-brush-patch-command";
 import { createDeleteTerrainCommand } from "../../src/commands/delete-terrain-command";
 import { createUpsertTerrainCommand } from "../../src/commands/upsert-terrain-command";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
@@ -145,5 +146,58 @@ describe("terrain commands", () => {
 
     expect(store.redo()).toBe(true);
     expect(store.getState().document.terrains[terrain.id]).toBeUndefined();
+  });
+
+  it("applies sparse terrain brush patches without replacing the terrain object", () => {
+    const terrain = createTerrain({
+      id: "terrain-patch-main",
+      sampleCountX: 3,
+      sampleCountZ: 3,
+      heights: new Array(9).fill(0)
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Terrain Patch Scene" }),
+        terrains: {
+          [terrain.id]: terrain
+        }
+      }
+    });
+    const terrainBeforePatch = store.getState().document.terrains[terrain.id];
+
+    store.executeCommand(
+      createApplyTerrainBrushPatchCommand({
+        label: "Patch terrain fixture",
+        patch: {
+          terrainId: terrain.id,
+          heightSamples: [{ index: 4, before: 0, after: 2 }],
+          paintWeights: [{ index: 1, before: 0, after: 0.5 }]
+        }
+      })
+    );
+
+    const patchedTerrain = store.getState().document.terrains[terrain.id];
+
+    expect(patchedTerrain).toBe(terrainBeforePatch);
+    expect(patchedTerrain?.heights[4]).toBe(2);
+    expect(patchedTerrain?.paintWeights[1]).toBe(0.5);
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.terrains[terrain.id]).toBe(
+      terrainBeforePatch
+    );
+    expect(store.getState().document.terrains[terrain.id]?.heights[4]).toBe(0);
+    expect(store.getState().document.terrains[terrain.id]?.paintWeights[1]).toBe(
+      0
+    );
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.terrains[terrain.id]).toBe(
+      terrainBeforePatch
+    );
+    expect(store.getState().document.terrains[terrain.id]?.heights[4]).toBe(2);
+    expect(store.getState().document.terrains[terrain.id]?.paintWeights[1]).toBe(
+      0.5
+    );
   });
 });
