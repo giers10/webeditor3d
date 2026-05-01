@@ -3432,11 +3432,16 @@ export function App({ store, initialStatusMessage }: AppProps) {
     editorSimulationControllerRef.current = new EditorSimulationController();
   }
   const editorSimulationController = editorSimulationControllerRef.current;
+  const editorValidationOptions = {
+    terrainSampleValues: "skip" as const
+  };
   const documentValidation = validateSceneDocumentLocalBuildContent(
-    editorState.document
+    editorState.document,
+    editorValidationOptions
   );
   const projectValidation = validateProjectDocument(
-    editorState.projectDocument
+    editorState.projectDocument,
+    editorValidationOptions
   );
   const projectSchedulingValidation = validateProjectSchedulingResources(
     editorState.projectDocument
