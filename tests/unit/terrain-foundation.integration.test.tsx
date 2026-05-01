@@ -28,6 +28,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setWhiteboxSelectionMode: ReturnType<typeof vi.fn>;
     setWhiteboxSnapSettings: ReturnType<typeof vi.fn>;
     setToolMode: ReturnType<typeof vi.fn>;
+    setTerrainLodGridVisibleTerrainIds: ReturnType<typeof vi.fn>;
     setCreationPreview: ReturnType<typeof vi.fn>;
     setTransformSession: ReturnType<typeof vi.fn>;
     focusSelection: ReturnType<typeof vi.fn>;
@@ -59,6 +60,7 @@ const { MockViewportHost, viewportHostInstances } = vi.hoisted(() => {
     setWhiteboxSelectionMode = vi.fn();
     setWhiteboxSnapSettings = vi.fn();
     setToolMode = vi.fn();
+    setTerrainLodGridVisibleTerrainIds = vi.fn();
     setCreationPreview = vi.fn();
     setTransformSession = vi.fn();
     focusSelection = vi.fn();
@@ -185,5 +187,38 @@ describe("Terrain foundation", () => {
         store.getState().document.terrains[createdTerrain.id]?.collisionEnabled
       ).toBe(false);
     });
+  });
+
+  it("keeps terrain LoD grid hidden by default and exposes an inspector toggle", async () => {
+    const store = createEditorStore();
+
+    render(<App store={store} />);
+
+    await waitFor(() => {
+      expect(viewportHostInstances.length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    fireEvent.click(await screen.findByTestId("add-menu-terrain"));
+
+    const checkbox = await screen.findByTestId("terrain-lod-grid-visible");
+
+    expect(checkbox).not.toBeChecked();
+
+    fireEvent.click(checkbox);
+
+    const createdTerrain = Object.values(store.getState().document.terrains)[0];
+
+    if (createdTerrain === undefined) {
+      throw new Error("Expected the created terrain to exist.");
+    }
+
+    await waitFor(() => {
+      expect(
+        viewportHostInstances[0].setTerrainLodGridVisibleTerrainIds
+      ).toHaveBeenLastCalledWith([createdTerrain.id]);
+    });
+
+    expect(checkbox).toBeChecked();
   });
 });
