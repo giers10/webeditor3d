@@ -6,7 +6,7 @@ import type {
 } from "../core/terrain-brush";
 import type { ToolMode } from "../core/tool-mode";
 
-import type { EditorCommand } from "./command";
+import type { CommandContext, EditorCommand } from "./command";
 
 interface ApplyTerrainBrushPatchCommandOptions {
   patch: TerrainBrushPatch;
@@ -54,7 +54,7 @@ export function createApplyTerrainBrushPatchCommand(
   let previousToolMode: ToolMode | null = null;
 
   const applyPatch = (
-    context: Parameters<EditorCommand["execute"]>[0],
+    context: CommandContext,
     direction: "forward" | "backward"
   ) => {
     const currentDocument = context.getDocument();
