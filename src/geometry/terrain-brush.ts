@@ -30,6 +30,8 @@ export interface TerrainBrushDirtySampleBounds {
 export interface TerrainBrushStampMutationResult {
   changed: boolean;
   dirtyBounds: TerrainBrushDirtySampleBounds | null;
+  heightSampleIndices: number[];
+  paintWeightIndices: number[];
 }
 
 interface TerrainSmoothHeightSource {
@@ -243,11 +245,27 @@ function setTerrainSamplePaintWeights(
   sampleX: number,
   sampleZ: number,
   weights: readonly [number, number, number, number]
-) {
+): number[] {
   const offset = getTerrainPaintWeightSampleOffset(terrain, sampleX, sampleZ);
-  paintWeights[offset] = weights[1];
-  paintWeights[offset + 1] = weights[2];
-  paintWeights[offset + 2] = weights[3];
+  const changedIndices: number[] = [];
+
+  for (
+    let layerOffset = 0;
+    layerOffset < TERRAIN_LAYER_COUNT - 1;
+    layerOffset += 1
+  ) {
+    const paintWeightIndex = offset + layerOffset;
+    const nextWeight = weights[layerOffset + 1] ?? 0;
+
+    if ((paintWeights[paintWeightIndex] ?? 0) === nextWeight) {
+      continue;
+    }
+
+    paintWeights[paintWeightIndex] = nextWeight;
+    changedIndices.push(paintWeightIndex);
+  }
+
+  return changedIndices;
 }
 
 export function applyTerrainBrushStamp(options: {
@@ -304,7 +322,9 @@ export function applyTerrainBrushStampInPlace(options: {
   if (minSampleX > maxSampleX || minSampleZ > maxSampleZ) {
     return {
       changed: false,
-      dirtyBounds: null
+      dirtyBounds: null,
+      heightSampleIndices: [],
+      paintWeightIndices: []
     };
   }
 
@@ -320,6 +340,8 @@ export function applyTerrainBrushStampInPlace(options: {
       : null;
   const smoothingStrength = clamp01(strength);
   let dirtyBounds: TerrainBrushDirtySampleBounds | null = null;
+  const heightSampleIndices: number[] = [];
+  const paintWeightIndices: number[] = [];
 
   const markDirty = (sampleX: number, sampleZ: number) => {
     if (dirtyBounds === null) {
@@ -411,14 +433,18 @@ export function applyTerrainBrushStampInPlace(options: {
             nextWeights[2] !== currentWeights[2] ||
             nextWeights[3] !== currentWeights[3]
           ) {
-            setTerrainSamplePaintWeights(
+            const changedPaintWeightIndices = setTerrainSamplePaintWeights(
               terrain.paintWeights,
               terrain,
               sampleX,
               sampleZ,
               nextWeights
             );
-            markDirty(sampleX, sampleZ);
+
+            if (changedPaintWeightIndices.length > 0) {
+              paintWeightIndices.push(...changedPaintWeightIndices);
+              markDirty(sampleX, sampleZ);
+            }
           }
           continue;
         }
@@ -426,6 +452,7 @@ export function applyTerrainBrushStampInPlace(options: {
 
       if (nextHeight !== currentHeight) {
         terrain.heights[sampleIndex] = nextHeight;
+        heightSampleIndices.push(sampleIndex);
         markDirty(sampleX, sampleZ);
       }
     }
@@ -433,16 +460,19 @@ export function applyTerrainBrushStampInPlace(options: {
 
   return {
     changed: dirtyBounds !== null,
-    dirtyBounds
+    dirtyBounds,
+    heightSampleIndices,
+    paintWeightIndices
   };
 }
 
 export function createTerrainBrushPatchFromTerrains(options: {
   before: Terrain;
   after: Terrain;
-  dirtyBounds: TerrainBrushDirtySampleBounds;
+  heightSampleIndices: Iterable<number>;
+  paintWeightIndices: Iterable<number>;
 }): TerrainBrushPatch {
-  const { before, after, dirtyBounds } = options;
+  const { before, after } = options;
 
   if (before.id !== after.id) {
     throw new Error("Terrain brush patches require matching terrain ids.");
@@ -461,67 +491,60 @@ export function createTerrainBrushPatchFromTerrains(options: {
 
   const heightSamples: TerrainBrushPatch["heightSamples"] = [];
   const paintWeights: TerrainBrushPatch["paintWeights"] = [];
-  const minSampleX = clamp(
-    Math.floor(dirtyBounds.minSampleX),
-    0,
-    before.sampleCountX - 1
-  );
-  const maxSampleX = clamp(
-    Math.ceil(dirtyBounds.maxSampleX),
-    0,
-    before.sampleCountX - 1
-  );
-  const minSampleZ = clamp(
-    Math.floor(dirtyBounds.minSampleZ),
-    0,
-    before.sampleCountZ - 1
-  );
-  const maxSampleZ = clamp(
-    Math.ceil(dirtyBounds.maxSampleZ),
-    0,
-    before.sampleCountZ - 1
-  );
+  const normalizeIndices = (
+    indices: Iterable<number>,
+    length: number,
+    label: string
+  ): number[] => {
+    const uniqueIndices = new Set<number>();
 
-  for (let sampleZ = minSampleZ; sampleZ <= maxSampleZ; sampleZ += 1) {
-    for (let sampleX = minSampleX; sampleX <= maxSampleX; sampleX += 1) {
-      const sampleIndex = getTerrainSampleIndex(before, sampleX, sampleZ);
-      const beforeHeight = before.heights[sampleIndex] ?? 0;
-      const afterHeight = after.heights[sampleIndex] ?? 0;
-
-      if (beforeHeight !== afterHeight) {
-        heightSamples.push({
-          index: sampleIndex,
-          before: beforeHeight,
-          after: afterHeight
-        });
+    for (const index of indices) {
+      if (!Number.isInteger(index) || index < 0 || index >= length) {
+        throw new Error(`${label} patch index ${index} is out of range.`);
       }
 
-      const paintOffset = getTerrainPaintWeightSampleOffset(
-        before,
-        sampleX,
-        sampleZ
-      );
-
-      for (
-        let layerOffset = 0;
-        layerOffset < TERRAIN_LAYER_COUNT - 1;
-        layerOffset += 1
-      ) {
-        const paintWeightIndex = paintOffset + layerOffset;
-        const beforeWeight = before.paintWeights[paintWeightIndex] ?? 0;
-        const afterWeight = after.paintWeights[paintWeightIndex] ?? 0;
-
-        if (beforeWeight === afterWeight) {
-          continue;
-        }
-
-        paintWeights.push({
-          index: paintWeightIndex,
-          before: beforeWeight,
-          after: afterWeight
-        });
-      }
+      uniqueIndices.add(index);
     }
+
+    return [...uniqueIndices].sort((left, right) => left - right);
+  };
+
+  for (const sampleIndex of normalizeIndices(
+    options.heightSampleIndices,
+    before.heights.length,
+    "Terrain height"
+  )) {
+    const beforeHeight = before.heights[sampleIndex] ?? 0;
+    const afterHeight = after.heights[sampleIndex] ?? 0;
+
+    if (beforeHeight === afterHeight) {
+      continue;
+    }
+
+    heightSamples.push({
+      index: sampleIndex,
+      before: beforeHeight,
+      after: afterHeight
+    });
+  }
+
+  for (const paintWeightIndex of normalizeIndices(
+    options.paintWeightIndices,
+    before.paintWeights.length,
+    "Terrain paint weight"
+  )) {
+    const beforeWeight = before.paintWeights[paintWeightIndex] ?? 0;
+    const afterWeight = after.paintWeights[paintWeightIndex] ?? 0;
+
+    if (beforeWeight === afterWeight) {
+      continue;
+    }
+
+    paintWeights.push({
+      index: paintWeightIndex,
+      before: beforeWeight,
+      after: afterWeight
+    });
   }
 
   return {
