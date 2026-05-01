@@ -105,6 +105,8 @@ import {
 } from "../document/paths";
 import {
   cloneTerrain,
+  getTerrainRenderDirtyBoundsSince,
+  getTerrainRenderDirtyRevision,
   getTerrains,
   type Terrain
 } from "../document/terrains";
@@ -803,6 +805,7 @@ export class ViewportHost {
     string,
     TerrainRenderObjects
   >();
+  private readonly terrainRenderRevisions = new Map<string, number>();
   private readonly pathRenderObjects = new Map<string, PathRenderObjects>();
   private readonly entityRenderObjects = new Map<string, EntityRenderObjects>();
   private readonly localLightRenderObjects = new Map<
