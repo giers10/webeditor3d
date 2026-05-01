@@ -755,6 +755,55 @@ describe("ViewportCanvas", () => {
     ).toHaveTextContent("terrain · smooth");
   });
 
+  it("passes terrain LoD grid visibility to the viewport host", async () => {
+    const sceneDocument = createEmptySceneDocument();
+
+    render(
+      <ViewportCanvas
+        panelId="topLeft"
+        world={sceneDocument.world}
+        sceneDocument={sceneDocument}
+        editorSimulationController={new EditorSimulationController()}
+        projectAssets={sceneDocument.assets}
+        loadedModelAssets={{}}
+        loadedImageAssets={{}}
+        whiteboxSelectionMode="object"
+        whiteboxSnapEnabled
+        whiteboxSnapStep={1}
+        viewportGridVisible={true}
+        selection={{ kind: "terrains", ids: ["terrain-selected"] }}
+        activeSelectionId="terrain-selected"
+        terrainLodGridVisibleTerrainIds={["terrain-selected"]}
+        terrainBrushState={null}
+        toolMode="select"
+        toolPreview={{ kind: "none" }}
+        transformSession={createInactiveTransformSession()}
+        cameraState={createDefaultViewportPanelCameraState()}
+        viewMode="perspective"
+        displayMode="normal"
+        layoutMode="single"
+        isActivePanel
+        focusRequestId={0}
+        focusSelection={{ kind: "none" }}
+        onSelectionChange={vi.fn()}
+        onTerrainBrushCommit={vi.fn(() => true)}
+        onCommitCreation={vi.fn(() => true)}
+        onCameraStateChange={vi.fn()}
+        onToolPreviewChange={vi.fn()}
+        onTransformSessionChange={vi.fn()}
+        onTransformCommit={vi.fn()}
+        onTransformCancel={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(viewportHostInstances).toHaveLength(1);
+      expect(
+        viewportHostInstances[0].setTerrainLodGridVisibleTerrainIds
+      ).toHaveBeenCalledWith(["terrain-selected"]);
+    });
+  });
+
   it("shows the active terrain paint layer in the viewport overlay", () => {
     const sceneDocument = createEmptySceneDocument();
     const terrainBrushState: ArmedTerrainBrushState = {
