@@ -65,13 +65,6 @@ interface EditorViewportDraftRecord {
   viewportLayoutState: ViewportLayoutState;
 }
 
-interface IndexedDbRequestLike<T> {
-  result: T;
-  error: DOMException | null;
-  onsuccess: ((event: Event) => void) | null;
-  onerror: ((event: Event) => void) | null;
-}
-
 function getErrorDetail(error: unknown): string {
   if (error instanceof Error && error.message.trim().length > 0) {
     return error.message.trim();
@@ -288,8 +281,9 @@ export class IndexedDbEditorDraftStorage implements EditorDraftStorage {
       "readonly"
     );
     const store = transaction.objectStore(EDITOR_DRAFT_OBJECT_STORE);
+    const done = transactionDone(transaction);
     const result = await requestToPromise(store.get(key));
-    await transactionDone(transaction);
+    await done;
     return result;
   }
 
@@ -299,9 +293,10 @@ export class IndexedDbEditorDraftStorage implements EditorDraftStorage {
       "readwrite"
     );
     const store = transaction.objectStore(EDITOR_DRAFT_OBJECT_STORE);
+    const done = transactionDone(transaction);
 
     store.put(value, key);
-    await transactionDone(transaction);
+    await done;
   }
 
   private loadLegacyDraft(): EditorDraftLoadResult {
@@ -555,15 +550,4 @@ export async function loadOrCreateEditorDraft(
         diagnostic: `${draftResult.message} Starting with a fresh empty document.`
       };
   }
-}
-
-export function createResolvedIndexedDbRequest<T>(
-  result: T
-): IndexedDbRequestLike<T> {
-  return {
-    result,
-    error: null,
-    onsuccess: null,
-    onerror: null
-  };
 }
