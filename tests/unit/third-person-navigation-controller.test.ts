@@ -110,6 +110,71 @@ function createRuntimeControllerContext(
   };
 }
 
+function createThirdPersonLedgeGrabContext(topY = 2) {
+  const playerStart = createPlayerStartEntity({
+    id: "entity-player-start-third-person-ledge-grab",
+    position: {
+      x: 0,
+      y: 1,
+      z: 0
+    },
+    inputBindings: {
+      keyboard: {
+        moveForward: "ArrowUp",
+        moveBackward: "ArrowDown",
+        moveLeft: "ArrowLeft",
+        moveRight: "ArrowRight"
+      }
+    }
+  });
+  const { context } = createRuntimeControllerContext(playerStart);
+
+  context.resolveFirstPersonMotion = (
+    feetPosition: Vec3,
+    motion: Vec3,
+    _shape: FirstPersonPlayerShape
+  ) => ({
+    feetPosition: {
+      x: feetPosition.x + motion.x * 0.2,
+      y: feetPosition.y + motion.y,
+      z: feetPosition.z + motion.z * 0.2
+    },
+    grounded: false,
+    collisionCount: 1,
+    groundCollisionNormal: null,
+    collidedAxes: {
+      x: false,
+      y: false,
+      z: true
+    }
+  });
+  Object.assign(context, {
+    probePlayerGround: vi.fn((feetPosition: Vec3) => {
+      const distance = feetPosition.y - topY;
+
+      return feetPosition.z > 0.1 && distance >= 0 && distance <= 0.6
+        ? {
+            grounded: true,
+            distance,
+            normal: { x: 0, y: 1, z: 0 },
+            slopeDegrees: 0
+          }
+        : {
+            grounded: false,
+            distance: null,
+            normal: null,
+            slopeDegrees: null
+          };
+    }),
+    canOccupyPlayerShape: vi.fn(
+      (feetPosition: Vec3) =>
+        feetPosition.z <= 0.08 || feetPosition.y >= topY
+    )
+  });
+
+  return { context };
+}
+
 describe("ThirdPersonNavigationController", () => {
   afterEach(() => {
     vi.restoreAllMocks();
