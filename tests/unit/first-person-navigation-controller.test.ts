@@ -431,6 +431,9 @@ describe("FirstPersonNavigationController", () => {
   it("enters and holds a ledge grab when upper-body reach finds a higher edge", () => {
     const { context } = createFirstPersonLedgeGrabContext();
     const controller = new FirstPersonNavigationController();
+    const controllerInternals = controller as unknown as {
+      pressedKeys: Set<string>;
+    };
 
     controller.activate(context);
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
@@ -444,6 +447,7 @@ describe("FirstPersonNavigationController", () => {
     expect(ledgeTelemetry?.grounded).toBe(false);
 
     window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    controllerInternals.pressedKeys.clear();
     controller.update(0.5);
 
     const heldTelemetry =
@@ -464,11 +468,15 @@ describe("FirstPersonNavigationController", () => {
     const topY = 2;
     const { context } = createFirstPersonLedgeGrabContext(topY);
     const controller = new FirstPersonNavigationController();
+    const controllerInternals = controller as unknown as {
+      pressedKeys: Set<string>;
+    };
 
     controller.activate(context);
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
     controller.update(0.05);
     window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    controllerInternals.pressedKeys.clear();
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
     controller.update(0.05);
 
@@ -488,12 +496,17 @@ describe("FirstPersonNavigationController", () => {
   it("drops from a first-person ledge grab when moving away", () => {
     const { context } = createFirstPersonLedgeGrabContext();
     const controller = new FirstPersonNavigationController();
+    const controllerInternals = controller as unknown as {
+      pressedKeys: Set<string>;
+    };
 
     controller.activate(context);
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
     controller.update(0.05);
     window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    controllerInternals.pressedKeys.clear();
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyS" }));
+    controllerInternals.pressedKeys.add("KeyS");
     controller.update(0.05);
 
     const telemetry =
