@@ -8,6 +8,7 @@ import {
 import {
   applyTerrainBrushStampInPlace,
   applyTerrainBrushStamp,
+  createTerrainBrushPatchFromTerrains,
   getTerrainBrushWeight,
   sampleTerrainHeightAtWorldPosition
 } from "../../src/geometry/terrain-brush";
@@ -146,6 +147,42 @@ describe("terrain brush geometry", () => {
     expect(terrain.heights).toBe(originalHeights);
     expect(terrain.paintWeights).toBe(originalPaintWeights);
     expect(terrain.heights[2 + 2 * 5]).toBeCloseTo(0.5);
+  });
+
+  it("creates sparse terrain brush patches from dirty sample bounds", () => {
+    const before = createTerrain({
+      id: "terrain-sparse-patch",
+      position: { x: 0, y: 0, z: 0 },
+      sampleCountX: 4,
+      sampleCountZ: 4,
+      cellSize: 1,
+      heights: new Array(16).fill(0)
+    });
+    const after = createTerrain(before);
+
+    after.heights[5] = 2;
+    after.heights[15] = 9;
+    after.paintWeights[15] = 0.4;
+
+    const patch = createTerrainBrushPatchFromTerrains({
+      before,
+      after,
+      dirtyBounds: {
+        minSampleX: 1,
+        maxSampleX: 1,
+        minSampleZ: 1,
+        maxSampleZ: 1
+      }
+    });
+
+    expect(patch.heightSamples).toEqual([
+      {
+        index: 5,
+        before: 0,
+        after: 2
+      }
+    ]);
+    expect(patch.paintWeights).toEqual([]);
   });
 
   it("paints terrain layer weights toward the active layer while preserving a normalized blend", () => {
