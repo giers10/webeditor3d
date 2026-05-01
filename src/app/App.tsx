@@ -8684,6 +8684,28 @@ export function App({ store, initialStatusMessage }: AppProps) {
     );
   };
 
+  const handleTerrainLodGridVisibleChange = (visible: boolean) => {
+    if (selectedTerrain === null) {
+      return;
+    }
+
+    const terrainId = selectedTerrain.id;
+
+    setTerrainLodGridVisibleTerrainIds((currentIds) => {
+      const hasTerrainId = currentIds.includes(terrainId);
+
+      if (visible && !hasTerrainId) {
+        return [...currentIds, terrainId];
+      }
+
+      if (!visible && hasTerrainId) {
+        return currentIds.filter((currentId) => currentId !== terrainId);
+      }
+
+      return currentIds;
+    });
+  };
+
   const handleTerrainBrushRadiusChange = (value: string) => {
     setTerrainBrushSettings((currentSettings) => ({
       ...currentSettings,
