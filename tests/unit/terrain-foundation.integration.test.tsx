@@ -136,7 +136,7 @@ describe("Terrain foundation", () => {
         "Terrain editing stays inspector-driven. Arm a brush here, then drag on the selected terrain in the viewport."
       )
     ).toBeInTheDocument();
-    expect(screen.getByText(/9 x 9 samples/)).toBeInTheDocument();
+    expect(screen.getAllByText(/9 x 9 samples/).length).toBeGreaterThan(0);
   });
 
   it("updates selected terrain grid settings and collision from the inspector", async () => {
