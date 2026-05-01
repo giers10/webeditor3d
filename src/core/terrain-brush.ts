@@ -1,4 +1,3 @@
-import type { Terrain } from "../document/terrains";
 import { TERRAIN_LAYER_COUNT } from "../document/terrains";
 
 export type TerrainBrushTool =
@@ -29,8 +28,21 @@ export type ArmedTerrainBrushState =
   | ArmedTerrainSculptBrushState
   | ArmedTerrainPaintBrushState;
 
+export interface TerrainSampleValuePatch {
+  index: number;
+  before: number;
+  after: number;
+}
+
+export interface TerrainBrushPatch {
+  terrainId: string;
+  heightSamples: TerrainSampleValuePatch[];
+  paintWeights: TerrainSampleValuePatch[];
+}
+
 export interface TerrainBrushStrokeCommit {
-  terrain: Terrain;
+  terrainId: string;
+  patch: TerrainBrushPatch;
   commandLabel: string;
   tool: TerrainBrushTool;
 }
