@@ -458,7 +458,12 @@ import {
   type EditorSimulationUiSnapshot
 } from "../runtime-three/editor-simulation-controller";
 import { validateRuntimeSceneBuild } from "../runtime-three/runtime-scene-validation";
-import { EditorAutosaveController } from "../serialization/editor-autosave";
+import {
+  EditorAutosaveController,
+  type EditorAutosaveRequest
+} from "../serialization/editor-autosave";
+import type { EditorDraftStorage } from "../serialization/editor-draft-storage";
+import type { SaveSceneDocumentDraftResult } from "../serialization/local-draft-storage";
 import { Panel } from "../shared-ui/Panel";
 import { NpcDialoguesPanel } from "./NpcDialoguesPanel";
 import { ProjectSequencerPane } from "./ProjectSequencerPane";
@@ -527,6 +532,7 @@ import { useEditorStoreState } from "./use-editor-store";
 
 interface AppProps {
   store: EditorStore;
+  draftStorage?: EditorDraftStorage | null;
   initialStatusMessage?: string;
 }
 
