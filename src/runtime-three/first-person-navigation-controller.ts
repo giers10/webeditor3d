@@ -22,6 +22,10 @@ import {
   type RuntimePlayerClimbSurface
 } from "./player-climbing";
 import {
+  resolvePlayerEdgeAssistTopOut,
+  shouldAttemptPlayerEdgeAssist
+} from "./player-edge-assist";
+import {
   createIdleRuntimeLocomotionState,
   stepPlayerLocomotion
 } from "./player-locomotion";
@@ -363,18 +367,85 @@ export class FirstPersonNavigationController implements NavigationController {
       return;
     }
 
-    this.feetPosition = locomotionStep.feetPosition;
+    const previousFeetPosition = this.feetPosition;
+    const edgeInputDirection = resolveClimbPlanarInputDirection(
+      inputState,
+      this.yawRadians
+    );
+    const edgeAssist =
+      edgeInputDirection.direction !== null &&
+      shouldAttemptPlayerEdgeAssist({
+        enabled: playerMovement.edgeAssist.enabled,
+        pushToTopHeight: playerMovement.edgeAssist.pushToTopHeight,
+        inputMagnitude: locomotionStep.locomotionState.inputMagnitude,
+        requestedPlanarSpeed:
+          locomotionStep.locomotionState.requestedPlanarSpeed,
+        planarSpeed: locomotionStep.locomotionState.planarSpeed,
+        collisionCount: locomotionStep.locomotionState.contact.collisionCount,
+        airborne: locomotionStep.locomotionState.locomotionMode === "airborne"
+      })
+        ? resolvePlayerEdgeAssistTopOut({
+            feetPosition: locomotionStep.feetPosition,
+            shape: locomotionStep.activeShape,
+            direction: edgeInputDirection.direction,
+            pushToTopHeight: playerMovement.edgeAssist.pushToTopHeight,
+            canOccupyShape: (feetPosition, shape) =>
+              this.context?.canOccupyPlayerShape?.(feetPosition, shape) ??
+              true,
+            probeGround: (feetPosition, shape, maxDistance) =>
+              this.context?.probePlayerGround?.(
+                feetPosition,
+                shape,
+                maxDistance
+              ) ?? {
+                grounded: false,
+                distance: null,
+                normal: null,
+                slopeDegrees: null
+              }
+          })
+        : null;
+    const nextFeetPosition =
+      edgeAssist === null ? locomotionStep.feetPosition : edgeAssist.feetPosition;
+    const nextLocomotionState =
+      edgeAssist === null
+        ? locomotionStep.locomotionState
+        : {
+            ...locomotionStep.locomotionState,
+            locomotionMode: "grounded" as const,
+            airborneKind: null,
+            gait: "walk" as const,
+            grounded: true,
+            verticalVelocity: 0,
+            contact: {
+              ...locomotionStep.locomotionState.contact,
+              groundNormal: { x: 0, y: 1, z: 0 },
+              groundDistance: 0,
+              slopeDegrees: 0
+            }
+          };
+
+    this.feetPosition = nextFeetPosition;
     this.activePlayerShape = locomotionStep.activeShape;
-    this.verticalVelocity = locomotionStep.verticalVelocity;
+    this.verticalVelocity =
+      edgeAssist === null ? locomotionStep.verticalVelocity : 0;
     this.jumpBufferRemainingMs = locomotionStep.jumpBufferRemainingMs;
     this.coyoteTimeRemainingMs = locomotionStep.coyoteTimeRemainingMs;
-    this.jumpHoldRemainingMs = locomotionStep.jumpHoldRemainingMs;
+    this.jumpHoldRemainingMs =
+      edgeAssist === null ? locomotionStep.jumpHoldRemainingMs : 0;
     this.jumpPressed = locomotionStep.jumpPressed;
     this.latestJumpStarted = locomotionStep.jumpStarted;
-    this.latestHeadBump = locomotionStep.headBump;
-    this.locomotionState = locomotionStep.locomotionState;
-    this.previousPlanarDisplacement = locomotionStep.planarDisplacement;
-    this.grounded = locomotionStep.locomotionState.grounded;
+    this.latestHeadBump = edgeAssist === null ? locomotionStep.headBump : false;
+    this.locomotionState = nextLocomotionState;
+    this.previousPlanarDisplacement =
+      edgeAssist === null
+        ? locomotionStep.planarDisplacement
+        : {
+            x: this.feetPosition.x - previousFeetPosition.x,
+            y: 0,
+            z: this.feetPosition.z - previousFeetPosition.z
+          };
+    this.grounded = nextLocomotionState.grounded;
     this.inWaterVolume = locomotionStep.inWaterVolume;
     this.inFogVolume = locomotionStep.inFogVolume;
     this.smoothedFeetY = smoothGroundedStairHeight({
