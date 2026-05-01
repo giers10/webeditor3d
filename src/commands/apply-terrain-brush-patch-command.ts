@@ -4,6 +4,7 @@ import type {
   TerrainBrushPatch,
   TerrainSampleValuePatch
 } from "../core/terrain-brush";
+import { updateTerrainBoundsCacheAfterHeightPatch } from "../document/terrains";
 import type { ToolMode } from "../core/tool-mode";
 
 import type { CommandContext, EditorCommand } from "./command";
@@ -64,11 +65,19 @@ export function createApplyTerrainBrushPatchCommand(
       throw new Error(`Terrain ${patch.terrainId} does not exist.`);
     }
 
+    const heightPatchForBounds = patch.heightSamples.map((entry) => ({
+      index: entry.index,
+      before: direction === "forward" ? entry.before : entry.after,
+      after: direction === "forward" ? entry.after : entry.before
+    }));
+
     for (const entry of patch.heightSamples) {
       assertValidPatchEntry(entry, terrain.heights.length, "Terrain height");
       terrain.heights[entry.index] =
         direction === "forward" ? entry.after : entry.before;
     }
+
+    updateTerrainBoundsCacheAfterHeightPatch(terrain, heightPatchForBounds);
 
     for (const entry of patch.paintWeights) {
       assertValidPatchEntry(
