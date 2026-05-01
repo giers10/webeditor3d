@@ -30,6 +30,10 @@ import { createDeletePathCommand } from "../commands/delete-path-command";
 import { createDeletePathPointCommand } from "../commands/delete-path-point-command";
 import { createDeleteModelInstanceCommand } from "../commands/delete-model-instance-command";
 import { createCommitTransformSessionCommand } from "../commands/commit-transform-session-command";
+import {
+  createApplyTerrainBrushPatchCommand,
+  isTerrainBrushPatchEmpty
+} from "../commands/apply-terrain-brush-patch-command";
 import { createMoveBoxBrushCommand } from "../commands/move-box-brush-command";
 import { createRotateBoxBrushCommand } from "../commands/rotate-box-brush-command";
 import { createResizeBoxBrushCommand } from "../commands/resize-box-brush-command";
