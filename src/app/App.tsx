@@ -552,6 +552,7 @@ interface PlayerStartMovementTemplateNumberDraft {
   bunnyHopBoost: string;
   sprintSpeedMultiplier: string;
   crouchSpeedMultiplier: string;
+  pushToTopHeight: string;
 }
 
 type WorldTimePhaseKey = "dawn" | "dusk";
@@ -925,7 +926,8 @@ function createPlayerStartMovementTemplateNumberDraft(
     variableJumpMaxHoldMs: String(template.jump.maxHoldMs),
     bunnyHopBoost: String(template.jump.bunnyHopBoost),
     sprintSpeedMultiplier: String(template.sprint.speedMultiplier),
-    crouchSpeedMultiplier: String(template.crouch.speedMultiplier)
+    crouchSpeedMultiplier: String(template.crouch.speedMultiplier),
+    pushToTopHeight: String(template.edgeAssist.pushToTopHeight)
   };
 }
 
@@ -943,7 +945,8 @@ function arePlayerStartMovementTemplateNumberDraftsEqual(
     left.variableJumpMaxHoldMs === right.variableJumpMaxHoldMs &&
     left.bunnyHopBoost === right.bunnyHopBoost &&
     left.sprintSpeedMultiplier === right.sprintSpeedMultiplier &&
-    left.crouchSpeedMultiplier === right.crouchSpeedMultiplier
+    left.crouchSpeedMultiplier === right.crouchSpeedMultiplier &&
+    left.pushToTopHeight === right.pushToTopHeight
   );
 }
 
