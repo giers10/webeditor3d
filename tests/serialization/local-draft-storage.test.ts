@@ -247,9 +247,14 @@ describe("local draft storage", () => {
     });
   });
 
-  it("skips oversized terrain-heavy autosaves and clears stale drafts", () => {
+  it("skips oversized terrain-heavy autosaves and keeps the previous draft", () => {
     const storage = new MemoryStorage();
-    storage.setItem(DEFAULT_SCENE_DRAFT_STORAGE_KEY, "stale draft");
+    saveSceneDocumentDraft(
+      storage,
+      createProjectDocumentFromSceneDocument(
+        createEmptySceneDocument({ name: "Previous Draft" })
+      )
+    );
     const terrain = createTerrain({
       id: "terrain-large-draft",
       sampleCountX: 17,
@@ -276,7 +281,56 @@ describe("local draft storage", () => {
 
     expect(result.status).toBe("skipped");
     expect(result.message).toContain("Autosave skipped");
-    expect(storage.getItem(DEFAULT_SCENE_DRAFT_STORAGE_KEY)).toBeNull();
+    expect(result.message).toContain("last successful autosave was kept");
+
+    const recoveredResult = loadSceneDocumentDraft(storage);
+
+    expect(recoveredResult.status).toBe("loaded");
+
+    if (recoveredResult.status !== "loaded") {
+      return;
+    }
+
+    expect(
+      recoveredResult.document.scenes[recoveredResult.document.activeSceneId]
+        ?.name
+    ).toBe("Previous Draft");
+  });
+
+  it("allows terrain autosaves when the minimum estimate and actual draft fit", () => {
+    const storage = new MemoryStorage();
+    const terrain = createTerrain({
+      id: "terrain-medium-draft",
+      sampleCountX: 17,
+      sampleCountZ: 17
+    });
+    const document = {
+      ...createEmptyProjectDocument(),
+      scenes: {
+        "scene-main": {
+          ...createEmptyProjectScene({
+            id: "scene-main",
+            name: "Terrain Draft"
+          }),
+          terrains: {
+            [terrain.id]: terrain
+          }
+        }
+      }
+    };
+
+    const result = saveSceneDocumentDraft(storage, document, null, undefined, {
+      maxSerializedBytes: 70_000
+    });
+
+    expect(result).toEqual({
+      status: "saved",
+      message: "Autosave updated."
+    });
+
+    const recoveredResult = loadSceneDocumentDraft(storage);
+
+    expect(recoveredResult.status).toBe("loaded");
   });
 
   it("skips oversized autosaves before full document validation", () => {
