@@ -2139,6 +2139,43 @@ describe("scene document JSON", () => {
     expect(migratedDocument.entities[playerStart.id]).toEqual(playerStart);
   });
 
+  it("migrates pre-edge-assist Player Start movement templates to include defaults", () => {
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-legacy-edge-assist",
+      movementTemplate: {
+        kind: "custom",
+        edgeAssist: {
+          enabled: false,
+          pushToTopHeight: 0.1
+        }
+      }
+    });
+    const { edgeAssist: _edgeAssist, ...legacyMovementTemplate } =
+      playerStart.movementTemplate;
+    const legacyDocument = {
+      ...createEmptySceneDocument({
+        name: "Legacy Player Edge Assist Scene"
+      }),
+      version: WHITEBOX_FACE_CLIMBABLE_SCENE_DOCUMENT_VERSION,
+      entities: {
+        [playerStart.id]: {
+          ...playerStart,
+          movementTemplate: legacyMovementTemplate
+        }
+      }
+    };
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[playerStart.id]).toMatchObject({
+      kind: "playerStart",
+      movementTemplate: {
+        edgeAssist: createPlayerStartEntity().movementTemplate.edgeAssist
+      }
+    });
+  });
+
   it("migrates version 34 Player Start jump settings to include default air direction mode", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-player-start-legacy-air-direction",
