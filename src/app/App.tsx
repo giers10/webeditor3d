@@ -8784,14 +8784,18 @@ export function App({ store, initialStatusMessage }: AppProps) {
     commit: TerrainBrushStrokeCommit
   ): boolean => {
     try {
+      if (isTerrainBrushPatchEmpty(commit.patch)) {
+        return true;
+      }
+
       store.executeCommand(
-        createUpsertTerrainCommand({
-          terrain: commit.terrain,
+        createApplyTerrainBrushPatchCommand({
+          patch: commit.patch,
           label: commit.commandLabel
         })
       );
       setStatusMessage(
-        `${commit.commandLabel} on ${getTerrainLabelById(commit.terrain.id, terrainList)}.`
+        `${commit.commandLabel} on ${getTerrainLabelById(commit.terrainId, terrainList)}.`
       );
       return true;
     } catch (error) {
