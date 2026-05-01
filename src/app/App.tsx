@@ -5129,6 +5129,15 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
             applyTransformAxisConstraint("z");
             return;
           }
+
+          if (
+            event.code === "KeyW" &&
+            transformSession.operation === "translate"
+          ) {
+            event.preventDefault();
+            toggleTransformSurfaceSnap();
+            return;
+          }
         }
       }
 
