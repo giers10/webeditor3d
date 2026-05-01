@@ -22,6 +22,10 @@ import {
   type RuntimePlayerClimbSurface
 } from "./player-climbing";
 import {
+  resolvePlayerEdgeAssistTopOut,
+  shouldAttemptPlayerEdgeAssist
+} from "./player-edge-assist";
+import {
   createIdleRuntimeLocomotionState,
   stepPlayerLocomotion
 } from "./player-locomotion";
