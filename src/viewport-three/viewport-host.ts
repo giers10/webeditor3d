@@ -187,6 +187,7 @@ import {
 } from "../geometry/terrain-mesh";
 import {
   applyTerrainBrushStampInPlace,
+  createTerrainBrushPatchFromTerrains,
   createTerrainBrushPreviewPoints,
   getTerrainBrushStrokeSpacing,
   sampleTerrainHeightAtWorldPosition,
@@ -380,8 +381,10 @@ interface LightVolumeRenderObjects {
 
 interface ActiveTerrainBrushStroke {
   pointerId: number;
+  baseTerrain: Terrain;
   previewTerrain: Terrain;
   changed: boolean;
+  dirtyBounds: TerrainBrushDirtySampleBounds | null;
   referenceHeight: number | null;
   lastAppliedPoint: {
     x: number;
