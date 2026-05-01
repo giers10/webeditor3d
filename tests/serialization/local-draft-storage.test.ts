@@ -279,6 +279,39 @@ describe("local draft storage", () => {
     expect(storage.getItem(DEFAULT_SCENE_DRAFT_STORAGE_KEY)).toBeNull();
   });
 
+  it("skips oversized autosaves before full document validation", () => {
+    const storage = new MemoryStorage();
+    const invalidTerrain = createTerrain({
+      id: "terrain-invalid-large-draft",
+      sampleCountX: 17,
+      sampleCountZ: 17
+    });
+    invalidTerrain.layers[0] = {
+      materialId: "missing-material"
+    };
+    const document = {
+      ...createEmptyProjectDocument(),
+      scenes: {
+        "scene-main": {
+          ...createEmptyProjectScene({
+            id: "scene-main",
+            name: "Invalid Terrain Draft"
+          }),
+          terrains: {
+            [invalidTerrain.id]: invalidTerrain
+          }
+        }
+      }
+    };
+
+    const result = saveSceneDocumentDraft(storage, document, null, undefined, {
+      maxSerializedBytes: 512
+    });
+
+    expect(result.status).toBe("skipped");
+    expect(result.message).toContain("Autosave skipped");
+  });
+
   it("loads older raw scene-document drafts without requiring viewport layout state", () => {
     const storage = new MemoryStorage();
     storage.setItem(
