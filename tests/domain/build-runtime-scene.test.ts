@@ -869,7 +869,8 @@ describe("buildRuntimeSceneFromDocument", () => {
             capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
             jump: defaultMovementTemplate.jump,
             sprint: defaultMovementTemplate.sprint,
-            crouch: defaultMovementTemplate.crouch
+            crouch: defaultMovementTemplate.crouch,
+            edgeAssist: defaultMovementTemplate.edgeAssist
           },
           inputBindings: playerStart.inputBindings,
           collider: {
@@ -1098,7 +1099,8 @@ describe("buildRuntimeSceneFromDocument", () => {
         capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
         jump: defaultMovementTemplate.jump,
         sprint: defaultMovementTemplate.sprint,
-        crouch: defaultMovementTemplate.crouch
+        crouch: defaultMovementTemplate.crouch,
+        edgeAssist: defaultMovementTemplate.edgeAssist
       },
       inputBindings: playerStart.inputBindings,
       collider: {
@@ -1161,7 +1163,8 @@ describe("buildRuntimeSceneFromDocument", () => {
       capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
       jump: defaultMovementTemplate.jump,
       sprint: defaultMovementTemplate.sprint,
-      crouch: defaultMovementTemplate.crouch
+      crouch: defaultMovementTemplate.crouch,
+      edgeAssist: defaultMovementTemplate.edgeAssist
     });
     expect(runtimeScene.playerInputBindings).toEqual(playerStart.inputBindings);
     expect(runtimeScene.navigationMode).toBe("firstPerson");
@@ -1455,7 +1458,8 @@ describe("buildRuntimeSceneFromDocument", () => {
       capabilities: DEFAULT_PLAYER_START_MOVEMENT_CAPABILITIES,
       jump: defaultMovementTemplate.jump,
       sprint: defaultMovementTemplate.sprint,
-      crouch: defaultMovementTemplate.crouch
+      crouch: defaultMovementTemplate.crouch,
+      edgeAssist: defaultMovementTemplate.edgeAssist
     });
     expect(runtimeScene.playerInputBindings).toEqual(
       createPlayerStartInputBindings()
