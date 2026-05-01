@@ -162,7 +162,7 @@ describe("terrain brush geometry", () => {
 
     after.heights[5] = 2;
     after.heights[15] = 9;
-    after.paintWeights[15] = 0.4;
+    after.paintWeights[45] = 0.4;
 
     const patch = createTerrainBrushPatchFromTerrains({
       before,
