@@ -4607,7 +4607,35 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
 
   useEffect(() => {
     autosaveControllerRef.current = new EditorAutosaveController({
-      saveDraft: () => store.saveDraft(),
+      saveDraft: async (request: EditorAutosaveRequest) => {
+        if (draftStorage === null) {
+          return store.saveDraft();
+        }
+
+        const projectDocument = store.getProjectDocumentDraftSnapshot();
+        const viewportLayoutState = store.getViewportLayoutDraftSnapshot();
+        const results: SaveSceneDocumentDraftResult[] = [];
+
+        if (request.document) {
+          results.push(
+            await draftStorage.saveDocumentDraft(
+              projectDocument,
+              viewportLayoutState
+            )
+          );
+        }
+
+        if (request.viewportLayout) {
+          results.push(
+            await draftStorage.saveViewportLayoutDraft(
+              viewportLayoutState,
+              projectDocument
+            )
+          );
+        }
+
+        return mergeAutosaveResults(results);
+      },
       onComplete: (result) => {
         if (result.status === "skipped") {
           if (lastAutosaveErrorRef.current !== result.message) {
@@ -4633,30 +4661,47 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
       autosaveControllerRef.current?.dispose();
       autosaveControllerRef.current = null;
     };
-  }, [store]);
+  }, [draftStorage, store]);
 
   useEffect(() => {
-    if (!editorState.storageAvailable) {
+    if (!autosaveAvailable) {
       return;
     }
 
-    autosaveControllerRef.current?.schedule();
+    autosaveControllerRef.current?.schedule("document");
   }, [
+    autosaveAvailable,
+    editorState.projectDocument
+  ]);
+
+  useEffect(() => {
+    if (!autosaveAvailable) {
+      return;
+    }
+
+    autosaveControllerRef.current?.schedule("viewport");
+  }, [
+    autosaveAvailable,
     editorState.activeViewportPanelId,
-    editorState.document,
-    editorState.storageAvailable,
     editorState.viewportLayoutMode,
     editorState.viewportPanels,
     editorState.viewportQuadSplit
   ]);
 
   useEffect(() => {
-    if (!editorState.storageAvailable) {
+    if (!autosaveAvailable) {
       return;
     }
 
     const flushAutosave = () => {
-      autosaveControllerRef.current?.flush();
+      void autosaveControllerRef.current?.flush("all");
+
+      if (draftStorage !== null) {
+        draftStorage.flushEmergencyFallback?.(
+          store.getProjectDocumentDraftSnapshot(),
+          store.getViewportLayoutDraftSnapshot()
+        );
+      }
     };
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
@@ -4673,7 +4718,7 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
       window.removeEventListener("pagehide", flushAutosave);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [editorState.storageAvailable]);
+  }, [autosaveAvailable, draftStorage, store]);
 
   useEffect(() => {
     if (!projectAssetStorageReady) {
