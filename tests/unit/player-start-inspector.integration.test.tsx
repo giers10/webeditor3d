@@ -199,6 +199,12 @@ describe("Player Start inspector", () => {
     const jumpBufferInput = screen.getByTestId(
       "player-start-movement-jump-buffer"
     );
+    const edgeAssistCheckbox = screen.getByTestId(
+      "player-start-movement-edge-assist-enabled"
+    );
+    const pushToTopInput = screen.getByTestId(
+      "player-start-movement-push-to-top-height"
+    );
 
     act(() => {
       fireEvent.change(templateSelect, {
@@ -247,6 +253,19 @@ describe("Player Start inspector", () => {
       fireEvent.blur(jumpBufferInput);
     });
 
+    act(() => {
+      fireEvent.click(edgeAssistCheckbox);
+    });
+
+    act(() => {
+      fireEvent.change(pushToTopInput, {
+        target: {
+          value: "0.42"
+        }
+      });
+      fireEvent.blur(pushToTopInput);
+    });
+
     await waitFor(() => {
       expect(store.getState().document.entities[playerStart.id]).toMatchObject({
         movementTemplate: {
@@ -256,6 +275,10 @@ describe("Player Start inspector", () => {
             bufferMs: 75,
             variableHeight: false,
             directionOnly: true
+          },
+          edgeAssist: {
+            enabled: false,
+            pushToTopHeight: 0.42
           }
         }
       });
