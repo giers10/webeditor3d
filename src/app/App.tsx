@@ -2978,6 +2978,13 @@ export function App({ store, initialStatusMessage }: AppProps) {
   const [terrainSampleCountXDraft, setTerrainSampleCountXDraft] = useState("9");
   const [terrainSampleCountZDraft, setTerrainSampleCountZDraft] = useState("9");
   const [terrainCellSizeDraft, setTerrainCellSizeDraft] = useState("1");
+  const [
+    terrainLodGridVisibleTerrainIds,
+    setTerrainLodGridVisibleTerrainIds
+  ] = useState<readonly string[]>([]);
+  const selectedTerrainLodGridVisible =
+    selectedTerrain !== null &&
+    terrainLodGridVisibleTerrainIds.includes(selectedTerrain.id);
   const activeTerrainBrushState: ArmedTerrainBrushState | null =
     selectedTerrain === null || armedTerrainBrushTool === null
       ? null
