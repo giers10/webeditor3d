@@ -699,26 +699,28 @@ describe("ThirdPersonNavigationController", () => {
         z: true
       }
     });
-    context.probePlayerGround = vi.fn((feetPosition: Vec3) => {
-      const distance = feetPosition.y - topY;
+    Object.assign(context, {
+      probePlayerGround: vi.fn((feetPosition: Vec3) => {
+        const distance = feetPosition.y - topY;
 
-      return feetPosition.z > 0.1 && distance >= 0 && distance <= 0.6
-        ? {
-            grounded: true,
-            distance,
-            normal: { x: 0, y: 1, z: 0 },
-            slopeDegrees: 0
-          }
-        : {
-            grounded: false,
-            distance: null,
-            normal: null,
-            slopeDegrees: null
-          };
+        return feetPosition.z > 0.1 && distance >= 0 && distance <= 0.6
+          ? {
+              grounded: true,
+              distance,
+              normal: { x: 0, y: 1, z: 0 },
+              slopeDegrees: 0
+            }
+          : {
+              grounded: false,
+              distance: null,
+              normal: null,
+              slopeDegrees: null
+            };
+      }),
+      canOccupyPlayerShape: vi.fn(
+        (feetPosition: Vec3) => feetPosition.y >= topY && feetPosition.z > 0.1
+      )
     });
-    context.canOccupyPlayerShape = vi.fn(
-      (feetPosition: Vec3) => feetPosition.y >= topY && feetPosition.z > 0.1
-    );
     const controller = new ThirdPersonNavigationController();
 
     controller.activate(context);
