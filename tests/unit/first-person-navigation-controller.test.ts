@@ -309,6 +309,74 @@ describe("FirstPersonNavigationController", () => {
     });
   });
 
+  it("pushes airborne blocked movement onto a nearby top surface", () => {
+    const topY = 1.35;
+    const playerStart = createPlayerStartEntity({
+      id: "entity-player-start-edge-assist",
+      position: {
+        x: 0,
+        y: 1,
+        z: 0
+      }
+    });
+    const { context } = createRuntimeControllerContext(
+      playerStart,
+      (feetPosition, motion) => ({
+        feetPosition: {
+          x: feetPosition.x + motion.x * 0.2,
+          y: feetPosition.y + motion.y,
+          z: feetPosition.z + motion.z * 0.2
+        },
+        grounded: false,
+        collisionCount: 1,
+        groundCollisionNormal: null,
+        collidedAxes: {
+          x: false,
+          y: false,
+          z: true
+        }
+      }),
+      {
+        probePlayerGround: (feetPosition) => {
+          const distance = feetPosition.y - topY;
+
+          return feetPosition.z > 0.1 && distance >= 0 && distance <= 0.6
+            ? {
+                grounded: true,
+                distance,
+                normal: { x: 0, y: 1, z: 0 },
+                slopeDegrees: 0
+              }
+            : {
+                grounded: false,
+                distance: null,
+                normal: null,
+                slopeDegrees: null
+              };
+        },
+        canOccupyPlayerShape: (feetPosition) =>
+          feetPosition.y >= topY && feetPosition.z > 0.1
+      }
+    );
+    const controller = new FirstPersonNavigationController();
+
+    controller.activate(context);
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+    controller.update(0.05);
+
+    const telemetry =
+      context.setPlayerControllerTelemetry.mock.calls.at(-1)?.[0];
+
+    expect(telemetry?.feetPosition.y).toBeCloseTo(topY);
+    expect(telemetry?.locomotionState.locomotionMode).toBe("grounded");
+    expect(telemetry?.locomotionState.verticalVelocity).toBe(0);
+
+    window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+    controller.deactivate(context, {
+      releasePointerLock: false
+    });
+  });
+
   it("enters climbing when first-person movement runs into a climbable face", () => {
     const { context } = createRuntimeControllerContext(
       createPlayerStartEntity({
