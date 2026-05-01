@@ -803,6 +803,14 @@ export class EditorStore {
     return draftResult;
   }
 
+  getProjectDocumentDraftSnapshot(): ProjectDocument {
+    return this.projectDocument;
+  }
+
+  getViewportLayoutDraftSnapshot(): ViewportLayoutState {
+    return this.createViewportLayoutState();
+  }
+
   exportDocumentJson(): string {
     return serializeProjectDocument(this.projectDocument);
   }
