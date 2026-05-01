@@ -4,7 +4,13 @@ import type {
   TerrainBrushPatch,
   TerrainSampleValuePatch
 } from "../core/terrain-brush";
-import { updateTerrainBoundsCacheAfterHeightPatch } from "../document/terrains";
+import {
+  markTerrainRenderSamplesDirty,
+  TERRAIN_LAYER_COUNT,
+  updateTerrainBoundsCacheAfterHeightPatch,
+  type Terrain,
+  type TerrainSampleBounds
+} from "../document/terrains";
 import type { ToolMode } from "../core/tool-mode";
 
 import type { CommandContext, EditorCommand } from "./command";
@@ -43,6 +49,31 @@ export function isTerrainBrushPatchEmpty(patch: TerrainBrushPatch): boolean {
   return patch.heightSamples.length === 0 && patch.paintWeights.length === 0;
 }
 
+function mergeTerrainSampleIndexIntoBounds(
+  bounds: TerrainSampleBounds | null,
+  terrain: Terrain,
+  sampleIndex: number
+): TerrainSampleBounds {
+  const sampleX = sampleIndex % terrain.sampleCountX;
+  const sampleZ = Math.floor(sampleIndex / terrain.sampleCountX);
+
+  if (bounds === null) {
+    return {
+      minSampleX: sampleX,
+      maxSampleX: sampleX,
+      minSampleZ: sampleZ,
+      maxSampleZ: sampleZ
+    };
+  }
+
+  return {
+    minSampleX: Math.min(bounds.minSampleX, sampleX),
+    maxSampleX: Math.max(bounds.maxSampleX, sampleX),
+    minSampleZ: Math.min(bounds.minSampleZ, sampleZ),
+    maxSampleZ: Math.max(bounds.maxSampleZ, sampleZ)
+  };
+}
+
 export function createApplyTerrainBrushPatchCommand(
   options: ApplyTerrainBrushPatchCommandOptions
 ): EditorCommand {
@@ -71,10 +102,17 @@ export function createApplyTerrainBrushPatchCommand(
       after: direction === "forward" ? entry.after : entry.before
     }));
 
+    let renderDirtyBounds: TerrainSampleBounds | null = null;
+
     for (const entry of patch.heightSamples) {
       assertValidPatchEntry(entry, terrain.heights.length, "Terrain height");
       terrain.heights[entry.index] =
         direction === "forward" ? entry.after : entry.before;
+      renderDirtyBounds = mergeTerrainSampleIndexIntoBounds(
+        renderDirtyBounds,
+        terrain,
+        entry.index
+      );
     }
 
     updateTerrainBoundsCacheAfterHeightPatch(terrain, heightPatchForBounds);
@@ -87,7 +125,14 @@ export function createApplyTerrainBrushPatchCommand(
       );
       terrain.paintWeights[entry.index] =
         direction === "forward" ? entry.after : entry.before;
+      renderDirtyBounds = mergeTerrainSampleIndexIntoBounds(
+        renderDirtyBounds,
+        terrain,
+        Math.floor(entry.index / (TERRAIN_LAYER_COUNT - 1))
+      );
     }
+
+    markTerrainRenderSamplesDirty(terrain, renderDirtyBounds);
 
     context.setDocument({
       ...currentDocument,
