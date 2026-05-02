@@ -4093,7 +4093,8 @@ export class RuntimeHost {
       const terrainForLod = {
         ...terrain,
         kind: "terrain" as const,
-        enabled: true
+        enabled: true,
+        foliageMasks: {}
       };
       const lodMeshData = buildTerrainLodMeshData(terrainForLod);
       const detailMaterial = this.createRuntimeTerrainMaterial(terrain);
@@ -5077,7 +5078,8 @@ export class RuntimeHost {
       const derivedMesh = buildTerrainDerivedMeshData({
         ...terrain,
         kind: "terrain",
-        enabled: true
+        enabled: true,
+        foliageMasks: {}
       });
 
       contactBounds.push({
