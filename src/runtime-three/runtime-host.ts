@@ -51,6 +51,7 @@ import {
   type Brush,
   type WhiteboxFaceId
 } from "../document/brushes";
+import { createEmptyTerrainFoliageBlockerMask } from "../document/terrains";
 import {
   mapWorldPointToScenePathProgressBetweenPoints,
   resolveNearestPointOnResolvedScenePath,
