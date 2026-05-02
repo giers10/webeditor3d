@@ -2364,6 +2364,62 @@ type FoliageLayerNumericField =
 
 type FoliageLayerNumberDrafts = Record<FoliageLayerNumericField, string>;
 
+const FOLIAGE_LAYER_NUMERIC_INPUTS: readonly {
+  field: FoliageLayerNumericField;
+  label: string;
+  min?: number;
+  max?: number;
+  step: string;
+}[] = [
+  { field: "density", label: "Density", min: 0, step: "0.05" },
+  { field: "minScale", label: "Min Scale", min: 0, step: "0.05" },
+  { field: "maxScale", label: "Max Scale", min: 0, step: "0.05" },
+  {
+    field: "minSlopeDegrees",
+    label: "Min Slope",
+    min: 0,
+    max: 90,
+    step: "1"
+  },
+  {
+    field: "maxSlopeDegrees",
+    label: "Max Slope",
+    min: 0,
+    max: 90,
+    step: "1"
+  },
+  {
+    field: "alignToNormal",
+    label: "Align To Normal",
+    min: 0,
+    max: 1,
+    step: "0.05"
+  },
+  { field: "noiseScale", label: "Noise Scale", min: 0, step: "0.1" },
+  {
+    field: "noiseStrength",
+    label: "Noise Strength",
+    min: 0,
+    max: 1,
+    step: "0.05"
+  },
+  {
+    field: "noiseThreshold",
+    label: "Noise Threshold",
+    min: 0,
+    max: 1,
+    step: "0.05"
+  },
+  {
+    field: "colorVariation",
+    label: "Color Variation",
+    min: 0,
+    max: 1,
+    step: "0.05"
+  },
+  { field: "seed", label: "Seed", step: "1" }
+];
+
 function createFoliageLayerNumberDrafts(
   layer: FoliageLayer
 ): FoliageLayerNumberDrafts {
