@@ -236,6 +236,63 @@ describe("foliage render batch helpers", () => {
     );
   });
 
+  it("returns no batches when foliage quality is disabled", () => {
+    const prototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
+    const batches = createFoliageRenderBatches(
+      createScatter([createInstance({ prototypeId: prototype.id })]),
+      {
+        [prototype.id]: prototype
+      },
+      {
+        quality: {
+          enabled: false,
+          densityMultiplier: 1,
+          maxDistanceMultiplier: 1,
+          shadows: "near"
+        }
+      }
+    );
+
+    expect(batches).toEqual([]);
+  });
+
+  it("limits foliage shadows to near LODs when quality shadows are near", () => {
+    const prototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
+    const batches = createFoliageRenderBatches(
+      createScatter([
+        createInstance({
+          prototypeId: prototype.id,
+          position: { x: 2, y: 0, z: 2 }
+        }),
+        createInstance({
+          prototypeId: prototype.id,
+          position: { x: 54, y: 0, z: 0 }
+        })
+      ]),
+      {
+        [prototype.id]: prototype
+      },
+      {
+        view: {
+          cameraPosition: { x: 0, y: 0, z: 0 }
+        },
+        quality: {
+          enabled: true,
+          densityMultiplier: 1,
+          maxDistanceMultiplier: 1,
+          shadows: "near"
+        }
+      }
+    );
+
+    expect(batches.find((batch) => batch.lodLevel === 0)?.castShadow).toBe(
+      true
+    );
+    expect(batches.find((batch) => batch.lodLevel === 2)?.castShadow).toBe(
+      false
+    );
+  });
+
   it("ignores prototypes that do not have a bundled render source", () => {
     const projectPrototype = createProjectAssetPrototype();
     const batches = createFoliageRenderBatches(
