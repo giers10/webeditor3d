@@ -125,6 +125,51 @@ describe("project document JSON", () => {
     ).toEqual(document);
   });
 
+  it("migrates pre-foliage project documents with empty foliage state", () => {
+    const document = createEmptyProjectDocument({
+      name: "Legacy Foliage-Free Project"
+    });
+    const legacyDocument = JSON.parse(
+      serializeProjectDocument(document)
+    ) as Record<string, unknown>;
+    const legacyScenes = legacyDocument.scenes as Record<string, unknown>;
+
+    legacyDocument.version = PLAYER_START_EDGE_ASSIST_SCENE_DOCUMENT_VERSION;
+    delete legacyDocument.foliagePrototypes;
+
+    for (const scene of Object.values(legacyScenes)) {
+      delete (scene as Record<string, unknown>).foliageLayers;
+    }
+
+    const migratedDocument = parseProjectDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.foliagePrototypes).toEqual({});
+    expect(
+      migratedDocument.scenes[migratedDocument.activeSceneId]!.foliageLayers
+    ).toEqual({});
+  });
+
+  it("round-trips scene-local foliage layers that reference bundled prototypes", () => {
+    const bundledPrototype = BUNDLED_FOLIAGE_PROTOTYPES[0];
+    const document = createEmptyProjectDocument({
+      name: "Bundled Foliage Project"
+    });
+    const layer = createFoliageLayer({
+      id: "foliage-layer-bundled-project",
+      name: "Bundled Project Layer",
+      prototypeIds: [bundledPrototype.id]
+    });
+
+    document.scenes[document.activeSceneId]!.foliageLayers[layer.id] = layer;
+
+    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("round-trips NPC dialogue references in project scenes", () => {
     const document = createEmptyProjectDocument({
       name: "NPC Dialogue Project"
