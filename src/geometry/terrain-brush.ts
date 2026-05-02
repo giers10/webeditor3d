@@ -7,7 +7,10 @@ import type {
 } from "../core/terrain-brush";
 import {
   createTerrain,
+  getOrCreateTerrainFoliageMask,
   getTerrainHeightAtSample,
+  getTerrainFoliageMask,
+  getTerrainFoliageMaskSampleIndex,
   getTerrainPaintWeightSampleOffset,
   getTerrainSampleIndex,
   getTerrainSampleLayerWeights,
@@ -32,6 +35,12 @@ export interface TerrainBrushStampMutationResult {
   dirtyBounds: TerrainBrushDirtySampleBounds | null;
   heightSampleIndices: number[];
   paintWeightIndices: number[];
+  foliageMaskValueIndices: TerrainFoliageMaskValueIndex[];
+}
+
+export interface TerrainFoliageMaskValueIndex {
+  layerId: string;
+  index: number;
 }
 
 interface TerrainSmoothHeightSource {
@@ -324,7 +333,8 @@ export function applyTerrainBrushStampInPlace(options: {
       changed: false,
       dirtyBounds: null,
       heightSampleIndices: [],
-      paintWeightIndices: []
+      paintWeightIndices: [],
+      foliageMaskValueIndices: []
     };
   }
 
@@ -342,6 +352,7 @@ export function applyTerrainBrushStampInPlace(options: {
   let dirtyBounds: TerrainBrushDirtySampleBounds | null = null;
   const heightSampleIndices: number[] = [];
   const paintWeightIndices: number[] = [];
+  const foliageMaskValueIndices: TerrainFoliageMaskValueIndex[] = [];
 
   const markDirty = (sampleX: number, sampleZ: number) => {
     if (dirtyBounds === null) {
@@ -448,6 +459,41 @@ export function applyTerrainBrushStampInPlace(options: {
           }
           continue;
         }
+        case "foliagePaint":
+        case "foliageErase": {
+          const foliageLayerId =
+            "foliageLayerId" in settings ? settings.foliageLayerId : null;
+
+          if (foliageLayerId === null) {
+            throw new Error(
+              "Foliage terrain brush stamps require a foliage layer id."
+            );
+          }
+
+          const mask = getOrCreateTerrainFoliageMask(terrain, foliageLayerId);
+          const maskIndex = getTerrainFoliageMaskSampleIndex(
+            mask,
+            sampleX,
+            sampleZ
+          );
+          const currentMaskValue = mask.values[maskIndex] ?? 0;
+          const targetMaskValue = tool === "foliagePaint" ? 1 : 0;
+          const nextMaskValue = lerp(
+            currentMaskValue,
+            targetMaskValue,
+            clamp01(smoothingStrength * weight)
+          );
+
+          if (nextMaskValue !== currentMaskValue) {
+            mask.values[maskIndex] = nextMaskValue;
+            foliageMaskValueIndices.push({
+              layerId: foliageLayerId,
+              index: maskIndex
+            });
+            markDirty(sampleX, sampleZ);
+          }
+          continue;
+        }
       }
 
       if (nextHeight !== currentHeight) {
@@ -462,7 +508,8 @@ export function applyTerrainBrushStampInPlace(options: {
     changed: dirtyBounds !== null,
     dirtyBounds,
     heightSampleIndices,
-    paintWeightIndices
+    paintWeightIndices,
+    foliageMaskValueIndices
   };
 }
 
@@ -471,6 +518,7 @@ export function createTerrainBrushPatchFromTerrains(options: {
   after: Terrain;
   heightSampleIndices: Iterable<number>;
   paintWeightIndices: Iterable<number>;
+  foliageMaskValueIndices?: Iterable<TerrainFoliageMaskValueIndex>;
 }): TerrainBrushPatch {
   const { before, after } = options;
 
@@ -491,6 +539,7 @@ export function createTerrainBrushPatchFromTerrains(options: {
 
   const heightSamples: TerrainBrushPatch["heightSamples"] = [];
   const paintWeights: TerrainBrushPatch["paintWeights"] = [];
+  const foliageMaskValues: TerrainBrushPatch["foliageMaskValues"] = [];
   const normalizeIndices = (
     indices: Iterable<number>,
     length: number,
@@ -547,10 +596,51 @@ export function createTerrainBrushPatchFromTerrains(options: {
     });
   }
 
+  const seenFoliageMaskValueKeys = new Set<string>();
+
+  for (const entry of options.foliageMaskValueIndices ?? []) {
+    const beforeMask = getTerrainFoliageMask(before, entry.layerId);
+    const afterMask = getTerrainFoliageMask(after, entry.layerId);
+    const maskLength =
+      beforeMask?.values.length ??
+      afterMask?.values.length ??
+      before.sampleCountX * before.sampleCountZ;
+
+    if (
+      !Number.isInteger(entry.index) ||
+      entry.index < 0 ||
+      entry.index >= maskLength
+    ) {
+      throw new Error(`Terrain foliage mask patch index ${entry.index} is out of range.`);
+    }
+
+    const key = `${entry.layerId}\u0000${entry.index}`;
+
+    if (seenFoliageMaskValueKeys.has(key)) {
+      continue;
+    }
+
+    seenFoliageMaskValueKeys.add(key);
+    const beforeValue = beforeMask?.values[entry.index] ?? 0;
+    const afterValue = afterMask?.values[entry.index] ?? 0;
+
+    if (beforeValue === afterValue) {
+      continue;
+    }
+
+    foliageMaskValues.push({
+      layerId: entry.layerId,
+      index: entry.index,
+      before: beforeValue,
+      after: afterValue
+    });
+  }
+
   return {
     terrainId: before.id,
     heightSamples,
-    paintWeights
+    paintWeights,
+    foliageMaskValues
   };
 }
 
