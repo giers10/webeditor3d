@@ -168,6 +168,20 @@ function normalizeTerrainCollisionEnabled(value: boolean): boolean {
   return value;
 }
 
+function normalizeTerrainFoliageLayerId(value: string, label: string): string {
+  if (typeof value !== "string") {
+    throw new Error(`${label} must be a string.`);
+  }
+
+  const trimmedValue = value.trim();
+
+  if (trimmedValue.length === 0) {
+    throw new Error(`${label} must be a non-empty string.`);
+  }
+
+  return trimmedValue;
+}
+
 export function getTerrainLayerLabel(layerIndex: number): string {
   if (!Number.isInteger(layerIndex) || layerIndex < 0 || layerIndex >= TERRAIN_LAYER_COUNT) {
     throw new Error(`Terrain layer index ${layerIndex} is out of range.`);
