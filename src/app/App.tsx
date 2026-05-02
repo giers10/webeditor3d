@@ -20936,11 +20936,37 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                       >
                         Erase Mask
                       </button>
+                      <button
+                        className={`viewport-panel__button ${armedTerrainBrushTool === "foliageBlockerPaint" ? "viewport-panel__button--active" : ""}`}
+                        type="button"
+                        data-testid="terrain-brush-tool-foliage-blocker-paint"
+                        aria-pressed={
+                          armedTerrainBrushTool === "foliageBlockerPaint"
+                        }
+                        onClick={() =>
+                          handleArmTerrainBrushTool("foliageBlockerPaint")
+                        }
+                      >
+                        Paint Blocker
+                      </button>
+                      <button
+                        className={`viewport-panel__button ${armedTerrainBrushTool === "foliageBlockerErase" ? "viewport-panel__button--active" : ""}`}
+                        type="button"
+                        data-testid="terrain-brush-tool-foliage-blocker-erase"
+                        aria-pressed={
+                          armedTerrainBrushTool === "foliageBlockerErase"
+                        }
+                        onClick={() =>
+                          handleArmTerrainBrushTool("foliageBlockerErase")
+                        }
+                      >
+                        Clear Blocker
+                      </button>
                     </div>
                     <div className="material-summary">
                       {activeFoliageLayer === null
                         ? "Create or select a foliage layer in the Foliage panel before painting terrain masks."
-                        : `${activeFoliageLayer.name} mask has ${selectedTerrainActiveFoliageMaskPaintedSampleCount} painted sample${selectedTerrainActiveFoliageMaskPaintedSampleCount === 1 ? "" : "s"} on this terrain.`}
+                        : `${activeFoliageLayer.name} mask has ${selectedTerrainActiveFoliageMaskPaintedSampleCount} painted sample${selectedTerrainActiveFoliageMaskPaintedSampleCount === 1 ? "" : "s"} on this terrain. Global blocker has ${selectedTerrainFoliageBlockerPaintedSampleCount} blocked sample${selectedTerrainFoliageBlockerPaintedSampleCount === 1 ? "" : "s"}.`}
                     </div>
                   </div>
 
