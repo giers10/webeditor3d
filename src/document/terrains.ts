@@ -968,6 +968,99 @@ function sampleTerrainPaintWeightAtGridCoordinate(
   );
 }
 
+function sampleTerrainFoliageMaskAtGridCoordinate(
+  mask: TerrainFoliageMask,
+  sampleX: number,
+  sampleZ: number
+): number {
+  const clampedSampleX = clamp(sampleX, 0, mask.resolutionX - 1);
+  const clampedSampleZ = clamp(sampleZ, 0, mask.resolutionZ - 1);
+  const minSampleX = Math.floor(clampedSampleX);
+  const maxSampleX = Math.min(mask.resolutionX - 1, minSampleX + 1);
+  const minSampleZ = Math.floor(clampedSampleZ);
+  const maxSampleZ = Math.min(mask.resolutionZ - 1, minSampleZ + 1);
+  const blendX = clampedSampleX - minSampleX;
+  const blendZ = clampedSampleZ - minSampleZ;
+  const value00 = getTerrainFoliageMaskValueAtSample(
+    mask,
+    minSampleX,
+    minSampleZ
+  );
+  const value10 = getTerrainFoliageMaskValueAtSample(
+    mask,
+    maxSampleX,
+    minSampleZ
+  );
+  const value01 = getTerrainFoliageMaskValueAtSample(
+    mask,
+    minSampleX,
+    maxSampleZ
+  );
+  const value11 = getTerrainFoliageMaskValueAtSample(
+    mask,
+    maxSampleX,
+    maxSampleZ
+  );
+
+  return lerp(
+    lerp(value00, value10, blendX),
+    lerp(value01, value11, blendX),
+    blendZ
+  );
+}
+
+export function sampleTerrainFoliageMaskAtLocalPosition(
+  terrain: Terrain,
+  layerId: string,
+  localX: number,
+  localZ: number,
+  clampToBounds = false
+): number | null {
+  const sampleSpaceX = localX / terrain.cellSize;
+  const sampleSpaceZ = localZ / terrain.cellSize;
+  const maxSampleX = terrain.sampleCountX - 1;
+  const maxSampleZ = terrain.sampleCountZ - 1;
+
+  if (!clampToBounds) {
+    if (
+      sampleSpaceX < 0 ||
+      sampleSpaceX > maxSampleX ||
+      sampleSpaceZ < 0 ||
+      sampleSpaceZ > maxSampleZ
+    ) {
+      return null;
+    }
+  }
+
+  const mask = getTerrainFoliageMask(terrain, layerId);
+
+  if (mask === null) {
+    return 0;
+  }
+
+  return sampleTerrainFoliageMaskAtGridCoordinate(
+    mask,
+    sampleSpaceX,
+    sampleSpaceZ
+  );
+}
+
+export function sampleTerrainFoliageMaskAtWorldPosition(
+  terrain: Terrain,
+  layerId: string,
+  worldX: number,
+  worldZ: number,
+  clampToBounds = false
+): number | null {
+  return sampleTerrainFoliageMaskAtLocalPosition(
+    terrain,
+    layerId,
+    worldX - terrain.position.x,
+    worldZ - terrain.position.z,
+    clampToBounds
+  );
+}
+
 function createTerrainPositionFromCenter(
   center: Vec3,
   sampleCountX: number,
