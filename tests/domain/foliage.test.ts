@@ -9,6 +9,7 @@ import {
   createSceneDocumentFromProject,
   createEmptyProjectDocument
 } from "../../src/document/scene-document";
+import { createTerrain, createTerrainFoliageMask } from "../../src/document/terrains";
 import { validateSceneDocument } from "../../src/document/scene-document-validation";
 import { BUNDLED_FOLIAGE_PROTOTYPES } from "../../src/foliage/bundled-foliage-manifest";
 import {
@@ -112,6 +113,40 @@ describe("foliage document foundations", () => {
           code: "invalid-foliage-layer-noise-strength"
         }),
         expect.objectContaining({ code: "missing-foliage-layer-prototype" })
+      ])
+    );
+  });
+
+  it("validates terrain foliage mask layer references and ranges", () => {
+    const document = createEmptySceneDocument();
+    const terrain = createTerrain({
+      id: "terrain-invalid-foliage-mask",
+      sampleCountX: 2,
+      sampleCountZ: 2,
+      foliageMasks: {
+        "missing-foliage-layer": createTerrainFoliageMask({
+          layerId: "missing-foliage-layer",
+          resolutionX: 2,
+          resolutionZ: 2,
+          values: [0, 0.25, 0.5, 1]
+        })
+      }
+    });
+
+    document.terrains[terrain.id] = {
+      ...terrain,
+      foliageMasks: {
+        "missing-foliage-layer": {
+          ...terrain.foliageMasks["missing-foliage-layer"]!,
+          values: [0, 2, 0.5, 1]
+        }
+      }
+    };
+
+    expect(validateSceneDocument(document).errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "missing-terrain-foliage-mask-layer" }),
+        expect.objectContaining({ code: "invalid-terrain-foliage-mask-value" })
       ])
     );
   });
