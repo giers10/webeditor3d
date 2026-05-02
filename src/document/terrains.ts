@@ -398,6 +398,117 @@ function normalizeTerrainPaintWeights(
   return normalizedPaintWeights;
 }
 
+export function createTerrainFoliageMask(options: {
+  layerId: string;
+  resolutionX: number;
+  resolutionZ: number;
+  values?: readonly number[];
+}): TerrainFoliageMask {
+  const layerId = normalizeTerrainFoliageLayerId(
+    options.layerId,
+    "Terrain foliage mask layerId"
+  );
+  const resolutionX = normalizeTerrainSampleCount(
+    options.resolutionX,
+    "Terrain foliage mask resolutionX"
+  );
+  const resolutionZ = normalizeTerrainSampleCount(
+    options.resolutionZ,
+    "Terrain foliage mask resolutionZ"
+  );
+  const expectedValueCount = resolutionX * resolutionZ;
+  const values =
+    options.values === undefined
+      ? createFlatTerrainFoliageMaskValues(resolutionX, resolutionZ)
+      : [...options.values];
+
+  if (values.length !== expectedValueCount) {
+    throw new Error(
+      `Terrain foliage mask values must contain exactly ${expectedValueCount} samples.`
+    );
+  }
+
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index];
+
+    if (!Number.isFinite(value)) {
+      throw new Error("Terrain foliage mask values must remain finite.");
+    }
+
+    values[index] = clamp(value, 0, 1);
+  }
+
+  return {
+    layerId,
+    resolutionX,
+    resolutionZ,
+    values
+  };
+}
+
+export function createEmptyTerrainFoliageMask(
+  terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ">,
+  layerId: string
+): TerrainFoliageMask {
+  return createTerrainFoliageMask({
+    layerId,
+    resolutionX: terrain.sampleCountX,
+    resolutionZ: terrain.sampleCountZ
+  });
+}
+
+export function cloneTerrainFoliageMask(
+  mask: TerrainFoliageMask
+): TerrainFoliageMask {
+  return createTerrainFoliageMask(mask);
+}
+
+function normalizeTerrainFoliageMasks(
+  sampleCountX: number,
+  sampleCountZ: number,
+  foliageMasks: TerrainFoliageMaskRegistry | undefined
+): TerrainFoliageMaskRegistry {
+  if (foliageMasks === undefined) {
+    return {};
+  }
+
+  const normalizedMasks: TerrainFoliageMaskRegistry = {};
+
+  for (const [layerId, mask] of Object.entries(foliageMasks)) {
+    const normalizedMask = createTerrainFoliageMask(mask);
+
+    if (normalizedMask.layerId !== layerId) {
+      throw new Error(
+        `Terrain foliage mask ${layerId} must match its layerId.`
+      );
+    }
+
+    if (
+      normalizedMask.resolutionX !== sampleCountX ||
+      normalizedMask.resolutionZ !== sampleCountZ
+    ) {
+      throw new Error(
+        "Terrain foliage mask resolution must match the terrain sample grid."
+      );
+    }
+
+    normalizedMasks[layerId] = normalizedMask;
+  }
+
+  return normalizedMasks;
+}
+
+export function cloneTerrainFoliageMasks(
+  foliageMasks: TerrainFoliageMaskRegistry
+): TerrainFoliageMaskRegistry {
+  return Object.fromEntries(
+    Object.entries(foliageMasks).map(([layerId, mask]) => [
+      layerId,
+      cloneTerrainFoliageMask(mask)
+    ])
+  );
+}
+
 export function getTerrainSampleLayerWeights(
   terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "paintWeights">,
   sampleX: number,
