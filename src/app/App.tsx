@@ -8995,6 +8995,219 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
     }
   };
 
+  const handleCreateFoliageLayer = () => {
+    try {
+      const nextLayer = createFoliageLayer({
+        name:
+          foliageLayerList.length === 0
+            ? "Foliage Layer"
+            : `Foliage Layer ${foliageLayerList.length + 1}`
+      });
+
+      store.executeCommand(
+        createCreateFoliageLayerCommand({
+          layer: nextLayer,
+          label: "Create foliage layer"
+        })
+      );
+      setActiveFoliageLayerId(nextLayer.id);
+      setStatusMessage(`Created ${nextLayer.name}.`);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const updateFoliageLayer = (
+    layer: FoliageLayer,
+    label: string,
+    successMessage: string
+  ) => {
+    store.executeCommand(
+      createUpdateFoliageLayerCommand({
+        layer,
+        label
+      })
+    );
+    setStatusMessage(successMessage);
+  };
+
+  const applyActiveFoliageLayerName = () => {
+    if (activeFoliageLayer === null) {
+      return;
+    }
+
+    const nextName = foliageLayerNameDraft.trim();
+
+    if (nextName.length === 0) {
+      setFoliageLayerNameDraft(activeFoliageLayer.name);
+      setStatusMessage("Foliage layer name must not be empty.");
+      return;
+    }
+
+    if (nextName === activeFoliageLayer.name) {
+      return;
+    }
+
+    try {
+      const nextLayer = createFoliageLayer({
+        ...activeFoliageLayer,
+        name: nextName
+      });
+
+      updateFoliageLayer(
+        nextLayer,
+        "Rename foliage layer",
+        `Renamed foliage layer to ${nextLayer.name}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleFoliageLayerEnabledChange = (
+    layer: FoliageLayer,
+    enabled: boolean
+  ) => {
+    if (layer.enabled === enabled) {
+      return;
+    }
+
+    try {
+      const nextLayer = createFoliageLayer({
+        ...layer,
+        enabled
+      });
+
+      updateFoliageLayer(
+        nextLayer,
+        enabled ? "Enable foliage layer" : "Disable foliage layer",
+        `${nextLayer.name} is now ${enabled ? "enabled" : "disabled"}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleDeleteFoliageLayer = (layerId: string) => {
+    const layer = editorState.document.foliageLayers[layerId];
+
+    if (layer === undefined) {
+      return;
+    }
+
+    if (!confirmDeleteSceneItem(layer.name)) {
+      return;
+    }
+
+    try {
+      const nextActiveLayer = foliageLayerList.find(
+        (currentLayer) => currentLayer.id !== layerId
+      );
+
+      store.executeCommand(createDeleteFoliageLayerCommand(layerId));
+      setActiveFoliageLayerId(nextActiveLayer?.id ?? null);
+      setStatusMessage(`Deleted ${layer.name}.`);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyActiveFoliageLayerNumericField = (
+    field: FoliageLayerNumericField
+  ) => {
+    if (activeFoliageLayer === null) {
+      return;
+    }
+
+    const label = getFoliageLayerNumericFieldLabel(field);
+
+    try {
+      const nextValue = readFoliageLayerNumericDraft(
+        field,
+        foliageLayerNumberDrafts[field]
+      );
+
+      if (activeFoliageLayer[field] === nextValue) {
+        setFoliageLayerNumberDrafts(
+          createFoliageLayerNumberDrafts(activeFoliageLayer)
+        );
+        return;
+      }
+
+      const nextLayer = createFoliageLayer({
+        ...activeFoliageLayer,
+        [field]: nextValue
+      });
+
+      updateFoliageLayer(
+        nextLayer,
+        `Set foliage ${label.toLowerCase()}`,
+        `Updated ${activeFoliageLayer.name} ${label.toLowerCase()}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleFoliageLayerNumberDraftChange = (
+    field: FoliageLayerNumericField,
+    value: string
+  ) => {
+    setFoliageLayerNumberDrafts((currentDrafts) => ({
+      ...currentDrafts,
+      [field]: value
+    }));
+  };
+
+  const handleFoliagePrototypeSelectionChange = (
+    prototypeId: string,
+    selected: boolean
+  ) => {
+    if (
+      activeFoliageLayer === null ||
+      !BUNDLED_FOLIAGE_PROTOTYPE_IDS.has(prototypeId)
+    ) {
+      return;
+    }
+
+    const currentPrototypeIds = activeFoliageLayer.prototypeIds;
+    const hasPrototypeId = currentPrototypeIds.includes(prototypeId);
+
+    if (hasPrototypeId === selected) {
+      return;
+    }
+
+    const nextPrototypeIds = selected
+      ? [...currentPrototypeIds, prototypeId]
+      : currentPrototypeIds.filter(
+          (currentPrototypeId) => currentPrototypeId !== prototypeId
+        );
+    const validPrototypeIds = getValidFoliageLayerPrototypeIds(
+      nextPrototypeIds,
+      editorState.document.foliagePrototypes
+    );
+
+    try {
+      const prototype = BUNDLED_FOLIAGE_PROTOTYPES.find(
+        (currentPrototype) => currentPrototype.id === prototypeId
+      );
+      const nextLayer = createFoliageLayer({
+        ...activeFoliageLayer,
+        prototypeIds: validPrototypeIds
+      });
+
+      updateFoliageLayer(
+        nextLayer,
+        selected ? "Add foliage prototype" : "Remove foliage prototype",
+        `${prototype?.label ?? prototypeId} ${
+          selected ? "added to" : "removed from"
+        } ${nextLayer.name}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const handleArmTerrainBrushTool = (tool: TerrainBrushTool) => {
     if (selectedTerrain === null) {
       return;
