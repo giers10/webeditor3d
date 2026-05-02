@@ -3377,6 +3377,11 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
       ? 0
       : selectedTerrainActiveFoliageMask.values.filter((value) => value > 0)
           .length;
+  const selectedTerrainFoliageBlockerPaintedSampleCount =
+    selectedTerrain === null
+      ? 0
+      : selectedTerrain.foliageBlockerMask.values.filter((value) => value > 0)
+          .length;
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(
     String(editorState.document.world.ambientLight.intensity)
   );
