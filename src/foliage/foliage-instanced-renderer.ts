@@ -142,6 +142,7 @@ function scaleFoliageLayerRegistryDensities(
 
 function createRenderViewFromCamera(camera: Camera): FoliageRenderView {
   camera.updateMatrixWorld();
+  camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
   const cameraPosition = new Vector3();
   camera.getWorldPosition(cameraPosition);
   const projectionViewMatrix = new Matrix4().multiplyMatrices(

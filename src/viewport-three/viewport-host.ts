@@ -6657,8 +6657,10 @@ export class ViewportHost {
     this.foliageRenderer.sync({
       terrains: document.terrains,
       foliageLayers: document.foliageLayers,
-      foliagePrototypes: document.foliagePrototypes
+      foliagePrototypes: document.foliagePrototypes,
+      quality: document.world.advancedRendering.foliage
     });
+    this.foliageRenderer.updateView(this.getActiveCamera());
   }
 
   private createTerrainRenderObjects(terrain: Terrain): TerrainRenderObjects {
@@ -11569,6 +11571,7 @@ export class ViewportHost {
     this.updateGridPositioning();
     this.updateTransformGizmoPose();
     this.updateTerrainLodVisibility();
+    this.foliageRenderer.updateView(this.getActiveCamera());
     this.volumeTime += dt;
 
     for (const uniform of this.volumeAnimatedUniforms) {

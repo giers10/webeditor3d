@@ -194,6 +194,11 @@ import {
   ADVANCED_RENDERING_SHADOW_MAP_SIZES,
   ADVANCED_RENDERING_SHADOW_TYPES,
   ADVANCED_RENDERING_TONE_MAPPING_MODES,
+  FOLIAGE_QUALITY_SHADOW_MODES,
+  MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
+  MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
+  MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
+  MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
   areWorldSettingsEqual,
   changeWorldBackgroundMode,
   cloneWorldSettings,
@@ -211,6 +216,7 @@ import {
   type AdvancedRenderingShadowMapSize,
   type AdvancedRenderingShadowType,
   type AdvancedRenderingToneMappingMode,
+  type FoliageQualityShadowMode,
   type WorldShaderSkySettings,
   type WorldSettings
 } from "../document/world-settings";
@@ -1148,6 +1154,10 @@ function readUnitIntervalNumberDraft(source: string, label: string): number {
   }
 
   return value;
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 function assertAdvancedRenderingDistanceFogRange(

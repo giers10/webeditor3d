@@ -5030,8 +5030,10 @@ export class RuntimeHost {
     this.foliageRenderer.sync({
       terrains: runtimeScene.foliage.terrains,
       foliageLayers: runtimeScene.foliage.layers,
-      foliagePrototypes: runtimeScene.foliage.prototypes
+      foliagePrototypes: runtimeScene.foliage.prototypes,
+      quality: runtimeScene.world.advancedRendering.foliage
     });
+    this.foliageRenderer.updateView(this.camera);
   }
 
   private disposeUniqueMaterials(materials: Material[]) {
@@ -5363,6 +5365,7 @@ export class RuntimeHost {
     }
 
     this.updateTerrainLodVisibility();
+    this.foliageRenderer.updateView(this.camera);
     this.updateUnderwaterSceneFog();
     this.syncCelestialShadowState();
 
