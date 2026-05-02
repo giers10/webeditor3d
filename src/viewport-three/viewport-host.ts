@@ -9585,6 +9585,7 @@ export class ViewportHost {
     dirtyBounds: TerrainBrushDirtySampleBounds | null;
     heightSampleIndices: number[];
     paintWeightIndices: number[];
+    foliageMaskValueKeys: string[];
     lastAppliedPoint: {
       x: number;
       z: number;
@@ -9601,6 +9602,7 @@ export class ViewportHost {
         dirtyBounds: null,
         heightSampleIndices: [],
         paintWeightIndices: [],
+        foliageMaskValueKeys: [],
         lastAppliedPoint: from
       };
     }
@@ -9609,6 +9611,7 @@ export class ViewportHost {
     let dirtyBounds: TerrainBrushDirtySampleBounds | null = null;
     const heightSampleIndices = new Set<number>();
     const paintWeightIndices = new Set<number>();
+    const foliageMaskValueKeys = new Set<string>();
     let lastAppliedPoint = from;
     const stepCount = Math.floor(distance / spacing);
     const mergeDirtyBounds = (nextBounds: TerrainBrushDirtySampleBounds | null) => {
@@ -9659,6 +9662,14 @@ export class ViewportHost {
       for (const paintWeightIndex of result.paintWeightIndices) {
         paintWeightIndices.add(paintWeightIndex);
       }
+      for (const foliageMaskValueIndex of result.foliageMaskValueIndices) {
+        foliageMaskValueKeys.add(
+          createTerrainFoliageMaskValueKey(
+            foliageMaskValueIndex.layerId,
+            foliageMaskValueIndex.index
+          )
+        );
+      }
       lastAppliedPoint = point;
     }
 
@@ -9667,6 +9678,7 @@ export class ViewportHost {
       dirtyBounds,
       heightSampleIndices: [...heightSampleIndices],
       paintWeightIndices: [...paintWeightIndices],
+      foliageMaskValueKeys: [...foliageMaskValueKeys],
       lastAppliedPoint
     };
   }
@@ -9675,7 +9687,7 @@ export class ViewportHost {
     stroke: ActiveTerrainBrushStroke,
     result: Pick<
       ReturnType<typeof applyTerrainBrushStampInPlace>,
-      "heightSampleIndices" | "paintWeightIndices"
+      "heightSampleIndices" | "paintWeightIndices" | "foliageMaskValueIndices"
     >
   ) {
     for (const sampleIndex of result.heightSampleIndices) {
@@ -9684,6 +9696,15 @@ export class ViewportHost {
 
     for (const paintWeightIndex of result.paintWeightIndices) {
       stroke.paintWeightIndices.add(paintWeightIndex);
+    }
+
+    for (const foliageMaskValueIndex of result.foliageMaskValueIndices) {
+      stroke.foliageMaskValueKeys.add(
+        createTerrainFoliageMaskValueKey(
+          foliageMaskValueIndex.layerId,
+          foliageMaskValueIndex.index
+        )
+      );
     }
   }
 
