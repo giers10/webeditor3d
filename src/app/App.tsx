@@ -4544,6 +4544,45 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
   }, [selectedTerrain]);
 
   useEffect(() => {
+    if (foliageLayerList.length === 0) {
+      if (activeFoliageLayerId !== null) {
+        setActiveFoliageLayerId(null);
+      }
+      return;
+    }
+
+    if (
+      activeFoliageLayerId === null ||
+      editorState.document.foliageLayers[activeFoliageLayerId] === undefined
+    ) {
+      setActiveFoliageLayerId(foliageLayerList[0].id);
+    }
+  }, [
+    activeFoliageLayerId,
+    editorState.document.foliageLayers,
+    foliageLayerList
+  ]);
+
+  useEffect(() => {
+    if (activeFoliageLayer === null) {
+      setFoliageLayerNameDraft("");
+      setFoliageLayerNumberDrafts(
+        createFoliageLayerNumberDrafts(
+          createFoliageLayer({
+            id: "foliage-layer-draft"
+          })
+        )
+      );
+      return;
+    }
+
+    setFoliageLayerNameDraft(activeFoliageLayer.name);
+    setFoliageLayerNumberDrafts(
+      createFoliageLayerNumberDrafts(activeFoliageLayer)
+    );
+  }, [activeFoliageLayer]);
+
+  useEffect(() => {
     const projectTime = editorState.projectDocument.time;
 
     setProjectTimeStartDayNumberDraft(String(projectTime.startDayNumber));
