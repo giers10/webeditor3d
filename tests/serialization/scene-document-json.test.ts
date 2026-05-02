@@ -38,6 +38,7 @@ import {
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
   FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  FOLIAGE_MASKS_SCENE_DOCUMENT_VERSION,
   IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
@@ -1189,6 +1190,41 @@ describe("scene document JSON", () => {
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.world.advancedRendering.godRays).toEqual(
       emptyScene.world.advancedRendering.godRays
+    );
+  });
+
+  it("migrates v93 scene documents without foliage quality settings to defaults", () => {
+    const emptyScene = createEmptySceneDocument({
+      name: "Legacy Foliage Quality Scene"
+    });
+    const { foliage: _foliage, ...legacyAdvancedRendering } =
+      emptyScene.world.advancedRendering;
+
+    const migratedDocument = migrateSceneDocument({
+      version: FOLIAGE_MASKS_SCENE_DOCUMENT_VERSION,
+      name: emptyScene.name,
+      time: emptyScene.time,
+      scheduler: emptyScene.scheduler,
+      world: {
+        ...emptyScene.world,
+        advancedRendering: legacyAdvancedRendering
+      },
+      materials: emptyScene.materials,
+      textures: emptyScene.textures,
+      assets: emptyScene.assets,
+      brushes: emptyScene.brushes,
+      terrains: emptyScene.terrains,
+      foliagePrototypes: emptyScene.foliagePrototypes,
+      foliageLayers: emptyScene.foliageLayers,
+      paths: emptyScene.paths,
+      modelInstances: emptyScene.modelInstances,
+      entities: emptyScene.entities,
+      interactionLinks: emptyScene.interactionLinks
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.advancedRendering.foliage).toEqual(
+      emptyScene.world.advancedRendering.foliage
     );
   });
 
