@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   createFoliageInstanceMatrix,
-  createFoliageRenderBatches
+  createFoliageRenderBatches,
+  getFoliagePrototypeRenderLods,
+  resolveFoliageRenderLod,
+  shouldCullFoliageChunkByDistance
 } from "../../src/foliage/foliage-render-batches";
 import { BUNDLED_FOLIAGE_PROTOTYPES } from "../../src/foliage/bundled-foliage-manifest";
 import {
@@ -73,7 +76,7 @@ function createProjectAssetPrototype(): FoliagePrototype {
 }
 
 describe("foliage render batch helpers", () => {
-  it("groups scatter instances by terrain, layer, prototype, and bundled LOD0", () => {
+  it("groups scatter instances by terrain chunk, layer, prototype, and active bundled LOD", () => {
     const prototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
     const otherPrototype = BUNDLED_FOLIAGE_PROTOTYPES[1]!;
     const batches = createFoliageRenderBatches(
@@ -99,6 +102,137 @@ describe("foliage render batch helpers", () => {
     expect(batches.every((batch) => batch.lodLevel === 0)).toBe(true);
     expect(batches.every((batch) => /_LOD0\.glb$/u.test(batch.bundledPath))).toBe(
       true
+    );
+    expect(batches.every((batch) => batch.chunkId === "chunk-a")).toBe(true);
+  });
+
+  it("selects foliage LODs from camera distance", () => {
+    const prototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
+    const batches = createFoliageRenderBatches(
+      createScatter([
+        createInstance({
+          prototypeId: prototype.id,
+          position: { x: 0, y: 0, z: 0 }
+        }),
+        createInstance({
+          prototypeId: prototype.id,
+          position: { x: 24, y: 0, z: 0 }
+        }),
+        createInstance({
+          prototypeId: prototype.id,
+          position: { x: 54, y: 0, z: 0 }
+        }),
+        createInstance({
+          prototypeId: prototype.id,
+          position: { x: 100, y: 0, z: 0 }
+        })
+      ]),
+      {
+        [prototype.id]: prototype
+      },
+      {
+        view: {
+          cameraPosition: { x: 0, y: 0, z: 0 }
+        }
+      }
+    );
+
+    expect(batches.map((batch) => batch.lodLevel).sort()).toEqual([
+      0, 1, 2, 3
+    ]);
+  });
+
+  it("uses lodBias to vary LOD switching near a threshold", () => {
+    const prototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
+    const lods = getFoliagePrototypeRenderLods(prototype);
+    const earlyLod = resolveFoliageRenderLod({
+      lods,
+      cameraDistance: 18.5,
+      lodBias: 0.5,
+      maxDistanceMultiplier: 1
+    });
+    const delayedLod = resolveFoliageRenderLod({
+      lods,
+      cameraDistance: 18.5,
+      lodBias: -0.5,
+      maxDistanceMultiplier: 1
+    });
+
+    expect(earlyLod?.level).toBe(1);
+    expect(delayedLod?.level).toBe(0);
+  });
+
+  it("culls chunks beyond the effective foliage distance", () => {
+    expect(
+      shouldCullFoliageChunkByDistance({
+        chunk: {
+          bounds: {
+            min: { x: 0, y: 0, z: 0 },
+            max: { x: 16, y: 0, z: 16 }
+          }
+        },
+        cameraPosition: { x: 200, y: 0, z: 200 },
+        maxDistance: 32
+      })
+    ).toBe(true);
+    expect(
+      shouldCullFoliageChunkByDistance({
+        chunk: {
+          bounds: {
+            min: { x: 0, y: 0, z: 0 },
+            max: { x: 16, y: 0, z: 16 }
+          }
+        },
+        cameraPosition: { x: 12, y: 0, z: 12 },
+        maxDistance: 32
+      })
+    ).toBe(false);
+  });
+
+  it("groups batches by chunk and LOD", () => {
+    const prototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
+    const scatter: FoliageScatterResult = {
+      chunks: [
+        createScatter([
+          createInstance({
+            prototypeId: prototype.id,
+            position: { x: 2, y: 0, z: 2 }
+          })
+        ]).chunks[0]!,
+        {
+          ...createScatter([
+            createInstance({
+              prototypeId: prototype.id,
+              position: { x: 40, y: 0, z: 40 }
+            })
+          ]).chunks[0]!,
+          id: "chunk-b",
+          bounds: {
+            min: { x: 32, y: 0, z: 32 },
+            max: { x: 48, y: 0, z: 48 }
+          }
+        }
+      ],
+      instanceCount: 2
+    };
+    const batches = createFoliageRenderBatches(
+      scatter,
+      {
+        [prototype.id]: prototype
+      },
+      {
+        view: {
+          cameraPosition: { x: 0, y: 0, z: 0 }
+        }
+      }
+    );
+
+    expect(batches).toHaveLength(2);
+    expect(new Set(batches.map((batch) => batch.chunkId))).toEqual(
+      new Set(["chunk-a", "chunk-b"])
+    );
+    expect(new Set(batches.map((batch) => batch.lodLevel))).toEqual(
+      new Set([0, 2])
     );
   });
 
