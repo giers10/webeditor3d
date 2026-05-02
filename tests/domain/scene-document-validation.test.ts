@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createBoxBrush } from "../../src/document/brushes";
+import { createTerrain } from "../../src/document/terrains";
 import {
   createActiveSceneControlTargetRef,
   createActivateCameraRigOverrideControlEffect,
