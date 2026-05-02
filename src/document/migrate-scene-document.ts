@@ -178,6 +178,7 @@ import {
   CONTROL_SURFACE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   DISTANCE_FOG_SCENE_DOCUMENT_VERSION,
   DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION,
+  FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   GOD_RAYS_SCENE_DOCUMENT_VERSION,
   GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
@@ -262,6 +263,15 @@ import {
   type SceneLoadingScreenSettings,
   type SceneDocument
 } from "./scene-document";
+import {
+  createFoliageLayer,
+  createFoliagePrototype,
+  isFoliagePrototypeCategory,
+  isFoliagePrototypeLodLevel,
+  type FoliageLayer,
+  type FoliagePrototype,
+  type FoliagePrototypeLod
+} from "../foliage/foliage";
 import {
   createEmptyProjectDialogueLibrary,
   createProjectDialogue,
