@@ -16,8 +16,10 @@ import { createCreateRadialPrismBrushCommand } from "../commands/create-radial-p
 import { createCreateSceneCommand } from "../commands/create-scene-command";
 import { createCreateTorusBrushCommand } from "../commands/create-torus-brush-command";
 import { createCreateWedgeBrushCommand } from "../commands/create-wedge-brush-command";
+import { createCreateFoliageLayerCommand } from "../commands/create-foliage-layer-command";
 import { createDeleteBoxBrushCommand } from "../commands/delete-box-brush-command";
 import { createDeleteEntityCommand } from "../commands/delete-entity-command";
+import { createDeleteFoliageLayerCommand } from "../commands/delete-foliage-layer-command";
 import { createDeleteProjectAssetCommand } from "../commands/delete-project-asset-command";
 import { createDeleteSelectionCommand } from "../commands/delete-selection-command";
 import { createDeleteTerrainCommand } from "../commands/delete-terrain-command";
@@ -66,6 +68,7 @@ import { createUpsertModelInstanceCommand } from "../commands/upsert-model-insta
 import { createUpsertPathCommand } from "../commands/upsert-path-command";
 import { createUpsertTerrainCommand } from "../commands/upsert-terrain-command";
 import { createUpsertInteractionLinkCommand } from "../commands/upsert-interaction-link-command";
+import { createUpdateFoliageLayerCommand } from "../commands/update-foliage-layer-command";
 import {
   applySameKindSelectionClick,
   getSelectedBrushEdgeId,
@@ -244,6 +247,15 @@ import {
   TERRAIN_LAYER_COUNT,
   type Terrain
 } from "../document/terrains";
+import {
+  BUNDLED_FOLIAGE_PROTOTYPES
+} from "../foliage/bundled-foliage-manifest";
+import {
+  createFoliageLayer,
+  type FoliageLayer,
+  type FoliageLayerRegistry,
+  type FoliagePrototype
+} from "../foliage/foliage";
 import {
   areProjectTimeSettingsEqual,
   cloneProjectTimeSettings,
