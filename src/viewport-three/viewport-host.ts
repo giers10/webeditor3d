@@ -9685,10 +9685,14 @@ export class ViewportHost {
 
   private mergeTerrainBrushStampIndices(
     stroke: ActiveTerrainBrushStroke,
-    result: Pick<
-      ReturnType<typeof applyTerrainBrushStampInPlace>,
-      "heightSampleIndices" | "paintWeightIndices" | "foliageMaskValueIndices"
-    >
+    result: {
+      heightSampleIndices: readonly number[];
+      paintWeightIndices: readonly number[];
+      foliageMaskValueIndices?: ReturnType<
+        typeof applyTerrainBrushStampInPlace
+      >["foliageMaskValueIndices"];
+      foliageMaskValueKeys?: readonly string[];
+    }
   ) {
     for (const sampleIndex of result.heightSampleIndices) {
       stroke.heightSampleIndices.add(sampleIndex);
@@ -9698,13 +9702,17 @@ export class ViewportHost {
       stroke.paintWeightIndices.add(paintWeightIndex);
     }
 
-    for (const foliageMaskValueIndex of result.foliageMaskValueIndices) {
+    for (const foliageMaskValueIndex of result.foliageMaskValueIndices ?? []) {
       stroke.foliageMaskValueKeys.add(
         createTerrainFoliageMaskValueKey(
           foliageMaskValueIndex.layerId,
           foliageMaskValueIndex.index
         )
       );
+    }
+
+    for (const foliageMaskValueKey of result.foliageMaskValueKeys ?? []) {
+      stroke.foliageMaskValueKeys.add(foliageMaskValueKey);
     }
   }
 
