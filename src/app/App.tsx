@@ -2540,6 +2540,16 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
     () => getFoliageLayerList(editorState.document.foliageLayers),
     [editorState.document.foliageLayers]
   );
+  const customFoliagePrototypeList = useMemo(
+    () =>
+      Object.values(editorState.document.foliagePrototypes).sort(
+        (left, right) =>
+          left.category.localeCompare(right.category) ||
+          left.label.localeCompare(right.label) ||
+          left.id.localeCompare(right.id)
+      ),
+    [editorState.document.foliagePrototypes]
+  );
   const pathList = getScenePaths(editorState.document.paths);
   const layoutMode = editorState.viewportLayoutMode;
   const activePanelId = editorState.activeViewportPanelId;
