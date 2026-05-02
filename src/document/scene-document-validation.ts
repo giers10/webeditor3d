@@ -6934,7 +6934,7 @@ function validateProjectSequence(
 function validateProjectResources(
   document: Pick<
     ProjectDocument,
-    "materials" | "assets" | "sequences" | "scenes"
+    "materials" | "assets" | "foliagePrototypes" | "sequences" | "scenes"
   >,
   context: ProjectSchedulerValidationContext,
   diagnostics: SceneDiagnostic[]
@@ -7032,6 +7032,7 @@ function filterProjectSceneDiagnostics(
       (!diagnostic.path.startsWith("materials.") &&
         !diagnostic.path.startsWith("time.") &&
         !diagnostic.path.startsWith("assets.") &&
+        !diagnostic.path.startsWith("foliagePrototypes.") &&
         !diagnostic.path.startsWith("dialogues.") &&
         !diagnostic.path.startsWith("sequences."))
   );
