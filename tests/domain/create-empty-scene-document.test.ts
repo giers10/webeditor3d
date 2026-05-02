@@ -13,6 +13,8 @@ describe("createEmptySceneDocument", () => {
     expect(document.world).toEqual(createDefaultWorldSettings());
     expect(document.brushes).toEqual({});
     expect(document.paths).toEqual({});
+    expect(document.foliagePrototypes).toEqual({});
+    expect(document.foliageLayers).toEqual({});
     expect(document.entities).toEqual({});
     expect(document.modelInstances).toEqual({});
     expect(document.interactionLinks).toEqual({});
