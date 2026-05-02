@@ -19021,6 +19021,125 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                       />
                     </label>
 
+                    <div className="form-section">
+                      <div className="label">Foliage</div>
+                      <label className="form-field form-field--toggle">
+                        <span className="label">Enabled</span>
+                        <input
+                          type="checkbox"
+                          checked={advancedRendering.foliage.enabled}
+                          onChange={(event) =>
+                            applyAdvancedRenderingFoliageEnabled(
+                              event.currentTarget.checked
+                            )
+                          }
+                        />
+                      </label>
+                      <div className="vector-inputs vector-inputs--two">
+                        <label className="form-field">
+                          <span className="label">Density</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min={MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER}
+                            max={MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER}
+                            step="0.05"
+                            value={
+                              advancedRenderingFoliageDensityMultiplierDraft
+                            }
+                            onChange={(event) =>
+                              setAdvancedRenderingFoliageDensityMultiplierDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={
+                              applyAdvancedRenderingFoliageDensityMultiplier
+                            }
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingFoliageDensityMultiplier
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingFoliageDensityMultiplier
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingFoliageDensityMultiplier
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Distance</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min={
+                              MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER
+                            }
+                            max={
+                              MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER
+                            }
+                            step="0.05"
+                            value={
+                              advancedRenderingFoliageMaxDistanceMultiplierDraft
+                            }
+                            onChange={(event) =>
+                              setAdvancedRenderingFoliageMaxDistanceMultiplierDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={
+                              applyAdvancedRenderingFoliageMaxDistanceMultiplier
+                            }
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingFoliageMaxDistanceMultiplier
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingFoliageMaxDistanceMultiplier
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingFoliageMaxDistanceMultiplier
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                      <label className="form-field">
+                        <span className="label">Shadows</span>
+                        <select
+                          className="select-input"
+                          value={advancedRendering.foliage.shadows}
+                          onChange={(event) =>
+                            applyAdvancedRenderingFoliageShadows(
+                              event.currentTarget
+                                .value as FoliageQualityShadowMode
+                            )
+                          }
+                        >
+                          {FOLIAGE_QUALITY_SHADOW_MODES.map((shadowMode) => (
+                            <option key={shadowMode} value={shadowMode}>
+                              {formatFoliageQualityShadowModeLabel(shadowMode)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+
                     {!advancedRendering.enabled ? null : (
                       <>
                         <div className="form-section">

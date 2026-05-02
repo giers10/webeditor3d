@@ -1713,6 +1713,13 @@ describe("validateSceneDocument", () => {
         density: Number.NaN,
         sourceSize: 0,
         samples: 0
+      },
+      foliage: {
+        ...document.world.advancedRendering.foliage,
+        enabled: "yes",
+        densityMultiplier: 3,
+        maxDistanceMultiplier: 0,
+        shadows: "close"
       }
     } as any;
 
@@ -1851,6 +1858,22 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-advanced-rendering-god-rays-samples",
           path: "world.advancedRendering.godRays.samples"
+        }),
+        expect.objectContaining({
+          code: "invalid-foliage-quality-enabled",
+          path: "world.advancedRendering.foliage.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-foliage-quality-density-multiplier",
+          path: "world.advancedRendering.foliage.densityMultiplier"
+        }),
+        expect.objectContaining({
+          code: "invalid-foliage-quality-max-distance-multiplier",
+          path: "world.advancedRendering.foliage.maxDistanceMultiplier"
+        }),
+        expect.objectContaining({
+          code: "invalid-foliage-quality-shadows",
+          path: "world.advancedRendering.foliage.shadows"
         }),
         expect.objectContaining({
           code: "invalid-advanced-rendering-fog-path",
