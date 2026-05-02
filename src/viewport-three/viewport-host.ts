@@ -9308,7 +9308,12 @@ export class ViewportHost {
       const nextChunk = buildTerrainLodChunkMeshData(
         terrain,
         chunk.startSampleX,
-        chunk.startSampleZ
+        chunk.startSampleZ,
+        undefined,
+        {
+          foliageMaskLayerId:
+            this.getTerrainFoliageMaskPreviewLayerId(terrain.id)
+        }
       );
 
       if (nextChunk === null) {
