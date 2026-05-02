@@ -1,22 +1,43 @@
-import { Matrix4, Quaternion, Vector3 } from "three";
+import { Frustum, Matrix4, Quaternion, Sphere, Vector3 } from "three";
 
 import type { Vec3 } from "../core/vector";
-import type { FoliagePrototype, FoliagePrototypeRegistry } from "./foliage";
+import {
+  resolveFoliageQualitySettings,
+  type FoliageQualitySettings
+} from "../document/world-settings";
+import type {
+  FoliagePrototype,
+  FoliagePrototypeLodLevel,
+  FoliagePrototypeRegistry
+} from "./foliage";
 import type {
   DerivedFoliageInstance,
+  DerivedFoliageScatterChunk,
   FoliageScatterResult
 } from "./foliage-scatter";
 
-export const FOLIAGE_RENDER_LOD_LEVEL = 0 as const;
+export interface FoliageRenderLod {
+  level: FoliagePrototypeLodLevel;
+  bundledPath: string;
+  maxDistance: number;
+  castShadow: boolean;
+}
+
+export interface FoliageRenderView {
+  cameraPosition: Vec3;
+  frustum?: Frustum | null;
+}
 
 export interface FoliageRenderBatch {
   key: string;
+  chunkId: string;
   terrainId: string;
   layerId: string;
   prototypeId: string;
-  lodLevel: typeof FOLIAGE_RENDER_LOD_LEVEL;
+  lodLevel: FoliagePrototypeLodLevel;
   bundledPath: string;
   castShadow: boolean;
+  chunkBounds: DerivedFoliageScatterChunk["bounds"];
   instances: DerivedFoliageInstance[];
 }
 
@@ -31,48 +52,141 @@ function createVector3(vector: Vec3): Vector3 {
   return new Vector3(vector.x, vector.y, vector.z);
 }
 
-export function getFoliagePrototypeRenderLod(
-  prototype: FoliagePrototype
-): {
-  bundledPath: string;
-  castShadow: boolean;
-} | null {
-  const lod = prototype.lods.find(
-    (candidate) => candidate.level === FOLIAGE_RENDER_LOD_LEVEL
-  );
+function distanceBetween(left: Vec3, right: Vec3): number {
+  return Math.hypot(left.x - right.x, left.y - right.y, left.z - right.z);
+}
 
-  if (lod === undefined || lod.source !== "bundled") {
-    return null;
-  }
-
+function getChunkCenter(chunk: Pick<DerivedFoliageScatterChunk, "bounds">): Vec3 {
   return {
-    bundledPath: lod.bundledPath,
-    castShadow: lod.castShadow
+    x: (chunk.bounds.min.x + chunk.bounds.max.x) * 0.5,
+    y: (chunk.bounds.min.y + chunk.bounds.max.y) * 0.5,
+    z: (chunk.bounds.min.z + chunk.bounds.max.z) * 0.5
   };
 }
 
+function getChunkRadius(chunk: Pick<DerivedFoliageScatterChunk, "bounds">): number {
+  const center = getChunkCenter(chunk);
+
+  return Math.max(
+    distanceBetween(center, chunk.bounds.min),
+    distanceBetween(center, chunk.bounds.max)
+  );
+}
+
+function cloneChunkBounds(
+  bounds: DerivedFoliageScatterChunk["bounds"]
+): DerivedFoliageScatterChunk["bounds"] {
+  return {
+    min: { ...bounds.min },
+    max: { ...bounds.max }
+  };
+}
+
+export function getFoliagePrototypeRenderLods(
+  prototype: FoliagePrototype
+): FoliageRenderLod[] {
+  return prototype.lods
+    .filter((lod) => lod.source === "bundled")
+    .map((lod) => ({
+      level: lod.level,
+      bundledPath: lod.bundledPath,
+      maxDistance: lod.maxDistance,
+      castShadow: lod.castShadow
+    }))
+    .sort((left, right) => left.level - right.level);
+}
+
+export function resolveFoliageRenderLod(options: {
+  lods: readonly FoliageRenderLod[];
+  cameraDistance: number;
+  lodBias: number;
+  maxDistanceMultiplier: number;
+}): FoliageRenderLod | null {
+  const { lods, cameraDistance, lodBias, maxDistanceMultiplier } = options;
+  const distanceMultiplier = Math.max(0, maxDistanceMultiplier);
+  const biasedDistance = Math.max(
+    0,
+    cameraDistance * (1 + clamp(lodBias, -1, 1) * 0.12)
+  );
+
+  for (const lod of lods) {
+    if (biasedDistance <= lod.maxDistance * distanceMultiplier) {
+      return lod;
+    }
+  }
+
+  return null;
+}
+
+export function shouldCullFoliageChunkByDistance(options: {
+  chunk: Pick<DerivedFoliageScatterChunk, "bounds">;
+  cameraPosition: Vec3;
+  maxDistance: number;
+}): boolean {
+  const center = getChunkCenter(options.chunk);
+  const radius = getChunkRadius(options.chunk);
+
+  return distanceBetween(center, options.cameraPosition) - radius > options.maxDistance;
+}
+
+export function shouldCullFoliageChunkByFrustum(options: {
+  chunk: Pick<DerivedFoliageScatterChunk, "bounds">;
+  frustum: Frustum | null | undefined;
+}): boolean {
+  if (options.frustum === null || options.frustum === undefined) {
+    return false;
+  }
+
+  const center = getChunkCenter(options.chunk);
+  const sphere = new Sphere(createVector3(center), getChunkRadius(options.chunk));
+
+  return !options.frustum.intersectsSphere(sphere);
+}
+
 export function createFoliageRenderBatchKey(options: {
+  chunkId: string;
   terrainId: string;
   layerId: string;
   prototypeId: string;
+  lodLevel: FoliagePrototypeLodLevel;
   bundledPath: string;
 }): string {
   return [
+    options.chunkId,
     options.terrainId,
     options.layerId,
     options.prototypeId,
-    FOLIAGE_RENDER_LOD_LEVEL,
+    options.lodLevel,
     options.bundledPath
   ].join("|");
 }
 
 export function createFoliageRenderBatches(
   scatter: FoliageScatterResult,
-  prototypeRegistry: FoliagePrototypeRegistry
+  prototypeRegistry: FoliagePrototypeRegistry,
+  options: {
+    view?: FoliageRenderView | null;
+    quality?: FoliageQualitySettings | null;
+  } = {}
 ): FoliageRenderBatch[] {
+  const quality = resolveFoliageQualitySettings(options.quality);
+
+  if (!quality.enabled || quality.densityMultiplier <= 0) {
+    return [];
+  }
+
   const batches = new Map<string, FoliageRenderBatch>();
 
   for (const chunk of scatter.chunks) {
+    if (
+      shouldCullFoliageChunkByFrustum({
+        chunk,
+        frustum: options.view?.frustum
+      })
+    ) {
+      continue;
+    }
+
     for (const instance of chunk.instances) {
       const prototype = prototypeRegistry[instance.prototypeId];
 
@@ -80,16 +194,59 @@ export function createFoliageRenderBatches(
         continue;
       }
 
-      const renderLod = getFoliagePrototypeRenderLod(prototype);
+      const renderLods = getFoliagePrototypeRenderLods(prototype);
+
+      if (renderLods.length === 0) {
+        continue;
+      }
+
+      const maxRenderDistance =
+        Math.max(
+          instance.cullDistance,
+          ...renderLods.map((lod) => lod.maxDistance)
+        ) * quality.maxDistanceMultiplier;
+
+      if (
+        options.view !== null &&
+        options.view !== undefined &&
+        shouldCullFoliageChunkByDistance({
+          chunk,
+          cameraPosition: options.view.cameraPosition,
+          maxDistance: maxRenderDistance
+        })
+      ) {
+        continue;
+      }
+
+      const renderLod =
+        options.view === null || options.view === undefined
+          ? renderLods[0]!
+          : resolveFoliageRenderLod({
+              lods: renderLods,
+              cameraDistance: distanceBetween(
+                instance.position,
+                options.view.cameraPosition
+              ),
+              lodBias: instance.lodBias,
+              maxDistanceMultiplier: quality.maxDistanceMultiplier
+            });
 
       if (renderLod === null) {
         continue;
       }
 
+      const castShadow =
+        quality.shadows === "off"
+          ? false
+          : quality.shadows === "full"
+            ? renderLod.castShadow
+            : renderLod.castShadow && renderLod.level <= 1;
       const key = createFoliageRenderBatchKey({
+        chunkId: chunk.id,
         terrainId: instance.terrainId,
         layerId: instance.layerId,
         prototypeId: instance.prototypeId,
+        lodLevel: renderLod.level,
         bundledPath: renderLod.bundledPath
       });
       let batch = batches.get(key);
@@ -97,12 +254,14 @@ export function createFoliageRenderBatches(
       if (batch === undefined) {
         batch = {
           key,
+          chunkId: chunk.id,
           terrainId: instance.terrainId,
           layerId: instance.layerId,
           prototypeId: instance.prototypeId,
-          lodLevel: FOLIAGE_RENDER_LOD_LEVEL,
+          lodLevel: renderLod.level,
           bundledPath: renderLod.bundledPath,
-          castShadow: renderLod.castShadow,
+          castShadow,
+          chunkBounds: cloneChunkBounds(chunk.bounds),
           instances: []
         };
         batches.set(key, batch);
