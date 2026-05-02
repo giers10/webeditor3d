@@ -1173,7 +1173,8 @@ function getRuntimeTerrainSceneBounds(terrain: RuntimeTerrain): RuntimeSceneBoun
   const bounds = getTerrainBounds({
     ...terrain,
     kind: "terrain",
-    enabled: true
+    enabled: true,
+    foliageMasks: {}
   });
   const min = cloneVec3(bounds.min);
   const max = cloneVec3(bounds.max);
