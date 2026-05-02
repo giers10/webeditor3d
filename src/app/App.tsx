@@ -2598,12 +2598,16 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
   );
   const customFoliagePrototypeList = useMemo(
     () =>
-      Object.values(editorState.document.foliagePrototypes).sort(
-        (left, right) =>
-          left.category.localeCompare(right.category) ||
-          left.label.localeCompare(right.label) ||
-          left.id.localeCompare(right.id)
-      ),
+      Object.values(editorState.document.foliagePrototypes)
+        .filter(
+          (prototype) => !BUNDLED_FOLIAGE_PROTOTYPE_IDS.has(prototype.id)
+        )
+        .sort(
+          (left, right) =>
+            left.category.localeCompare(right.category) ||
+            left.label.localeCompare(right.label) ||
+            left.id.localeCompare(right.id)
+        ),
     [editorState.document.foliagePrototypes]
   );
   const pathList = getScenePaths(editorState.document.paths);

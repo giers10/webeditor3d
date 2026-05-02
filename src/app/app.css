@@ -458,6 +458,18 @@ button:disabled {
   gap: 6px;
 }
 
+.foliage-prototype-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.foliage-prototype-choice {
+  cursor: pointer;
+}
+
 .outliner-section {
   display: flex;
   flex-direction: column;
