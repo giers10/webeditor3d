@@ -9699,10 +9699,9 @@ export class ViewportHost {
       tool: toolState.tool,
       referenceHeight,
       layerIndex: toolState.tool === "paint" ? toolState.layerIndex : null,
-      foliageLayerId:
-        toolState.tool === "foliagePaint" || toolState.tool === "foliageErase"
-          ? toolState.foliageLayerId
-          : null
+      foliageLayerId: isTerrainFoliageLayerMaskTool(toolState.tool)
+        ? toolState.foliageLayerId
+        : null
     });
   }
 
