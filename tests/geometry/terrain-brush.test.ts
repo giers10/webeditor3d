@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createDefaultTerrainBrushSettings } from "../../src/core/terrain-brush";
 import {
   createTerrain,
+  getTerrainFoliageMask,
   getTerrainSampleLayerWeights
 } from "../../src/document/terrains";
 import {
@@ -146,6 +147,7 @@ describe("terrain brush geometry", () => {
     });
     expect(result.heightSampleIndices).toEqual([12]);
     expect(result.paintWeightIndices).toEqual([]);
+    expect(result.foliageMaskValueIndices).toEqual([]);
     expect(terrain.heights).toBe(originalHeights);
     expect(terrain.paintWeights).toBe(originalPaintWeights);
     expect(terrain.heights[2 + 2 * 5]).toBeCloseTo(0.5);
@@ -190,6 +192,65 @@ describe("terrain brush geometry", () => {
         index: 45,
         before: 0,
         after: 0.4
+      }
+    ]);
+    expect(patch.foliageMaskValues).toEqual([]);
+  });
+
+  it("paints and erases foliage mask density for a foliage layer", () => {
+    const foliageLayerId = "foliage-layer-brush";
+    const terrain = createTerrain({
+      id: "terrain-foliage-brush",
+      position: { x: 0, y: 0, z: 0 },
+      sampleCountX: 3,
+      sampleCountZ: 3,
+      cellSize: 1
+    });
+
+    const paintedTerrain = applyTerrainBrushStamp({
+      terrain,
+      center: { x: 1, z: 1 },
+      settings: {
+        radius: 0.6,
+        strength: 0.5,
+        falloff: 0
+      },
+      tool: "foliagePaint",
+      foliageLayerId
+    });
+    const paintedMask = getTerrainFoliageMask(paintedTerrain, foliageLayerId);
+
+    expect(paintedMask?.values[4]).toBeCloseTo(0.5);
+
+    const erasedTerrain = applyTerrainBrushStamp({
+      terrain: paintedTerrain,
+      center: { x: 1, z: 1 },
+      settings: {
+        radius: 0.6,
+        strength: 0.5,
+        falloff: 0
+      },
+      tool: "foliageErase",
+      foliageLayerId
+    });
+    const erasedMask = getTerrainFoliageMask(erasedTerrain, foliageLayerId);
+
+    expect(erasedMask?.values[4]).toBeCloseTo(0.25);
+
+    const patch = createTerrainBrushPatchFromTerrains({
+      before: terrain,
+      after: paintedTerrain,
+      heightSampleIndices: [],
+      paintWeightIndices: [],
+      foliageMaskValueIndices: [{ layerId: foliageLayerId, index: 4 }]
+    });
+
+    expect(patch.foliageMaskValues).toEqual([
+      {
+        layerId: foliageLayerId,
+        index: 4,
+        before: 0,
+        after: 0.5
       }
     ]);
   });
