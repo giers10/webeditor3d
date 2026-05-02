@@ -5,6 +5,8 @@ import type {
   TerrainSampleValuePatch
 } from "../core/terrain-brush";
 import {
+  getOrCreateTerrainFoliageMask,
+  isTerrainFoliageMaskEmpty,
   markTerrainRenderSamplesDirty,
   TERRAIN_LAYER_COUNT,
   updateTerrainBoundsCacheAfterHeightPatch,
@@ -46,7 +48,11 @@ function assertValidPatchEntry(
 }
 
 export function isTerrainBrushPatchEmpty(patch: TerrainBrushPatch): boolean {
-  return patch.heightSamples.length === 0 && patch.paintWeights.length === 0;
+  return (
+    patch.heightSamples.length === 0 &&
+    patch.paintWeights.length === 0 &&
+    patch.foliageMaskValues.length === 0
+  );
 }
 
 function mergeTerrainSampleIndexIntoBounds(
@@ -80,7 +86,10 @@ export function createApplyTerrainBrushPatchCommand(
   const patch: TerrainBrushPatch = {
     terrainId: options.patch.terrainId,
     heightSamples: options.patch.heightSamples.map((entry) => ({ ...entry })),
-    paintWeights: options.patch.paintWeights.map((entry) => ({ ...entry }))
+    paintWeights: options.patch.paintWeights.map((entry) => ({ ...entry })),
+    foliageMaskValues: options.patch.foliageMaskValues.map((entry) => ({
+      ...entry
+    }))
   };
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
@@ -130,6 +139,32 @@ export function createApplyTerrainBrushPatchCommand(
         terrain,
         Math.floor(entry.index / (TERRAIN_LAYER_COUNT - 1))
       );
+    }
+
+    for (const entry of patch.foliageMaskValues) {
+      if (currentDocument.foliageLayers[entry.layerId] === undefined) {
+        throw new Error(
+          `Foliage layer ${entry.layerId} does not exist for terrain mask patch.`
+        );
+      }
+
+      const mask = getOrCreateTerrainFoliageMask(terrain, entry.layerId);
+      assertValidPatchEntry(
+        entry,
+        mask.values.length,
+        "Terrain foliage mask"
+      );
+      mask.values[entry.index] =
+        direction === "forward" ? entry.after : entry.before;
+      renderDirtyBounds = mergeTerrainSampleIndexIntoBounds(
+        renderDirtyBounds,
+        terrain,
+        entry.index
+      );
+
+      if (isTerrainFoliageMaskEmpty(mask)) {
+        delete terrain.foliageMasks[entry.layerId];
+      }
     }
 
     markTerrainRenderSamplesDirty(terrain, renderDirtyBounds);
