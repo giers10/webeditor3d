@@ -59,7 +59,8 @@ import {
 import {
   getTerrainBrushCommandLabel,
   type ArmedTerrainBrushState,
-  type TerrainBrushStrokeCommit
+  type TerrainBrushStrokeCommit,
+  type TerrainBrushTool
 } from "../core/terrain-brush";
 import { getWhiteboxSelectionFeedbackLabel } from "../core/whitebox-selection-feedback";
 import type { WhiteboxSelectionMode } from "../core/whitebox-selection-mode";
@@ -418,6 +419,27 @@ function parseTerrainFoliageMaskValueKey(key: string): {
     layerId: key.slice(0, separatorIndex),
     index: Number(key.slice(separatorIndex + 1))
   };
+}
+
+function isTerrainFoliageLayerMaskTool(
+  tool: TerrainBrushTool | null | undefined
+): tool is "foliagePaint" | "foliageErase" {
+  return tool === "foliagePaint" || tool === "foliageErase";
+}
+
+function isTerrainFoliageBlockerMaskTool(
+  tool: TerrainBrushTool | null | undefined
+): tool is "foliageBlockerPaint" | "foliageBlockerErase" {
+  return tool === "foliageBlockerPaint" || tool === "foliageBlockerErase";
+}
+
+function isTerrainFoliageMaskTool(
+  tool: TerrainBrushTool | null | undefined
+): boolean {
+  return (
+    isTerrainFoliageLayerMaskTool(tool) ||
+    isTerrainFoliageBlockerMaskTool(tool)
+  );
 }
 
 interface AffectedSelectionIds {
@@ -1626,18 +1648,14 @@ export class ViewportHost {
       terrainBrushState?.tool === "paint"
         ? this.currentTerrainBrushState.layerIndex !==
           terrainBrushState.layerIndex
-        : (this.currentTerrainBrushState?.tool === "foliagePaint" ||
-              this.currentTerrainBrushState?.tool === "foliageErase") &&
-            (terrainBrushState?.tool === "foliagePaint" ||
-              terrainBrushState?.tool === "foliageErase")
+        : isTerrainFoliageLayerMaskTool(this.currentTerrainBrushState?.tool) &&
+            isTerrainFoliageLayerMaskTool(terrainBrushState?.tool)
           ? this.currentTerrainBrushState.foliageLayerId !==
             terrainBrushState.foliageLayerId
           : this.currentTerrainBrushState?.tool === "paint" ||
             terrainBrushState?.tool === "paint" ||
-            this.currentTerrainBrushState?.tool === "foliagePaint" ||
-            this.currentTerrainBrushState?.tool === "foliageErase" ||
-            terrainBrushState?.tool === "foliagePaint" ||
-            terrainBrushState?.tool === "foliageErase";
+            isTerrainFoliageMaskTool(this.currentTerrainBrushState?.tool) ||
+            isTerrainFoliageMaskTool(terrainBrushState?.tool);
 
     this.currentTerrainBrushState = terrainBrushState;
 
@@ -6526,8 +6544,7 @@ export class ViewportHost {
     if (
       this.currentTerrainBrushState === null ||
       this.currentTerrainBrushState.terrainId !== terrainId ||
-      (this.currentTerrainBrushState.tool !== "foliagePaint" &&
-        this.currentTerrainBrushState.tool !== "foliageErase")
+      !isTerrainFoliageLayerMaskTool(this.currentTerrainBrushState.tool)
     ) {
       return null;
     }
@@ -6535,11 +6552,38 @@ export class ViewportHost {
     return this.currentTerrainBrushState.foliageLayerId;
   }
 
+  private isTerrainFoliageBlockerMaskPreviewActive(
+    terrainId: string
+  ): boolean {
+    return (
+      this.currentTerrainBrushState !== null &&
+      this.currentTerrainBrushState.terrainId === terrainId &&
+      isTerrainFoliageBlockerMaskTool(this.currentTerrainBrushState.tool)
+    );
+  }
+
+  private isTerrainFoliageMaskPreviewActive(terrainId: string): boolean {
+    return (
+      this.getTerrainFoliageMaskPreviewLayerId(terrainId) !== null ||
+      this.isTerrainFoliageBlockerMaskPreviewActive(terrainId)
+    );
+  }
+
   private getTerrainFoliageMaskPreviewColor(terrainId: string): number {
-    return this.currentTerrainBrushState?.terrainId === terrainId &&
-      this.currentTerrainBrushState.tool === "foliageErase"
-      ? TERRAIN_BRUSH_PREVIEW_FOLIAGE_ERASE_COLOR
-      : TERRAIN_BRUSH_PREVIEW_FOLIAGE_PAINT_COLOR;
+    if (this.currentTerrainBrushState?.terrainId !== terrainId) {
+      return TERRAIN_BRUSH_PREVIEW_FOLIAGE_PAINT_COLOR;
+    }
+
+    switch (this.currentTerrainBrushState.tool) {
+      case "foliageErase":
+        return TERRAIN_BRUSH_PREVIEW_FOLIAGE_ERASE_COLOR;
+      case "foliageBlockerPaint":
+        return TERRAIN_BRUSH_PREVIEW_FOLIAGE_BLOCKER_PAINT_COLOR;
+      case "foliageBlockerErase":
+        return TERRAIN_BRUSH_PREVIEW_FOLIAGE_BLOCKER_ERASE_COLOR;
+      default:
+        return TERRAIN_BRUSH_PREVIEW_FOLIAGE_PAINT_COLOR;
+    }
   }
 
   private createTerrainMaterial(terrain: Terrain): Material {
@@ -6573,7 +6617,7 @@ export class ViewportHost {
       foliageMaskPreviewColorHex:
         this.getTerrainFoliageMaskPreviewColor(terrain.id),
       foliageMaskPreviewOpacity:
-        this.getTerrainFoliageMaskPreviewLayerId(terrain.id) === null
+        !this.isTerrainFoliageMaskPreviewActive(terrain.id)
           ? 0
           : 0.62,
       emissiveHex: active
@@ -6600,7 +6644,7 @@ export class ViewportHost {
       foliageMaskPreviewColorHex:
         this.getTerrainFoliageMaskPreviewColor(terrain.id),
       foliageMaskPreviewOpacity:
-        this.getTerrainFoliageMaskPreviewLayerId(terrain.id) === null
+        !this.isTerrainFoliageMaskPreviewActive(terrain.id)
           ? 0
           : 0.62,
       emissiveHex: active
