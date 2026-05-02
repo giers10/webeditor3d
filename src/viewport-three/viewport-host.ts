@@ -9352,6 +9352,10 @@ export class ViewportHost {
         return TERRAIN_BRUSH_PREVIEW_SMOOTH_COLOR;
       case "flatten":
         return TERRAIN_BRUSH_PREVIEW_FLATTEN_COLOR;
+      case "foliagePaint":
+        return TERRAIN_BRUSH_PREVIEW_FOLIAGE_PAINT_COLOR;
+      case "foliageErase":
+        return TERRAIN_BRUSH_PREVIEW_FOLIAGE_ERASE_COLOR;
       case "paint": {
         const terrain =
           this.getDisplayedTerrainState(brushState.terrainId) ??
