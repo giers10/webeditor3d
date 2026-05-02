@@ -1707,6 +1707,11 @@ export class ViewportHost {
     this.applyViewModePose();
     this.applyAdvancedRenderingCameraFar(this.currentAdvancedRenderingSettings);
     this.syncFoliageVisibility();
+
+    if (this.currentDocument !== null) {
+      this.rebuildFoliage(this.currentDocument);
+    }
+
     this.syncTerrainBrushPreview();
 
     if (this.currentAdvancedRenderingSettings !== null) {
@@ -6643,6 +6648,12 @@ export class ViewportHost {
 
   private rebuildFoliage(document: SceneDocument) {
     this.syncFoliageVisibility();
+
+    if (!this.foliageRenderer.group.visible) {
+      this.foliageRenderer.dispose();
+      return;
+    }
+
     this.foliageRenderer.sync({
       terrains: document.terrains,
       foliageLayers: document.foliageLayers,
