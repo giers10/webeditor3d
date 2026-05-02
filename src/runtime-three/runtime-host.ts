@@ -4109,7 +4109,8 @@ export class RuntimeHost {
         ...terrain,
         kind: "terrain" as const,
         enabled: true,
-        foliageMasks: {}
+        foliageMasks: {},
+        foliageBlockerMask: createEmptyTerrainFoliageBlockerMask(terrain)
       };
       const lodMeshData = buildTerrainLodMeshData(terrainForLod);
       const detailMaterial = this.createRuntimeTerrainMaterial(terrain);
@@ -5104,7 +5105,8 @@ export class RuntimeHost {
         ...terrain,
         kind: "terrain",
         enabled: true,
-        foliageMasks: {}
+        foliageMasks: {},
+        foliageBlockerMask: createEmptyTerrainFoliageBlockerMask(terrain)
       });
 
       contactBounds.push({
