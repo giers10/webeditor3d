@@ -71,6 +71,11 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     staticColliders: [],
     colliders: [],
     sceneBounds: null,
+    foliage: {
+      terrains: [],
+      layers: {},
+      prototypes: {}
+    },
     playerInputBindings: createPlayerStartInputBindings(),
     localLights: {
       pointLights: [],
