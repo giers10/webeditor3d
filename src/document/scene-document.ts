@@ -35,7 +35,8 @@ import {
   type FoliagePrototypeRegistry
 } from "../foliage/foliage";
 
-export const SCENE_DOCUMENT_VERSION = 92 as const;
+export const SCENE_DOCUMENT_VERSION = 93 as const;
+export const FOLIAGE_MASKS_SCENE_DOCUMENT_VERSION = 93 as const;
 export const FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION = 92 as const;
 export const PLAYER_START_EDGE_ASSIST_SCENE_DOCUMENT_VERSION = 91 as const;
 export const WHITEBOX_FACE_CLIMBABLE_SCENE_DOCUMENT_VERSION = 90 as const;
