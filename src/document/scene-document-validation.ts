@@ -6976,6 +6976,26 @@ function validateProjectResources(
     validateProjectAsset(asset, path, diagnostics);
   }
 
+  for (const [prototypeKey, prototype] of Object.entries(
+    document.foliagePrototypes
+  )) {
+    const path = `foliagePrototypes.${prototypeKey}`;
+
+    if (prototype.id !== prototypeKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "foliage-prototype-id-mismatch",
+          "Foliage prototype ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(prototype.id, path, seenIds, diagnostics);
+    validateFoliagePrototype(prototype, path, document, diagnostics);
+  }
+
   for (const [sequenceKey, sequence] of Object.entries(
     document.sequences.sequences
   )) {
@@ -7735,6 +7755,24 @@ export function validateSceneDocument(
 
     registerAuthoredId(terrain.id, path, seenIds, diagnostics);
     validateTerrain(terrain, path, document, diagnostics, options);
+  }
+
+  for (const [layerKey, layer] of Object.entries(document.foliageLayers)) {
+    const path = `foliageLayers.${layerKey}`;
+
+    if (layer.id !== layerKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "foliage-layer-id-mismatch",
+          "Foliage layer ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(layer.id, path, seenIds, diagnostics);
+    validateFoliageLayer(layer, path, document, diagnostics);
   }
 
   for (const [modelInstanceKey, modelInstance] of Object.entries(
