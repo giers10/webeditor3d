@@ -845,7 +845,11 @@ const STARTER_MATERIAL_ORDER = new Map(
 );
 const TERRAIN_SCULPT_BRUSH_TOOLS: Exclude<
   TerrainBrushTool,
-  "paint" | "foliagePaint" | "foliageErase"
+  | "paint"
+  | "foliagePaint"
+  | "foliageErase"
+  | "foliageBlockerPaint"
+  | "foliageBlockerErase"
 >[] = [
   "raise",
   "lower",
