@@ -174,7 +174,8 @@ describe("terrain commands", () => {
         patch: {
           terrainId: terrain.id,
           heightSamples: [{ index: 4, before: 0, after: 2 }],
-          paintWeights: [{ index: 1, before: 0, after: 0.5 }]
+          paintWeights: [{ index: 1, before: 0, after: 0.5 }],
+          foliageMaskValues: []
         }
       })
     );
