@@ -9560,7 +9560,11 @@ export class ViewportHost {
       settings: toolState,
       tool: toolState.tool,
       referenceHeight,
-      layerIndex: toolState.tool === "paint" ? toolState.layerIndex : null
+      layerIndex: toolState.tool === "paint" ? toolState.layerIndex : null,
+      foliageLayerId:
+        toolState.tool === "foliagePaint" || toolState.tool === "foliageErase"
+          ? toolState.foliageLayerId
+          : null
     });
   }
 
