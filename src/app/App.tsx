@@ -9307,6 +9307,16 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
       return;
     }
 
+    if (
+      (tool === "foliagePaint" || tool === "foliageErase") &&
+      activeFoliageLayer === null
+    ) {
+      setStatusMessage(
+        "Create or select a foliage layer before arming foliage mask painting."
+      );
+      return;
+    }
+
     if (armedTerrainBrushTool === tool) {
       setArmedTerrainBrushTool(null);
       setStatusMessage(
@@ -9321,6 +9331,8 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
         ? ` ${getTerrainLayerLabel(
             clampTerrainPaintLayerIndex(activeTerrainPaintLayerIndex)
           ).toLowerCase()}`
+        : tool === "foliagePaint" || tool === "foliageErase"
+          ? ` for ${activeFoliageLayer?.name ?? "the active foliage layer"}`
         : "";
     setStatusMessage(
       `Armed ${getTerrainBrushToolLabel(tool)} terrain brush${paintLayerLabel} for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Drag in the viewport to edit the selected terrain.`
