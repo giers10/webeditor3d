@@ -30,6 +30,10 @@ import {
   createEmptyProjectScene
 } from "../../src/document/scene-document";
 import { createBoxBrush } from "../../src/document/brushes";
+import {
+  createTerrain,
+  createTerrainFoliageMask
+} from "../../src/document/terrains";
 import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import {
