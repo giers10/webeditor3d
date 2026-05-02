@@ -9490,6 +9490,10 @@ export class ViewportHost {
         return TERRAIN_BRUSH_PREVIEW_FOLIAGE_PAINT_COLOR;
       case "foliageErase":
         return TERRAIN_BRUSH_PREVIEW_FOLIAGE_ERASE_COLOR;
+      case "foliageBlockerPaint":
+        return TERRAIN_BRUSH_PREVIEW_FOLIAGE_BLOCKER_PAINT_COLOR;
+      case "foliageBlockerErase":
+        return TERRAIN_BRUSH_PREVIEW_FOLIAGE_BLOCKER_ERASE_COLOR;
       case "paint": {
         const terrain =
           this.getDisplayedTerrainState(brushState.terrainId) ??
