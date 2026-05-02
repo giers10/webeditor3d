@@ -2319,6 +2319,19 @@ function formatAdvancedRenderingWaterReflectionModeLabel(
   }
 }
 
+function formatFoliageQualityShadowModeLabel(
+  mode: FoliageQualityShadowMode
+): string {
+  switch (mode) {
+    case "off":
+      return "Off";
+    case "near":
+      return "Near";
+    case "full":
+      return "Full";
+  }
+}
+
 function formatBoxVolumeModeLabel(mode: BoxBrushVolumeMode): string {
   switch (mode) {
     case "none":
@@ -3483,6 +3496,23 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
     setAdvancedRenderingShadowBiasDraft
   ] = useState(
     String(editorState.document.world.advancedRendering.shadows.bias)
+  );
+  const [
+    advancedRenderingFoliageDensityMultiplierDraft,
+    setAdvancedRenderingFoliageDensityMultiplierDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.foliage.densityMultiplier
+    )
+  );
+  const [
+    advancedRenderingFoliageMaxDistanceMultiplierDraft,
+    setAdvancedRenderingFoliageMaxDistanceMultiplierDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.foliage
+        .maxDistanceMultiplier
+    )
   );
   const [
     advancedRenderingAmbientOcclusionIntensityDraft,
@@ -4826,6 +4856,12 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
   useEffect(() => {
     const advancedRendering = editorState.document.world.advancedRendering;
     setAdvancedRenderingShadowBiasDraft(String(advancedRendering.shadows.bias));
+    setAdvancedRenderingFoliageDensityMultiplierDraft(
+      String(advancedRendering.foliage.densityMultiplier)
+    );
+    setAdvancedRenderingFoliageMaxDistanceMultiplierDraft(
+      String(advancedRendering.foliage.maxDistanceMultiplier)
+    );
     setAdvancedRenderingAmbientOcclusionIntensityDraft(
       String(advancedRendering.ambientOcclusion.intensity)
     );
@@ -12885,6 +12921,81 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
       enabled ? "Advanced rendering enabled." : "Advanced rendering disabled.",
       (advancedRendering) => {
         advancedRendering.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingFoliageEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set foliage rendering",
+      enabled ? "Foliage rendering enabled." : "Foliage rendering disabled.",
+      (advancedRendering) => {
+        advancedRendering.foliage.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingFoliageDensityMultiplier = () => {
+    try {
+      const densityMultiplier = clampNumber(
+        readFiniteNumberDraft(
+          advancedRenderingFoliageDensityMultiplierDraft,
+          "Foliage density multiplier"
+        ),
+        MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
+        MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER
+      );
+
+      setAdvancedRenderingFoliageDensityMultiplierDraft(
+        String(densityMultiplier)
+      );
+      applyAdvancedRenderingSettings(
+        "Set foliage density quality",
+        "Updated the foliage density multiplier.",
+        (advancedRendering) => {
+          advancedRendering.foliage.densityMultiplier = densityMultiplier;
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingFoliageMaxDistanceMultiplier = () => {
+    try {
+      const maxDistanceMultiplier = clampNumber(
+        readFiniteNumberDraft(
+          advancedRenderingFoliageMaxDistanceMultiplierDraft,
+          "Foliage distance multiplier"
+        ),
+        MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
+        MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER
+      );
+
+      setAdvancedRenderingFoliageMaxDistanceMultiplierDraft(
+        String(maxDistanceMultiplier)
+      );
+      applyAdvancedRenderingSettings(
+        "Set foliage distance quality",
+        "Updated the foliage distance multiplier.",
+        (advancedRendering) => {
+          advancedRendering.foliage.maxDistanceMultiplier =
+            maxDistanceMultiplier;
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingFoliageShadows = (
+    shadows: FoliageQualityShadowMode
+  ) => {
+    applyAdvancedRenderingSettings(
+      "Set foliage shadows",
+      `Foliage shadows set to ${formatFoliageQualityShadowModeLabel(shadows)}.`,
+      (advancedRendering) => {
+        advancedRendering.foliage.shadows = shadows;
       }
     );
   };
