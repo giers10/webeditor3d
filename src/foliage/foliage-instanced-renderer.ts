@@ -1,29 +1,39 @@
 import {
+  Camera,
   Color,
+  Frustum,
   Group,
   InstancedMesh,
   Matrix4,
   Mesh,
+  Vector3,
   type BufferGeometry,
   type Material
 } from "three";
 
 import type { Terrain } from "../document/terrains";
+import {
+  resolveFoliageQualitySettings,
+  type FoliageQualitySettings
+} from "../document/world-settings";
 import { applyRendererRenderCategoryFromMaterial } from "../rendering/render-layers";
 import { loadBundledFoliageModelTemplate } from "./bundled-foliage-model-loader";
 import {
   createFoliageInstanceMatrix,
   createFoliageRenderBatches,
-  type FoliageRenderBatch
+  type FoliageRenderBatch,
+  type FoliageRenderView
 } from "./foliage-render-batches";
 import type {
+  FoliageLayer,
   FoliageLayerRegistry,
   FoliagePrototypeRegistry
 } from "./foliage";
 import {
   createFoliageScatterPrototypeRegistry,
   generateFoliageScatterForScene,
-  type FoliageScatterPrototypeSource
+  type FoliageScatterPrototypeSource,
+  type FoliageScatterResult
 } from "./foliage-scatter";
 
 export interface FoliageInstancedRendererSyncInput {
@@ -31,6 +41,7 @@ export interface FoliageInstancedRendererSyncInput {
   foliageLayers: FoliageLayerRegistry;
   foliagePrototypes?: FoliagePrototypeRegistry;
   bundledFoliagePrototypes?: FoliageScatterPrototypeSource;
+  quality?: FoliageQualitySettings | null;
 }
 
 export interface FoliageInstancedRendererOptions {
@@ -43,6 +54,8 @@ interface FoliageTemplateSourceMesh {
   material: Material | Material[];
   localMatrix: Matrix4;
 }
+
+const VIEW_SIGNATURE_PRECISION = 100;
 
 function cloneMaterial(material: Material): Material {
   return material.clone();
@@ -101,6 +114,62 @@ function normalizeTerrainRegistry(
   return terrains as Record<string, Terrain>;
 }
 
+function scaleFoliageLayerDensity(
+  layer: FoliageLayer,
+  densityMultiplier: number
+): FoliageLayer {
+  return {
+    ...layer,
+    density: layer.density * densityMultiplier
+  };
+}
+
+function scaleFoliageLayerRegistryDensities(
+  layers: FoliageLayerRegistry,
+  densityMultiplier: number
+): FoliageLayerRegistry {
+  if (densityMultiplier === 1) {
+    return layers;
+  }
+
+  return Object.fromEntries(
+    Object.entries(layers).map(([layerId, layer]) => [
+      layerId,
+      scaleFoliageLayerDensity(layer, densityMultiplier)
+    ])
+  );
+}
+
+function createRenderViewFromCamera(camera: Camera): FoliageRenderView {
+  camera.updateMatrixWorld();
+  const cameraPosition = new Vector3();
+  camera.getWorldPosition(cameraPosition);
+  const projectionViewMatrix = new Matrix4().multiplyMatrices(
+    camera.projectionMatrix,
+    camera.matrixWorldInverse
+  );
+
+  return {
+    cameraPosition: {
+      x: cameraPosition.x,
+      y: cameraPosition.y,
+      z: cameraPosition.z
+    },
+    frustum: new Frustum().setFromProjectionMatrix(projectionViewMatrix)
+  };
+}
+
+function createCameraViewSignature(camera: Camera): string {
+  const values = [
+    ...camera.matrixWorld.elements,
+    ...camera.projectionMatrix.elements
+  ];
+
+  return values
+    .map((value) => Math.round(value * VIEW_SIGNATURE_PRECISION))
+    .join("|");
+}
+
 function collectTemplateSourceMeshes(template: Group): FoliageTemplateSourceMesh[] {
   const sourceMeshes: FoliageTemplateSourceMesh[] = [];
 
@@ -135,9 +204,11 @@ function createInstancedMeshForSource(
   );
   const color = new Color();
 
-  mesh.name = `Foliage:${batch.prototypeId}:${batch.lodLevel}`;
+  mesh.name = `Foliage:${batch.prototypeId}:${batch.chunkId}:${batch.lodLevel}`;
   mesh.userData.nonPickable = true;
+  mesh.userData.shadowIgnored = !batch.castShadow;
   mesh.userData.foliageBatchKey = batch.key;
+  mesh.userData.foliageChunkId = batch.chunkId;
   mesh.userData.foliagePrototypeId = batch.prototypeId;
   mesh.userData.foliageLayerId = batch.layerId;
   mesh.userData.foliageTerrainId = batch.terrainId;
@@ -174,6 +245,11 @@ export class FoliageInstancedRenderer {
 
   private requestId = 0;
   private activeBatchGroup: Group | null = null;
+  private scatter: FoliageScatterResult | null = null;
+  private prototypeRegistry: FoliagePrototypeRegistry = {};
+  private quality: FoliageQualitySettings = resolveFoliageQualitySettings(null);
+  private currentView: FoliageRenderView | null = null;
+  private viewSignature: string | null = null;
   private readonly onRebuilt?: () => void;
   private readonly onDiagnostic?: (message: string) => void;
 
@@ -185,19 +261,67 @@ export class FoliageInstancedRenderer {
   }
 
   sync(input: FoliageInstancedRendererSyncInput) {
-    const requestId = ++this.requestId;
     const terrains = normalizeTerrainRegistry(input.terrains);
+    const quality = resolveFoliageQualitySettings(input.quality);
     const prototypeRegistry = createFoliageScatterPrototypeRegistry({
       foliagePrototypes: input.foliagePrototypes,
       bundledFoliagePrototypes: input.bundledFoliagePrototypes
     });
-    const scatter = generateFoliageScatterForScene({
+    const foliageLayers = scaleFoliageLayerRegistryDensities(
+      input.foliageLayers,
+      quality.densityMultiplier
+    );
+
+    this.quality = quality;
+    this.prototypeRegistry = prototypeRegistry;
+
+    if (!quality.enabled || quality.densityMultiplier <= 0) {
+      this.scatter = null;
+      this.clearActiveBatches();
+      this.onRebuilt?.();
+      return;
+    }
+
+    this.scatter = generateFoliageScatterForScene({
       terrains,
-      foliageLayers: input.foliageLayers,
+      foliageLayers,
       foliagePrototypes: input.foliagePrototypes,
       bundledFoliagePrototypes: input.bundledFoliagePrototypes
     });
-    const batches = createFoliageRenderBatches(scatter, prototypeRegistry);
+    this.rebuildCurrentBatches();
+  }
+
+  updateView(camera: Camera) {
+    this.currentView = createRenderViewFromCamera(camera);
+
+    if (this.scatter === null) {
+      return;
+    }
+
+    const nextViewSignature = createCameraViewSignature(camera);
+
+    if (nextViewSignature === this.viewSignature) {
+      return;
+    }
+
+    this.viewSignature = nextViewSignature;
+    this.rebuildCurrentBatches();
+  }
+
+  private rebuildCurrentBatches() {
+    const requestId = ++this.requestId;
+    const scatter = this.scatter;
+
+    if (scatter === null) {
+      this.clearActiveBatches();
+      this.onRebuilt?.();
+      return;
+    }
+
+    const batches = createFoliageRenderBatches(scatter, this.prototypeRegistry, {
+      view: this.currentView,
+      quality: this.quality
+    });
 
     this.clearActiveBatches();
 
@@ -211,6 +335,9 @@ export class FoliageInstancedRenderer {
 
   dispose() {
     this.requestId += 1;
+    this.scatter = null;
+    this.prototypeRegistry = {};
+    this.viewSignature = null;
     this.clearActiveBatches();
   }
 
