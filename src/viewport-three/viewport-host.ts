@@ -9911,6 +9911,9 @@ export class ViewportHost {
           createTerrainFoliageMaskValueKey(entry.layerId, entry.index)
         )
       ),
+      foliageBlockerMaskValueIndices: new Set(
+        initialStamp.foliageBlockerMaskValueIndices
+      ),
       referenceHeight,
       lastAppliedPoint: {
         x: hit.point.x,
