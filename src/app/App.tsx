@@ -20827,6 +20827,10 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                           : armedTerrainBrushTool === "foliagePaint" ||
                               armedTerrainBrushTool === "foliageErase"
                             ? `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)} on ${activeFoliageLayer?.name ?? "no foliage layer"}.`
+                            : armedTerrainBrushTool === "foliageBlockerPaint" ||
+                                armedTerrainBrushTool ===
+                                  "foliageBlockerErase"
+                              ? `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)}.`
                           : `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Click the active tool again to disarm it.`}
                     </div>
                   </div>
