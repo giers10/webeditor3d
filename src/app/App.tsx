@@ -2339,6 +2339,179 @@ function formatBoxVolumeRenderPathLabel(path: BoxVolumeRenderPath): string {
 
 const DEFAULT_BOX_VOLUME_LIGHT_SETTINGS = createDefaultBoxBrushLightSettings();
 
+const SORTED_BUNDLED_FOLIAGE_PROTOTYPES = [...BUNDLED_FOLIAGE_PROTOTYPES].sort(
+  (left, right) =>
+    left.category.localeCompare(right.category) ||
+    left.label.localeCompare(right.label)
+);
+
+const BUNDLED_FOLIAGE_PROTOTYPE_IDS = new Set(
+  BUNDLED_FOLIAGE_PROTOTYPES.map((prototype) => prototype.id)
+);
+
+type FoliageLayerNumericField =
+  | "density"
+  | "minScale"
+  | "maxScale"
+  | "minSlopeDegrees"
+  | "maxSlopeDegrees"
+  | "alignToNormal"
+  | "noiseScale"
+  | "noiseStrength"
+  | "noiseThreshold"
+  | "colorVariation"
+  | "seed";
+
+type FoliageLayerNumberDrafts = Record<FoliageLayerNumericField, string>;
+
+function createFoliageLayerNumberDrafts(
+  layer: FoliageLayer
+): FoliageLayerNumberDrafts {
+  return {
+    density: String(layer.density),
+    minScale: String(layer.minScale),
+    maxScale: String(layer.maxScale),
+    minSlopeDegrees: String(layer.minSlopeDegrees),
+    maxSlopeDegrees: String(layer.maxSlopeDegrees),
+    alignToNormal: String(layer.alignToNormal),
+    noiseScale: String(layer.noiseScale),
+    noiseStrength: String(layer.noiseStrength),
+    noiseThreshold: String(layer.noiseThreshold),
+    colorVariation: String(layer.colorVariation),
+    seed: String(layer.seed)
+  };
+}
+
+function getFoliageLayerList(
+  foliageLayers: FoliageLayerRegistry
+): FoliageLayer[] {
+  return Object.values(foliageLayers).sort(
+    (left, right) => left.name.localeCompare(right.name) || left.id.localeCompare(right.id)
+  );
+}
+
+function getFoliageLayerNumericFieldLabel(
+  field: FoliageLayerNumericField
+): string {
+  switch (field) {
+    case "density":
+      return "Density";
+    case "minScale":
+      return "Min Scale";
+    case "maxScale":
+      return "Max Scale";
+    case "minSlopeDegrees":
+      return "Min Slope";
+    case "maxSlopeDegrees":
+      return "Max Slope";
+    case "alignToNormal":
+      return "Align To Normal";
+    case "noiseScale":
+      return "Noise Scale";
+    case "noiseStrength":
+      return "Noise Strength";
+    case "noiseThreshold":
+      return "Noise Threshold";
+    case "colorVariation":
+      return "Color Variation";
+    case "seed":
+      return "Seed";
+  }
+}
+
+function formatMeters(value: number): string {
+  return Number.isInteger(value) ? `${value}m` : `${value.toFixed(1)}m`;
+}
+
+function formatFoliagePrototypeLodStatus(
+  prototype: FoliagePrototype
+): string {
+  const levels = prototype.lods.map((lod) => lod.level).sort();
+
+  return `${levels.length} LOD${levels.length === 1 ? "" : "s"} · LOD ${levels.join(", ")}`;
+}
+
+function formatFoliagePrototypeLodDistanceSummary(
+  prototype: FoliagePrototype
+): string {
+  return prototype.lods
+    .slice()
+    .sort((left, right) => left.level - right.level)
+    .map((lod) => `L${lod.level} ${formatMeters(lod.maxDistance)}`)
+    .join(" · ");
+}
+
+function formatFoliagePrototypeSource(prototype: FoliagePrototype): string {
+  const hasBundledLod = prototype.lods.some((lod) => lod.source === "bundled");
+  const hasProjectAssetLod = prototype.lods.some(
+    (lod) => lod.source === "projectAsset"
+  );
+
+  if (hasBundledLod && hasProjectAssetLod) {
+    return "Mixed";
+  }
+
+  return hasBundledLod ? "Bundled" : "Project Asset";
+}
+
+function getValidFoliageLayerPrototypeIds(
+  prototypeIds: readonly string[],
+  projectFoliagePrototypes: Record<string, FoliagePrototype>
+): string[] {
+  const seenPrototypeIds = new Set<string>();
+  const validPrototypeIds: string[] = [];
+
+  for (const prototypeId of prototypeIds) {
+    if (
+      seenPrototypeIds.has(prototypeId) ||
+      (!BUNDLED_FOLIAGE_PROTOTYPE_IDS.has(prototypeId) &&
+        projectFoliagePrototypes[prototypeId] === undefined)
+    ) {
+      continue;
+    }
+
+    seenPrototypeIds.add(prototypeId);
+    validPrototypeIds.push(prototypeId);
+  }
+
+  return validPrototypeIds;
+}
+
+function readSlopeDegreesDraft(source: string, label: string): number {
+  const value = readFiniteNumberDraft(source, label);
+
+  if (value < 0 || value > 90) {
+    throw new Error(`${label} must be between 0 and 90 degrees.`);
+  }
+
+  return value;
+}
+
+function readFoliageLayerNumericDraft(
+  field: FoliageLayerNumericField,
+  source: string
+): number {
+  const label = getFoliageLayerNumericFieldLabel(field);
+
+  switch (field) {
+    case "density":
+    case "minScale":
+    case "maxScale":
+    case "noiseScale":
+      return readNonNegativeNumberDraft(source, label);
+    case "alignToNormal":
+    case "noiseStrength":
+    case "noiseThreshold":
+    case "colorVariation":
+      return readUnitIntervalNumberDraft(source, label);
+    case "minSlopeDegrees":
+    case "maxSlopeDegrees":
+      return readSlopeDegreesDraft(source, label);
+    case "seed":
+      return readFiniteNumberDraft(source, label);
+  }
+}
+
 function createProjectDownloadName(projectName: string): string {
   const slug = projectName
     .trim()
