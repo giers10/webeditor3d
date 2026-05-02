@@ -160,6 +160,38 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("round-trips terrain foliage masks for authored foliage layers", () => {
+    const bundledPrototype = BUNDLED_FOLIAGE_PROTOTYPES[0];
+    const layer = createFoliageLayer({
+      id: "foliage-layer-mask-roundtrip",
+      name: "Mask Roundtrip",
+      prototypeIds: [bundledPrototype.id]
+    });
+    const terrain = createTerrain({
+      id: "terrain-foliage-mask-roundtrip",
+      sampleCountX: 2,
+      sampleCountZ: 2,
+      foliageMasks: {
+        [layer.id]: createTerrainFoliageMask({
+          layerId: layer.id,
+          resolutionX: 2,
+          resolutionZ: 2,
+          values: [0, 0.25, 0.5, 1]
+        })
+      }
+    });
+    const document = createEmptySceneDocument({
+      name: "Foliage Mask Scene"
+    });
+
+    document.foliageLayers[layer.id] = layer;
+    document.terrains[terrain.id] = terrain;
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("migrates pre-foliage scene documents with empty foliage state", () => {
     const document = createEmptySceneDocument({
       name: "Legacy Foliage-Free Scene"
@@ -179,6 +211,33 @@ describe("scene document JSON", () => {
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.foliagePrototypes).toEqual({});
     expect(migratedDocument.foliageLayers).toEqual({});
+  });
+
+  it("migrates pre-foliage-mask terrain documents with empty terrain foliage masks", () => {
+    const terrain = createTerrain({
+      id: "terrain-pre-foliage-mask",
+      sampleCountX: 2,
+      sampleCountZ: 2
+    });
+    const document = createEmptySceneDocument({
+      name: "Legacy Terrain Mask-Free Scene"
+    });
+    document.terrains[terrain.id] = terrain;
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(document)
+    ) as Record<string, unknown>;
+
+    legacyDocument.version = FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION;
+    delete ((legacyDocument.terrains as Record<string, Record<string, unknown>>)[
+      terrain.id
+    ] as Record<string, unknown>).foliageMasks;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.terrains[terrain.id]?.foliageMasks).toEqual({});
   });
 
   it("round-trips camera rig control effects in interaction links, sequences, and scheduler routines", () => {
