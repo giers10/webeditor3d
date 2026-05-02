@@ -79,6 +79,43 @@ describe("validateSceneDocument", () => {
     expect(validation.warnings).toEqual([]);
   });
 
+  it("detects invalid terrain foliage blocker masks", () => {
+    const terrain = createTerrain({
+      id: "terrain-invalid-blocker-mask",
+      sampleCountX: 2,
+      sampleCountZ: 2
+    });
+    const document = createEmptySceneDocument({
+      name: "Invalid Terrain Blocker Mask"
+    });
+
+    terrain.foliageBlockerMask = {
+      resolutionX: 3,
+      resolutionZ: 2,
+      values: [0, 1, Number.NaN]
+    } as any;
+    document.terrains[terrain.id] = terrain;
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-terrain-foliage-blocker-mask-resolution-x",
+          path: `terrains.${terrain.id}.foliageBlockerMask.resolutionX`
+        }),
+        expect.objectContaining({
+          code: "invalid-terrain-foliage-blocker-mask-value-count",
+          path: `terrains.${terrain.id}.foliageBlockerMask.values`
+        }),
+        expect.objectContaining({
+          code: "invalid-terrain-foliage-blocker-mask-value",
+          path: `terrains.${terrain.id}.foliageBlockerMask.values.2`
+        })
+      ])
+    );
+  });
+
   it("validates project-global actor schedule targets against all project scenes", () => {
     const sceneA = createEmptyProjectScene({
       id: "scene-a",
