@@ -1265,6 +1265,7 @@ export function createTerrain(
       | "heights"
       | "layers"
       | "paintWeights"
+      | "foliageMasks"
     >
   > = {}
 ): Terrain {
@@ -1292,6 +1293,11 @@ export function createTerrain(
     sampleCountX,
     sampleCountZ,
     overrides.paintWeights
+  );
+  const foliageMasks = normalizeTerrainFoliageMasks(
+    sampleCountX,
+    sampleCountZ,
+    overrides.foliageMasks
   );
   const visible = overrides.visible ?? DEFAULT_TERRAIN_VISIBLE;
   const enabled = overrides.enabled ?? DEFAULT_TERRAIN_ENABLED;
@@ -1332,7 +1338,8 @@ export function createTerrain(
     cellSize,
     heights,
     layers,
-    paintWeights
+    paintWeights,
+    foliageMasks
   };
 }
 
@@ -1361,7 +1368,21 @@ export function areTerrainsEqual(left: Terrain, right: Terrain): boolean {
     left.paintWeights.length === right.paintWeights.length &&
     left.paintWeights.every(
       (weight, index) => weight === right.paintWeights[index]
-    )
+    ) &&
+    Object.keys(left.foliageMasks).length ===
+      Object.keys(right.foliageMasks).length &&
+    Object.entries(left.foliageMasks).every(([layerId, leftMask]) => {
+      const rightMask = right.foliageMasks[layerId];
+
+      return (
+        rightMask !== undefined &&
+        leftMask.layerId === rightMask.layerId &&
+        leftMask.resolutionX === rightMask.resolutionX &&
+        leftMask.resolutionZ === rightMask.resolutionZ &&
+        leftMask.values.length === rightMask.values.length &&
+        leftMask.values.every((value, index) => value === rightMask.values[index])
+      );
+    })
   );
 }
 
