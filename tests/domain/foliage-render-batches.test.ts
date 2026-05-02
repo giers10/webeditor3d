@@ -236,7 +236,7 @@ describe("foliage render batch helpers", () => {
     );
   });
 
-  it("ignores prototypes that do not have a bundled LOD0 render source", () => {
+  it("ignores prototypes that do not have a bundled render source", () => {
     const projectPrototype = createProjectAssetPrototype();
     const batches = createFoliageRenderBatches(
       createScatter([createInstance({ prototypeId: projectPrototype.id })]),
