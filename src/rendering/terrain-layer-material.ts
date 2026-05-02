@@ -18,6 +18,8 @@ interface TerrainLayerBlendMaterialOptions {
   layerTextures: readonly [Texture, Texture, Texture, Texture];
   emissiveHex?: number;
   emissiveIntensity?: number;
+  foliageMaskPreviewColorHex?: number;
+  foliageMaskPreviewOpacity?: number;
   wireframe?: boolean;
 }
 
@@ -25,6 +27,8 @@ interface TerrainLayerColorBlendMaterialOptions {
   layerColors: readonly [number, number, number, number];
   emissiveHex?: number;
   emissiveIntensity?: number;
+  foliageMaskPreviewColorHex?: number;
+  foliageMaskPreviewOpacity?: number;
   wireframe?: boolean;
 }
 
@@ -94,20 +98,29 @@ export function createTerrainLayerBlendMaterial(
     shader.uniforms.terrainLayerMap1 = { value: options.layerTextures[1] };
     shader.uniforms.terrainLayerMap2 = { value: options.layerTextures[2] };
     shader.uniforms.terrainLayerMap3 = { value: options.layerTextures[3] };
+    shader.uniforms.terrainFoliageMaskPreviewColor = {
+      value: new Color(options.foliageMaskPreviewColorHex ?? 0x65d36e)
+    };
+    shader.uniforms.terrainFoliageMaskPreviewOpacity = {
+      value: options.foliageMaskPreviewOpacity ?? 0
+    };
 
     shader.vertexShader = shader.vertexShader
       .replace(
         "#include <common>",
         `#include <common>
 attribute vec4 terrainLayerWeights;
+attribute float terrainFoliageMask;
 varying vec4 vTerrainLayerWeights;
+varying float vTerrainFoliageMask;
 varying vec2 vTerrainUv;`
       )
       .replace(
         "#include <uv_vertex>",
         `#include <uv_vertex>
 vTerrainUv = uv;
-vTerrainLayerWeights = terrainLayerWeights;`
+vTerrainLayerWeights = terrainLayerWeights;
+vTerrainFoliageMask = terrainFoliageMask;`
       );
 
     shader.fragmentShader = shader.fragmentShader
@@ -115,11 +128,14 @@ vTerrainLayerWeights = terrainLayerWeights;`
         "#include <common>",
         `#include <common>
 varying vec4 vTerrainLayerWeights;
+varying float vTerrainFoliageMask;
 varying vec2 vTerrainUv;
 uniform sampler2D terrainLayerMap0;
 uniform sampler2D terrainLayerMap1;
 uniform sampler2D terrainLayerMap2;
-uniform sampler2D terrainLayerMap3;`
+uniform sampler2D terrainLayerMap3;
+uniform vec3 terrainFoliageMaskPreviewColor;
+uniform float terrainFoliageMaskPreviewOpacity;`
       )
       .replace(
         "#include <map_fragment>",
@@ -141,11 +157,21 @@ vec4 terrainLayerColor =
   texture2D(terrainLayerMap1, vTerrainUv) * terrainWeights.y +
   texture2D(terrainLayerMap2, vTerrainUv) * terrainWeights.z +
   texture2D(terrainLayerMap3, vTerrainUv) * terrainWeights.w;
-diffuseColor *= terrainLayerColor;`
+diffuseColor *= terrainLayerColor;
+float foliageMaskPreviewBlend = clamp(
+  vTerrainFoliageMask * terrainFoliageMaskPreviewOpacity,
+  0.0,
+  terrainFoliageMaskPreviewOpacity
+);
+diffuseColor.rgb = mix(
+  diffuseColor.rgb,
+  terrainFoliageMaskPreviewColor,
+  foliageMaskPreviewBlend
+);`
       );
   };
 
-  material.customProgramCacheKey = () => "terrain-layer-blend-v1";
+  material.customProgramCacheKey = () => "terrain-layer-blend-v2";
   material.needsUpdate = true;
   return material;
 }
@@ -179,18 +205,27 @@ export function createTerrainLayerColorBlendMaterial(
     shader.uniforms.terrainLayerColor1 = { value: layerColors[1] };
     shader.uniforms.terrainLayerColor2 = { value: layerColors[2] };
     shader.uniforms.terrainLayerColor3 = { value: layerColors[3] };
+    shader.uniforms.terrainFoliageMaskPreviewColor = {
+      value: new Color(options.foliageMaskPreviewColorHex ?? 0x65d36e)
+    };
+    shader.uniforms.terrainFoliageMaskPreviewOpacity = {
+      value: options.foliageMaskPreviewOpacity ?? 0
+    };
 
     shader.vertexShader = shader.vertexShader
       .replace(
         "#include <common>",
         `#include <common>
 attribute vec4 terrainLayerWeights;
-varying vec4 vTerrainLayerWeights;`
+attribute float terrainFoliageMask;
+varying vec4 vTerrainLayerWeights;
+varying float vTerrainFoliageMask;`
       )
       .replace(
         "#include <uv_vertex>",
         `#include <uv_vertex>
-vTerrainLayerWeights = terrainLayerWeights;`
+vTerrainLayerWeights = terrainLayerWeights;
+vTerrainFoliageMask = terrainFoliageMask;`
       );
 
     shader.fragmentShader = shader.fragmentShader
@@ -198,10 +233,13 @@ vTerrainLayerWeights = terrainLayerWeights;`
         "#include <common>",
         `#include <common>
 varying vec4 vTerrainLayerWeights;
+varying float vTerrainFoliageMask;
 uniform vec3 terrainLayerColor0;
 uniform vec3 terrainLayerColor1;
 uniform vec3 terrainLayerColor2;
-uniform vec3 terrainLayerColor3;`
+uniform vec3 terrainLayerColor3;
+uniform vec3 terrainFoliageMaskPreviewColor;
+uniform float terrainFoliageMaskPreviewOpacity;`
       )
       .replace(
         "#include <map_fragment>",
@@ -223,11 +261,21 @@ vec3 terrainLayerColor =
   terrainLayerColor1 * terrainWeights.y +
   terrainLayerColor2 * terrainWeights.z +
   terrainLayerColor3 * terrainWeights.w;
-diffuseColor.rgb *= terrainLayerColor;`
+diffuseColor.rgb *= terrainLayerColor;
+float foliageMaskPreviewBlend = clamp(
+  vTerrainFoliageMask * terrainFoliageMaskPreviewOpacity,
+  0.0,
+  terrainFoliageMaskPreviewOpacity
+);
+diffuseColor.rgb = mix(
+  diffuseColor.rgb,
+  terrainFoliageMaskPreviewColor,
+  foliageMaskPreviewBlend
+);`
       );
   };
 
-  material.customProgramCacheKey = () => "terrain-layer-color-blend-v1";
+  material.customProgramCacheKey = () => "terrain-layer-color-blend-v2";
   material.needsUpdate = true;
   return material;
 }
