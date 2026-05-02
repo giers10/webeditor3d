@@ -91,10 +91,14 @@ function normalizeTerrainRegistry(
   terrains: Record<string, Terrain> | readonly Terrain[]
 ): Record<string, Terrain> {
   if (Array.isArray(terrains)) {
-    return Object.fromEntries(terrains.map((terrain) => [terrain.id, terrain]));
+    const terrainList = terrains as readonly Terrain[];
+
+    return Object.fromEntries(
+      terrainList.map((terrain) => [terrain.id, terrain])
+    );
   }
 
-  return terrains;
+  return terrains as Record<string, Terrain>;
 }
 
 function collectTemplateSourceMeshes(template: Group): FoliageTemplateSourceMesh[] {
