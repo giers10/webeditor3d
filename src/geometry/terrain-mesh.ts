@@ -479,7 +479,8 @@ function buildTerrainLodLevelMeshData(
   endSampleX: number,
   endSampleZ: number,
   level: number,
-  stride: number
+  stride: number,
+  options: TerrainMeshBuildOptions
 ): TerrainLodLevelMeshData {
   const sampleXs = createLodSampleCoordinates(
     startSampleX,
@@ -494,6 +495,7 @@ function buildTerrainLodLevelMeshData(
   const positions: number[] = [];
   const uvs: number[] = [];
   const layerWeights: number[] = [];
+  const foliageMaskWeights: number[] = [];
   const indices: number[] = [];
 
   for (const sampleZ of sampleZs) {
@@ -505,7 +507,9 @@ function buildTerrainLodLevelMeshData(
         0,
         positions,
         uvs,
-        layerWeights
+        layerWeights,
+        foliageMaskWeights,
+        options
       );
     }
   }
@@ -553,7 +557,9 @@ function buildTerrainLodLevelMeshData(
       positions,
       uvs,
       layerWeights,
-      indices
+      foliageMaskWeights,
+      indices,
+      options
     );
     pushTerrainLodSkirtSegment(
       terrain,
@@ -565,7 +571,9 @@ function buildTerrainLodLevelMeshData(
       positions,
       uvs,
       layerWeights,
-      indices
+      foliageMaskWeights,
+      indices,
+      options
     );
   }
 
@@ -580,7 +588,9 @@ function buildTerrainLodLevelMeshData(
       positions,
       uvs,
       layerWeights,
-      indices
+      foliageMaskWeights,
+      indices,
+      options
     );
     pushTerrainLodSkirtSegment(
       terrain,
@@ -592,13 +602,16 @@ function buildTerrainLodLevelMeshData(
       positions,
       uvs,
       layerWeights,
-      indices
+      foliageMaskWeights,
+      indices,
+      options
     );
   }
 
   const typedPositions = new Float32Array(positions);
   const typedUvs = new Float32Array(uvs);
   const typedLayerWeights = new Float32Array(layerWeights);
+  const typedFoliageMaskWeights = new Float32Array(foliageMaskWeights);
   const typedIndices = new Uint32Array(indices);
   const geometry = new BufferGeometry();
 
@@ -607,6 +620,10 @@ function buildTerrainLodLevelMeshData(
   geometry.setAttribute(
     "terrainLayerWeights",
     new BufferAttribute(typedLayerWeights, TERRAIN_LAYER_COUNT)
+  );
+  geometry.setAttribute(
+    "terrainFoliageMask",
+    new BufferAttribute(typedFoliageMaskWeights, 1)
   );
   geometry.setIndex(new BufferAttribute(typedIndices, 1));
   geometry.computeVertexNormals();
@@ -625,6 +642,7 @@ function buildTerrainLodLevelMeshData(
     normals,
     uvs: typedUvs,
     layerWeights: typedLayerWeights,
+    foliageMaskWeights: typedFoliageMaskWeights,
     indices: typedIndices,
     skirtVertexCount: typedPositions.length / 3 - skirtStartVertexCount
   };
