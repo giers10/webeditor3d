@@ -110,6 +110,14 @@ import {
   getProjectScheduleRoutineHeldSteps,
   getProjectSequenceImpulseSteps
 } from "../sequencer/project-sequence-steps";
+import { isBundledFoliagePrototypeId } from "../foliage/bundled-foliage-manifest";
+import {
+  FOLIAGE_PROTOTYPE_LOD_LEVELS,
+  isFoliagePrototypeCategory,
+  isFoliagePrototypeLodLevel,
+  type FoliageLayer,
+  type FoliagePrototype
+} from "../foliage/foliage";
 
 export type SceneDiagnosticSeverity = "error" | "warning";
 export type SceneDiagnosticScope = "document" | "build";
