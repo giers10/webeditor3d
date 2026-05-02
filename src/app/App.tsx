@@ -9388,6 +9388,8 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
           ).toLowerCase()}`
         : tool === "foliagePaint" || tool === "foliageErase"
           ? ` for ${activeFoliageLayer?.name ?? "the active foliage layer"}`
+          : tool === "foliageBlockerPaint" || tool === "foliageBlockerErase"
+            ? " for the global foliage blocker"
         : "";
     setStatusMessage(
       `Armed ${getTerrainBrushToolLabel(tool)} terrain brush${paintLayerLabel} for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Drag in the viewport to edit the selected terrain.`
