@@ -7,8 +7,10 @@ import { createUpsertTerrainCommand } from "../../src/commands/upsert-terrain-co
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
   createTerrain,
+  getTerrainFoliageMask,
   getTerrainRenderDirtyBoundsSince
 } from "../../src/document/terrains";
+import { createFoliageLayer } from "../../src/foliage/foliage";
 
 describe("terrain commands", () => {
   it("creates a terrain and restores it through undo and redo", () => {
@@ -223,5 +225,70 @@ describe("terrain commands", () => {
     expect(store.getState().document.terrains[terrain.id]?.paintWeights[1]).toBe(
       0.5
     );
+  });
+
+  it("applies foliage mask brush patches with undo and redo", () => {
+    const foliageLayer = createFoliageLayer({
+      id: "foliage-layer-mask-command",
+      name: "Mask Command Layer"
+    });
+    const terrain = createTerrain({
+      id: "terrain-foliage-mask-command",
+      sampleCountX: 3,
+      sampleCountZ: 3
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Terrain Foliage Mask Scene" }),
+        terrains: {
+          [terrain.id]: terrain
+        },
+        foliageLayers: {
+          [foliageLayer.id]: foliageLayer
+        }
+      }
+    });
+
+    store.executeCommand(
+      createApplyTerrainBrushPatchCommand({
+        label: "Patch foliage mask fixture",
+        patch: {
+          terrainId: terrain.id,
+          heightSamples: [],
+          paintWeights: [],
+          foliageMaskValues: [
+            {
+              layerId: foliageLayer.id,
+              index: 4,
+              before: 0,
+              after: 0.75
+            }
+          ]
+        }
+      })
+    );
+
+    expect(
+      getTerrainFoliageMask(
+        store.getState().document.terrains[terrain.id]!,
+        foliageLayer.id
+      )?.values[4]
+    ).toBe(0.75);
+
+    expect(store.undo()).toBe(true);
+    expect(
+      getTerrainFoliageMask(
+        store.getState().document.terrains[terrain.id]!,
+        foliageLayer.id
+      )
+    ).toBeNull();
+
+    expect(store.redo()).toBe(true);
+    expect(
+      getTerrainFoliageMask(
+        store.getState().document.terrains[terrain.id]!,
+        foliageLayer.id
+      )?.values[4]
+    ).toBe(0.75);
   });
 });
