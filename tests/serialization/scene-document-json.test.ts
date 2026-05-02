@@ -15,7 +15,10 @@ import {
 } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
-import { createTerrain } from "../../src/document/terrains";
+import {
+  createTerrain,
+  createTerrainFoliageMask
+} from "../../src/document/terrains";
 import {
   ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION,
   AUTHORED_TERRAIN_PAINT_SCENE_DOCUMENT_VERSION,
@@ -34,6 +37,7 @@ import {
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
+  FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
   MODEL_ASSET_PIPELINE_SCENE_DOCUMENT_VERSION,
