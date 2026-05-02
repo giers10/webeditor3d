@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createDefaultTerrainBrushSettings } from "../../src/core/terrain-brush";
 import {
   createTerrain,
+  getTerrainFoliageBlockerMaskValueAtSample,
   getTerrainFoliageMask,
   getTerrainSampleLayerWeights
 } from "../../src/document/terrains";
@@ -195,6 +196,7 @@ describe("terrain brush geometry", () => {
       }
     ]);
     expect(patch.foliageMaskValues).toEqual([]);
+    expect(patch.foliageBlockerMaskValues).toEqual([]);
   });
 
   it("paints and erases foliage mask density for a foliage layer", () => {
@@ -248,6 +250,90 @@ describe("terrain brush geometry", () => {
     expect(patch.foliageMaskValues).toEqual([
       {
         layerId: foliageLayerId,
+        index: 4,
+        before: 0,
+        after: 0.5
+      }
+    ]);
+    expect(patch.foliageBlockerMaskValues).toEqual([]);
+  });
+
+  it("paints and clears the global foliage blocker mask without touching layer masks", () => {
+    const foliageLayerId = "foliage-layer-blocker-independent";
+    const terrain = createTerrain({
+      id: "terrain-foliage-blocker-brush",
+      position: { x: 0, y: 0, z: 0 },
+      sampleCountX: 3,
+      sampleCountZ: 3,
+      cellSize: 1
+    });
+    const layerPaintedTerrain = applyTerrainBrushStamp({
+      terrain,
+      center: { x: 0, z: 0 },
+      settings: {
+        radius: 0.6,
+        strength: 1,
+        falloff: 0
+      },
+      tool: "foliagePaint",
+      foliageLayerId
+    });
+    const blockedTerrain = applyTerrainBrushStamp({
+      terrain: layerPaintedTerrain,
+      center: { x: 1, z: 1 },
+      settings: {
+        radius: 0.6,
+        strength: 0.5,
+        falloff: 0
+      },
+      tool: "foliageBlockerPaint"
+    });
+
+    expect(
+      getTerrainFoliageBlockerMaskValueAtSample(
+        blockedTerrain.foliageBlockerMask,
+        1,
+        1
+      )
+    ).toBeCloseTo(0.5);
+    expect(getTerrainFoliageMask(blockedTerrain, foliageLayerId)?.values[0]).toBe(
+      1
+    );
+
+    const clearedTerrain = applyTerrainBrushStamp({
+      terrain: blockedTerrain,
+      center: { x: 1, z: 1 },
+      settings: {
+        radius: 0.6,
+        strength: 0.5,
+        falloff: 0
+      },
+      tool: "foliageBlockerErase"
+    });
+
+    expect(
+      getTerrainFoliageBlockerMaskValueAtSample(
+        clearedTerrain.foliageBlockerMask,
+        1,
+        1
+      )
+    ).toBeCloseTo(0.25);
+    expect(getTerrainFoliageMask(clearedTerrain, foliageLayerId)?.values[0]).toBe(
+      1
+    );
+
+    const patch = createTerrainBrushPatchFromTerrains({
+      before: terrain,
+      after: blockedTerrain,
+      heightSampleIndices: [],
+      paintWeightIndices: [],
+      foliageMaskValueIndices: [],
+      foliageBlockerMaskValueIndices: [4]
+    });
+
+    expect(patch.foliageMaskValues).toEqual([]);
+    expect(patch.foliageBlockerMaskValues).toEqual([
+      {
         index: 4,
         before: 0,
         after: 0.5
