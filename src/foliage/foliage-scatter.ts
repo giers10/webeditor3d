@@ -6,6 +6,7 @@ import {
   getTerrainFootprintWidth,
   getTerrainHeightAtSample,
   isTerrainFoliageMaskEmpty,
+  sampleTerrainFoliageBlockerMaskAtWorldPosition,
   sampleTerrainFoliageMaskAtWorldPosition,
   type Terrain
 } from "../document/terrains";
@@ -91,6 +92,7 @@ interface WeightedFoliagePrototypeSet {
 
 export const DEFAULT_FOLIAGE_SCATTER_CHUNK_SIZE_METERS = 16;
 export const DEFAULT_MAX_FOLIAGE_SCATTER_INSTANCES_PER_CHUNK = 512;
+export const FOLIAGE_BLOCKER_MASK_THRESHOLD = 0.1;
 
 const HASH_OFFSET_BASIS = 2166136261;
 const HASH_PRIME = 16777619;
@@ -509,6 +511,18 @@ function generateChunkInstances(options: {
       ) ?? 0;
 
     if (maskValue <= 0) {
+      continue;
+    }
+
+    const blockerValue =
+      sampleTerrainFoliageBlockerMaskAtWorldPosition(
+        terrain,
+        worldX,
+        worldZ,
+        false
+      ) ?? 0;
+
+    if (blockerValue > FOLIAGE_BLOCKER_MASK_THRESHOLD) {
       continue;
     }
 

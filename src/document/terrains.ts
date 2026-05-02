@@ -956,7 +956,10 @@ function getStoredTerrainPaintWeightAtSample(
 }
 
 export function getTerrainFoliageMaskSampleIndex(
-  mask: Pick<TerrainFoliageMask | TerrainFoliageBlockerMask, "resolutionX" | "resolutionZ">,
+  mask: Pick<
+    TerrainFoliageMask | TerrainFoliageBlockerMask,
+    "resolutionX" | "resolutionZ"
+  >,
   sampleX: number,
   sampleZ: number
 ): number {
@@ -1096,26 +1099,12 @@ function sampleTerrainFoliageMaskAtGridCoordinate(
   const maxSampleZ = Math.min(mask.resolutionZ - 1, minSampleZ + 1);
   const blendX = clampedSampleX - minSampleX;
   const blendZ = clampedSampleZ - minSampleZ;
-  const value00 = getTerrainFoliageMaskValueAtSample(
-    mask as TerrainFoliageMask,
-    minSampleX,
-    minSampleZ
-  );
-  const value10 = getTerrainFoliageMaskValueAtSample(
-    mask as TerrainFoliageMask,
-    maxSampleX,
-    minSampleZ
-  );
-  const value01 = getTerrainFoliageMaskValueAtSample(
-    mask as TerrainFoliageMask,
-    minSampleX,
-    maxSampleZ
-  );
-  const value11 = getTerrainFoliageMaskValueAtSample(
-    mask as TerrainFoliageMask,
-    maxSampleX,
-    maxSampleZ
-  );
+  const readMaskValue = (x: number, z: number) =>
+    mask.values[getTerrainFoliageMaskSampleIndex(mask, x, z)] ?? 0;
+  const value00 = readMaskValue(minSampleX, minSampleZ);
+  const value10 = readMaskValue(maxSampleX, minSampleZ);
+  const value01 = readMaskValue(minSampleX, maxSampleZ);
+  const value11 = readMaskValue(maxSampleX, maxSampleZ);
 
   return lerp(
     lerp(value00, value10, blendX),

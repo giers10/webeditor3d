@@ -3010,6 +3010,64 @@ function validateTerrain(
       }
     }
   }
+
+  const blockerMask = terrain.foliageBlockerMask;
+  const blockerMaskPath = `${path}.foliageBlockerMask`;
+
+  if (blockerMask.resolutionX !== terrain.sampleCountX) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-foliage-blocker-mask-resolution-x",
+        "Terrain foliage blocker mask resolutionX must match terrain sampleCountX.",
+        `${blockerMaskPath}.resolutionX`
+      )
+    );
+  }
+
+  if (blockerMask.resolutionZ !== terrain.sampleCountZ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-foliage-blocker-mask-resolution-z",
+        "Terrain foliage blocker mask resolutionZ must match terrain sampleCountZ.",
+        `${blockerMaskPath}.resolutionZ`
+      )
+    );
+  }
+
+  const expectedBlockerMaskValueCount =
+    blockerMask.resolutionX * blockerMask.resolutionZ;
+
+  if (blockerMask.values.length !== expectedBlockerMaskValueCount) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-terrain-foliage-blocker-mask-value-count",
+        `Terrain foliage blocker mask values must contain exactly ${expectedBlockerMaskValueCount} samples.`,
+        `${blockerMaskPath}.values`
+      )
+    );
+  }
+
+  if (options.terrainSampleValues !== "skip") {
+    for (let index = 0; index < blockerMask.values.length; index += 1) {
+      const maskValue = blockerMask.values[index];
+
+      if (isFiniteNumber(maskValue) && maskValue >= 0 && maskValue <= 1) {
+        continue;
+      }
+
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-terrain-foliage-blocker-mask-value",
+          "Terrain foliage blocker mask values must remain finite values between 0 and 1.",
+          `${blockerMaskPath}.values.${index}`
+        )
+      );
+    }
+  }
 }
 
 function validateFoliagePrototype(

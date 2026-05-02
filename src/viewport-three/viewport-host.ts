@@ -391,6 +391,7 @@ interface ActiveTerrainBrushStroke {
   heightSampleIndices: Set<number>;
   paintWeightIndices: Set<number>;
   foliageMaskValueKeys: Set<string>;
+  foliageBlockerMaskValueIndices: Set<number>;
   referenceHeight: number | null;
   lastAppliedPoint: {
     x: number;
@@ -498,6 +499,8 @@ const TERRAIN_BRUSH_PREVIEW_FLATTEN_COLOR = 0xf1d37d;
 const TERRAIN_BRUSH_PREVIEW_PAINT_COLOR = 0x8eb9ff;
 const TERRAIN_BRUSH_PREVIEW_FOLIAGE_PAINT_COLOR = 0x65d36e;
 const TERRAIN_BRUSH_PREVIEW_FOLIAGE_ERASE_COLOR = 0xf0a853;
+const TERRAIN_BRUSH_PREVIEW_FOLIAGE_BLOCKER_PAINT_COLOR = 0xdf5e77;
+const TERRAIN_BRUSH_PREVIEW_FOLIAGE_BLOCKER_ERASE_COLOR = 0x5ec6df;
 const TERRAIN_BRUSH_PREVIEW_OFFSET = 0.05;
 const BOX_CREATE_PREVIEW_FILL = 0x89b6ff;
 const BOX_CREATE_PREVIEW_EDGE = 0xf3be8f;
