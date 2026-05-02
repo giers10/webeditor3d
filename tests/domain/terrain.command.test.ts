@@ -177,7 +177,8 @@ describe("terrain commands", () => {
           terrainId: terrain.id,
           heightSamples: [{ index: 4, before: 0, after: 2 }],
           paintWeights: [{ index: 1, before: 0, after: 0.5 }],
-          foliageMaskValues: []
+          foliageMaskValues: [],
+          foliageBlockerMaskValues: []
         }
       })
     );
@@ -263,7 +264,8 @@ describe("terrain commands", () => {
               before: 0,
               after: 0.75
             }
-          ]
+          ],
+          foliageBlockerMaskValues: []
         }
       })
     );

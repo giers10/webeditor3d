@@ -6541,15 +6541,20 @@ export class ViewportHost {
   }
 
   private getTerrainFoliageMaskPreviewLayerId(terrainId: string): string | null {
+    const brushState = this.currentTerrainBrushState;
+
+    if (brushState === null || brushState.terrainId !== terrainId) {
+      return null;
+    }
+
     if (
-      this.currentTerrainBrushState === null ||
-      this.currentTerrainBrushState.terrainId !== terrainId ||
-      !isTerrainFoliageLayerMaskTool(this.currentTerrainBrushState.tool)
+      brushState.tool !== "foliagePaint" &&
+      brushState.tool !== "foliageErase"
     ) {
       return null;
     }
 
-    return this.currentTerrainBrushState.foliageLayerId;
+    return brushState.foliageLayerId;
   }
 
   private isTerrainFoliageBlockerMaskPreviewActive(
@@ -9699,7 +9704,8 @@ export class ViewportHost {
       tool: toolState.tool,
       referenceHeight,
       layerIndex: toolState.tool === "paint" ? toolState.layerIndex : null,
-      foliageLayerId: isTerrainFoliageLayerMaskTool(toolState.tool)
+      foliageLayerId:
+        toolState.tool === "foliagePaint" || toolState.tool === "foliageErase"
         ? toolState.foliageLayerId
         : null
     });
