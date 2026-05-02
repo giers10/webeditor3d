@@ -20965,7 +20965,7 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                     </div>
                     <div className="material-summary">
                       {activeFoliageLayer === null
-                        ? "Create or select a foliage layer in the Foliage panel before painting terrain masks."
+                        ? `No active foliage layer selected. Global blocker has ${selectedTerrainFoliageBlockerPaintedSampleCount} blocked sample${selectedTerrainFoliageBlockerPaintedSampleCount === 1 ? "" : "s"}.`
                         : `${activeFoliageLayer.name} mask has ${selectedTerrainActiveFoliageMaskPaintedSampleCount} painted sample${selectedTerrainActiveFoliageMaskPaintedSampleCount === 1 ? "" : "s"} on this terrain. Global blocker has ${selectedTerrainFoliageBlockerPaintedSampleCount} blocked sample${selectedTerrainFoliageBlockerPaintedSampleCount === 1 ? "" : "s"}.`}
                     </div>
                   </div>
