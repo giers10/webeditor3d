@@ -3310,13 +3310,25 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
             strength: terrainBrushSettings.strength,
             falloff: terrainBrushSettings.falloff
           }
-        : {
-            terrainId: selectedTerrain.id,
-            tool: armedTerrainBrushTool,
-            radius: terrainBrushSettings.radius,
-            strength: terrainBrushSettings.strength,
-            falloff: terrainBrushSettings.falloff
-          };
+        : armedTerrainBrushTool === "foliagePaint" ||
+            armedTerrainBrushTool === "foliageErase"
+          ? activeFoliageLayer === null
+            ? null
+            : {
+                terrainId: selectedTerrain.id,
+                tool: armedTerrainBrushTool,
+                foliageLayerId: activeFoliageLayer.id,
+                radius: terrainBrushSettings.radius,
+                strength: terrainBrushSettings.strength,
+                falloff: terrainBrushSettings.falloff
+              }
+          : {
+              terrainId: selectedTerrain.id,
+              tool: armedTerrainBrushTool,
+              radius: terrainBrushSettings.radius,
+              strength: terrainBrushSettings.strength,
+              falloff: terrainBrushSettings.falloff
+            };
   const resolvedTerrainPaintLayerIndex = clampTerrainPaintLayerIndex(
     activeTerrainPaintLayerIndex
   );
@@ -3329,6 +3341,15 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
       : (editorState.document.materials[
           selectedTerrainActivePaintLayer.materialId
         ] ?? null);
+  const selectedTerrainActiveFoliageMask =
+    selectedTerrain === null || activeFoliageLayer === null
+      ? null
+      : (selectedTerrain.foliageMasks[activeFoliageLayer.id] ?? null);
+  const selectedTerrainActiveFoliageMaskPaintedSampleCount =
+    selectedTerrainActiveFoliageMask === null
+      ? 0
+      : selectedTerrainActiveFoliageMask.values.filter((value) => value > 0)
+          .length;
   const [ambientLightIntensityDraft, setAmbientLightIntensityDraft] = useState(
     String(editorState.document.world.ambientLight.intensity)
   );
