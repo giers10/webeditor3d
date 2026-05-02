@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createTerrainFoliageBlockerMask,
   createTerrainFoliageMask,
   getTerrainBounds,
+  getTerrainFoliageBlockerMaskValueAtSample,
   getTerrainFoliageMask,
   getTerrainFoliageMaskValueAtSample,
   getTerrainPaintWeightSampleOffset,
+  sampleTerrainFoliageBlockerMaskAtWorldPosition,
   sampleTerrainFoliageMaskAtWorldPosition,
   updateTerrainBoundsCacheAfterHeightPatch,
   resizeTerrainGrid,
@@ -47,7 +50,12 @@ describe("terrain grid resizing", () => {
           resolutionZ: 2,
           values: [0, 1, 0, 0.5]
         })
-      }
+      },
+      foliageBlockerMask: createTerrainFoliageBlockerMask({
+        resolutionX: 2,
+        resolutionZ: 2,
+        values: [0, 0.25, 0.5, 1]
+      })
     });
 
     const resizedTerrain = resizeTerrainGrid(terrain, {
@@ -72,12 +80,54 @@ describe("terrain grid resizing", () => {
     expect(resizedMask?.resolutionX).toBe(3);
     expect(resizedMask?.resolutionZ).toBe(3);
     expect(resizedMask?.values[4]).toBeCloseTo(0.375);
+    expect(resizedTerrain.foliageBlockerMask.resolutionX).toBe(3);
+    expect(resizedTerrain.foliageBlockerMask.resolutionZ).toBe(3);
+    expect(resizedTerrain.foliageBlockerMask.values[4]).toBeCloseTo(0.4375);
     expect(terrain.position).toEqual({
       x: 0,
       y: 1,
       z: 0
     });
     expect(terrain.heights).toEqual([0, 2, 4, 6]);
+  });
+});
+
+describe("terrain foliage blocker masks", () => {
+  it("creates, clones, normalizes, and samples blocker mask values", () => {
+    const terrain = createTerrain({
+      id: "terrain-foliage-blocker-mask-sample",
+      position: { x: 10, y: 0, z: 20 },
+      sampleCountX: 2,
+      sampleCountZ: 2,
+      cellSize: 2,
+      foliageBlockerMask: createTerrainFoliageBlockerMask({
+        resolutionX: 2,
+        resolutionZ: 2,
+        values: [0, 1.2, -1, 0.5]
+      })
+    });
+    const clonedTerrain = createTerrain(terrain);
+
+    expect(terrain.foliageBlockerMask.values).toEqual([0, 1, 0, 0.5]);
+    expect(clonedTerrain.foliageBlockerMask).toEqual(
+      terrain.foliageBlockerMask
+    );
+    expect(clonedTerrain.foliageBlockerMask).not.toBe(
+      terrain.foliageBlockerMask
+    );
+    expect(
+      getTerrainFoliageBlockerMaskValueAtSample(
+        terrain.foliageBlockerMask,
+        1,
+        1
+      )
+    ).toBe(0.5);
+    expect(
+      sampleTerrainFoliageBlockerMaskAtWorldPosition(terrain, 11, 21)
+    ).toBeCloseTo(0.375);
+    expect(
+      sampleTerrainFoliageBlockerMaskAtWorldPosition(terrain, 99, 99)
+    ).toBeNull();
   });
 });
 
