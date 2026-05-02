@@ -147,4 +147,20 @@ describe("foliage render batch helpers", () => {
     expect(transformedUp.y).toBeCloseTo(normal.y, 6);
     expect(transformedUp.z).toBeCloseTo(normal.z, 6);
   });
+
+  it("keeps local up vertical on slopes when alignToNormal is disabled", () => {
+    const matrix = createFoliageInstanceMatrix(
+      createInstance({
+        normal: { x: 1, y: 1, z: 0 },
+        yawRadians: Math.PI * 0.5,
+        alignToNormal: 0
+      })
+    );
+    const rotation = new Quaternion().setFromRotationMatrix(matrix);
+    const transformedUp = new Vector3(0, 1, 0).applyQuaternion(rotation);
+
+    expect(transformedUp.x).toBeCloseTo(0, 6);
+    expect(transformedUp.y).toBeCloseTo(1, 6);
+    expect(transformedUp.z).toBeCloseTo(0, 6);
+  });
 });
