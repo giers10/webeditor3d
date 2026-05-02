@@ -337,7 +337,7 @@ async function loadGltfFromArrayBuffer(arrayBuffer: ArrayBuffer): Promise<GLTF> 
   return loader.parseAsync(arrayBuffer, "");
 }
 
-function createConfiguredGltfLoader(): GLTFLoader {
+export function createConfiguredGltfLoader(): GLTFLoader {
   const loader = new GLTFLoader();
   loader.setDRACOLoader(getSharedDracoLoader());
   return loader;
