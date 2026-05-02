@@ -6493,6 +6493,26 @@ export class ViewportHost {
     return this.currentDocument.materials[materialId] ?? null;
   }
 
+  private getTerrainFoliageMaskPreviewLayerId(terrainId: string): string | null {
+    if (
+      this.currentTerrainBrushState === null ||
+      this.currentTerrainBrushState.terrainId !== terrainId ||
+      (this.currentTerrainBrushState.tool !== "foliagePaint" &&
+        this.currentTerrainBrushState.tool !== "foliageErase")
+    ) {
+      return null;
+    }
+
+    return this.currentTerrainBrushState.foliageLayerId;
+  }
+
+  private getTerrainFoliageMaskPreviewColor(terrainId: string): number {
+    return this.currentTerrainBrushState?.terrainId === terrainId &&
+      this.currentTerrainBrushState.tool === "foliageErase"
+      ? TERRAIN_BRUSH_PREVIEW_FOLIAGE_ERASE_COLOR
+      : TERRAIN_BRUSH_PREVIEW_FOLIAGE_PAINT_COLOR;
+  }
+
   private createTerrainMaterial(terrain: Terrain): Material {
     const selected = isTerrainSelected(this.currentSelection, terrain.id);
     const hovered = isTerrainSelected(this.hoveredSelection, terrain.id);
@@ -6521,6 +6541,12 @@ export class ViewportHost {
 
     return createTerrainLayerBlendMaterial({
       layerTextures,
+      foliageMaskPreviewColorHex:
+        this.getTerrainFoliageMaskPreviewColor(terrain.id),
+      foliageMaskPreviewOpacity:
+        this.getTerrainFoliageMaskPreviewLayerId(terrain.id) === null
+          ? 0
+          : 0.62,
       emissiveHex: active
         ? TERRAIN_ACTIVE_EMISSIVE
         : selected
@@ -6542,6 +6568,12 @@ export class ViewportHost {
 
     return createTerrainLayerColorBlendMaterial({
       layerColors,
+      foliageMaskPreviewColorHex:
+        this.getTerrainFoliageMaskPreviewColor(terrain.id),
+      foliageMaskPreviewOpacity:
+        this.getTerrainFoliageMaskPreviewLayerId(terrain.id) === null
+          ? 0
+          : 0.62,
       emissiveHex: active
         ? TERRAIN_ACTIVE_EMISSIVE
         : selected
