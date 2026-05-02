@@ -373,7 +373,9 @@ function pushTerrainLodVertex(
   yOffset: number,
   positions: number[],
   uvs: number[],
-  layerWeights: number[]
+  layerWeights: number[],
+  foliageMaskWeights: number[],
+  options: TerrainMeshBuildOptions
 ) {
   const localX = sampleX * terrain.cellSize;
   const localY = getTerrainHeightAtSample(terrain, sampleX, sampleZ) + yOffset;
@@ -390,6 +392,17 @@ function pushTerrainLodVertex(
   for (const weight of sampleLayerWeights) {
     layerWeights.push(weight);
   }
+
+  const foliageMask =
+    options.foliageMaskLayerId === undefined ||
+    options.foliageMaskLayerId === null
+      ? null
+      : getTerrainFoliageMask(terrain, options.foliageMaskLayerId);
+  foliageMaskWeights.push(
+    foliageMask === null
+      ? 0
+      : getTerrainFoliageMaskValueAtSample(foliageMask, sampleX, sampleZ)
+  );
 }
 
 function pushTerrainLodSkirtSegment(
@@ -402,7 +415,9 @@ function pushTerrainLodSkirtSegment(
   positions: number[],
   uvs: number[],
   layerWeights: number[],
-  indices: number[]
+  foliageMaskWeights: number[],
+  indices: number[],
+  options: TerrainMeshBuildOptions
 ) {
   const topStart = positions.length / 3;
   pushTerrainLodVertex(
@@ -412,7 +427,9 @@ function pushTerrainLodSkirtSegment(
     0,
     positions,
     uvs,
-    layerWeights
+    layerWeights,
+    foliageMaskWeights,
+    options
   );
   const topEnd = positions.length / 3;
   pushTerrainLodVertex(
@@ -422,7 +439,9 @@ function pushTerrainLodSkirtSegment(
     0,
     positions,
     uvs,
-    layerWeights
+    layerWeights,
+    foliageMaskWeights,
+    options
   );
   const bottomStart = positions.length / 3;
   pushTerrainLodVertex(
@@ -432,7 +451,9 @@ function pushTerrainLodSkirtSegment(
     -skirtDepth,
     positions,
     uvs,
-    layerWeights
+    layerWeights,
+    foliageMaskWeights,
+    options
   );
   const bottomEnd = positions.length / 3;
   pushTerrainLodVertex(
@@ -442,7 +463,9 @@ function pushTerrainLodSkirtSegment(
     -skirtDepth,
     positions,
     uvs,
-    layerWeights
+    layerWeights,
+    foliageMaskWeights,
+    options
   );
 
   indices.push(topStart, bottomStart, bottomEnd);
