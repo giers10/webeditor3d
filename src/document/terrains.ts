@@ -12,6 +12,12 @@ export interface TerrainFoliageMask {
   values: number[];
 }
 
+export interface TerrainFoliageBlockerMask {
+  resolutionX: number;
+  resolutionZ: number;
+  values: number[];
+}
+
 export type TerrainFoliageMaskRegistry = Record<string, TerrainFoliageMask>;
 
 export interface Terrain {
@@ -29,6 +35,7 @@ export interface Terrain {
   layers: TerrainLayer[];
   paintWeights: number[];
   foliageMasks: TerrainFoliageMaskRegistry;
+  foliageBlockerMask: TerrainFoliageBlockerMask;
 }
 
 export interface TerrainHeightPatchEntry {
@@ -298,6 +305,14 @@ export function createFlatTerrainFoliageMaskValues(
   );
 }
 
+export function createFlatTerrainFoliageBlockerMaskValues(
+  resolutionX: number,
+  resolutionZ: number,
+  value = 0
+): number[] {
+  return createFlatTerrainFoliageMaskValues(resolutionX, resolutionZ, value);
+}
+
 export function getTerrainSampleIndex(
   terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ">,
   sampleX: number,
@@ -463,6 +478,65 @@ export function cloneTerrainFoliageMask(
   return createTerrainFoliageMask(mask);
 }
 
+export function createTerrainFoliageBlockerMask(options: {
+  resolutionX: number;
+  resolutionZ: number;
+  values?: readonly number[];
+}): TerrainFoliageBlockerMask {
+  const resolutionX = normalizeTerrainSampleCount(
+    options.resolutionX,
+    "Terrain foliage blocker mask resolutionX"
+  );
+  const resolutionZ = normalizeTerrainSampleCount(
+    options.resolutionZ,
+    "Terrain foliage blocker mask resolutionZ"
+  );
+  const expectedValueCount = resolutionX * resolutionZ;
+  const values =
+    options.values === undefined
+      ? createFlatTerrainFoliageBlockerMaskValues(resolutionX, resolutionZ)
+      : [...options.values];
+
+  if (values.length !== expectedValueCount) {
+    throw new Error(
+      `Terrain foliage blocker mask values must contain exactly ${expectedValueCount} samples.`
+    );
+  }
+
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index];
+
+    if (!Number.isFinite(value)) {
+      throw new Error(
+        "Terrain foliage blocker mask values must remain finite."
+      );
+    }
+
+    values[index] = clamp(value, 0, 1);
+  }
+
+  return {
+    resolutionX,
+    resolutionZ,
+    values
+  };
+}
+
+export function createEmptyTerrainFoliageBlockerMask(
+  terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ">
+): TerrainFoliageBlockerMask {
+  return createTerrainFoliageBlockerMask({
+    resolutionX: terrain.sampleCountX,
+    resolutionZ: terrain.sampleCountZ
+  });
+}
+
+export function cloneTerrainFoliageBlockerMask(
+  mask: TerrainFoliageBlockerMask
+): TerrainFoliageBlockerMask {
+  return createTerrainFoliageBlockerMask(mask);
+}
+
 function normalizeTerrainFoliageMasks(
   sampleCountX: number,
   sampleCountZ: number,
@@ -496,6 +570,31 @@ function normalizeTerrainFoliageMasks(
   }
 
   return normalizedMasks;
+}
+
+function normalizeTerrainFoliageBlockerMask(
+  sampleCountX: number,
+  sampleCountZ: number,
+  foliageBlockerMask: TerrainFoliageBlockerMask | undefined
+): TerrainFoliageBlockerMask {
+  const normalizedMask =
+    foliageBlockerMask === undefined
+      ? createTerrainFoliageBlockerMask({
+          resolutionX: sampleCountX,
+          resolutionZ: sampleCountZ
+        })
+      : createTerrainFoliageBlockerMask(foliageBlockerMask);
+
+  if (
+    normalizedMask.resolutionX !== sampleCountX ||
+    normalizedMask.resolutionZ !== sampleCountZ
+  ) {
+    throw new Error(
+      "Terrain foliage blocker mask resolution must match the terrain sample grid."
+    );
+  }
+
+  return normalizedMask;
 }
 
 export function cloneTerrainFoliageMasks(
@@ -857,7 +956,7 @@ function getStoredTerrainPaintWeightAtSample(
 }
 
 export function getTerrainFoliageMaskSampleIndex(
-  mask: Pick<TerrainFoliageMask, "resolutionX" | "resolutionZ">,
+  mask: Pick<TerrainFoliageMask | TerrainFoliageBlockerMask, "resolutionX" | "resolutionZ">,
   sampleX: number,
   sampleZ: number
 ): number {
@@ -882,6 +981,16 @@ export function getTerrainFoliageMaskSampleIndex(
 
 export function getTerrainFoliageMaskValueAtSample(
   mask: TerrainFoliageMask,
+  sampleX: number,
+  sampleZ: number
+): number {
+  return (
+    mask.values[getTerrainFoliageMaskSampleIndex(mask, sampleX, sampleZ)] ?? 0
+  );
+}
+
+export function getTerrainFoliageBlockerMaskValueAtSample(
+  mask: TerrainFoliageBlockerMask,
   sampleX: number,
   sampleZ: number
 ): number {
@@ -918,6 +1027,12 @@ export function getOrCreateTerrainFoliageMask(
 
 export function isTerrainFoliageMaskEmpty(
   mask: TerrainFoliageMask
+): boolean {
+  return mask.values.every((value) => value === 0);
+}
+
+export function isTerrainFoliageBlockerMaskEmpty(
+  mask: TerrainFoliageBlockerMask
 ): boolean {
   return mask.values.every((value) => value === 0);
 }
@@ -969,7 +1084,7 @@ function sampleTerrainPaintWeightAtGridCoordinate(
 }
 
 function sampleTerrainFoliageMaskAtGridCoordinate(
-  mask: TerrainFoliageMask,
+  mask: TerrainFoliageMask | TerrainFoliageBlockerMask,
   sampleX: number,
   sampleZ: number
 ): number {
@@ -982,22 +1097,22 @@ function sampleTerrainFoliageMaskAtGridCoordinate(
   const blendX = clampedSampleX - minSampleX;
   const blendZ = clampedSampleZ - minSampleZ;
   const value00 = getTerrainFoliageMaskValueAtSample(
-    mask,
+    mask as TerrainFoliageMask,
     minSampleX,
     minSampleZ
   );
   const value10 = getTerrainFoliageMaskValueAtSample(
-    mask,
+    mask as TerrainFoliageMask,
     maxSampleX,
     minSampleZ
   );
   const value01 = getTerrainFoliageMaskValueAtSample(
-    mask,
+    mask as TerrainFoliageMask,
     minSampleX,
     maxSampleZ
   );
   const value11 = getTerrainFoliageMaskValueAtSample(
-    mask,
+    mask as TerrainFoliageMask,
     maxSampleX,
     maxSampleZ
   );
@@ -1007,6 +1122,14 @@ function sampleTerrainFoliageMaskAtGridCoordinate(
     lerp(value01, value11, blendX),
     blendZ
   );
+}
+
+function sampleTerrainFoliageBlockerMaskAtGridCoordinate(
+  mask: TerrainFoliageBlockerMask,
+  sampleX: number,
+  sampleZ: number
+): number {
+  return sampleTerrainFoliageMaskAtGridCoordinate(mask, sampleX, sampleZ);
 }
 
 export function sampleTerrainFoliageMaskAtLocalPosition(
@@ -1055,6 +1178,49 @@ export function sampleTerrainFoliageMaskAtWorldPosition(
   return sampleTerrainFoliageMaskAtLocalPosition(
     terrain,
     layerId,
+    worldX - terrain.position.x,
+    worldZ - terrain.position.z,
+    clampToBounds
+  );
+}
+
+export function sampleTerrainFoliageBlockerMaskAtLocalPosition(
+  terrain: Terrain,
+  localX: number,
+  localZ: number,
+  clampToBounds = false
+): number | null {
+  const sampleSpaceX = localX / terrain.cellSize;
+  const sampleSpaceZ = localZ / terrain.cellSize;
+  const maxSampleX = terrain.sampleCountX - 1;
+  const maxSampleZ = terrain.sampleCountZ - 1;
+
+  if (!clampToBounds) {
+    if (
+      sampleSpaceX < 0 ||
+      sampleSpaceX > maxSampleX ||
+      sampleSpaceZ < 0 ||
+      sampleSpaceZ > maxSampleZ
+    ) {
+      return null;
+    }
+  }
+
+  return sampleTerrainFoliageBlockerMaskAtGridCoordinate(
+    terrain.foliageBlockerMask,
+    sampleSpaceX,
+    sampleSpaceZ
+  );
+}
+
+export function sampleTerrainFoliageBlockerMaskAtWorldPosition(
+  terrain: Terrain,
+  worldX: number,
+  worldZ: number,
+  clampToBounds = false
+): number | null {
+  return sampleTerrainFoliageBlockerMaskAtLocalPosition(
+    terrain,
     worldX - terrain.position.x,
     worldZ - terrain.position.z,
     clampToBounds
@@ -1192,6 +1358,41 @@ function createResampledTerrainFoliageMasks(
   );
 }
 
+function createResampledTerrainFoliageBlockerMask(
+  terrain: Terrain,
+  sampleCountX: number,
+  sampleCountZ: number
+): TerrainFoliageBlockerMask {
+  const values = new Array<number>(sampleCountX * sampleCountZ);
+
+  for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
+    const normalizedSampleZ =
+      sampleCountZ === 1 ? 0 : sampleZ / (sampleCountZ - 1);
+    const sourceSampleZ =
+      normalizedSampleZ * (terrain.foliageBlockerMask.resolutionZ - 1);
+
+    for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
+      const normalizedSampleX =
+        sampleCountX === 1 ? 0 : sampleX / (sampleCountX - 1);
+      const sourceSampleX =
+        normalizedSampleX * (terrain.foliageBlockerMask.resolutionX - 1);
+
+      values[sampleZ * sampleCountX + sampleX] =
+        sampleTerrainFoliageBlockerMaskAtGridCoordinate(
+          terrain.foliageBlockerMask,
+          sourceSampleX,
+          sourceSampleZ
+        );
+    }
+  }
+
+  return createTerrainFoliageBlockerMask({
+    resolutionX: sampleCountX,
+    resolutionZ: sampleCountZ,
+    values
+  });
+}
+
 export function resizeTerrainGrid(
   terrain: Terrain,
   options: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "cellSize"> & {
@@ -1233,6 +1434,11 @@ export function resizeTerrainGrid(
       terrain,
       sampleCountX,
       sampleCountZ
+    ),
+    foliageBlockerMask: createResampledTerrainFoliageBlockerMask(
+      terrain,
+      sampleCountX,
+      sampleCountZ
     )
   });
 }
@@ -1266,6 +1472,7 @@ export function createTerrain(
       | "layers"
       | "paintWeights"
       | "foliageMasks"
+      | "foliageBlockerMask"
     >
   > = {}
 ): Terrain {
@@ -1298,6 +1505,11 @@ export function createTerrain(
     sampleCountX,
     sampleCountZ,
     overrides.foliageMasks
+  );
+  const foliageBlockerMask = normalizeTerrainFoliageBlockerMask(
+    sampleCountX,
+    sampleCountZ,
+    overrides.foliageBlockerMask
   );
   const visible = overrides.visible ?? DEFAULT_TERRAIN_VISIBLE;
   const enabled = overrides.enabled ?? DEFAULT_TERRAIN_ENABLED;
@@ -1339,7 +1551,8 @@ export function createTerrain(
     heights,
     layers,
     paintWeights,
-    foliageMasks
+    foliageMasks,
+    foliageBlockerMask
   };
 }
 
@@ -1382,7 +1595,16 @@ export function areTerrainsEqual(left: Terrain, right: Terrain): boolean {
         leftMask.values.length === rightMask.values.length &&
         leftMask.values.every((value, index) => value === rightMask.values[index])
       );
-    })
+    }) &&
+    left.foliageBlockerMask.resolutionX ===
+      right.foliageBlockerMask.resolutionX &&
+    left.foliageBlockerMask.resolutionZ ===
+      right.foliageBlockerMask.resolutionZ &&
+    left.foliageBlockerMask.values.length ===
+      right.foliageBlockerMask.values.length &&
+    left.foliageBlockerMask.values.every(
+      (value, index) => value === right.foliageBlockerMask.values[index]
+    )
   );
 }
 
