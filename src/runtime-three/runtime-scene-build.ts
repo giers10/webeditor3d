@@ -62,6 +62,7 @@ import {
 } from "../document/paths";
 import {
   cloneTerrain,
+  createEmptyTerrainFoliageBlockerMask,
   getTerrainBounds,
   getTerrainFootprintDepth,
   getTerrainFootprintWidth,
@@ -1188,7 +1189,8 @@ function getRuntimeTerrainSceneBounds(terrain: RuntimeTerrain): RuntimeSceneBoun
     ...terrain,
     kind: "terrain",
     enabled: true,
-    foliageMasks: {}
+    foliageMasks: {},
+    foliageBlockerMask: createEmptyTerrainFoliageBlockerMask(terrain)
   });
   const min = cloneVec3(bounds.min);
   const max = cloneVec3(bounds.max);
