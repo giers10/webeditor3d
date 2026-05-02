@@ -2291,6 +2291,225 @@ function readTerrains(value: unknown): SceneDocument["terrains"] {
   return terrains;
 }
 
+function readFoliagePrototypeLod(
+  value: unknown,
+  label: string,
+  assets: SceneDocument["assets"]
+): FoliagePrototypeLod {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const level = expectFiniteNumber(value.level, `${label}.level`);
+
+  if (!isFoliagePrototypeLodLevel(level)) {
+    throw new Error(`${label}.level must be 0, 1, 2, or 3.`);
+  }
+
+  const source = expectString(value.source, `${label}.source`);
+  const maxDistance = expectNonNegativeFiniteNumber(
+    value.maxDistance,
+    `${label}.maxDistance`
+  );
+  const castShadow = expectBoolean(value.castShadow, `${label}.castShadow`);
+
+  if (source === "bundled") {
+    return {
+      level,
+      source,
+      bundledPath: expectString(value.bundledPath, `${label}.bundledPath`),
+      maxDistance,
+      castShadow
+    };
+  }
+
+  if (source === "projectAsset") {
+    const modelAssetId = expectString(value.modelAssetId, `${label}.modelAssetId`);
+    const asset = assets[modelAssetId];
+
+    if (asset === undefined) {
+      throw new Error(
+        `${label}.modelAssetId references missing asset ${modelAssetId}.`
+      );
+    }
+
+    if (asset.kind !== "model") {
+      throw new Error(`${label}.modelAssetId must reference a model asset.`);
+    }
+
+    return {
+      level,
+      source,
+      modelAssetId,
+      maxDistance,
+      castShadow
+    };
+  }
+
+  throw new Error(`${label}.source must be bundled or projectAsset.`);
+}
+
+function readFoliagePrototype(
+  value: unknown,
+  label: string,
+  assets: SceneDocument["assets"]
+): FoliagePrototype {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const category = expectString(value.category, `${label}.category`);
+
+  if (!isFoliagePrototypeCategory(category)) {
+    throw new Error(`${label}.category must be a supported foliage category.`);
+  }
+
+  if (!Array.isArray(value.lods)) {
+    throw new Error(`${label}.lods must be an array.`);
+  }
+
+  return createFoliagePrototype({
+    id: expectString(value.id, `${label}.id`),
+    label: expectString(value.label, `${label}.label`),
+    category,
+    lods: value.lods.map((lodValue, lodIndex) =>
+      readFoliagePrototypeLod(lodValue, `${label}.lods.${lodIndex}`, assets)
+    ),
+    minScale: expectNonNegativeFiniteNumber(
+      value.minScale,
+      `${label}.minScale`
+    ),
+    maxScale: expectNonNegativeFiniteNumber(
+      value.maxScale,
+      `${label}.maxScale`
+    ),
+    randomYaw: expectBoolean(value.randomYaw, `${label}.randomYaw`),
+    alignToNormal: expectFiniteNumber(value.alignToNormal, `${label}.alignToNormal`),
+    densityWeight: expectNonNegativeFiniteNumber(
+      value.densityWeight,
+      `${label}.densityWeight`
+    ),
+    colorVariation: expectFiniteNumber(
+      value.colorVariation,
+      `${label}.colorVariation`
+    ),
+    windStrength: expectNonNegativeFiniteNumber(
+      value.windStrength,
+      `${label}.windStrength`
+    ),
+    windPhaseRandomness: expectFiniteNumber(
+      value.windPhaseRandomness,
+      `${label}.windPhaseRandomness`
+    ),
+    defaultCullDistance: expectNonNegativeFiniteNumber(
+      value.defaultCullDistance,
+      `${label}.defaultCullDistance`
+    )
+  });
+}
+
+function readFoliagePrototypes(
+  value: unknown,
+  assets: SceneDocument["assets"]
+): SceneDocument["foliagePrototypes"] {
+  if (value === undefined) {
+    return {};
+  }
+
+  if (!isRecord(value)) {
+    throw new Error("foliagePrototypes must be a record.");
+  }
+
+  const prototypes: SceneDocument["foliagePrototypes"] = {};
+
+  for (const [prototypeId, prototypeValue] of Object.entries(value)) {
+    const prototype = readFoliagePrototype(
+      prototypeValue,
+      `foliagePrototypes.${prototypeId}`,
+      assets
+    );
+
+    if (prototype.id !== prototypeId) {
+      throw new Error(
+        `foliagePrototypes.${prototypeId}.id must match the registry key.`
+      );
+    }
+
+    prototypes[prototypeId] = prototype;
+  }
+
+  return prototypes;
+}
+
+function readFoliageLayer(value: unknown, label: string): FoliageLayer {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return createFoliageLayer({
+    id: expectString(value.id, `${label}.id`),
+    name: expectString(value.name, `${label}.name`),
+    prototypeIds: expectStringArray(value.prototypeIds, `${label}.prototypeIds`),
+    density: expectNonNegativeFiniteNumber(value.density, `${label}.density`),
+    minScale: expectNonNegativeFiniteNumber(value.minScale, `${label}.minScale`),
+    maxScale: expectNonNegativeFiniteNumber(value.maxScale, `${label}.maxScale`),
+    minSlopeDegrees: expectFiniteNumber(
+      value.minSlopeDegrees,
+      `${label}.minSlopeDegrees`
+    ),
+    maxSlopeDegrees: expectFiniteNumber(
+      value.maxSlopeDegrees,
+      `${label}.maxSlopeDegrees`
+    ),
+    alignToNormal: expectFiniteNumber(
+      value.alignToNormal,
+      `${label}.alignToNormal`
+    ),
+    noiseScale: expectNonNegativeFiniteNumber(
+      value.noiseScale,
+      `${label}.noiseScale`
+    ),
+    noiseStrength: expectFiniteNumber(
+      value.noiseStrength,
+      `${label}.noiseStrength`
+    ),
+    noiseThreshold: expectFiniteNumber(
+      value.noiseThreshold,
+      `${label}.noiseThreshold`
+    ),
+    colorVariation: expectFiniteNumber(
+      value.colorVariation,
+      `${label}.colorVariation`
+    ),
+    seed: expectFiniteNumber(value.seed, `${label}.seed`),
+    enabled: expectBoolean(value.enabled, `${label}.enabled`)
+  });
+}
+
+function readFoliageLayers(value: unknown): SceneDocument["foliageLayers"] {
+  if (value === undefined) {
+    return {};
+  }
+
+  if (!isRecord(value)) {
+    throw new Error("foliageLayers must be a record.");
+  }
+
+  const layers: SceneDocument["foliageLayers"] = {};
+
+  for (const [layerId, layerValue] of Object.entries(value)) {
+    const layer = readFoliageLayer(layerValue, `foliageLayers.${layerId}`);
+
+    if (layer.id !== layerId) {
+      throw new Error(`foliageLayers.${layerId}.id must match the registry key.`);
+    }
+
+    layers[layerId] = layer;
+  }
+
+  return layers;
+}
+
 function readVec2(value: unknown, label: string) {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
