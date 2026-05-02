@@ -139,7 +139,8 @@ export function createFoliageInstanceMatrix(
     tilt,
     tiltAmount
   );
-  const yaw = new Quaternion().setFromAxisAngle(normal, instance.yawRadians);
+  const yawAxis = UP_VECTOR.clone().applyQuaternion(partialTilt).normalize();
+  const yaw = new Quaternion().setFromAxisAngle(yawAxis, instance.yawRadians);
   const rotation = yaw.multiply(partialTilt);
   const instanceMatrix = new Matrix4().compose(
     createVector3(instance.position),
