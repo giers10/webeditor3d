@@ -284,6 +284,7 @@ export function applyTerrainBrushStamp(options: {
   tool: TerrainBrushTool;
   referenceHeight?: number | null;
   layerIndex?: number | null;
+  foliageLayerId?: string | null;
 }): Terrain {
   const nextTerrain = createTerrain(options.terrain);
   const result = applyTerrainBrushStampInPlace({
@@ -301,6 +302,7 @@ export function applyTerrainBrushStampInPlace(options: {
   tool: TerrainBrushTool;
   referenceHeight?: number | null;
   layerIndex?: number | null;
+  foliageLayerId?: string | null;
 }): TerrainBrushStampMutationResult {
   const {
     terrain,
@@ -308,7 +310,8 @@ export function applyTerrainBrushStampInPlace(options: {
     settings,
     tool,
     referenceHeight = null,
-    layerIndex = null
+    layerIndex = null,
+    foliageLayerId = null
   } = options;
   const { radius, strength, falloff } = settings;
   const minSampleX = Math.max(
@@ -461,9 +464,6 @@ export function applyTerrainBrushStampInPlace(options: {
         }
         case "foliagePaint":
         case "foliageErase": {
-          const foliageLayerId =
-            "foliageLayerId" in settings ? settings.foliageLayerId : null;
-
           if (foliageLayerId === null) {
             throw new Error(
               "Foliage terrain brush stamps require a foliage layer id."
@@ -635,6 +635,11 @@ export function createTerrainBrushPatchFromTerrains(options: {
       after: afterValue
     });
   }
+
+  foliageMaskValues.sort(
+    (left, right) =>
+      left.layerId.localeCompare(right.layerId) || left.index - right.index
+  );
 
   return {
     terrainId: before.id,
