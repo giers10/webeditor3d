@@ -321,10 +321,12 @@ import {
   isAdvancedRenderingDynamicGlobalIlluminationQuality,
   isAdvancedRenderingWaterReflectionMode,
   createDefaultAdvancedRenderingSettings,
+  isFoliageQualityShadowMode,
   isBoxVolumeRenderPath,
   isAdvancedRenderingShadowMapSize,
   isAdvancedRenderingShadowType,
   isAdvancedRenderingToneMappingMode,
+  resolveFoliageQualitySettings,
   isWorldBackgroundMode,
   isWorldShaderSkyPresetId,
   type WorldCelestialOrbitAuthoringSettings,
@@ -812,6 +814,10 @@ function readAdvancedRenderingSettings(
     throw new Error("world.advancedRendering.godRays must be an object.");
   }
 
+  if (value.foliage !== undefined && !isRecord(value.foliage)) {
+    throw new Error("world.advancedRendering.foliage must be an object.");
+  }
+
   const shadows = value.shadows as Record<string, unknown> | undefined;
   const ambientOcclusion = value.ambientOcclusion as
     | Record<string, unknown>
@@ -829,6 +835,7 @@ function readAdvancedRenderingSettings(
     | undefined;
   const distanceFog = value.distanceFog as Record<string, unknown> | undefined;
   const godRays = value.godRays as Record<string, unknown> | undefined;
+  const foliage = value.foliage as Record<string, unknown> | undefined;
 
   const shadowsMapSize = readOptionalAllowedValue(
     shadows?.mapSize,
@@ -871,6 +878,12 @@ function readAdvancedRenderingSettings(
     "world.advancedRendering.waterReflectionMode",
     defaults.waterReflectionMode,
     isAdvancedRenderingWaterReflectionMode
+  );
+  const foliageShadowMode = readOptionalAllowedValue(
+    foliage?.shadows,
+    "world.advancedRendering.foliage.shadows",
+    defaults.foliage.shadows,
+    isFoliageQualityShadowMode
   );
 
   return {
@@ -1089,6 +1102,24 @@ function readAdvancedRenderingSettings(
         64
       )
     },
+    foliage: resolveFoliageQualitySettings({
+      enabled: readOptionalBoolean(
+        foliage?.enabled,
+        "world.advancedRendering.foliage.enabled",
+        defaults.foliage.enabled
+      ),
+      densityMultiplier: readOptionalFiniteNumber(
+        foliage?.densityMultiplier,
+        "world.advancedRendering.foliage.densityMultiplier",
+        defaults.foliage.densityMultiplier
+      ),
+      maxDistanceMultiplier: readOptionalFiniteNumber(
+        foliage?.maxDistanceMultiplier,
+        "world.advancedRendering.foliage.maxDistanceMultiplier",
+        defaults.foliage.maxDistanceMultiplier
+      ),
+      shadows: foliageShadowMode
+    }),
     fogPath,
     waterPath,
     waterReflectionMode
