@@ -275,6 +275,29 @@ export function createFlatTerrainPaintWeights(
   ).fill(0);
 }
 
+export function createFlatTerrainFoliageMaskValues(
+  resolutionX: number,
+  resolutionZ: number,
+  value = 0
+): number[] {
+  const normalizedResolutionX = normalizeTerrainSampleCount(
+    resolutionX,
+    "Terrain foliage mask resolutionX"
+  );
+  const normalizedResolutionZ = normalizeTerrainSampleCount(
+    resolutionZ,
+    "Terrain foliage mask resolutionZ"
+  );
+
+  if (!Number.isFinite(value)) {
+    throw new Error("Terrain foliage mask values must remain finite.");
+  }
+
+  return new Array(normalizedResolutionX * normalizedResolutionZ).fill(
+    clamp(value, 0, 1)
+  );
+}
+
 export function getTerrainSampleIndex(
   terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ">,
   sampleX: number,
