@@ -2,6 +2,8 @@ import { BufferAttribute, BufferGeometry } from "three";
 
 import type { Vec3 } from "../core/vector";
 import {
+  getTerrainFoliageMask,
+  getTerrainFoliageMaskValueAtSample,
   getTerrainHeightAtSample,
   getTerrainSampleLayerWeights,
   TERRAIN_LAYER_COUNT,
@@ -22,6 +24,7 @@ export interface DerivedTerrainMeshData {
   normals: Float32Array;
   uvs: Float32Array;
   layerWeights: Float32Array;
+  foliageMaskWeights: Float32Array;
   indices: Uint32Array;
   cellTriangulation: TerrainCellTriangulation[];
   localBounds: {
@@ -42,6 +45,10 @@ export const TERRAIN_LOD_DEBUG_COLORS = [
 const TERRAIN_LOD_DISTANCE_MULTIPLIERS = [0.75, 1.5, 3, 6] as const;
 const TERRAIN_LOD_HYSTERESIS_RATIO = 0.16;
 
+interface TerrainMeshBuildOptions {
+  foliageMaskLayerId?: string | null;
+}
+
 export interface TerrainLodLevelMeshData {
   level: number;
   stride: number;
@@ -50,6 +57,7 @@ export interface TerrainLodLevelMeshData {
   normals: Float32Array;
   uvs: Float32Array;
   layerWeights: Float32Array;
+  foliageMaskWeights: Float32Array;
   indices: Uint32Array;
   skirtVertexCount: number;
 }
