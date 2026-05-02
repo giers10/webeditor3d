@@ -51,7 +51,8 @@ export function isTerrainBrushPatchEmpty(patch: TerrainBrushPatch): boolean {
   return (
     patch.heightSamples.length === 0 &&
     patch.paintWeights.length === 0 &&
-    patch.foliageMaskValues.length === 0
+    patch.foliageMaskValues.length === 0 &&
+    patch.foliageBlockerMaskValues.length === 0
   );
 }
 
@@ -89,7 +90,10 @@ export function createApplyTerrainBrushPatchCommand(
     paintWeights: options.patch.paintWeights.map((entry) => ({ ...entry })),
     foliageMaskValues: options.patch.foliageMaskValues.map((entry) => ({
       ...entry
-    }))
+    })),
+    foliageBlockerMaskValues: options.patch.foliageBlockerMaskValues.map(
+      (entry) => ({ ...entry })
+    )
   };
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
@@ -165,6 +169,21 @@ export function createApplyTerrainBrushPatchCommand(
       if (isTerrainFoliageMaskEmpty(mask)) {
         delete terrain.foliageMasks[entry.layerId];
       }
+    }
+
+    for (const entry of patch.foliageBlockerMaskValues) {
+      assertValidPatchEntry(
+        entry,
+        terrain.foliageBlockerMask.values.length,
+        "Terrain foliage blocker mask"
+      );
+      terrain.foliageBlockerMask.values[entry.index] =
+        direction === "forward" ? entry.after : entry.before;
+      renderDirtyBounds = mergeTerrainSampleIndexIntoBounds(
+        renderDirtyBounds,
+        terrain,
+        entry.index
+      );
     }
 
     markTerrainRenderSamplesDirty(terrain, renderDirtyBounds);

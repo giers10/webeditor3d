@@ -3,6 +3,7 @@ import { BufferAttribute, BufferGeometry } from "three";
 import type { Vec3 } from "../core/vector";
 import {
   getTerrainFoliageMask,
+  getTerrainFoliageBlockerMaskValueAtSample,
   getTerrainFoliageMaskValueAtSample,
   getTerrainHeightAtSample,
   getTerrainSampleLayerWeights,
@@ -47,6 +48,7 @@ const TERRAIN_LOD_HYSTERESIS_RATIO = 0.16;
 
 interface TerrainMeshBuildOptions {
   foliageMaskLayerId?: string | null;
+  foliageBlockerMask?: boolean;
 }
 
 export interface TerrainLodLevelMeshData {
@@ -225,13 +227,19 @@ export function buildTerrainDerivedMeshData(
       }
       layerWeightOffset += TERRAIN_LAYER_COUNT;
       foliageMaskWeights[foliageMaskWeightOffset] =
-        foliageMask === null
-          ? 0
-          : getTerrainFoliageMaskValueAtSample(
-              foliageMask,
+        options.foliageBlockerMask === true
+          ? getTerrainFoliageBlockerMaskValueAtSample(
+              terrain.foliageBlockerMask,
               sampleX,
               sampleZ
-            );
+            )
+          : foliageMask === null
+            ? 0
+            : getTerrainFoliageMaskValueAtSample(
+                foliageMask,
+                sampleX,
+                sampleZ
+              );
       foliageMaskWeightOffset += 1;
     }
   }
@@ -399,9 +407,15 @@ function pushTerrainLodVertex(
       ? null
       : getTerrainFoliageMask(terrain, options.foliageMaskLayerId);
   foliageMaskWeights.push(
-    foliageMask === null
-      ? 0
-      : getTerrainFoliageMaskValueAtSample(foliageMask, sampleX, sampleZ)
+    options.foliageBlockerMask === true
+      ? getTerrainFoliageBlockerMaskValueAtSample(
+          terrain.foliageBlockerMask,
+          sampleX,
+          sampleZ
+        )
+      : foliageMask === null
+        ? 0
+        : getTerrainFoliageMaskValueAtSample(foliageMask, sampleX, sampleZ)
   );
 }
 

@@ -7,7 +7,9 @@ export type TerrainBrushTool =
   | "flatten"
   | "paint"
   | "foliagePaint"
-  | "foliageErase";
+  | "foliageErase"
+  | "foliageBlockerPaint"
+  | "foliageBlockerErase";
 
 export interface TerrainBrushSettings {
   radius: number;
@@ -17,7 +19,10 @@ export interface TerrainBrushSettings {
 
 export interface ArmedTerrainSculptBrushState extends TerrainBrushSettings {
   terrainId: string;
-  tool: Exclude<TerrainBrushTool, "paint" | "foliagePaint" | "foliageErase">;
+  tool: Exclude<
+    TerrainBrushTool,
+    "paint" | "foliagePaint" | "foliageErase" | "foliageBlockerPaint" | "foliageBlockerErase"
+  >;
 }
 
 export interface ArmedTerrainPaintBrushState extends TerrainBrushSettings {
@@ -33,10 +38,17 @@ export interface ArmedTerrainFoliagePaintBrushState
   foliageLayerId: string;
 }
 
+export interface ArmedTerrainFoliageBlockerBrushState
+  extends TerrainBrushSettings {
+  terrainId: string;
+  tool: "foliageBlockerPaint" | "foliageBlockerErase";
+}
+
 export type ArmedTerrainBrushState =
   | ArmedTerrainSculptBrushState
   | ArmedTerrainPaintBrushState
-  | ArmedTerrainFoliagePaintBrushState;
+  | ArmedTerrainFoliagePaintBrushState
+  | ArmedTerrainFoliageBlockerBrushState;
 
 export interface TerrainSampleValuePatch {
   index: number;
@@ -53,6 +65,7 @@ export interface TerrainBrushPatch {
   heightSamples: TerrainSampleValuePatch[];
   paintWeights: TerrainSampleValuePatch[];
   foliageMaskValues: TerrainFoliageMaskValuePatch[];
+  foliageBlockerMaskValues: TerrainSampleValuePatch[];
 }
 
 export interface TerrainBrushStrokeCommit {
@@ -143,6 +156,10 @@ export function getTerrainBrushToolLabel(tool: TerrainBrushTool): string {
       return "Paint Foliage";
     case "foliageErase":
       return "Erase Foliage";
+    case "foliageBlockerPaint":
+      return "Paint Foliage Blocker";
+    case "foliageBlockerErase":
+      return "Clear Foliage Blocker";
   }
 }
 

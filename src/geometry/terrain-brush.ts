@@ -7,6 +7,7 @@ import type {
 } from "../core/terrain-brush";
 import {
   createTerrain,
+  getTerrainFoliageBlockerMaskValueAtSample,
   getOrCreateTerrainFoliageMask,
   getTerrainHeightAtSample,
   getTerrainFoliageMask,
@@ -36,6 +37,7 @@ export interface TerrainBrushStampMutationResult {
   heightSampleIndices: number[];
   paintWeightIndices: number[];
   foliageMaskValueIndices: TerrainFoliageMaskValueIndex[];
+  foliageBlockerMaskValueIndices: number[];
 }
 
 export interface TerrainFoliageMaskValueIndex {
@@ -337,7 +339,8 @@ export function applyTerrainBrushStampInPlace(options: {
       dirtyBounds: null,
       heightSampleIndices: [],
       paintWeightIndices: [],
-      foliageMaskValueIndices: []
+      foliageMaskValueIndices: [],
+      foliageBlockerMaskValueIndices: []
     };
   }
 
@@ -356,6 +359,7 @@ export function applyTerrainBrushStampInPlace(options: {
   const heightSampleIndices: number[] = [];
   const paintWeightIndices: number[] = [];
   const foliageMaskValueIndices: TerrainFoliageMaskValueIndex[] = [];
+  const foliageBlockerMaskValueIndices: number[] = [];
 
   const markDirty = (sampleX: number, sampleZ: number) => {
     if (dirtyBounds === null) {
@@ -494,6 +498,29 @@ export function applyTerrainBrushStampInPlace(options: {
           }
           continue;
         }
+        case "foliageBlockerPaint":
+        case "foliageBlockerErase": {
+          const maskIndex = getTerrainFoliageMaskSampleIndex(
+            terrain.foliageBlockerMask,
+            sampleX,
+            sampleZ
+          );
+          const currentMaskValue =
+            terrain.foliageBlockerMask.values[maskIndex] ?? 0;
+          const targetMaskValue = tool === "foliageBlockerPaint" ? 1 : 0;
+          const nextMaskValue = lerp(
+            currentMaskValue,
+            targetMaskValue,
+            clamp01(smoothingStrength * weight)
+          );
+
+          if (nextMaskValue !== currentMaskValue) {
+            terrain.foliageBlockerMask.values[maskIndex] = nextMaskValue;
+            foliageBlockerMaskValueIndices.push(maskIndex);
+            markDirty(sampleX, sampleZ);
+          }
+          continue;
+        }
       }
 
       if (nextHeight !== currentHeight) {
@@ -509,7 +536,8 @@ export function applyTerrainBrushStampInPlace(options: {
     dirtyBounds,
     heightSampleIndices,
     paintWeightIndices,
-    foliageMaskValueIndices
+    foliageMaskValueIndices,
+    foliageBlockerMaskValueIndices
   };
 }
 
@@ -519,6 +547,7 @@ export function createTerrainBrushPatchFromTerrains(options: {
   heightSampleIndices: Iterable<number>;
   paintWeightIndices: Iterable<number>;
   foliageMaskValueIndices?: Iterable<TerrainFoliageMaskValueIndex>;
+  foliageBlockerMaskValueIndices?: Iterable<number>;
 }): TerrainBrushPatch {
   const { before, after } = options;
 
@@ -530,7 +559,9 @@ export function createTerrainBrushPatchFromTerrains(options: {
     before.sampleCountX !== after.sampleCountX ||
     before.sampleCountZ !== after.sampleCountZ ||
     before.heights.length !== after.heights.length ||
-    before.paintWeights.length !== after.paintWeights.length
+    before.paintWeights.length !== after.paintWeights.length ||
+    before.foliageBlockerMask.values.length !==
+      after.foliageBlockerMask.values.length
   ) {
     throw new Error(
       "Terrain brush patches require matching terrain sample dimensions."
@@ -540,6 +571,8 @@ export function createTerrainBrushPatchFromTerrains(options: {
   const heightSamples: TerrainBrushPatch["heightSamples"] = [];
   const paintWeights: TerrainBrushPatch["paintWeights"] = [];
   const foliageMaskValues: TerrainBrushPatch["foliageMaskValues"] = [];
+  const foliageBlockerMaskValues: TerrainBrushPatch["foliageBlockerMaskValues"] =
+    [];
   const normalizeIndices = (
     indices: Iterable<number>,
     length: number,
@@ -641,11 +674,41 @@ export function createTerrainBrushPatchFromTerrains(options: {
       left.layerId.localeCompare(right.layerId) || left.index - right.index
   );
 
+  for (const maskIndex of normalizeIndices(
+    options.foliageBlockerMaskValueIndices ?? [],
+    before.foliageBlockerMask.values.length,
+    "Terrain foliage blocker mask"
+  )) {
+    const beforeValue =
+      getTerrainFoliageBlockerMaskValueAtSample(
+        before.foliageBlockerMask,
+        maskIndex % before.foliageBlockerMask.resolutionX,
+        Math.floor(maskIndex / before.foliageBlockerMask.resolutionX)
+      ) ?? 0;
+    const afterValue =
+      getTerrainFoliageBlockerMaskValueAtSample(
+        after.foliageBlockerMask,
+        maskIndex % after.foliageBlockerMask.resolutionX,
+        Math.floor(maskIndex / after.foliageBlockerMask.resolutionX)
+      ) ?? 0;
+
+    if (beforeValue === afterValue) {
+      continue;
+    }
+
+    foliageBlockerMaskValues.push({
+      index: maskIndex,
+      before: beforeValue,
+      after: afterValue
+    });
+  }
+
   return {
     terrainId: before.id,
     heightSamples,
     paintWeights,
-    foliageMaskValues
+    foliageMaskValues,
+    foliageBlockerMaskValues
   };
 }
 

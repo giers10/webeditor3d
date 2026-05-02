@@ -2320,6 +2320,38 @@ function readTerrain(value: unknown, label: string): Terrain {
             })
           );
         })();
+  const foliageBlockerMask =
+    value.foliageBlockerMask === undefined
+      ? undefined
+      : (() => {
+          if (!isRecord(value.foliageBlockerMask)) {
+            throw new Error(`${label}.foliageBlockerMask must be an object.`);
+          }
+
+          if (!Array.isArray(value.foliageBlockerMask.values)) {
+            throw new Error(
+              `${label}.foliageBlockerMask.values must be an array.`
+            );
+          }
+
+          return {
+            resolutionX: expectFiniteNumber(
+              value.foliageBlockerMask.resolutionX,
+              `${label}.foliageBlockerMask.resolutionX`
+            ),
+            resolutionZ: expectFiniteNumber(
+              value.foliageBlockerMask.resolutionZ,
+              `${label}.foliageBlockerMask.resolutionZ`
+            ),
+            values: value.foliageBlockerMask.values.map(
+              (maskSample, sampleIndex) =>
+                expectFiniteNumber(
+                  maskSample,
+                  `${label}.foliageBlockerMask.values.${sampleIndex}`
+                )
+            )
+          };
+        })();
 
   return createTerrain({
     id: expectString(value.id, `${label}.id`),
@@ -2339,7 +2371,8 @@ function readTerrain(value: unknown, label: string): Terrain {
     heights,
     layers,
     paintWeights,
-    foliageMasks
+    foliageMasks,
+    foliageBlockerMask
   });
 }
 
