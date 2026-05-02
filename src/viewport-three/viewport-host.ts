@@ -9764,6 +9764,11 @@ export class ViewportHost {
       dirtyBounds: initialStamp.dirtyBounds,
       heightSampleIndices: new Set(initialStamp.heightSampleIndices),
       paintWeightIndices: new Set(initialStamp.paintWeightIndices),
+      foliageMaskValueKeys: new Set(
+        initialStamp.foliageMaskValueIndices.map((entry) =>
+          createTerrainFoliageMaskValueKey(entry.layerId, entry.index)
+        )
+      ),
       referenceHeight,
       lastAppliedPoint: {
         x: hit.point.x,
