@@ -5,6 +5,15 @@ export interface TerrainLayer {
   materialId: string | null;
 }
 
+export interface TerrainFoliageMask {
+  layerId: string;
+  resolutionX: number;
+  resolutionZ: number;
+  values: number[];
+}
+
+export type TerrainFoliageMaskRegistry = Record<string, TerrainFoliageMask>;
+
 export interface Terrain {
   id: string;
   kind: "terrain";
@@ -19,6 +28,7 @@ export interface Terrain {
   heights: number[];
   layers: TerrainLayer[];
   paintWeights: number[];
+  foliageMasks: TerrainFoliageMaskRegistry;
 }
 
 export interface TerrainHeightPatchEntry {
