@@ -650,6 +650,7 @@ function buildTerrainLodLevelMeshData(
 
 export function buildTerrainLodMeshData(
   terrain: Terrain,
+  options: TerrainMeshBuildOptions = {},
   chunkSizeCells = TERRAIN_LOD_CHUNK_SIZE_CELLS
 ): DerivedTerrainLodMeshData {
   const chunks: TerrainLodChunkMeshData[] = [];
@@ -671,7 +672,8 @@ export function buildTerrainLodMeshData(
         terrain,
         startSampleX,
         startSampleZ,
-        chunkSizeCells
+        chunkSizeCells,
+        options
       );
 
       if (chunk === null) {
@@ -700,7 +702,8 @@ export function buildTerrainLodChunkMeshData(
   terrain: Terrain,
   startSampleX: number,
   startSampleZ: number,
-  chunkSizeCells = TERRAIN_LOD_CHUNK_SIZE_CELLS
+  chunkSizeCells = TERRAIN_LOD_CHUNK_SIZE_CELLS,
+  options: TerrainMeshBuildOptions = {}
 ): TerrainLodChunkMeshData | null {
   const maxCellX = terrain.sampleCountX - 1;
   const maxCellZ = terrain.sampleCountZ - 1;
@@ -734,7 +737,8 @@ export function buildTerrainLodChunkMeshData(
       endSampleX,
       endSampleZ,
       level,
-      stride
+      stride,
+      options
     )
   );
   const localCenter = {
