@@ -85,15 +85,22 @@ function cloneChunkBounds(
 export function getFoliagePrototypeRenderLods(
   prototype: FoliagePrototype
 ): FoliageRenderLod[] {
-  return prototype.lods
-    .filter((lod) => lod.source === "bundled")
-    .map((lod) => ({
+  const renderLods: FoliageRenderLod[] = [];
+
+  for (const lod of prototype.lods) {
+    if (lod.source !== "bundled") {
+      continue;
+    }
+
+    renderLods.push({
       level: lod.level,
       bundledPath: lod.bundledPath,
       maxDistance: lod.maxDistance,
       castShadow: lod.castShadow
-    }))
-    .sort((left, right) => left.level - right.level);
+    });
+  }
+
+  return renderLods.sort((left, right) => left.level - right.level);
 }
 
 export function resolveFoliageRenderLod(options: {
