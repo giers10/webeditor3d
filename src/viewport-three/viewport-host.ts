@@ -10025,6 +10025,9 @@ export class ViewportHost {
     const heightSampleIndices = new Set(activeStroke.heightSampleIndices);
     const paintWeightIndices = new Set(activeStroke.paintWeightIndices);
     const foliageMaskValueKeys = new Set(activeStroke.foliageMaskValueKeys);
+    const foliageBlockerMaskValueIndices = new Set(
+      activeStroke.foliageBlockerMaskValueIndices
+    );
     const mergeStampIndices = (
       result: {
         heightSampleIndices: readonly number[];
@@ -10033,6 +10036,7 @@ export class ViewportHost {
           typeof applyTerrainBrushStampInPlace
         >["foliageMaskValueIndices"];
         foliageMaskValueKeys?: readonly string[];
+        foliageBlockerMaskValueIndices?: readonly number[];
       }
     ) => {
       for (const sampleIndex of result.heightSampleIndices) {
@@ -10054,6 +10058,10 @@ export class ViewportHost {
 
       for (const foliageMaskValueKey of result.foliageMaskValueKeys ?? []) {
         foliageMaskValueKeys.add(foliageMaskValueKey);
+      }
+
+      for (const maskIndex of result.foliageBlockerMaskValueIndices ?? []) {
+        foliageBlockerMaskValueIndices.add(maskIndex);
       }
     };
 
@@ -10110,7 +10118,8 @@ export class ViewportHost {
       changed &&
       (heightSampleIndices.size > 0 ||
         paintWeightIndices.size > 0 ||
-        foliageMaskValueKeys.size > 0);
+        foliageMaskValueKeys.size > 0 ||
+        foliageBlockerMaskValueIndices.size > 0);
     const toolState = this.activeTerrainBrushStroke.toolState;
     this.activeTerrainBrushStroke = null;
     this.terrainBrushPreviewGroup.visible = false;
@@ -10127,7 +10136,8 @@ export class ViewportHost {
       paintWeightIndices,
       foliageMaskValueIndices: [...foliageMaskValueKeys].map(
         parseTerrainFoliageMaskValueKey
-      )
+      ),
+      foliageBlockerMaskValueIndices: [...foliageBlockerMaskValueIndices]
     });
 
     const committed =
