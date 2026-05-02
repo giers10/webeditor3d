@@ -837,7 +837,10 @@ function formatPlayerStartGamepadCameraLookBindingLabel(
 const STARTER_MATERIAL_ORDER = new Map(
   STARTER_MATERIAL_LIBRARY.map((material, index) => [material.id, index])
 );
-const TERRAIN_SCULPT_BRUSH_TOOLS: Exclude<TerrainBrushTool, "paint">[] = [
+const TERRAIN_SCULPT_BRUSH_TOOLS: Exclude<
+  TerrainBrushTool,
+  "paint" | "foliagePaint" | "foliageErase"
+>[] = [
   "raise",
   "lower",
   "smooth",
