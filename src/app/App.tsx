@@ -20573,6 +20573,9 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                         ? "No terrain brush is armed. Existing selection and transforms stay unchanged."
                         : armedTerrainBrushTool === "paint"
                           ? `Paint is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)} on ${getTerrainLayerLabel(resolvedTerrainPaintLayerIndex).toLowerCase()}.`
+                          : armedTerrainBrushTool === "foliagePaint" ||
+                              armedTerrainBrushTool === "foliageErase"
+                            ? `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)} on ${activeFoliageLayer?.name ?? "no foliage layer"}.`
                           : `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Click the active tool again to disarm it.`}
                     </div>
                   </div>
