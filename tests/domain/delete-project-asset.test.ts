@@ -27,6 +27,12 @@ import {
   createTeleportPlayerInteractionLink
 } from "../../src/interactions/interaction-links";
 import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-collider-fixtures";
+import { BUNDLED_FOLIAGE_PROTOTYPES } from "../../src/foliage/bundled-foliage-manifest";
+import {
+  FOLIAGE_PROTOTYPE_LOD_LEVELS,
+  createFoliageLayer,
+  createFoliagePrototype
+} from "../../src/foliage/foliage";
 
 function createProjectDocumentFixture() {
   const baseProjectDocument = createEmptyProjectDocument({
@@ -236,6 +242,45 @@ describe("deleteProjectAssetFromProjectDocument", () => {
       "link-play-animation",
       "link-stop-animation",
       "link-teleport"
+    ]);
+  });
+
+  it("removes only project-asset sourced foliage prototype references for deleted model assets", () => {
+    const fixture = createProjectDocumentFixture();
+    const bundledPrototype = BUNDLED_FOLIAGE_PROTOTYPES[0];
+    const foliagePrototype = createFoliagePrototype({
+      id: "foliage-project-asset-cleanup",
+      label: "Project Asset Cleanup",
+      category: "grass",
+      lods: FOLIAGE_PROTOTYPE_LOD_LEVELS.map((level) => ({
+        level,
+        source: "projectAsset",
+        modelAssetId: fixture.modelAsset.id,
+        maxDistance: 20 + level * 20,
+        castShadow: level < 2
+      }))
+    });
+    const foliageLayer = createFoliageLayer({
+      id: "foliage-layer-cleanup",
+      name: "Cleanup Layer",
+      prototypeIds: [foliagePrototype.id, bundledPrototype.id]
+    });
+
+    fixture.projectDocument.foliagePrototypes[foliagePrototype.id] =
+      foliagePrototype;
+    fixture.projectDocument.scenes[fixture.sceneId]!.foliageLayers[
+      foliageLayer.id
+    ] = foliageLayer;
+
+    const nextProjectDocument = deleteProjectAssetFromProjectDocument(
+      fixture.projectDocument,
+      fixture.modelAsset.id
+    );
+    const nextScene = nextProjectDocument.scenes[fixture.sceneId];
+
+    expect(nextProjectDocument.foliagePrototypes[foliagePrototype.id]).toBeUndefined();
+    expect(nextScene.foliageLayers[foliageLayer.id]?.prototypeIds).toEqual([
+      bundledPrototype.id
     ]);
   });
 });
