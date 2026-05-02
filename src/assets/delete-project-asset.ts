@@ -1,5 +1,6 @@
 import type { ProjectDocument, ProjectScene } from "../document/scene-document";
 import { createDefaultWorldSettings } from "../document/world-settings";
+import { foliagePrototypeReferencesProjectAsset } from "../foliage/foliage";
 
 import type { ProjectAssetRecord } from "./project-assets";
 
@@ -69,11 +70,13 @@ function removeInvalidatedInteractionLinks(
 
 function cleanupSceneForDeletedAsset(
   scene: ProjectScene,
-  asset: ProjectAssetRecord
+  asset: ProjectAssetRecord,
+  removedFoliagePrototypeIds: ReadonlySet<string>
 ): ProjectScene {
   let nextWorld = scene.world;
   let nextModelInstances = scene.modelInstances;
   let nextEntities = scene.entities;
+  let nextFoliageLayers = scene.foliageLayers;
   const removedModelInstanceIds = new Set<string>();
   const silencedSoundEmitterIds = new Set<string>();
 
@@ -185,10 +188,37 @@ function cleanupSceneForDeletedAsset(
     silencedSoundEmitterIds
   );
 
+  if (removedFoliagePrototypeIds.size > 0) {
+    const updatedFoliageLayers: ProjectScene["foliageLayers"] = {};
+    let didChangeFoliageLayers = false;
+
+    for (const [layerId, layer] of Object.entries(scene.foliageLayers)) {
+      const nextPrototypeIds = layer.prototypeIds.filter(
+        (prototypeId) => !removedFoliagePrototypeIds.has(prototypeId)
+      );
+
+      if (nextPrototypeIds.length !== layer.prototypeIds.length) {
+        updatedFoliageLayers[layerId] = {
+          ...layer,
+          prototypeIds: nextPrototypeIds
+        };
+        didChangeFoliageLayers = true;
+        continue;
+      }
+
+      updatedFoliageLayers[layerId] = layer;
+    }
+
+    if (didChangeFoliageLayers) {
+      nextFoliageLayers = updatedFoliageLayers;
+    }
+  }
+
   if (
     nextWorld === scene.world &&
     nextModelInstances === scene.modelInstances &&
     nextEntities === scene.entities &&
+    nextFoliageLayers === scene.foliageLayers &&
     nextInteractionLinks === scene.interactionLinks
   ) {
     return scene;
@@ -199,7 +229,43 @@ function cleanupSceneForDeletedAsset(
     world: nextWorld,
     modelInstances: nextModelInstances,
     entities: nextEntities,
+    foliageLayers: nextFoliageLayers,
     interactionLinks: nextInteractionLinks
+  };
+}
+
+function cleanupFoliagePrototypesForDeletedAsset(
+  foliagePrototypes: ProjectDocument["foliagePrototypes"],
+  asset: ProjectAssetRecord
+): {
+  foliagePrototypes: ProjectDocument["foliagePrototypes"];
+  removedFoliagePrototypeIds: ReadonlySet<string>;
+} {
+  if (asset.kind !== "model") {
+    return {
+      foliagePrototypes,
+      removedFoliagePrototypeIds: new Set()
+    };
+  }
+
+  const nextFoliagePrototypes: ProjectDocument["foliagePrototypes"] = {};
+  const removedFoliagePrototypeIds = new Set<string>();
+
+  for (const [prototypeId, prototype] of Object.entries(foliagePrototypes)) {
+    if (foliagePrototypeReferencesProjectAsset(prototype, asset.id)) {
+      removedFoliagePrototypeIds.add(prototypeId);
+      continue;
+    }
+
+    nextFoliagePrototypes[prototypeId] = prototype;
+  }
+
+  return {
+    foliagePrototypes:
+      removedFoliagePrototypeIds.size > 0
+        ? nextFoliagePrototypes
+        : foliagePrototypes,
+    removedFoliagePrototypeIds
   };
 }
 
@@ -218,11 +284,19 @@ export function deleteProjectAssetFromProjectDocument(
   };
   delete nextAssets[assetId];
 
+  const foliageCleanup = cleanupFoliagePrototypesForDeletedAsset(
+    projectDocument.foliagePrototypes,
+    asset
+  );
   const nextScenes: ProjectDocument["scenes"] = {};
   let didChangeScenes = false;
 
   for (const [sceneId, scene] of Object.entries(projectDocument.scenes)) {
-    const nextScene = cleanupSceneForDeletedAsset(scene, asset);
+    const nextScene = cleanupSceneForDeletedAsset(
+      scene,
+      asset,
+      foliageCleanup.removedFoliagePrototypeIds
+    );
     nextScenes[sceneId] = nextScene;
     didChangeScenes ||= nextScene !== scene;
   }
@@ -230,6 +304,7 @@ export function deleteProjectAssetFromProjectDocument(
   return {
     ...projectDocument,
     assets: nextAssets,
+    foliagePrototypes: foliageCleanup.foliagePrototypes,
     scenes: didChangeScenes ? nextScenes : projectDocument.scenes
   };
 }
