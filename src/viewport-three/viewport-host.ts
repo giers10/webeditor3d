@@ -86,6 +86,7 @@ import {
   disposeModelInstance,
   syncModelInstanceSelectionShell
 } from "../assets/model-instance-rendering";
+import { FoliageInstancedRenderer } from "../foliage/foliage-instanced-renderer";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
@@ -840,6 +841,11 @@ export class ViewportHost {
     LightVolumeRenderObjects
   >();
   private readonly modelRenderObjects = new Map<string, Group>();
+  private readonly foliageRenderer = new FoliageInstancedRenderer({
+    onRebuilt: () => {
+      this.applyShadowState();
+    }
+  });
   private readonly materialTextureCache = new Map<
     string,
     CachedMaterialTexture
@@ -1043,6 +1049,8 @@ export class ViewportHost {
     this.scene.add(this.lightVolumeGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.terrainGroup);
+    this.scene.add(this.foliageRenderer.group);
+    this.syncFoliageVisibility();
     this.terrainBrushPreviewGroup.visible = false;
     this.terrainBrushPreviewLine.frustumCulled = false;
     this.terrainBrushPreviewCenter.frustumCulled = false;
@@ -1358,6 +1366,7 @@ export class ViewportHost {
         this.currentActiveSelectionId
       );
     }
+    this.rebuildFoliage(document);
     this.rebuildPaths(document, this.currentSelection);
     this.rebuildEntityMarkers(document, this.currentSelection);
     this.rebuildModelInstances(document, this.currentSelection);
@@ -1813,6 +1822,7 @@ export class ViewportHost {
     this.clearLightVolumes();
     this.clearBrushMeshes();
     this.clearTerrains();
+    this.foliageRenderer.dispose();
     this.clearPaths();
     this.clearEntityMarkers();
     this.creationPreviewChangeHandler = null;

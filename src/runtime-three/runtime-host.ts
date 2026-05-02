@@ -41,6 +41,7 @@ import {
   createModelInstanceRenderGroup,
   disposeModelInstance
 } from "../assets/model-instance-rendering";
+import { FoliageInstancedRenderer } from "../foliage/foliage-instanced-renderer";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { LoadedAudioAsset } from "../assets/audio-assets";
@@ -759,6 +760,11 @@ export class RuntimeHost {
     LightVolumeRenderObjects
   >();
   private readonly modelRenderObjects = new Map<string, Group>();
+  private readonly foliageRenderer = new FoliageInstancedRenderer({
+    onRebuilt: () => {
+      this.applyShadowState();
+    }
+  });
   private readonly materialTextureCache = new Map<
     string,
     CachedMaterialTexture
@@ -882,6 +888,7 @@ export class RuntimeHost {
     this.scene.add(this.lightVolumeGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.terrainGroup);
+    this.scene.add(this.foliageRenderer.group);
     this.scene.add(this.modelGroup);
     this.targetingLuxMesh.renderOrder = 10000;
     this.targetingLuxGlowMesh.renderOrder = 9999;
@@ -1208,6 +1215,7 @@ export class RuntimeHost {
     this.rebuildLightVolumes(runtimeScene.volumes.light);
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildTerrainMeshes(runtimeScene.terrains);
+    this.rebuildFoliage(runtimeScene);
     this.rebuildModelRenderObjects(
       runtimeScene.modelInstances,
       runtimeScene.npcDefinitions
@@ -1404,6 +1412,7 @@ export class RuntimeHost {
     this.clearLightVolumes();
     this.clearBrushMeshes();
     this.clearTerrainMeshes();
+    this.foliageRenderer.dispose();
     this.clearModelRenderObjects();
     this.collisionWorldRequestId += 1;
     this.clearCollisionWorld();
@@ -3162,6 +3171,11 @@ export class RuntimeHost {
         shadowsEnabled
       );
     }
+
+    applyAdvancedRenderingRenderableShadowFlags(
+      this.foliageRenderer.group,
+      shadowsEnabled
+    );
 
     for (const renderGroup of this.modelRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(renderGroup, shadowsEnabled);
@@ -5010,6 +5024,14 @@ export class RuntimeHost {
     }
 
     this.terrainMeshes.clear();
+  }
+
+  private rebuildFoliage(runtimeScene: RuntimeSceneDefinition) {
+    this.foliageRenderer.sync({
+      terrains: runtimeScene.foliage.terrains,
+      foliageLayers: runtimeScene.foliage.layers,
+      foliagePrototypes: runtimeScene.foliage.prototypes
+    });
   }
 
   private disposeUniqueMaterials(materials: Material[]) {

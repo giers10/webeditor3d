@@ -61,12 +61,19 @@ import {
   type ScenePathPoint
 } from "../document/paths";
 import {
+  cloneTerrain,
   getTerrainBounds,
   getTerrainFootprintDepth,
   getTerrainFootprintWidth,
   getTerrains,
   type Terrain
 } from "../document/terrains";
+import {
+  cloneFoliageLayerRegistry,
+  cloneFoliagePrototypeRegistry,
+  type FoliageLayerRegistry,
+  type FoliagePrototypeRegistry
+} from "../foliage/foliage";
 import {
   cloneWorldSettings,
   type WorldSettings
@@ -496,6 +503,12 @@ export interface RuntimePath {
   totalLength: number;
 }
 
+export interface RuntimeFoliageDefinition {
+  terrains: Terrain[];
+  layers: FoliageLayerRegistry;
+  prototypes: FoliagePrototypeRegistry;
+}
+
 export interface RuntimeEntityCollection {
   playerStarts: RuntimePlayerStart[];
   sceneEntries: RuntimeSceneEntry[];
@@ -527,6 +540,7 @@ export interface RuntimeSceneDefinition {
   staticColliders: RuntimeSceneCollider[];
   colliders: RuntimeSceneCollider[];
   sceneBounds: RuntimeSceneBounds | null;
+  foliage: RuntimeFoliageDefinition;
   modelInstances: RuntimeModelInstance[];
   paths: RuntimePath[];
   npcDefinitions: RuntimeNpcDefinition[];
@@ -1895,6 +1909,11 @@ export function buildRuntimeSceneFromDocument(
   const terrains = enabledTerrains.map((terrain) =>
     buildRuntimeTerrain(terrain, document)
   );
+  const foliage: RuntimeFoliageDefinition = {
+    terrains: enabledTerrains.map((terrain) => cloneTerrain(terrain)),
+    layers: cloneFoliageLayerRegistry(document.foliageLayers),
+    prototypes: cloneFoliagePrototypeRegistry(document.foliagePrototypes)
+  };
   const staticColliders: RuntimeSceneCollider[] = [];
   const volumes: RuntimeBoxVolumeCollection = {
     fog: [],
@@ -2069,6 +2088,7 @@ export function buildRuntimeSceneFromDocument(
     staticColliders,
     colliders,
     sceneBounds: combinedSceneBounds,
+    foliage,
     modelInstances,
     paths,
     npcDefinitions: collections.npcDefinitions,
