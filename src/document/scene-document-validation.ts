@@ -2861,6 +2861,512 @@ function validateTerrain(
   }
 }
 
+function validateFoliagePrototype(
+  prototype: FoliagePrototype,
+  path: string,
+  document: Pick<SceneDocument | ProjectDocument, "assets">,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (prototype.id.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-id",
+        "Foliage prototype ids must be non-empty strings.",
+        `${path}.id`
+      )
+    );
+  }
+
+  if (prototype.label.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-label",
+        "Foliage prototype labels must be non-empty strings.",
+        `${path}.label`
+      )
+    );
+  }
+
+  if (!isFoliagePrototypeCategory(prototype.category)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-category",
+        "Foliage prototype category must be grass, weed, flower, bush, or other.",
+        `${path}.category`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(prototype.minScale)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-min-scale",
+        "Foliage prototype minScale must be a non-negative finite number.",
+        `${path}.minScale`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(prototype.maxScale)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-max-scale",
+        "Foliage prototype maxScale must be a non-negative finite number.",
+        `${path}.maxScale`
+      )
+    );
+  } else if (
+    isNonNegativeFiniteNumber(prototype.minScale) &&
+    prototype.maxScale < prototype.minScale
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-scale-range",
+        "Foliage prototype maxScale must be greater than or equal to minScale.",
+        `${path}.maxScale`
+      )
+    );
+  }
+
+  if (!isBoolean(prototype.randomYaw)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-random-yaw",
+        "Foliage prototype randomYaw must be a boolean.",
+        `${path}.randomYaw`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(prototype.alignToNormal, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-align-to-normal",
+        "Foliage prototype alignToNormal must stay between 0 and 1.",
+        `${path}.alignToNormal`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(prototype.densityWeight)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-density-weight",
+        "Foliage prototype densityWeight must be a non-negative finite number.",
+        `${path}.densityWeight`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(prototype.colorVariation, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-color-variation",
+        "Foliage prototype colorVariation must stay between 0 and 1.",
+        `${path}.colorVariation`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(prototype.windStrength)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-wind-strength",
+        "Foliage prototype windStrength must be a non-negative finite number.",
+        `${path}.windStrength`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(prototype.windPhaseRandomness, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-wind-phase-randomness",
+        "Foliage prototype windPhaseRandomness must stay between 0 and 1.",
+        `${path}.windPhaseRandomness`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(prototype.defaultCullDistance)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-prototype-cull-distance",
+        "Foliage prototype defaultCullDistance must be a non-negative finite number.",
+        `${path}.defaultCullDistance`
+      )
+    );
+  }
+
+  const seenLodLevels = new Set<FoliagePrototype["lods"][number]["level"]>();
+
+  for (const [lodIndex, lod] of prototype.lods.entries()) {
+    const lodPath = `${path}.lods.${lodIndex}`;
+
+    if (!isFoliagePrototypeLodLevel(lod.level)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-foliage-prototype-lod-level",
+          "Foliage prototype LOD level must be 0, 1, 2, or 3.",
+          `${lodPath}.level`
+        )
+      );
+    } else if (seenLodLevels.has(lod.level)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "duplicate-foliage-prototype-lod",
+          `Foliage prototype already defines LOD${lod.level}.`,
+          `${lodPath}.level`
+        )
+      );
+    } else {
+      seenLodLevels.add(lod.level);
+    }
+
+    if (!isNonNegativeFiniteNumber(lod.maxDistance)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-foliage-prototype-lod-max-distance",
+          "Foliage prototype LOD maxDistance must be a non-negative finite number.",
+          `${lodPath}.maxDistance`
+        )
+      );
+    }
+
+    if (!isBoolean(lod.castShadow)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-foliage-prototype-lod-cast-shadow",
+          "Foliage prototype LOD castShadow must be a boolean.",
+          `${lodPath}.castShadow`
+        )
+      );
+    }
+
+    if (lod.source === "bundled") {
+      if (
+        typeof lod.bundledPath !== "string" ||
+        !lod.bundledPath.startsWith("/foliage/")
+      ) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-foliage-prototype-bundled-path",
+            "Bundled foliage LODs must reference a path under /foliage/.",
+            `${lodPath}.bundledPath`
+          )
+        );
+      }
+    } else if (lod.source === "projectAsset") {
+      if (
+        typeof lod.modelAssetId !== "string" ||
+        lod.modelAssetId.trim() === ""
+      ) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-foliage-prototype-model-asset-id",
+            "Project-asset foliage LODs must reference a non-empty model asset id.",
+            `${lodPath}.modelAssetId`
+          )
+        );
+      } else {
+        const asset = document.assets[lod.modelAssetId];
+
+        if (asset === undefined) {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "missing-foliage-prototype-model-asset",
+              `Foliage prototype model asset ${lod.modelAssetId} does not exist.`,
+              `${lodPath}.modelAssetId`
+            )
+          );
+        } else if (asset.kind !== "model") {
+          diagnostics.push(
+            createDiagnostic(
+              "error",
+              "invalid-foliage-prototype-model-asset-kind",
+              "Project-asset foliage LODs must reference model assets.",
+              `${lodPath}.modelAssetId`
+            )
+          );
+        }
+      }
+    } else {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-foliage-prototype-lod-source",
+          "Foliage prototype LOD source must be bundled or projectAsset.",
+          `${lodPath}.source`
+        )
+      );
+    }
+  }
+
+  for (const level of FOLIAGE_PROTOTYPE_LOD_LEVELS) {
+    if (!seenLodLevels.has(level)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "missing-foliage-prototype-lod",
+          `Foliage prototype must define LOD${level}.`,
+          `${path}.lods`
+        )
+      );
+    }
+  }
+}
+
+function validateFoliageLayer(
+  layer: FoliageLayer,
+  path: string,
+  document: Pick<SceneDocument, "foliagePrototypes">,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (layer.id.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-id",
+        "Foliage layer ids must be non-empty strings.",
+        `${path}.id`
+      )
+    );
+  }
+
+  if (layer.name.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-name",
+        "Foliage layer names must be non-empty strings.",
+        `${path}.name`
+      )
+    );
+  }
+
+  if (!isBoolean(layer.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-enabled",
+        "Foliage layer enabled must be a boolean.",
+        `${path}.enabled`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(layer.density)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-density",
+        "Foliage layer density must be a non-negative finite number.",
+        `${path}.density`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(layer.minScale)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-min-scale",
+        "Foliage layer minScale must be a non-negative finite number.",
+        `${path}.minScale`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(layer.maxScale)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-max-scale",
+        "Foliage layer maxScale must be a non-negative finite number.",
+        `${path}.maxScale`
+      )
+    );
+  } else if (
+    isNonNegativeFiniteNumber(layer.minScale) &&
+    layer.maxScale < layer.minScale
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-scale-range",
+        "Foliage layer maxScale must be greater than or equal to minScale.",
+        `${path}.maxScale`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(layer.minSlopeDegrees, 0, 90)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-min-slope",
+        "Foliage layer minSlopeDegrees must stay between 0 and 90.",
+        `${path}.minSlopeDegrees`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(layer.maxSlopeDegrees, 0, 90)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-max-slope",
+        "Foliage layer maxSlopeDegrees must stay between 0 and 90.",
+        `${path}.maxSlopeDegrees`
+      )
+    );
+  } else if (
+    isFiniteNumberInRange(layer.minSlopeDegrees, 0, 90) &&
+    layer.maxSlopeDegrees < layer.minSlopeDegrees
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-slope-range",
+        "Foliage layer maxSlopeDegrees must be greater than or equal to minSlopeDegrees.",
+        `${path}.maxSlopeDegrees`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(layer.alignToNormal, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-align-to-normal",
+        "Foliage layer alignToNormal must stay between 0 and 1.",
+        `${path}.alignToNormal`
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(layer.noiseScale)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-noise-scale",
+        "Foliage layer noiseScale must be a non-negative finite number.",
+        `${path}.noiseScale`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(layer.noiseStrength, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-noise-strength",
+        "Foliage layer noiseStrength must stay between 0 and 1.",
+        `${path}.noiseStrength`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(layer.noiseThreshold, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-noise-threshold",
+        "Foliage layer noiseThreshold must stay between 0 and 1.",
+        `${path}.noiseThreshold`
+      )
+    );
+  }
+
+  if (!isFiniteNumberInRange(layer.colorVariation, 0, 1)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-color-variation",
+        "Foliage layer colorVariation must stay between 0 and 1.",
+        `${path}.colorVariation`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(layer.seed)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-layer-seed",
+        "Foliage layer seed must be a finite number.",
+        `${path}.seed`
+      )
+    );
+  }
+
+  const seenPrototypeIds = new Set<string>();
+
+  for (const [prototypeIndex, prototypeId] of layer.prototypeIds.entries()) {
+    const prototypePath = `${path}.prototypeIds.${prototypeIndex}`;
+
+    if (prototypeId.trim().length === 0) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-foliage-layer-prototype-id",
+          "Foliage layer prototypeIds must contain non-empty strings.",
+          prototypePath
+        )
+      );
+      continue;
+    }
+
+    if (seenPrototypeIds.has(prototypeId)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "duplicate-foliage-layer-prototype-id",
+          `Foliage layer already references prototype ${prototypeId}.`,
+          prototypePath
+        )
+      );
+      continue;
+    }
+
+    seenPrototypeIds.add(prototypeId);
+
+    if (
+      document.foliagePrototypes[prototypeId] === undefined &&
+      !isBundledFoliagePrototypeId(prototypeId)
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "missing-foliage-layer-prototype",
+          `Foliage layer prototype ${prototypeId} does not exist as a custom or bundled foliage prototype.`,
+          prototypePath
+        )
+      );
+    }
+  }
+}
+
 function validateAuthoredEntityState(
   entity: EntityInstance,
   path: string,
