@@ -196,7 +196,12 @@ describe("project document JSON", () => {
           resolutionZ: 2,
           values: [0, 0.2, 0.4, 1]
         })
-      }
+      },
+      foliageBlockerMask: createTerrainFoliageBlockerMask({
+        resolutionX: 2,
+        resolutionZ: 2,
+        values: [0, 0.5, 1, 0]
+      })
     });
     const scene = document.scenes[document.activeSceneId]!;
 
