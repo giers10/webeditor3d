@@ -1,13 +1,14 @@
 import type { Vec3 } from "../core/vector";
-import type { Terrain } from "../document/terrains";
 import {
   getTerrainBounds,
+  getTerrainFoliageMask,
   getTerrainFootprintDepth,
   getTerrainFootprintWidth,
-  sampleTerrainFoliageMaskAtWorldPosition
+  getTerrainHeightAtSample,
+  isTerrainFoliageMaskEmpty,
+  sampleTerrainFoliageMaskAtWorldPosition,
+  type Terrain
 } from "../document/terrains";
-import { sampleTerrainHeightAtWorldPosition } from "../geometry/terrain-brush";
-
 import { BUNDLED_FOLIAGE_PROTOTYPE_REGISTRY } from "./bundled-foliage-manifest";
 import type {
   FoliageLayer,
@@ -15,6 +16,12 @@ import type {
   FoliagePrototype,
   FoliagePrototypeRegistry
 } from "./foliage";
+
+export interface FoliageScatterColorTint {
+  r: number;
+  g: number;
+  b: number;
+}
 
 export interface DerivedFoliageInstance {
   terrainId: string;
@@ -24,7 +31,7 @@ export interface DerivedFoliageInstance {
   normal: Vec3;
   yawRadians: number;
   scale: number;
-  colorTint: Vec3;
+  colorTint: FoliageScatterColorTint;
   windPhase: number;
   windStrength: number;
   lodBias: number;
@@ -45,55 +52,51 @@ export interface DerivedFoliageScatterChunk {
   instances: DerivedFoliageInstance[];
 }
 
-export interface DerivedFoliageScatter {
+export interface FoliageScatterResult {
   chunks: DerivedFoliageScatterChunk[];
   instanceCount: number;
 }
 
-export interface GenerateFoliageScatterOptions {
+export type FoliageScatterPrototypeSource =
+  | FoliagePrototypeRegistry
+  | readonly FoliagePrototype[];
+
+export interface FoliageScatterGenerationOptions {
+  foliageLayers: FoliageLayerRegistry;
+  foliagePrototypes?: FoliagePrototypeRegistry;
+  bundledFoliagePrototypes?: FoliageScatterPrototypeSource;
   chunkSizeMeters?: number;
   maxInstancesPerChunk?: number;
 }
 
 export interface GenerateFoliageScatterForTerrainOptions
-  extends GenerateFoliageScatterOptions {
+  extends FoliageScatterGenerationOptions {
   terrain: Terrain;
-  foliageLayers: FoliageLayerRegistry;
-  foliagePrototypes?: FoliagePrototypeRegistry;
-  bundledFoliagePrototypes?:
-    | FoliagePrototypeRegistry
-    | readonly FoliagePrototype[];
 }
 
 export interface GenerateFoliageScatterForSceneOptions
-  extends GenerateFoliageScatterOptions {
+  extends FoliageScatterGenerationOptions {
   terrains: Record<string, Terrain>;
-  foliageLayers: FoliageLayerRegistry;
-  foliagePrototypes?: FoliagePrototypeRegistry;
-  bundledFoliagePrototypes?:
-    | FoliagePrototypeRegistry
-    | readonly FoliagePrototype[];
 }
 
 interface WeightedFoliagePrototype {
   prototype: FoliagePrototype;
-  weight: number;
+  cumulativeWeight: number;
 }
 
-interface TerrainChunkFootprint {
-  chunkX: number;
-  chunkZ: number;
-  minX: number;
-  maxX: number;
-  minZ: number;
-  maxZ: number;
-  area: number;
+interface WeightedFoliagePrototypeSet {
+  prototypes: WeightedFoliagePrototype[];
+  totalWeight: number;
 }
-
-const TAU = Math.PI * 2;
 
 export const DEFAULT_FOLIAGE_SCATTER_CHUNK_SIZE_METERS = 16;
 export const DEFAULT_MAX_FOLIAGE_SCATTER_INSTANCES_PER_CHUNK = 512;
+
+const HASH_OFFSET_BASIS = 2166136261;
+const HASH_PRIME = 16777619;
+const UINT32_MAX_PLUS_ONE = 4294967296;
+const FULL_TURN_RADIANS = Math.PI * 2;
+const RADIANS_TO_DEGREES = 180 / Math.PI;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -107,15 +110,15 @@ function lerp(start: number, end: number, alpha: number): number {
   return start + (end - start) * alpha;
 }
 
-function normalizeVector(vector: Vec3): Vec3 {
+function smoothstep(alpha: number): number {
+  return alpha * alpha * (3 - 2 * alpha);
+}
+
+function normalizeVec3(vector: Vec3): Vec3 {
   const length = Math.hypot(vector.x, vector.y, vector.z);
 
-  if (length <= 0.000001) {
-    return {
-      x: 0,
-      y: 1,
-      z: 0
-    };
+  if (length <= 0) {
+    return { x: 0, y: 1, z: 0 };
   }
 
   return {
@@ -125,47 +128,46 @@ function normalizeVector(vector: Vec3): Vec3 {
   };
 }
 
-function hashStringToUint32(value: string): number {
-  let hash = 2166136261;
+function hashString(value: string): number {
+  let hash = HASH_OFFSET_BASIS;
 
   for (let index = 0; index < value.length; index += 1) {
     hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
+    hash = Math.imul(hash, HASH_PRIME);
   }
 
   return hash >>> 0;
 }
 
-function mixUint32(left: number, right: number): number {
-  let value = (left ^ right) >>> 0;
-  value = Math.imul(value ^ (value >>> 16), 2246822507);
-  value = Math.imul(value ^ (value >>> 13), 3266489909);
-  return (value ^ (value >>> 16)) >>> 0;
+function hashParts(parts: readonly unknown[]): number {
+  return hashString(parts.map((part) => String(part)).join("|"));
 }
 
-function createSeededRandom(seed: string): () => number {
-  let state = hashStringToUint32(seed);
+function createSeededRandom(seed: number): () => number {
+  let state = seed >>> 0;
 
   return () => {
     state = (state + 0x6d2b79f5) >>> 0;
+
     let value = state;
     value = Math.imul(value ^ (value >>> 15), value | 1);
     value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
-    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+
+    return ((value ^ (value >>> 14)) >>> 0) / UINT32_MAX_PLUS_ONE;
   };
 }
 
-function hashGridNoise(seed: number, x: number, z: number): number {
-  const mixedX = mixUint32(seed, x >>> 0);
-  const mixedZ = mixUint32(mixedX, z >>> 0);
-  return mixedZ / 4294967295;
+function hashGridCoordinate(seed: number, gridX: number, gridZ: number): number {
+  let hash = seed >>> 0;
+  hash ^= Math.imul(gridX | 0, 374761393);
+  hash = Math.imul(hash ^ (hash >>> 13), 1274126177);
+  hash ^= Math.imul(gridZ | 0, 668265263);
+  hash = Math.imul(hash ^ (hash >>> 16), 2246822519);
+  hash = Math.imul(hash ^ (hash >>> 13), 3266489917);
+  return (hash ^ (hash >>> 16)) >>> 0;
 }
 
-function smoothstep(value: number): number {
-  return value * value * (3 - 2 * value);
-}
-
-function sampleValueNoise2d(
+function sampleValueNoise(
   worldX: number,
   worldZ: number,
   scale: number,
@@ -177,50 +179,80 @@ function sampleValueNoise2d(
 
   const noiseX = worldX / scale;
   const noiseZ = worldZ / scale;
-  const x0 = Math.floor(noiseX);
-  const z0 = Math.floor(noiseZ);
-  const x1 = x0 + 1;
-  const z1 = z0 + 1;
-  const tx = smoothstep(noiseX - x0);
-  const tz = smoothstep(noiseZ - z0);
-  const top = lerp(
-    hashGridNoise(seed, x0, z0),
-    hashGridNoise(seed, x1, z0),
-    tx
-  );
-  const bottom = lerp(
-    hashGridNoise(seed, x0, z1),
-    hashGridNoise(seed, x1, z1),
-    tx
-  );
+  const minX = Math.floor(noiseX);
+  const minZ = Math.floor(noiseZ);
+  const maxX = minX + 1;
+  const maxZ = minZ + 1;
+  const blendX = smoothstep(noiseX - minX);
+  const blendZ = smoothstep(noiseZ - minZ);
+  const value00 = hashGridCoordinate(seed, minX, minZ) / 0xffffffff;
+  const value10 = hashGridCoordinate(seed, maxX, minZ) / 0xffffffff;
+  const value01 = hashGridCoordinate(seed, minX, maxZ) / 0xffffffff;
+  const value11 = hashGridCoordinate(seed, maxX, maxZ) / 0xffffffff;
 
-  return lerp(top, bottom, tz);
+  return lerp(
+    lerp(value00, value10, blendX),
+    lerp(value01, value11, blendX),
+    blendZ
+  );
 }
 
-function createPrototypeRegistry(
-  projectPrototypes: FoliagePrototypeRegistry = {},
-  bundledPrototypes:
-    | FoliagePrototypeRegistry
-    | readonly FoliagePrototype[] = BUNDLED_FOLIAGE_PROTOTYPE_REGISTRY
+function normalizeChunkSize(chunkSizeMeters: number | undefined): number {
+  if (!Number.isFinite(chunkSizeMeters) || chunkSizeMeters === undefined) {
+    return DEFAULT_FOLIAGE_SCATTER_CHUNK_SIZE_METERS;
+  }
+
+  return chunkSizeMeters > 0
+    ? chunkSizeMeters
+    : DEFAULT_FOLIAGE_SCATTER_CHUNK_SIZE_METERS;
+}
+
+function normalizeMaxInstancesPerChunk(
+  maxInstancesPerChunk: number | undefined
+): number {
+  if (
+    maxInstancesPerChunk === undefined ||
+    !Number.isFinite(maxInstancesPerChunk)
+  ) {
+    return DEFAULT_MAX_FOLIAGE_SCATTER_INSTANCES_PER_CHUNK;
+  }
+
+  return Math.max(0, Math.floor(maxInstancesPerChunk));
+}
+
+function sourceToRegistry(
+  source: FoliageScatterPrototypeSource
 ): FoliagePrototypeRegistry {
-  const bundledRegistry = Array.isArray(bundledPrototypes)
-    ? Object.fromEntries(
-        bundledPrototypes.map((prototype) => [prototype.id, prototype])
-      )
-    : bundledPrototypes;
+  if (Array.isArray(source)) {
+    return Object.fromEntries(
+      source.map((prototype) => [prototype.id, prototype])
+    );
+  }
+
+  return { ...source };
+}
+
+export function createFoliageScatterPrototypeRegistry(options: {
+  foliagePrototypes?: FoliagePrototypeRegistry;
+  bundledFoliagePrototypes?: FoliageScatterPrototypeSource;
+} = {}): FoliagePrototypeRegistry {
+  const bundledRegistry = sourceToRegistry(
+    options.bundledFoliagePrototypes ?? BUNDLED_FOLIAGE_PROTOTYPE_REGISTRY
+  );
 
   return {
     ...bundledRegistry,
-    ...projectPrototypes
+    ...(options.foliagePrototypes ?? {})
   };
 }
 
-function resolveLayerWeightedPrototypes(
+function createWeightedPrototypeSet(
   layer: FoliageLayer,
-  prototypes: FoliagePrototypeRegistry
-): WeightedFoliagePrototype[] {
+  prototypeRegistry: FoliagePrototypeRegistry
+): WeightedFoliagePrototypeSet {
+  const prototypes: WeightedFoliagePrototype[] = [];
   const seenPrototypeIds = new Set<string>();
-  const weightedPrototypes: WeightedFoliagePrototype[] = [];
+  let totalWeight = 0;
 
   for (const prototypeId of layer.prototypeIds) {
     if (seenPrototypeIds.has(prototypeId)) {
@@ -228,424 +260,485 @@ function resolveLayerWeightedPrototypes(
     }
 
     seenPrototypeIds.add(prototypeId);
-    const prototype = prototypes[prototypeId];
-    const weight = prototype?.densityWeight ?? 0;
 
-    if (
-      prototype === undefined ||
-      !Number.isFinite(weight) ||
-      weight <= 0
-    ) {
+    const prototype = prototypeRegistry[prototypeId];
+
+    if (prototype === undefined || prototype.densityWeight <= 0) {
       continue;
     }
 
-    weightedPrototypes.push({
+    totalWeight += prototype.densityWeight;
+    prototypes.push({
       prototype,
-      weight
+      cumulativeWeight: totalWeight
     });
   }
 
-  return weightedPrototypes;
+  return {
+    prototypes,
+    totalWeight
+  };
 }
 
-function chooseWeightedPrototype(
-  weightedPrototypes: readonly WeightedFoliagePrototype[],
+function choosePrototype(
+  prototypeSet: WeightedFoliagePrototypeSet,
   random: () => number
 ): FoliagePrototype | null {
-  const totalWeight = weightedPrototypes.reduce(
-    (sum, entry) => sum + entry.weight,
-    0
-  );
-
-  if (totalWeight <= 0) {
+  if (prototypeSet.totalWeight <= 0 || prototypeSet.prototypes.length === 0) {
     return null;
   }
 
-  let cursor = random() * totalWeight;
+  const targetWeight = random() * prototypeSet.totalWeight;
 
-  for (const entry of weightedPrototypes) {
-    cursor -= entry.weight;
-
-    if (cursor <= 0) {
+  for (const entry of prototypeSet.prototypes) {
+    if (targetWeight < entry.cumulativeWeight) {
       return entry.prototype;
     }
   }
 
-  return weightedPrototypes[weightedPrototypes.length - 1]?.prototype ?? null;
+  return (
+    prototypeSet.prototypes[prototypeSet.prototypes.length - 1]?.prototype ??
+    null
+  );
 }
 
-function getChunkFootprints(
+function sampleTerrainHeightAtWorldPosition(
   terrain: Terrain,
-  chunkSizeMeters: number
-): TerrainChunkFootprint[] {
-  const width = getTerrainFootprintWidth(terrain);
-  const depth = getTerrainFootprintDepth(terrain);
-  const chunkCountX = Math.max(1, Math.ceil(width / chunkSizeMeters));
-  const chunkCountZ = Math.max(1, Math.ceil(depth / chunkSizeMeters));
-  const chunks: TerrainChunkFootprint[] = [];
+  worldX: number,
+  worldZ: number,
+  clampToBounds = false
+): number | null {
+  const sampleSpaceX = (worldX - terrain.position.x) / terrain.cellSize;
+  const sampleSpaceZ = (worldZ - terrain.position.z) / terrain.cellSize;
+  const maxSampleX = terrain.sampleCountX - 1;
+  const maxSampleZ = terrain.sampleCountZ - 1;
 
-  for (let chunkZ = 0; chunkZ < chunkCountZ; chunkZ += 1) {
-    const minZ = terrain.position.z + chunkZ * chunkSizeMeters;
-    const maxZ = Math.min(
-      terrain.position.z + depth,
-      minZ + chunkSizeMeters
-    );
-
-    for (let chunkX = 0; chunkX < chunkCountX; chunkX += 1) {
-      const minX = terrain.position.x + chunkX * chunkSizeMeters;
-      const maxX = Math.min(
-        terrain.position.x + width,
-        minX + chunkSizeMeters
-      );
-      const area = Math.max(0, maxX - minX) * Math.max(0, maxZ - minZ);
-
-      if (area <= 0) {
-        continue;
-      }
-
-      chunks.push({
-        chunkX,
-        chunkZ,
-        minX,
-        maxX,
-        minZ,
-        maxZ,
-        area
-      });
+  if (!clampToBounds) {
+    if (
+      sampleSpaceX < 0 ||
+      sampleSpaceX > maxSampleX ||
+      sampleSpaceZ < 0 ||
+      sampleSpaceZ > maxSampleZ
+    ) {
+      return null;
     }
   }
 
-  return chunks;
+  const clampedSampleX = clamp(sampleSpaceX, 0, maxSampleX);
+  const clampedSampleZ = clamp(sampleSpaceZ, 0, maxSampleZ);
+  const minSampleX = Math.floor(clampedSampleX);
+  const minSampleZ = Math.floor(clampedSampleZ);
+  const maxX = Math.min(maxSampleX, minSampleX + 1);
+  const maxZ = Math.min(maxSampleZ, minSampleZ + 1);
+  const blendX = clampedSampleX - minSampleX;
+  const blendZ = clampedSampleZ - minSampleZ;
+  const height00 = getTerrainHeightAtSample(terrain, minSampleX, minSampleZ);
+  const height10 = getTerrainHeightAtSample(terrain, maxX, minSampleZ);
+  const height01 = getTerrainHeightAtSample(terrain, minSampleX, maxZ);
+  const height11 = getTerrainHeightAtSample(terrain, maxX, maxZ);
+
+  return lerp(
+    lerp(height00, height10, blendX),
+    lerp(height01, height11, blendX),
+    blendZ
+  );
 }
 
-export function sampleTerrainNormalAtWorldPosition(
+export function sampleFoliageScatterTerrainNormal(
   terrain: Terrain,
   worldX: number,
   worldZ: number
 ): Vec3 {
   const step = Math.max(terrain.cellSize, 0.0001);
-  const left =
+  const leftHeight =
     sampleTerrainHeightAtWorldPosition(terrain, worldX - step, worldZ, true) ??
     0;
-  const right =
+  const rightHeight =
     sampleTerrainHeightAtWorldPosition(terrain, worldX + step, worldZ, true) ??
     0;
-  const down =
+  const backHeight =
     sampleTerrainHeightAtWorldPosition(terrain, worldX, worldZ - step, true) ??
     0;
-  const up =
+  const forwardHeight =
     sampleTerrainHeightAtWorldPosition(terrain, worldX, worldZ + step, true) ??
     0;
 
-  return normalizeVector({
-    x: left - right,
-    y: 2 * step,
-    z: down - up
+  return normalizeVec3({
+    x: leftHeight - rightHeight,
+    y: step * 2,
+    z: backHeight - forwardHeight
   });
 }
 
-function getSlopeDegreesFromNormal(normal: Vec3): number {
-  return (
-    (Math.acos(clamp(normal.y, -1, 1)) * 180) /
-    Math.PI
-  );
-}
-
-function getLayerMaskInfluence(
+export function sampleFoliageScatterTerrainSurface(
   terrain: Terrain,
-  layer: FoliageLayer,
   worldX: number,
   worldZ: number
-): number {
-  const maskValue =
-    sampleTerrainFoliageMaskAtWorldPosition(
-      terrain,
-      layer.id,
-      worldX,
-      worldZ
-    ) ?? 0;
-
-  if (maskValue <= 0) {
-    return 0;
-  }
-
-  const noiseSeed = hashStringToUint32(`${layer.id}:${layer.seed}:noise`);
-  const noiseValue = sampleValueNoise2d(
+): { position: Vec3; normal: Vec3 } | null {
+  const height = sampleTerrainHeightAtWorldPosition(
+    terrain,
     worldX,
     worldZ,
-    layer.noiseScale,
-    noiseSeed
-  );
-
-  if (noiseValue < layer.noiseThreshold) {
-    return 0;
-  }
-
-  const noiseInfluence = lerp(1, noiseValue, clamp01(layer.noiseStrength));
-  return clamp01(maskValue * noiseInfluence);
-}
-
-function createChunkBounds(
-  terrain: Terrain,
-  chunk: TerrainChunkFootprint
-): { min: Vec3; max: Vec3 } {
-  const terrainBounds = getTerrainBounds(terrain);
-
-  return {
-    min: {
-      x: chunk.minX,
-      y: terrainBounds.min.y,
-      z: chunk.minZ
-    },
-    max: {
-      x: chunk.maxX,
-      y: terrainBounds.max.y,
-      z: chunk.maxZ
-    }
-  };
-}
-
-function createFoliageInstance(options: {
-  terrain: Terrain;
-  layer: FoliageLayer;
-  prototype: FoliagePrototype;
-  worldX: number;
-  worldZ: number;
-  random: () => number;
-}): DerivedFoliageInstance | null {
-  const height = sampleTerrainHeightAtWorldPosition(
-    options.terrain,
-    options.worldX,
-    options.worldZ
+    false
   );
 
   if (height === null) {
     return null;
   }
 
-  const normal = sampleTerrainNormalAtWorldPosition(
-    options.terrain,
-    options.worldX,
-    options.worldZ
-  );
-  const slopeDegrees = getSlopeDegreesFromNormal(normal);
-
-  if (
-    slopeDegrees < options.layer.minSlopeDegrees ||
-    slopeDegrees > options.layer.maxSlopeDegrees
-  ) {
-    return null;
-  }
-
-  const layerScale = lerp(
-    Math.min(options.layer.minScale, options.layer.maxScale),
-    Math.max(options.layer.minScale, options.layer.maxScale),
-    options.random()
-  );
-  const prototypeScale = lerp(
-    Math.min(options.prototype.minScale, options.prototype.maxScale),
-    Math.max(options.prototype.minScale, options.prototype.maxScale),
-    options.random()
-  );
-  const colorVariation = clamp01(
-    Math.max(options.layer.colorVariation, options.prototype.colorVariation)
-  );
-  const createTintChannel = () =>
-    clamp(1 + (options.random() * 2 - 1) * colorVariation, 0, 2);
-
   return {
-    terrainId: options.terrain.id,
-    layerId: options.layer.id,
-    prototypeId: options.prototype.id,
     position: {
-      x: options.worldX,
-      y: options.terrain.position.y + height,
-      z: options.worldZ
+      x: worldX,
+      y: terrain.position.y + height,
+      z: worldZ
     },
-    normal,
-    yawRadians: options.prototype.randomYaw ? options.random() * TAU : 0,
-    scale: layerScale * prototypeScale,
-    colorTint: {
-      x: createTintChannel(),
-      y: createTintChannel(),
-      z: createTintChannel()
-    },
-    windPhase:
-      options.random() * TAU * clamp01(options.prototype.windPhaseRandomness),
-    windStrength: options.prototype.windStrength,
-    lodBias: (options.random() * 2 - 1) * 0.5,
-    alignToNormal: clamp01(options.layer.alignToNormal),
-    cullDistance: options.prototype.defaultCullDistance
+    normal: sampleFoliageScatterTerrainNormal(terrain, worldX, worldZ)
   };
 }
 
-function generateFoliageScatterChunk(options: {
+function getSlopeDegrees(normal: Vec3): number {
+  return Math.acos(clamp(normal.y, -1, 1)) * RADIANS_TO_DEGREES;
+}
+
+function shouldAcceptSlope(layer: FoliageLayer, normal: Vec3): boolean {
+  const slopeDegrees = getSlopeDegrees(normal);
+  return (
+    slopeDegrees >= layer.minSlopeDegrees &&
+    slopeDegrees <= layer.maxSlopeDegrees
+  );
+}
+
+function createColorTint(
+  layer: FoliageLayer,
+  prototype: FoliagePrototype,
+  random: () => number
+): FoliageScatterColorTint {
+  const variation = clamp01(
+    Math.max(layer.colorVariation, prototype.colorVariation)
+  );
+  const leafShift = (random() * 2 - 1) * variation;
+  const stemShift = (random() * 2 - 1) * variation * 0.5;
+
+  return {
+    r: clamp(1 + stemShift, 0, 2),
+    g: clamp(1 + leafShift, 0, 2),
+    b: clamp(1 + stemShift, 0, 2)
+  };
+}
+
+function createDerivedFoliageInstance(options: {
   terrain: Terrain;
   layer: FoliageLayer;
-  chunk: TerrainChunkFootprint;
-  weightedPrototypes: readonly WeightedFoliagePrototype[];
-  maxInstancesPerChunk: number;
-}): DerivedFoliageScatterChunk | null {
-  const candidateCount = Math.min(
-    options.maxInstancesPerChunk,
-    Math.ceil(options.chunk.area * Math.max(0, options.layer.density))
+  prototype: FoliagePrototype;
+  position: Vec3;
+  normal: Vec3;
+  random: () => number;
+}): DerivedFoliageInstance {
+  const { terrain, layer, prototype, position, normal, random } = options;
+  const prototypeScale = lerp(
+    prototype.minScale,
+    prototype.maxScale,
+    random()
   );
+  const layerScale = lerp(layer.minScale, layer.maxScale, random());
 
-  if (candidateCount <= 0) {
-    return null;
-  }
+  return {
+    terrainId: terrain.id,
+    layerId: layer.id,
+    prototypeId: prototype.id,
+    position,
+    normal,
+    yawRadians: prototype.randomYaw ? random() * FULL_TURN_RADIANS : 0,
+    scale: prototypeScale * layerScale,
+    colorTint: createColorTint(layer, prototype, random),
+    windPhase:
+      random() * FULL_TURN_RADIANS * clamp01(prototype.windPhaseRandomness),
+    windStrength: prototype.windStrength,
+    lodBias: random() - 0.5,
+    alignToNormal: clamp01(layer.alignToNormal * prototype.alignToNormal),
+    cullDistance: prototype.defaultCullDistance
+  };
+}
 
+function generateChunkInstances(options: {
+  terrain: Terrain;
+  layer: FoliageLayer;
+  prototypeSet: WeightedFoliagePrototypeSet;
+  chunkX: number;
+  chunkZ: number;
+  minWorldX: number;
+  maxWorldX: number;
+  minWorldZ: number;
+  maxWorldZ: number;
+  candidateCount: number;
+}): DerivedFoliageInstance[] {
+  const {
+    terrain,
+    layer,
+    prototypeSet,
+    chunkX,
+    chunkZ,
+    minWorldX,
+    maxWorldX,
+    minWorldZ,
+    maxWorldZ,
+    candidateCount
+  } = options;
   const random = createSeededRandom(
-    [
-      "foliage-scatter-v1",
-      options.terrain.id,
-      options.layer.id,
-      String(options.layer.seed),
-      String(options.chunk.chunkX),
-      String(options.chunk.chunkZ)
-    ].join(":")
+    hashParts([terrain.id, layer.id, layer.seed, chunkX, chunkZ])
   );
+  const noiseSeed = hashParts(["foliage-noise", terrain.id, layer.id, layer.seed]);
   const instances: DerivedFoliageInstance[] = [];
 
   for (
     let candidateIndex = 0;
-    candidateIndex < candidateCount &&
-    instances.length < options.maxInstancesPerChunk;
+    candidateIndex < candidateCount;
     candidateIndex += 1
   ) {
-    const worldX = lerp(options.chunk.minX, options.chunk.maxX, random());
-    const worldZ = lerp(options.chunk.minZ, options.chunk.maxZ, random());
-    const maskInfluence = getLayerMaskInfluence(
-      options.terrain,
-      options.layer,
+    const worldX = lerp(minWorldX, maxWorldX, random());
+    const worldZ = lerp(minWorldZ, maxWorldZ, random());
+    const maskValue =
+      sampleTerrainFoliageMaskAtWorldPosition(
+        terrain,
+        layer.id,
+        worldX,
+        worldZ,
+        false
+      ) ?? 0;
+
+    if (maskValue <= 0) {
+      continue;
+    }
+
+    const noiseValue = sampleValueNoise(
+      worldX,
+      worldZ,
+      layer.noiseScale,
+      noiseSeed
+    );
+
+    if (noiseValue < layer.noiseThreshold) {
+      continue;
+    }
+
+    const noiseInfluence = lerp(1, noiseValue, layer.noiseStrength);
+    const acceptanceProbability = clamp01(maskValue * noiseInfluence);
+
+    if (random() > acceptanceProbability) {
+      continue;
+    }
+
+    const surface = sampleFoliageScatterTerrainSurface(
+      terrain,
       worldX,
       worldZ
     );
 
-    if (maskInfluence <= 0 || random() > maskInfluence) {
+    if (surface === null || !shouldAcceptSlope(layer, surface.normal)) {
       continue;
     }
 
-    const prototype = chooseWeightedPrototype(
-      options.weightedPrototypes,
-      random
-    );
+    const prototype = choosePrototype(prototypeSet, random);
 
     if (prototype === null) {
       continue;
     }
 
-    const instance = createFoliageInstance({
-      terrain: options.terrain,
-      layer: options.layer,
-      prototype,
-      worldX,
-      worldZ,
-      random
-    });
-
-    if (instance !== null) {
-      instances.push(instance);
-    }
+    instances.push(
+      createDerivedFoliageInstance({
+        terrain,
+        layer,
+        prototype,
+        position: surface.position,
+        normal: surface.normal,
+        random
+      })
+    );
   }
 
-  if (instances.length === 0) {
-    return null;
-  }
-
-  return {
-    id: `${options.terrain.id}:${options.layer.id}:${options.chunk.chunkX}:${options.chunk.chunkZ}`,
-    terrainId: options.terrain.id,
-    layerId: options.layer.id,
-    chunkX: options.chunk.chunkX,
-    chunkZ: options.chunk.chunkZ,
-    bounds: createChunkBounds(options.terrain, options.chunk),
-    instances
-  };
+  return instances;
 }
 
-export function generateFoliageScatterForTerrain(
-  options: GenerateFoliageScatterForTerrainOptions
-): DerivedFoliageScatter {
-  const chunkSizeMeters = Math.max(
-    0.1,
-    options.chunkSizeMeters ?? DEFAULT_FOLIAGE_SCATTER_CHUNK_SIZE_METERS
-  );
-  const maxInstancesPerChunk = Math.max(
-    0,
-    Math.floor(
-      options.maxInstancesPerChunk ??
-        DEFAULT_MAX_FOLIAGE_SCATTER_INSTANCES_PER_CHUNK
-    )
-  );
-  const prototypes = createPrototypeRegistry(
-    options.foliagePrototypes,
-    options.bundledFoliagePrototypes
-  );
+function generateFoliageScatterForTerrainWithRegistry(options: {
+  terrain: Terrain;
+  foliageLayers: FoliageLayerRegistry;
+  prototypeRegistry: FoliagePrototypeRegistry;
+  chunkSizeMeters: number;
+  maxInstancesPerChunk: number;
+}): FoliageScatterResult {
+  const {
+    terrain,
+    foliageLayers,
+    prototypeRegistry,
+    chunkSizeMeters,
+    maxInstancesPerChunk
+  } = options;
   const chunks: DerivedFoliageScatterChunk[] = [];
 
-  for (const layer of Object.values(options.foliageLayers).sort((left, right) =>
-    left.id.localeCompare(right.id)
-  )) {
-    if (!layer.enabled || options.terrain.foliageMasks[layer.id] === undefined) {
+  if (!terrain.enabled || maxInstancesPerChunk <= 0) {
+    return {
+      chunks,
+      instanceCount: 0
+    };
+  }
+
+  const terrainWidth = getTerrainFootprintWidth(terrain);
+  const terrainDepth = getTerrainFootprintDepth(terrain);
+  const chunkCountX = Math.ceil(terrainWidth / chunkSizeMeters);
+  const chunkCountZ = Math.ceil(terrainDepth / chunkSizeMeters);
+  const terrainBounds = getTerrainBounds(terrain);
+  let instanceCount = 0;
+
+  for (const layerId of Object.keys(foliageLayers).sort()) {
+    const layer = foliageLayers[layerId];
+
+    if (
+      layer === undefined ||
+      !layer.enabled ||
+      layer.density <= 0 ||
+      !Number.isFinite(layer.density)
+    ) {
       continue;
     }
 
-    const weightedPrototypes = resolveLayerWeightedPrototypes(layer, prototypes);
+    const mask = getTerrainFoliageMask(terrain, layer.id);
 
-    if (weightedPrototypes.length === 0) {
+    if (mask === null || isTerrainFoliageMaskEmpty(mask)) {
       continue;
     }
 
-    for (const chunk of getChunkFootprints(options.terrain, chunkSizeMeters)) {
-      const scatterChunk = generateFoliageScatterChunk({
-        terrain: options.terrain,
-        layer,
-        chunk,
-        weightedPrototypes,
-        maxInstancesPerChunk
-      });
+    const prototypeSet = createWeightedPrototypeSet(layer, prototypeRegistry);
 
-      if (scatterChunk !== null) {
-        chunks.push(scatterChunk);
+    if (prototypeSet.totalWeight <= 0) {
+      continue;
+    }
+
+    for (let chunkZ = 0; chunkZ < chunkCountZ; chunkZ += 1) {
+      const localMinZ = chunkZ * chunkSizeMeters;
+      const localMaxZ = Math.min(terrainDepth, localMinZ + chunkSizeMeters);
+
+      for (let chunkX = 0; chunkX < chunkCountX; chunkX += 1) {
+        const localMinX = chunkX * chunkSizeMeters;
+        const localMaxX = Math.min(terrainWidth, localMinX + chunkSizeMeters);
+        const chunkArea = Math.max(
+          0,
+          (localMaxX - localMinX) * (localMaxZ - localMinZ)
+        );
+        const candidateCount = Math.min(
+          maxInstancesPerChunk,
+          Math.ceil(chunkArea * layer.density)
+        );
+
+        if (candidateCount <= 0) {
+          continue;
+        }
+
+        const minWorldX = terrain.position.x + localMinX;
+        const maxWorldX = terrain.position.x + localMaxX;
+        const minWorldZ = terrain.position.z + localMinZ;
+        const maxWorldZ = terrain.position.z + localMaxZ;
+        const instances = generateChunkInstances({
+          terrain,
+          layer,
+          prototypeSet,
+          chunkX,
+          chunkZ,
+          minWorldX,
+          maxWorldX,
+          minWorldZ,
+          maxWorldZ,
+          candidateCount
+        });
+
+        if (instances.length === 0) {
+          continue;
+        }
+
+        chunks.push({
+          id: `${terrain.id}:${layer.id}:${chunkX}:${chunkZ}`,
+          terrainId: terrain.id,
+          layerId: layer.id,
+          chunkX,
+          chunkZ,
+          bounds: {
+            min: {
+              x: minWorldX,
+              y: terrainBounds.min.y,
+              z: minWorldZ
+            },
+            max: {
+              x: maxWorldX,
+              y: terrainBounds.max.y,
+              z: maxWorldZ
+            }
+          },
+          instances
+        });
+        instanceCount += instances.length;
       }
     }
   }
 
   return {
     chunks,
-    instanceCount: chunks.reduce(
-      (sum, chunk) => sum + chunk.instances.length,
-      0
-    )
+    instanceCount
   };
+}
+
+export function generateFoliageScatterForTerrain(
+  options: GenerateFoliageScatterForTerrainOptions
+): FoliageScatterResult {
+  const prototypeRegistry = createFoliageScatterPrototypeRegistry({
+    foliagePrototypes: options.foliagePrototypes,
+    bundledFoliagePrototypes: options.bundledFoliagePrototypes
+  });
+
+  return generateFoliageScatterForTerrainWithRegistry({
+    terrain: options.terrain,
+    foliageLayers: options.foliageLayers,
+    prototypeRegistry,
+    chunkSizeMeters: normalizeChunkSize(options.chunkSizeMeters),
+    maxInstancesPerChunk: normalizeMaxInstancesPerChunk(
+      options.maxInstancesPerChunk
+    )
+  });
 }
 
 export function generateFoliageScatterForScene(
   options: GenerateFoliageScatterForSceneOptions
-): DerivedFoliageScatter {
+): FoliageScatterResult {
+  const prototypeRegistry = createFoliageScatterPrototypeRegistry({
+    foliagePrototypes: options.foliagePrototypes,
+    bundledFoliagePrototypes: options.bundledFoliagePrototypes
+  });
+  const chunkSizeMeters = normalizeChunkSize(options.chunkSizeMeters);
+  const maxInstancesPerChunk = normalizeMaxInstancesPerChunk(
+    options.maxInstancesPerChunk
+  );
   const chunks: DerivedFoliageScatterChunk[] = [];
+  let instanceCount = 0;
 
-  for (const terrain of Object.values(options.terrains).sort((left, right) =>
-    left.id.localeCompare(right.id)
-  )) {
-    const terrainScatter = generateFoliageScatterForTerrain({
+  for (const terrainId of Object.keys(options.terrains).sort()) {
+    const terrain = options.terrains[terrainId];
+
+    if (terrain === undefined) {
+      continue;
+    }
+
+    const result = generateFoliageScatterForTerrainWithRegistry({
       terrain,
       foliageLayers: options.foliageLayers,
-      foliagePrototypes: options.foliagePrototypes,
-      bundledFoliagePrototypes: options.bundledFoliagePrototypes,
-      chunkSizeMeters: options.chunkSizeMeters,
-      maxInstancesPerChunk: options.maxInstancesPerChunk
+      prototypeRegistry,
+      chunkSizeMeters,
+      maxInstancesPerChunk
     });
 
-    chunks.push(...terrainScatter.chunks);
+    chunks.push(...result.chunks);
+    instanceCount += result.instanceCount;
   }
 
   return {
     chunks,
-    instanceCount: chunks.reduce(
-      (sum, chunk) => sum + chunk.instances.length,
-      0
-    )
+    instanceCount
   };
 }
