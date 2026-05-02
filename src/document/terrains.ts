@@ -1151,6 +1151,47 @@ function createResampledTerrainPaintWeights(
   return paintWeights;
 }
 
+function createResampledTerrainFoliageMasks(
+  terrain: Terrain,
+  sampleCountX: number,
+  sampleCountZ: number
+): TerrainFoliageMaskRegistry {
+  return Object.fromEntries(
+    Object.entries(terrain.foliageMasks).map(([layerId, mask]) => {
+      const values = new Array<number>(sampleCountX * sampleCountZ);
+
+      for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
+        const normalizedSampleZ =
+          sampleCountZ === 1 ? 0 : sampleZ / (sampleCountZ - 1);
+        const sourceSampleZ = normalizedSampleZ * (mask.resolutionZ - 1);
+
+        for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
+          const normalizedSampleX =
+            sampleCountX === 1 ? 0 : sampleX / (sampleCountX - 1);
+          const sourceSampleX = normalizedSampleX * (mask.resolutionX - 1);
+
+          values[sampleZ * sampleCountX + sampleX] =
+            sampleTerrainFoliageMaskAtGridCoordinate(
+              mask,
+              sourceSampleX,
+              sourceSampleZ
+            );
+        }
+      }
+
+      return [
+        layerId,
+        createTerrainFoliageMask({
+          layerId,
+          resolutionX: sampleCountX,
+          resolutionZ: sampleCountZ,
+          values
+        })
+      ];
+    })
+  );
+}
+
 export function resizeTerrainGrid(
   terrain: Terrain,
   options: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "cellSize"> & {
@@ -1184,6 +1225,11 @@ export function resizeTerrainGrid(
     cellSize,
     heights: createResampledTerrainHeights(terrain, sampleCountX, sampleCountZ),
     paintWeights: createResampledTerrainPaintWeights(
+      terrain,
+      sampleCountX,
+      sampleCountZ
+    ),
+    foliageMasks: createResampledTerrainFoliageMasks(
       terrain,
       sampleCountX,
       sampleCountZ
