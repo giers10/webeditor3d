@@ -1823,6 +1823,43 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.sceneBounds?.max.y).toBe(2);
   });
 
+  it("includes authored foliage layers, prototypes, and terrain masks for derived rendering", () => {
+    const bundledPrototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
+    const layer = createFoliageLayer({
+      id: "foliage-layer-runtime-build",
+      name: "Runtime Build Grass",
+      prototypeIds: [bundledPrototype.id]
+    });
+    const terrain = createTerrain({
+      id: "terrain-runtime-foliage",
+      sampleCountX: 2,
+      sampleCountZ: 2,
+      foliageMasks: {
+        [layer.id]: createTerrainFoliageMask({
+          layerId: layer.id,
+          resolutionX: 2,
+          resolutionZ: 2,
+          values: [0, 1, 0.5, 0.25]
+        })
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Runtime Foliage Scene" }),
+      terrains: {
+        [terrain.id]: terrain
+      },
+      foliageLayers: {
+        [layer.id]: layer
+      }
+    });
+
+    expect(runtimeScene.foliage.layers[layer.id]).toEqual(layer);
+    expect(runtimeScene.foliage.prototypes).toEqual({});
+    expect(runtimeScene.foliage.terrains[0]?.foliageMasks[layer.id]).toEqual(
+      terrain.foliageMasks[layer.id]
+    );
+  });
+
   it("adds static-simple imported-model colliders as compound box pieces", () => {
     const wallGeometry = new PlaneGeometry(4, 4, 4, 4);
     wallGeometry.rotateY(Math.PI * 0.5);
