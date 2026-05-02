@@ -7,7 +7,8 @@ import {
   createDefaultWorldCelestialOrbitAuthoringSettings,
   createDefaultWorldShaderSkySettings,
   createWorldCelestialOrbitSettingsFromPeakDirection,
-  createDefaultWorldSettings
+  createDefaultWorldSettings,
+  resolveFoliageQualitySettings
 } from "../../src/document/world-settings";
 
 describe("world settings helpers", () => {
@@ -40,6 +41,9 @@ describe("world settings helpers", () => {
     );
     expect(clone.advancedRendering.godRays).not.toBe(
       source.advancedRendering.godRays
+    );
+    expect(clone.advancedRendering.foliage).not.toBe(
+      source.advancedRendering.foliage
     );
   });
 
@@ -181,6 +185,31 @@ describe("world settings helpers", () => {
     right.advancedRendering.godRays.sourceSize += 0.25;
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
+
+  it("treats foliage quality settings as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.advancedRendering.foliage.densityMultiplier = 0.5;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
+
+  it("bounds resolved foliage quality multipliers", () => {
+    expect(
+      resolveFoliageQualitySettings({
+        enabled: true,
+        densityMultiplier: 5,
+        maxDistanceMultiplier: 0.01,
+        shadows: "full"
+      })
+    ).toEqual({
+      enabled: true,
+      densityMultiplier: 2,
+      maxDistanceMultiplier: 0.1,
+      shadows: "full"
+    });
   });
 
   it("treats the scene project-time lighting toggle as part of authored world equality", () => {
