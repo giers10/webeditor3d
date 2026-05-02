@@ -174,6 +174,39 @@ describe("project document JSON", () => {
     );
   });
 
+  it("round-trips terrain foliage masks in project scenes", () => {
+    const bundledPrototype = BUNDLED_FOLIAGE_PROTOTYPES[0];
+    const document = createEmptyProjectDocument({
+      name: "Project Foliage Mask"
+    });
+    const layer = createFoliageLayer({
+      id: "foliage-layer-project-mask",
+      name: "Project Mask Layer",
+      prototypeIds: [bundledPrototype.id]
+    });
+    const terrain = createTerrain({
+      id: "terrain-project-foliage-mask",
+      sampleCountX: 2,
+      sampleCountZ: 2,
+      foliageMasks: {
+        [layer.id]: createTerrainFoliageMask({
+          layerId: layer.id,
+          resolutionX: 2,
+          resolutionZ: 2,
+          values: [0, 0.2, 0.4, 1]
+        })
+      }
+    });
+    const scene = document.scenes[document.activeSceneId]!;
+
+    scene.foliageLayers[layer.id] = layer;
+    scene.terrains[terrain.id] = terrain;
+
+    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("round-trips NPC dialogue references in project scenes", () => {
     const document = createEmptyProjectDocument({
       name: "NPC Dialogue Project"
