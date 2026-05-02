@@ -429,6 +429,7 @@ describe("local draft storage", () => {
             [invalidBrush.id]: invalidBrush
           },
           terrains: {},
+          foliageLayers: {},
           paths: {},
           modelInstances: {},
           entities: {},
