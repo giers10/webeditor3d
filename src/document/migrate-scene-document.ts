@@ -6044,6 +6044,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     assets,
     brushes: readBrushes(source.brushes, materials, false),
     terrains: readTerrains(source.terrains),
+    foliagePrototypes: readFoliagePrototypes(source.foliagePrototypes, assets),
+    foliageLayers: readFoliageLayers(source.foliageLayers),
     paths: readScenePaths(source.paths),
     modelInstances: readModelInstances(source.modelInstances, assets),
     entities: readEntities(source.entities, {
@@ -6096,6 +6098,7 @@ function readProjectScene(
     }),
     brushes: readBrushes(value.brushes, materials, false),
     terrains: readTerrains(value.terrains),
+    foliageLayers: readFoliageLayers(value.foliageLayers),
     paths: readScenePaths(value.paths),
     modelInstances: readModelInstances(value.modelInstances, assets),
     entities: readEntities(value.entities, {
