@@ -1638,6 +1638,10 @@ export class ViewportHost {
       this.cancelActiveTerrainBrushStroke(false);
     }
 
+    if (terrainChanged || toolChanged || layerChanged || terrainBrushState === null) {
+      this.rebuildDisplayedTerrainState();
+    }
+
     if (terrainBrushState === null || this.toolMode !== "select") {
       this.setTerrainBrushHover(null);
       return;
