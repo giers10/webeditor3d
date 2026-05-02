@@ -170,16 +170,24 @@ function pushCellIndices(
 }
 
 export function buildTerrainDerivedMeshData(
-  terrain: Terrain
+  terrain: Terrain,
+  options: TerrainMeshBuildOptions = {}
 ): DerivedTerrainMeshData {
   const vertexCount = terrain.sampleCountX * terrain.sampleCountZ;
   const positions = new Float32Array(vertexCount * 3);
   const uvs = new Float32Array(vertexCount * 2);
   const layerWeights = new Float32Array(vertexCount * TERRAIN_LAYER_COUNT);
+  const foliageMaskWeights = new Float32Array(vertexCount);
+  const foliageMask =
+    options.foliageMaskLayerId === undefined ||
+    options.foliageMaskLayerId === null
+      ? null
+      : getTerrainFoliageMask(terrain, options.foliageMaskLayerId);
   const localBounds = createEmptyLocalBounds();
   let vertexOffset = 0;
   let uvOffset = 0;
   let layerWeightOffset = 0;
+  let foliageMaskWeightOffset = 0;
 
   for (let sampleZ = 0; sampleZ < terrain.sampleCountZ; sampleZ += 1) {
     for (let sampleX = 0; sampleX < terrain.sampleCountX; sampleX += 1) {
@@ -216,6 +224,15 @@ export function buildTerrainDerivedMeshData(
           sampleLayerWeights[layerIndex];
       }
       layerWeightOffset += TERRAIN_LAYER_COUNT;
+      foliageMaskWeights[foliageMaskWeightOffset] =
+        foliageMask === null
+          ? 0
+          : getTerrainFoliageMaskValueAtSample(
+              foliageMask,
+              sampleX,
+              sampleZ
+            );
+      foliageMaskWeightOffset += 1;
     }
   }
 
@@ -257,6 +274,10 @@ export function buildTerrainDerivedMeshData(
     "terrainLayerWeights",
     new BufferAttribute(layerWeights, TERRAIN_LAYER_COUNT)
   );
+  geometry.setAttribute(
+    "terrainFoliageMask",
+    new BufferAttribute(foliageMaskWeights, 1)
+  );
   geometry.setIndex(new BufferAttribute(indices, 1));
   geometry.computeVertexNormals();
 
@@ -270,6 +291,7 @@ export function buildTerrainDerivedMeshData(
     normals,
     uvs,
     layerWeights,
+    foliageMaskWeights,
     indices,
     cellTriangulation,
     localBounds
