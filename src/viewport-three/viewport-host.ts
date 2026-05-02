@@ -389,12 +389,33 @@ interface ActiveTerrainBrushStroke {
   dirtyBounds: TerrainBrushDirtySampleBounds | null;
   heightSampleIndices: Set<number>;
   paintWeightIndices: Set<number>;
+  foliageMaskValueKeys: Set<string>;
   referenceHeight: number | null;
   lastAppliedPoint: {
     x: number;
     z: number;
   };
   toolState: ArmedTerrainBrushState;
+}
+
+function createTerrainFoliageMaskValueKey(layerId: string, index: number) {
+  return `${layerId}\u0000${index}`;
+}
+
+function parseTerrainFoliageMaskValueKey(key: string): {
+  layerId: string;
+  index: number;
+} {
+  const separatorIndex = key.lastIndexOf("\u0000");
+
+  if (separatorIndex === -1) {
+    throw new Error("Invalid terrain foliage mask value key.");
+  }
+
+  return {
+    layerId: key.slice(0, separatorIndex),
+    index: Number(key.slice(separatorIndex + 1))
+  };
 }
 
 interface AffectedSelectionIds {
