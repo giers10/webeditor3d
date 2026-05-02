@@ -324,9 +324,8 @@ export class FoliageInstancedRenderer {
       quality: this.quality
     });
 
-    this.clearActiveBatches();
-
     if (batches.length === 0) {
+      this.clearActiveBatches();
       this.onRebuilt?.();
       return;
     }
