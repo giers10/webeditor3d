@@ -7,6 +7,7 @@ import { createUpsertTerrainCommand } from "../../src/commands/upsert-terrain-co
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
   createTerrain,
+  getTerrainFoliageBlockerMaskValueAtSample,
   getTerrainFoliageMask,
   getTerrainRenderDirtyBoundsSince
 } from "../../src/document/terrains";
@@ -292,5 +293,66 @@ describe("terrain commands", () => {
         foliageLayer.id
       )?.values[4]
     ).toBe(0.75);
+  });
+
+  it("applies foliage blocker mask brush patches with undo and redo", () => {
+    const terrain = createTerrain({
+      id: "terrain-foliage-blocker-mask-command",
+      sampleCountX: 3,
+      sampleCountZ: 3
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Terrain Foliage Blocker Scene" }),
+        terrains: {
+          [terrain.id]: terrain
+        }
+      }
+    });
+
+    store.executeCommand(
+      createApplyTerrainBrushPatchCommand({
+        label: "Patch foliage blocker mask fixture",
+        patch: {
+          terrainId: terrain.id,
+          heightSamples: [],
+          paintWeights: [],
+          foliageMaskValues: [],
+          foliageBlockerMaskValues: [
+            {
+              index: 4,
+              before: 0,
+              after: 0.85
+            }
+          ]
+        }
+      })
+    );
+
+    expect(
+      getTerrainFoliageBlockerMaskValueAtSample(
+        store.getState().document.terrains[terrain.id]!.foliageBlockerMask,
+        1,
+        1
+      )
+    ).toBe(0.85);
+
+    expect(store.undo()).toBe(true);
+    expect(
+      getTerrainFoliageBlockerMaskValueAtSample(
+        store.getState().document.terrains[terrain.id]!.foliageBlockerMask,
+        1,
+        1
+      )
+    ).toBe(0);
+
+    expect(store.redo()).toBe(true);
+    expect(
+      getTerrainFoliageBlockerMaskValueAtSample(
+        store.getState().document.terrains[terrain.id]!.foliageBlockerMask,
+        1,
+        1
+      )
+    ).toBe(0.85);
   });
 });
