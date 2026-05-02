@@ -18,6 +18,7 @@ import {
   PROJECT_DIALOGUE_LIBRARY_SCENE_DOCUMENT_VERSION,
   PROJECT_SEQUENCE_EFFECTS_SCENE_DOCUMENT_VERSION,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_EDGE_ASSIST_SCENE_DOCUMENT_VERSION,
   PLAYER_START_PAUSE_BINDINGS_SCENE_DOCUMENT_VERSION,
   PLAYER_START_GAMEPAD_CAMERA_LOOK_SCENE_DOCUMENT_VERSION,
   PROJECT_TIME_DAY_NIGHT_PROFILE_SCENE_DOCUMENT_VERSION,
@@ -49,6 +50,8 @@ import {
   parseProjectDocumentJson,
   serializeProjectDocument
 } from "../../src/serialization/scene-document-json";
+import { BUNDLED_FOLIAGE_PROTOTYPES } from "../../src/foliage/bundled-foliage-manifest";
+import { createFoliageLayer } from "../../src/foliage/foliage";
 
 describe("project document JSON", () => {
   it("round-trips shader sky world settings in project scenes", () => {
