@@ -2859,6 +2859,96 @@ function validateTerrain(
       );
     }
   }
+
+  for (const [layerId, mask] of Object.entries(terrain.foliageMasks)) {
+    const maskPath = `${path}.foliageMasks.${layerId}`;
+
+    if (mask.layerId !== layerId) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "terrain-foliage-mask-layer-id-mismatch",
+          "Terrain foliage mask layerId must match its registry key.",
+          `${maskPath}.layerId`
+        )
+      );
+    }
+
+    if (layerId.trim().length === 0) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-terrain-foliage-mask-layer-id",
+          "Terrain foliage mask layer ids must be non-empty strings.",
+          `${maskPath}.layerId`
+        )
+      );
+    } else if (document.foliageLayers[layerId] === undefined) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "missing-terrain-foliage-mask-layer",
+          `Terrain foliage mask layer ${layerId} does not exist in scene foliage layers.`,
+          `${maskPath}.layerId`
+        )
+      );
+    }
+
+    if (mask.resolutionX !== terrain.sampleCountX) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-terrain-foliage-mask-resolution-x",
+          "Terrain foliage mask resolutionX must match terrain sampleCountX.",
+          `${maskPath}.resolutionX`
+        )
+      );
+    }
+
+    if (mask.resolutionZ !== terrain.sampleCountZ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-terrain-foliage-mask-resolution-z",
+          "Terrain foliage mask resolutionZ must match terrain sampleCountZ.",
+          `${maskPath}.resolutionZ`
+        )
+      );
+    }
+
+    const expectedFoliageMaskValueCount =
+      mask.resolutionX * mask.resolutionZ;
+
+    if (mask.values.length !== expectedFoliageMaskValueCount) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-terrain-foliage-mask-value-count",
+          `Terrain foliage mask values must contain exactly ${expectedFoliageMaskValueCount} samples.`,
+          `${maskPath}.values`
+        )
+      );
+    }
+
+    if (options.terrainSampleValues !== "skip") {
+      for (let index = 0; index < mask.values.length; index += 1) {
+        const maskValue = mask.values[index];
+
+        if (isFiniteNumber(maskValue) && maskValue >= 0 && maskValue <= 1) {
+          continue;
+        }
+
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-terrain-foliage-mask-value",
+            "Terrain foliage mask values must remain finite values between 0 and 1.",
+            `${maskPath}.values.${index}`
+          )
+        );
+      }
+    }
+  }
 }
 
 function validateFoliagePrototype(
