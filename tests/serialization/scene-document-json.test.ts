@@ -248,6 +248,39 @@ describe("scene document JSON", () => {
     expect(migratedDocument.terrains[terrain.id]?.foliageMasks).toEqual({});
   });
 
+  it("migrates pre-foliage-blocker terrain documents with an empty blocker mask", () => {
+    const terrain = createTerrain({
+      id: "terrain-pre-foliage-blocker-mask",
+      sampleCountX: 2,
+      sampleCountZ: 2
+    });
+    const document = createEmptySceneDocument({
+      name: "Legacy Terrain Blocker-Free Scene"
+    });
+    document.terrains[terrain.id] = terrain;
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(document)
+    ) as Record<string, unknown>;
+
+    legacyDocument.version = FOLIAGE_QUALITY_SCENE_DOCUMENT_VERSION;
+    delete ((legacyDocument.terrains as Record<string, Record<string, unknown>>)[
+      terrain.id
+    ] as Record<string, unknown>).foliageBlockerMask;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(
+      migratedDocument.terrains[terrain.id]?.foliageBlockerMask
+    ).toEqual({
+      resolutionX: 2,
+      resolutionZ: 2,
+      values: [0, 0, 0, 0]
+    });
+  });
+
   it("round-trips camera rig control effects in interaction links, sequences, and scheduler routines", () => {
     const cameraRig = createCameraRigEntity({
       id: "entity-camera-rig-main",
