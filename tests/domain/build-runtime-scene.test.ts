@@ -10,7 +10,10 @@ import {
 import { createBoxBrush } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
-import { createTerrain } from "../../src/document/terrains";
+import {
+  createTerrain,
+  createTerrainFoliageMask
+} from "../../src/document/terrains";
 import {
   createEmptyProjectDocument,
   createEmptyProjectScene,
@@ -44,6 +47,8 @@ import { createProjectSequence } from "../../src/sequencer/project-sequences";
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createProjectAssetStorageKey, type AudioAssetRecord } from "../../src/assets/project-assets";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
+import { BUNDLED_FOLIAGE_PROTOTYPES } from "../../src/foliage/bundled-foliage-manifest";
+import { createFoliageLayer } from "../../src/foliage/foliage";
 import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-collider-fixtures";
 
 const defaultMovementTemplate = createPlayerStartMovementTemplate();

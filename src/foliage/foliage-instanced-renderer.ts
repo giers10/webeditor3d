@@ -18,7 +18,6 @@ import {
 } from "./foliage-render-batches";
 import type {
   FoliageLayerRegistry,
-  FoliagePrototype,
   FoliagePrototypeRegistry
 } from "./foliage";
 import {
@@ -203,7 +202,7 @@ export class FoliageInstancedRenderer {
       return;
     }
 
-    void this.rebuildBatchesAsync(requestId, batches, prototypeRegistry);
+    void this.rebuildBatchesAsync(requestId, batches);
   }
 
   dispose() {
@@ -232,8 +231,7 @@ export class FoliageInstancedRenderer {
 
   private async rebuildBatchesAsync(
     requestId: number,
-    batches: readonly FoliageRenderBatch[],
-    _prototypeRegistry: FoliagePrototypeRegistry
+    batches: readonly FoliageRenderBatch[]
   ) {
     const nextBatchGroup = new Group();
     nextBatchGroup.name = "foliageInstancedBatches";

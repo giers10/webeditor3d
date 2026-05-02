@@ -1706,6 +1706,7 @@ export class ViewportHost {
 
     this.applyViewModePose();
     this.applyAdvancedRenderingCameraFar(this.currentAdvancedRenderingSettings);
+    this.syncFoliageVisibility();
     this.syncTerrainBrushPreview();
 
     if (this.currentAdvancedRenderingSettings !== null) {
@@ -1720,6 +1721,7 @@ export class ViewportHost {
 
     this.displayMode = displayMode;
     this.applyWorld();
+    this.syncFoliageVisibility();
 
     if (this.currentDocument !== null) {
       this.updateDocument(this.currentDocument);
@@ -2549,6 +2551,11 @@ export class ViewportHost {
     for (const renderObjects of this.entityRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(renderObjects.group, false);
     }
+
+    applyAdvancedRenderingRenderableShadowFlags(
+      this.foliageRenderer.group,
+      shadowsEnabled
+    );
 
     for (const renderGroup of this.modelRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(renderGroup, shadowsEnabled);
@@ -6627,6 +6634,20 @@ export class ViewportHost {
     this.applyShadowState();
     this.updateTerrainLodVisibility();
     this.syncTerrainBrushPreview();
+  }
+
+  private syncFoliageVisibility() {
+    this.foliageRenderer.group.visible =
+      this.viewMode === "perspective" && this.displayMode !== "wireframe";
+  }
+
+  private rebuildFoliage(document: SceneDocument) {
+    this.syncFoliageVisibility();
+    this.foliageRenderer.sync({
+      terrains: document.terrains,
+      foliageLayers: document.foliageLayers,
+      foliagePrototypes: document.foliagePrototypes
+    });
   }
 
   private createTerrainRenderObjects(terrain: Terrain): TerrainRenderObjects {
