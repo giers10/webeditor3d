@@ -2536,6 +2536,10 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
 
   const brushList = Object.values(editorState.document.brushes);
   const terrainList = getTerrains(editorState.document.terrains);
+  const foliageLayerList = useMemo(
+    () => getFoliageLayerList(editorState.document.foliageLayers),
+    [editorState.document.foliageLayers]
+  );
   const pathList = getScenePaths(editorState.document.paths);
   const layoutMode = editorState.viewportLayoutMode;
   const activePanelId = editorState.activeViewportPanelId;
@@ -3200,6 +3204,22 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
     terrainLodGridVisibleTerrainIds,
     setTerrainLodGridVisibleTerrainIds
   ] = useState<readonly string[]>([]);
+  const [activeFoliageLayerId, setActiveFoliageLayerId] = useState<
+    string | null
+  >(null);
+  const activeFoliageLayer =
+    activeFoliageLayerId === null
+      ? null
+      : (editorState.document.foliageLayers[activeFoliageLayerId] ?? null);
+  const [foliageLayerNameDraft, setFoliageLayerNameDraft] = useState("");
+  const [foliageLayerNumberDrafts, setFoliageLayerNumberDrafts] =
+    useState<FoliageLayerNumberDrafts>(() =>
+      createFoliageLayerNumberDrafts(
+        createFoliageLayer({
+          id: "foliage-layer-draft"
+        })
+      )
+    );
   const selectedTerrainLodGridVisible =
     selectedTerrain !== null &&
     terrainLodGridVisibleTerrainIds.includes(selectedTerrain.id);
