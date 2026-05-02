@@ -17,6 +17,7 @@ import { createScenePath } from "../../src/document/paths";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import {
   createTerrain,
+  createTerrainFoliageBlockerMask,
   createTerrainFoliageMask
 } from "../../src/document/terrains";
 import {
@@ -37,6 +38,7 @@ import {
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
+  FOLIAGE_BLOCKER_MASKS_SCENE_DOCUMENT_VERSION,
   FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FOLIAGE_MASKS_SCENE_DOCUMENT_VERSION,
   IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
@@ -179,7 +181,12 @@ describe("scene document JSON", () => {
           resolutionZ: 2,
           values: [0, 0.25, 0.5, 1]
         })
-      }
+      },
+      foliageBlockerMask: createTerrainFoliageBlockerMask({
+        resolutionX: 2,
+        resolutionZ: 2,
+        values: [0, 1, 0.25, 0.5]
+      })
     });
     const document = createEmptySceneDocument({
       name: "Foliage Mask Scene"
