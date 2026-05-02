@@ -5,6 +5,10 @@ import { createCreateFoliageLayerCommand } from "../../src/commands/create-folia
 import { createDeleteFoliageLayerCommand } from "../../src/commands/delete-foliage-layer-command";
 import { createUpdateFoliageLayerCommand } from "../../src/commands/update-foliage-layer-command";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
+import {
+  createTerrain,
+  createTerrainFoliageMask
+} from "../../src/document/terrains";
 import { BUNDLED_FOLIAGE_PROTOTYPES } from "../../src/foliage/bundled-foliage-manifest";
 import { createFoliageLayer } from "../../src/foliage/foliage";
 
@@ -118,5 +122,50 @@ describe("foliage layer commands", () => {
 
     expect(store.redo()).toBe(true);
     expect(store.getState().document.foliageLayers[layer.id]).toBeUndefined();
+  });
+
+  it("removes terrain foliage masks for the deleted layer and restores them on undo", () => {
+    const layer = createFoliageLayer({
+      id: "foliage-layer-delete-mask-command",
+      name: "Delete Mask Command Layer",
+      prototypeIds: [BUNDLED_FOLIAGE_PROTOTYPES[0]!.id]
+    });
+    const terrain = createTerrain({
+      id: "terrain-delete-foliage-mask-command",
+      sampleCountX: 2,
+      sampleCountZ: 2,
+      foliageMasks: {
+        [layer.id]: createTerrainFoliageMask({
+          layerId: layer.id,
+          resolutionX: 2,
+          resolutionZ: 2,
+          values: [0, 0.5, 0, 1]
+        })
+      }
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Foliage Delete Mask Scene" }),
+        terrains: {
+          [terrain.id]: terrain
+        },
+        foliageLayers: {
+          [layer.id]: layer
+        }
+      }
+    });
+
+    store.executeCommand(createDeleteFoliageLayerCommand(layer.id));
+
+    expect(store.getState().document.foliageLayers[layer.id]).toBeUndefined();
+    expect(
+      store.getState().document.terrains[terrain.id]?.foliageMasks[layer.id]
+    ).toBeUndefined();
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.foliageLayers[layer.id]).toEqual(layer);
+    expect(
+      store.getState().document.terrains[terrain.id]?.foliageMasks[layer.id]
+    ).toEqual(terrain.foliageMasks[layer.id]);
   });
 });
