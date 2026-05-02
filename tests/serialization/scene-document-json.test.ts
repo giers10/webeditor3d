@@ -971,6 +971,12 @@ describe("scene document JSON", () => {
         sourceSize: 1.35,
         samples: 40
       },
+      foliage: {
+        enabled: true,
+        densityMultiplier: 0.75,
+        maxDistanceMultiplier: 1.25,
+        shadows: "near"
+      },
       fogPath: "quality",
       waterPath: "performance",
       waterReflectionMode: "world",
