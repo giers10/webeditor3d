@@ -1612,8 +1612,18 @@ export class ViewportHost {
       terrainBrushState?.tool === "paint"
         ? this.currentTerrainBrushState.layerIndex !==
           terrainBrushState.layerIndex
-        : this.currentTerrainBrushState?.tool === "paint" ||
-          terrainBrushState?.tool === "paint";
+        : (this.currentTerrainBrushState?.tool === "foliagePaint" ||
+              this.currentTerrainBrushState?.tool === "foliageErase") &&
+            (terrainBrushState?.tool === "foliagePaint" ||
+              terrainBrushState?.tool === "foliageErase")
+          ? this.currentTerrainBrushState.foliageLayerId !==
+            terrainBrushState.foliageLayerId
+          : this.currentTerrainBrushState?.tool === "paint" ||
+            terrainBrushState?.tool === "paint" ||
+            this.currentTerrainBrushState?.tool === "foliagePaint" ||
+            this.currentTerrainBrushState?.tool === "foliageErase" ||
+            terrainBrushState?.tool === "foliagePaint" ||
+            terrainBrushState?.tool === "foliageErase";
 
     this.currentTerrainBrushState = terrainBrushState;
 
