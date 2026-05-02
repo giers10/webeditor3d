@@ -28,8 +28,15 @@ import {
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
 import type { Terrain } from "./terrains";
+import {
+  createEmptyFoliageLayerRegistry,
+  createEmptyFoliagePrototypeRegistry,
+  type FoliageLayerRegistry,
+  type FoliagePrototypeRegistry
+} from "../foliage/foliage";
 
-export const SCENE_DOCUMENT_VERSION = 91 as const;
+export const SCENE_DOCUMENT_VERSION = 92 as const;
+export const FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION = 92 as const;
 export const PLAYER_START_EDGE_ASSIST_SCENE_DOCUMENT_VERSION = 91 as const;
 export const WHITEBOX_FACE_CLIMBABLE_SCENE_DOCUMENT_VERSION = 90 as const;
 export const GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION = 89 as const;
@@ -190,6 +197,7 @@ export interface ProjectScene {
   world: WorldSettings;
   brushes: Record<string, Brush>;
   terrains: Record<string, Terrain>;
+  foliageLayers: FoliageLayerRegistry;
   paths: Record<string, ScenePath>;
   modelInstances: Record<string, ModelInstance>;
   entities: Record<string, EntityInstance>;
@@ -207,6 +215,7 @@ export interface ProjectDocument {
   materials: Record<string, MaterialDef>;
   textures: Record<string, never>;
   assets: Record<string, ProjectAssetRecord>;
+  foliagePrototypes: FoliagePrototypeRegistry;
 }
 
 export interface SceneDocument {
@@ -221,6 +230,8 @@ export interface SceneDocument {
   assets: Record<string, ProjectAssetRecord>;
   brushes: Record<string, Brush>;
   terrains: Record<string, Terrain>;
+  foliagePrototypes: FoliagePrototypeRegistry;
+  foliageLayers: FoliageLayerRegistry;
   paths: Record<string, ScenePath>;
   modelInstances: Record<string, ModelInstance>;
   entities: Record<string, EntityInstance>;
@@ -246,6 +257,8 @@ export function createEmptySceneDocument(
     assets: {},
     brushes: {},
     terrains: {},
+    foliagePrototypes: createEmptyFoliagePrototypeRegistry(),
+    foliageLayers: createEmptyFoliageLayerRegistry(),
     paths: {},
     modelInstances: {},
     entities: {},
@@ -273,6 +286,7 @@ export function createEmptyProjectScene(
     world: overrides.world ?? createDefaultWorldSettings(),
     brushes: {},
     terrains: {},
+    foliageLayers: createEmptyFoliageLayerRegistry(),
     paths: {},
     modelInstances: {},
     entities: {},
@@ -292,6 +306,7 @@ export function createEmptyProjectDocument(
       | "materials"
       | "textures"
       | "assets"
+      | "foliagePrototypes"
     >
   > & {
     sceneId?: string;
@@ -320,7 +335,9 @@ export function createEmptyProjectDocument(
       overrides.materials ?? createStarterMaterialRegistry()
     ),
     textures: overrides.textures ?? {},
-    assets: overrides.assets ?? {}
+    assets: overrides.assets ?? {},
+    foliagePrototypes:
+      overrides.foliagePrototypes ?? createEmptyFoliagePrototypeRegistry()
   };
 }
 
@@ -355,6 +372,8 @@ export function createSceneDocumentFromProject(
     assets: projectDocument.assets,
     brushes: scene.brushes,
     terrains: scene.terrains,
+    foliagePrototypes: projectDocument.foliagePrototypes,
+    foliageLayers: scene.foliageLayers,
     paths: scene.paths,
     modelInstances: scene.modelInstances,
     entities: scene.entities,
@@ -383,6 +402,7 @@ export function createProjectDocumentFromSceneDocument(
         world: sceneDocument.world,
         brushes: sceneDocument.brushes,
         terrains: sceneDocument.terrains,
+        foliageLayers: sceneDocument.foliageLayers,
         paths: sceneDocument.paths,
         modelInstances: sceneDocument.modelInstances,
         entities: sceneDocument.entities,
@@ -391,7 +411,8 @@ export function createProjectDocumentFromSceneDocument(
     },
     materials: sceneDocument.materials,
     textures: sceneDocument.textures,
-    assets: sceneDocument.assets
+    assets: sceneDocument.assets,
+    foliagePrototypes: sceneDocument.foliagePrototypes
   };
 }
 
@@ -411,6 +432,7 @@ export function applySceneDocumentToProject(
     materials: sceneDocument.materials,
     textures: sceneDocument.textures,
     assets: sceneDocument.assets,
+    foliagePrototypes: sceneDocument.foliagePrototypes,
     scenes: {
       ...projectDocument.scenes,
       [sceneId]: {
@@ -419,6 +441,7 @@ export function applySceneDocumentToProject(
         world: sceneDocument.world,
         brushes: sceneDocument.brushes,
         terrains: sceneDocument.terrains,
+        foliageLayers: sceneDocument.foliageLayers,
         paths: sceneDocument.paths,
         modelInstances: sceneDocument.modelInstances,
         entities: sceneDocument.entities,
