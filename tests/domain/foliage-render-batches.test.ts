@@ -89,10 +89,17 @@ describe("foliage render batch helpers", () => {
     );
 
     expect(batches).toHaveLength(2);
-    expect(batches[0]?.instances).toHaveLength(2);
-    expect(batches[1]?.instances).toHaveLength(1);
-    expect(batches[0]?.lodLevel).toBe(0);
-    expect(batches[0]?.bundledPath).toMatch(/_LOD0\.glb$/u);
+    expect(
+      batches.find((batch) => batch.prototypeId === prototype.id)?.instances
+    ).toHaveLength(2);
+    expect(
+      batches.find((batch) => batch.prototypeId === otherPrototype.id)
+        ?.instances
+    ).toHaveLength(1);
+    expect(batches.every((batch) => batch.lodLevel === 0)).toBe(true);
+    expect(batches.every((batch) => /_LOD0\.glb$/u.test(batch.bundledPath))).toBe(
+      true
+    );
   });
 
   it("ignores prototypes that do not have a bundled LOD0 render source", () => {
