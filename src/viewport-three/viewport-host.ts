@@ -9879,11 +9879,16 @@ export class ViewportHost {
     let dirtyBounds = this.activeTerrainBrushStroke.dirtyBounds;
     const heightSampleIndices = new Set(activeStroke.heightSampleIndices);
     const paintWeightIndices = new Set(activeStroke.paintWeightIndices);
+    const foliageMaskValueKeys = new Set(activeStroke.foliageMaskValueKeys);
     const mergeStampIndices = (
-      result: Pick<
-        ReturnType<typeof applyTerrainBrushStampInPlace>,
-        "heightSampleIndices" | "paintWeightIndices"
-      >
+      result: {
+        heightSampleIndices: readonly number[];
+        paintWeightIndices: readonly number[];
+        foliageMaskValueIndices?: ReturnType<
+          typeof applyTerrainBrushStampInPlace
+        >["foliageMaskValueIndices"];
+        foliageMaskValueKeys?: readonly string[];
+      }
     ) => {
       for (const sampleIndex of result.heightSampleIndices) {
         heightSampleIndices.add(sampleIndex);
@@ -9891,6 +9896,19 @@ export class ViewportHost {
 
       for (const paintWeightIndex of result.paintWeightIndices) {
         paintWeightIndices.add(paintWeightIndex);
+      }
+
+      for (const foliageMaskValueIndex of result.foliageMaskValueIndices ?? []) {
+        foliageMaskValueKeys.add(
+          createTerrainFoliageMaskValueKey(
+            foliageMaskValueIndex.layerId,
+            foliageMaskValueIndex.index
+          )
+        );
+      }
+
+      for (const foliageMaskValueKey of result.foliageMaskValueKeys ?? []) {
+        foliageMaskValueKeys.add(foliageMaskValueKey);
       }
     };
 
@@ -9945,7 +9963,9 @@ export class ViewportHost {
       !cancelled &&
       dirtyBounds !== null &&
       changed &&
-      (heightSampleIndices.size > 0 || paintWeightIndices.size > 0);
+      (heightSampleIndices.size > 0 ||
+        paintWeightIndices.size > 0 ||
+        foliageMaskValueKeys.size > 0);
     const toolState = this.activeTerrainBrushStroke.toolState;
     this.activeTerrainBrushStroke = null;
     this.terrainBrushPreviewGroup.visible = false;
@@ -9959,7 +9979,10 @@ export class ViewportHost {
       before: activeStroke.baseTerrain,
       after: finalPreviewTerrain,
       heightSampleIndices,
-      paintWeightIndices
+      paintWeightIndices,
+      foliageMaskValueIndices: [...foliageMaskValueKeys].map(
+        parseTerrainFoliageMaskValueKey
+      )
     });
 
     const committed =
