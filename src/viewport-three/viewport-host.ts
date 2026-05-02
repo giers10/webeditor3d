@@ -9723,6 +9723,7 @@ export class ViewportHost {
     heightSampleIndices: number[];
     paintWeightIndices: number[];
     foliageMaskValueKeys: string[];
+    foliageBlockerMaskValueIndices: number[];
     lastAppliedPoint: {
       x: number;
       z: number;
@@ -9740,6 +9741,7 @@ export class ViewportHost {
         heightSampleIndices: [],
         paintWeightIndices: [],
         foliageMaskValueKeys: [],
+        foliageBlockerMaskValueIndices: [],
         lastAppliedPoint: from
       };
     }
@@ -9749,6 +9751,7 @@ export class ViewportHost {
     const heightSampleIndices = new Set<number>();
     const paintWeightIndices = new Set<number>();
     const foliageMaskValueKeys = new Set<string>();
+    const foliageBlockerMaskValueIndices = new Set<number>();
     let lastAppliedPoint = from;
     const stepCount = Math.floor(distance / spacing);
     const mergeDirtyBounds = (nextBounds: TerrainBrushDirtySampleBounds | null) => {
@@ -9807,6 +9810,9 @@ export class ViewportHost {
           )
         );
       }
+      for (const maskIndex of result.foliageBlockerMaskValueIndices) {
+        foliageBlockerMaskValueIndices.add(maskIndex);
+      }
       lastAppliedPoint = point;
     }
 
@@ -9816,6 +9822,7 @@ export class ViewportHost {
       heightSampleIndices: [...heightSampleIndices],
       paintWeightIndices: [...paintWeightIndices],
       foliageMaskValueKeys: [...foliageMaskValueKeys],
+      foliageBlockerMaskValueIndices: [...foliageBlockerMaskValueIndices],
       lastAppliedPoint
     };
   }
