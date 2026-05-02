@@ -856,6 +856,72 @@ function getStoredTerrainPaintWeightAtSample(
   return terrain.paintWeights[offset + layerOffset] ?? 0;
 }
 
+export function getTerrainFoliageMaskSampleIndex(
+  mask: Pick<TerrainFoliageMask, "resolutionX" | "resolutionZ">,
+  sampleX: number,
+  sampleZ: number
+): number {
+  if (
+    !Number.isInteger(sampleX) ||
+    sampleX < 0 ||
+    sampleX >= mask.resolutionX
+  ) {
+    throw new Error(`Terrain foliage mask sampleX ${sampleX} is out of range.`);
+  }
+
+  if (
+    !Number.isInteger(sampleZ) ||
+    sampleZ < 0 ||
+    sampleZ >= mask.resolutionZ
+  ) {
+    throw new Error(`Terrain foliage mask sampleZ ${sampleZ} is out of range.`);
+  }
+
+  return sampleZ * mask.resolutionX + sampleX;
+}
+
+export function getTerrainFoliageMaskValueAtSample(
+  mask: TerrainFoliageMask,
+  sampleX: number,
+  sampleZ: number
+): number {
+  return (
+    mask.values[getTerrainFoliageMaskSampleIndex(mask, sampleX, sampleZ)] ?? 0
+  );
+}
+
+export function getTerrainFoliageMask(
+  terrain: Pick<Terrain, "foliageMasks">,
+  layerId: string
+): TerrainFoliageMask | null {
+  return terrain.foliageMasks[layerId] ?? null;
+}
+
+export function getOrCreateTerrainFoliageMask(
+  terrain: Terrain,
+  layerId: string
+): TerrainFoliageMask {
+  const normalizedLayerId = normalizeTerrainFoliageLayerId(
+    layerId,
+    "Terrain foliage mask layerId"
+  );
+  const currentMask = terrain.foliageMasks[normalizedLayerId];
+
+  if (currentMask !== undefined) {
+    return currentMask;
+  }
+
+  const nextMask = createEmptyTerrainFoliageMask(terrain, normalizedLayerId);
+  terrain.foliageMasks[normalizedLayerId] = nextMask;
+  return nextMask;
+}
+
+export function isTerrainFoliageMaskEmpty(
+  mask: TerrainFoliageMask
+): boolean {
+  return mask.values.every((value) => value === 0);
+}
+
 function sampleTerrainPaintWeightAtGridCoordinate(
   terrain: Terrain,
   sampleX: number,
