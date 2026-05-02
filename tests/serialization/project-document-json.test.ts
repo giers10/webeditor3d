@@ -32,6 +32,7 @@ import {
 import { createBoxBrush } from "../../src/document/brushes";
 import {
   createTerrain,
+  createTerrainFoliageBlockerMask,
   createTerrainFoliageMask
 } from "../../src/document/terrains";
 import { createScenePath } from "../../src/document/paths";
