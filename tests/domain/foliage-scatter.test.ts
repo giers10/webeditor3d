@@ -99,7 +99,10 @@ function createMaskedTerrain(options: {
     sampleCountX,
     sampleCountZ,
     cellSize: options.cellSize ?? 1,
-    heights: options.heights ?? new Array<number>(sampleCount).fill(0),
+    heights:
+      options.heights !== undefined
+        ? [...options.heights]
+        : new Array<number>(sampleCount).fill(0),
     foliageMasks:
       options.includeMask === false
         ? {}
