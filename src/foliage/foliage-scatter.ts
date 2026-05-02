@@ -224,12 +224,14 @@ function sourceToRegistry(
   source: FoliageScatterPrototypeSource
 ): FoliagePrototypeRegistry {
   if (Array.isArray(source)) {
+    const prototypes = source as readonly FoliagePrototype[];
+
     return Object.fromEntries(
-      source.map((prototype) => [prototype.id, prototype])
+      prototypes.map((prototype) => [prototype.id, prototype])
     );
   }
 
-  return { ...source };
+  return { ...(source as FoliagePrototypeRegistry) };
 }
 
 export function createFoliageScatterPrototypeRegistry(options: {
