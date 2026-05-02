@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createTerrain,
+  createTerrainFoliageBlockerMask,
   createTerrainFoliageMask,
   type Terrain
 } from "../../src/document/terrains";
@@ -215,6 +216,31 @@ describe("foliage scatter generation", () => {
 
     expect(fullMask.instanceCount).toBeGreaterThan(quarterMask.instanceCount);
     expect(quarterMask.instanceCount).toBeGreaterThan(0);
+  });
+
+  it("skips candidates in globally blocked terrain areas", () => {
+    const unblocked = createMaskedTerrain({ maskValue: 1 });
+    const blocked = createTerrain({
+      ...unblocked,
+      foliageBlockerMask: createTerrainFoliageBlockerMask({
+        resolutionX: unblocked.sampleCountX,
+        resolutionZ: unblocked.sampleCountZ,
+        values: new Array(
+          unblocked.sampleCountX * unblocked.sampleCountZ
+        ).fill(1)
+      })
+    });
+    const unblockedResult = generateForFixture({
+      terrain: unblocked,
+      maxInstancesPerChunk: 1024
+    });
+    const blockedResult = generateForFixture({
+      terrain: blocked,
+      maxInstancesPerChunk: 1024
+    });
+
+    expect(unblockedResult.instanceCount).toBeGreaterThan(0);
+    expect(blockedResult).toEqual({ chunks: [], instanceCount: 0 });
   });
 
   it("uses layer density to affect generated instance counts", () => {
