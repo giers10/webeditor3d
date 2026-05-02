@@ -9829,6 +9829,7 @@ export class ViewportHost {
         typeof applyTerrainBrushStampInPlace
       >["foliageMaskValueIndices"];
       foliageMaskValueKeys?: readonly string[];
+      foliageBlockerMaskValueIndices?: readonly number[];
     }
   ) {
     for (const sampleIndex of result.heightSampleIndices) {
@@ -9850,6 +9851,10 @@ export class ViewportHost {
 
     for (const foliageMaskValueKey of result.foliageMaskValueKeys ?? []) {
       stroke.foliageMaskValueKeys.add(foliageMaskValueKey);
+    }
+
+    for (const maskIndex of result.foliageBlockerMaskValueIndices ?? []) {
+      stroke.foliageBlockerMaskValueIndices.add(maskIndex);
     }
   }
 
