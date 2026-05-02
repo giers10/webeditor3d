@@ -36,6 +36,11 @@ export const ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_QUALITIES = [
   "low",
   "medium"
 ] as const;
+export const FOLIAGE_QUALITY_SHADOW_MODES = ["off", "near", "full"] as const;
+export const MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER = 0 as const;
+export const MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER = 2 as const;
+export const MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER = 0.1 as const;
+export const MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER = 2 as const;
 
 export type AdvancedRenderingShadowMapSize =
   (typeof ADVANCED_RENDERING_SHADOW_MAP_SIZES)[number];
@@ -48,6 +53,8 @@ export type AdvancedRenderingWaterReflectionMode =
   (typeof ADVANCED_RENDERING_WATER_REFLECTION_MODES)[number];
 export type AdvancedRenderingDynamicGlobalIlluminationQuality =
   (typeof ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_QUALITIES)[number];
+export type FoliageQualityShadowMode =
+  (typeof FOLIAGE_QUALITY_SHADOW_MODES)[number];
 
 export interface WorldSolidBackgroundSettings {
   mode: "solid";
@@ -189,6 +196,13 @@ export interface AdvancedRenderingGodRaysSettings {
   samples: number;
 }
 
+export interface FoliageQualitySettings {
+  enabled: boolean;
+  densityMultiplier: number;
+  maxDistanceMultiplier: number;
+  shadows: FoliageQualityShadowMode;
+}
+
 export interface AdvancedRenderingSettings {
   enabled: boolean;
   shadows: AdvancedRenderingShadowsSettings;
@@ -200,6 +214,7 @@ export interface AdvancedRenderingSettings {
   whiteboxBevel: AdvancedRenderingWhiteboxBevelSettings;
   distanceFog: AdvancedRenderingDistanceFogSettings;
   godRays: AdvancedRenderingGodRaysSettings;
+  foliage: FoliageQualitySettings;
   fogPath: BoxVolumeRenderPath;
   waterPath: BoxVolumeRenderPath;
   waterReflectionMode: AdvancedRenderingWaterReflectionMode;
@@ -304,6 +319,10 @@ const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_EXPOSURE = 0.28;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_DENSITY = 0.72;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SOURCE_SIZE = 1;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SAMPLES = 48;
+const DEFAULT_FOLIAGE_QUALITY_ENABLED = true;
+const DEFAULT_FOLIAGE_QUALITY_DENSITY_MULTIPLIER = 1;
+const DEFAULT_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER = 1;
+const DEFAULT_FOLIAGE_QUALITY_SHADOWS: FoliageQualityShadowMode = "near";
 const DEFAULT_BOX_VOLUME_RENDER_PATH: BoxVolumeRenderPath = "performance";
 const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE: AdvancedRenderingWaterReflectionMode =
   "none";
@@ -515,6 +534,74 @@ export function isAdvancedRenderingDynamicGlobalIlluminationQuality(
   );
 }
 
+export function isFoliageQualityShadowMode(
+  value: unknown
+): value is FoliageQualityShadowMode {
+  return FOLIAGE_QUALITY_SHADOW_MODES.includes(
+    value as FoliageQualityShadowMode
+  );
+}
+
+export function createDefaultFoliageQualitySettings(): FoliageQualitySettings {
+  return {
+    enabled: DEFAULT_FOLIAGE_QUALITY_ENABLED,
+    densityMultiplier: DEFAULT_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
+    maxDistanceMultiplier: DEFAULT_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
+    shadows: DEFAULT_FOLIAGE_QUALITY_SHADOWS
+  };
+}
+
+export function resolveFoliageQualitySettings(
+  settings: FoliageQualitySettings | null | undefined
+): FoliageQualitySettings {
+  const defaults = createDefaultFoliageQualitySettings();
+
+  if (settings === null || settings === undefined) {
+    return defaults;
+  }
+
+  return {
+    enabled: settings.enabled,
+    densityMultiplier: Number.isFinite(settings.densityMultiplier)
+      ? clamp(
+          settings.densityMultiplier,
+          MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
+          MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER
+        )
+      : defaults.densityMultiplier,
+    maxDistanceMultiplier: Number.isFinite(settings.maxDistanceMultiplier)
+      ? clamp(
+          settings.maxDistanceMultiplier,
+          MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
+          MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER
+        )
+      : defaults.maxDistanceMultiplier,
+    shadows: isFoliageQualityShadowMode(settings.shadows)
+      ? settings.shadows
+      : defaults.shadows
+  };
+}
+
+export function cloneFoliageQualitySettings(
+  settings: FoliageQualitySettings
+): FoliageQualitySettings {
+  return {
+    ...settings
+  };
+}
+
+export function areFoliageQualitySettingsEqual(
+  left: FoliageQualitySettings,
+  right: FoliageQualitySettings
+): boolean {
+  return (
+    left.enabled === right.enabled &&
+    left.densityMultiplier === right.densityMultiplier &&
+    left.maxDistanceMultiplier === right.maxDistanceMultiplier &&
+    left.shadows === right.shadows
+  );
+}
+
 export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSettings {
   return {
     enabled: false,
@@ -578,6 +665,7 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
       sourceSize: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SOURCE_SIZE,
       samples: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SAMPLES
     },
+    foliage: createDefaultFoliageQualitySettings(),
     fogPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
     waterPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
     waterReflectionMode: DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE
@@ -906,6 +994,7 @@ export function cloneAdvancedRenderingSettings(
     godRays: {
       ...settings.godRays
     },
+    foliage: cloneFoliageQualitySettings(settings.foliage),
     fogPath: settings.fogPath,
     waterPath: settings.waterPath,
     waterReflectionMode: settings.waterReflectionMode
@@ -1109,6 +1198,7 @@ export function areAdvancedRenderingSettingsEqual(
     left.godRays.density === right.godRays.density &&
     left.godRays.sourceSize === right.godRays.sourceSize &&
     left.godRays.samples === right.godRays.samples &&
+    areFoliageQualitySettingsEqual(left.foliage, right.foliage) &&
     left.fogPath === right.fogPath &&
     left.waterPath === right.waterPath &&
     left.waterReflectionMode === right.waterReflectionMode
