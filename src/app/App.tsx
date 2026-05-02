@@ -20655,6 +20655,41 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                   </div>
 
                   <div className="form-section">
+                    <div className="label">Foliage Mask Paint</div>
+                    <div
+                      className="viewport-panel__control-group"
+                      role="group"
+                      aria-label="Foliage mask paint controls"
+                    >
+                      <button
+                        className={`viewport-panel__button ${armedTerrainBrushTool === "foliagePaint" ? "viewport-panel__button--active" : ""}`}
+                        type="button"
+                        data-testid="terrain-brush-tool-foliage-paint"
+                        aria-pressed={armedTerrainBrushTool === "foliagePaint"}
+                        disabled={activeFoliageLayer === null}
+                        onClick={() => handleArmTerrainBrushTool("foliagePaint")}
+                      >
+                        Paint Mask
+                      </button>
+                      <button
+                        className={`viewport-panel__button ${armedTerrainBrushTool === "foliageErase" ? "viewport-panel__button--active" : ""}`}
+                        type="button"
+                        data-testid="terrain-brush-tool-foliage-erase"
+                        aria-pressed={armedTerrainBrushTool === "foliageErase"}
+                        disabled={activeFoliageLayer === null}
+                        onClick={() => handleArmTerrainBrushTool("foliageErase")}
+                      >
+                        Erase Mask
+                      </button>
+                    </div>
+                    <div className="material-summary">
+                      {activeFoliageLayer === null
+                        ? "Create or select a foliage layer in the Foliage panel before painting terrain masks."
+                        : `${activeFoliageLayer.name} mask has ${selectedTerrainActiveFoliageMaskPaintedSampleCount} painted sample${selectedTerrainActiveFoliageMaskPaintedSampleCount === 1 ? "" : "s"} on this terrain.`}
+                    </div>
+                  </div>
+
+                  <div className="form-section">
                     <div className="label">Brush Settings</div>
                     <label className="form-field">
                       <span className="label">
