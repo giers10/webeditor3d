@@ -2246,6 +2246,49 @@ function readTerrain(value: unknown, label: string): Terrain {
             expectFiniteNumber(paintWeight, `${label}.paintWeights.${index}`)
           );
         })();
+  const foliageMasks =
+    value.foliageMasks === undefined
+      ? undefined
+      : (() => {
+          if (!isRecord(value.foliageMasks)) {
+            throw new Error(`${label}.foliageMasks must be a record.`);
+          }
+
+          return Object.fromEntries(
+            Object.entries(value.foliageMasks).map(([layerId, maskValue]) => {
+              const maskLabel = `${label}.foliageMasks.${layerId}`;
+
+              if (!isRecord(maskValue)) {
+                throw new Error(`${maskLabel} must be an object.`);
+              }
+
+              if (!Array.isArray(maskValue.values)) {
+                throw new Error(`${maskLabel}.values must be an array.`);
+              }
+
+              return [
+                layerId,
+                {
+                  layerId: expectString(maskValue.layerId, `${maskLabel}.layerId`),
+                  resolutionX: expectFiniteNumber(
+                    maskValue.resolutionX,
+                    `${maskLabel}.resolutionX`
+                  ),
+                  resolutionZ: expectFiniteNumber(
+                    maskValue.resolutionZ,
+                    `${maskLabel}.resolutionZ`
+                  ),
+                  values: maskValue.values.map((maskSample, sampleIndex) =>
+                    expectFiniteNumber(
+                      maskSample,
+                      `${maskLabel}.values.${sampleIndex}`
+                    )
+                  )
+                }
+              ];
+            })
+          );
+        })();
 
   return createTerrain({
     id: expectString(value.id, `${label}.id`),
@@ -2264,7 +2307,8 @@ function readTerrain(value: unknown, label: string): Terrain {
     cellSize,
     heights,
     layers,
-    paintWeights
+    paintWeights,
+    foliageMasks
   });
 }
 
