@@ -40,6 +40,7 @@ import {
   NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION,
   NPC_DIALOGUE_REFERENCE_SCENE_DOCUMENT_VERSION,
   PATH_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  PLAYER_START_EDGE_ASSIST_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_AIR_DIRECTION_CONTROL_SCENE_DOCUMENT_VERSION,
   PLAYER_START_COLLIDER_SETTINGS_SCENE_DOCUMENT_VERSION,
@@ -102,6 +103,8 @@ import {
   parseSceneDocumentJson,
   serializeSceneDocument
 } from "../../src/serialization/scene-document-json";
+import { BUNDLED_FOLIAGE_PROTOTYPES } from "../../src/foliage/bundled-foliage-manifest";
+import { createFoliageLayer } from "../../src/foliage/foliage";
 
 describe("scene document JSON", () => {
   it("round-trips the current empty schema", () => {
@@ -132,6 +135,46 @@ describe("scene document JSON", () => {
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
       document
     );
+  });
+
+  it("round-trips authored foliage layer references in the current schema", () => {
+    const bundledPrototype = BUNDLED_FOLIAGE_PROTOTYPES[0];
+    const layer = createFoliageLayer({
+      id: "foliage-layer-roundtrip",
+      name: "Roundtrip Meadow",
+      prototypeIds: [bundledPrototype.id],
+      density: 1.25,
+      minScale: 0.8,
+      maxScale: 1.35,
+      seed: 42
+    });
+    const document = createEmptySceneDocument({ name: "Foliage Scene" });
+    document.foliageLayers[layer.id] = layer;
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
+  });
+
+  it("migrates pre-foliage scene documents with empty foliage state", () => {
+    const document = createEmptySceneDocument({
+      name: "Legacy Foliage-Free Scene"
+    });
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(document)
+    ) as Record<string, unknown>;
+
+    legacyDocument.version = PLAYER_START_EDGE_ASSIST_SCENE_DOCUMENT_VERSION;
+    delete legacyDocument.foliagePrototypes;
+    delete legacyDocument.foliageLayers;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.foliagePrototypes).toEqual({});
+    expect(migratedDocument.foliageLayers).toEqual({});
   });
 
   it("round-trips camera rig control effects in interaction links, sequences, and scheduler routines", () => {
