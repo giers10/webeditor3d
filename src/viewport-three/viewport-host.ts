@@ -6632,7 +6632,9 @@ export class ViewportHost {
     const group = new Group();
     const chunks: TerrainRenderChunkObjects[] = [];
     const pickMeshes: Mesh<BufferGeometry, Material>[] = [];
-    const lodMeshData = buildTerrainLodMeshData(terrain);
+    const lodMeshData = buildTerrainLodMeshData(terrain, {
+      foliageMaskLayerId: this.getTerrainFoliageMaskPreviewLayerId(terrain.id)
+    });
 
     group.position.set(terrain.position.x, terrain.position.y, terrain.position.z);
 
