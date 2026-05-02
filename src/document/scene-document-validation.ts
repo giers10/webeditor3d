@@ -87,6 +87,11 @@ import {
   isAdvancedRenderingShadowType,
   isBoxVolumeRenderPath,
   isAdvancedRenderingToneMappingMode,
+  isFoliageQualityShadowMode,
+  MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
+  MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
+  MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
+  MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
   isHexColorString,
   isWorldShaderSkyPresetId,
   type WorldCelestialOrbitAuthoringSettings,
@@ -1356,6 +1361,62 @@ function validateWorldSettings(
         "invalid-advanced-rendering-god-rays-samples",
         "Advanced rendering god rays samples must be a positive integer.",
         "world.advancedRendering.godRays.samples"
+      )
+    );
+  }
+
+  if (!isBoolean(advancedRendering.foliage.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-quality-enabled",
+        "Foliage quality enabled must be a boolean.",
+        "world.advancedRendering.foliage.enabled"
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      advancedRendering.foliage.densityMultiplier,
+      MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
+      MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-quality-density-multiplier",
+        "Foliage density multiplier must be a finite number between 0 and 2.",
+        "world.advancedRendering.foliage.densityMultiplier"
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      advancedRendering.foliage.maxDistanceMultiplier,
+      MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
+      MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-quality-max-distance-multiplier",
+        "Foliage max distance multiplier must be a finite number between 0.1 and 2.",
+        "world.advancedRendering.foliage.maxDistanceMultiplier"
+      )
+    );
+  }
+
+  if (!isFoliageQualityShadowMode(advancedRendering.foliage.shadows)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-quality-shadows",
+        "Foliage shadows must be off, near, or full.",
+        "world.advancedRendering.foliage.shadows"
       )
     );
   }
