@@ -6198,7 +6198,8 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       scenes,
       materials,
       textures: expectEmptyCollection(source.textures, "textures"),
-      assets
+      assets,
+      foliagePrototypes: readFoliagePrototypes(source.foliagePrototypes, assets)
     };
 
     return source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
