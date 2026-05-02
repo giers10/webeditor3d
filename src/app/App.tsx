@@ -16194,6 +16194,284 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                 </div>
               </Panel>
 
+              <Panel title="Foliage">
+                <div className="stat-card">
+                  <div className="label">Bundled Library</div>
+                  <div className="value">
+                    {SORTED_BUNDLED_FOLIAGE_PROTOTYPES.length} prototypes
+                  </div>
+                  <div className="material-summary">
+                    Engine-owned GLB assets are available for authored foliage
+                    layers. This panel does not create placed model instances.
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Prototype Library</div>
+                  <div
+                    className="foliage-prototype-list"
+                    data-testid="foliage-prototype-library"
+                  >
+                    {[
+                      ...SORTED_BUNDLED_FOLIAGE_PROTOTYPES,
+                      ...customFoliagePrototypeList
+                    ].map((prototype) => (
+                      <div
+                        key={prototype.id}
+                        className="outliner-item outliner-item--compact"
+                      >
+                        <div className="outliner-item__row">
+                          <div className="outliner-item__select">
+                            <span className="outliner-item__title">
+                              {prototype.label}
+                            </span>
+                            <span className="outliner-item__meta">
+                              {prototype.category} ·{" "}
+                              {formatFoliagePrototypeSource(prototype)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="outliner-item__meta">
+                          {formatFoliagePrototypeLodStatus(prototype)}
+                        </div>
+                        <div className="outliner-item__meta">
+                          {formatFoliagePrototypeLodDistanceSummary(prototype)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="label">Scene Layers</div>
+                  <div className="inline-actions">
+                    <button
+                      className="toolbar__button toolbar__button--compact"
+                      type="button"
+                      data-testid="foliage-create-layer"
+                      onClick={handleCreateFoliageLayer}
+                    >
+                      Create Layer
+                    </button>
+                  </div>
+                  <div
+                    className="outliner-list"
+                    data-testid="foliage-layer-list"
+                  >
+                    {foliageLayerList.length === 0 ? (
+                      <div className="outliner-empty">
+                        No foliage layers are authored for this scene.
+                      </div>
+                    ) : (
+                      foliageLayerList.map((layer) => (
+                        <div
+                          key={layer.id}
+                          className={`outliner-item outliner-item--compact ${
+                            activeFoliageLayerId === layer.id
+                              ? "outliner-item--selected"
+                              : ""
+                          } ${
+                            layer.enabled ? "" : "outliner-item--disabled"
+                          }`}
+                        >
+                          <div className="outliner-item__row">
+                            <input
+                              className="outliner-item__toggle"
+                              type="checkbox"
+                              data-testid={`foliage-layer-enabled-${layer.id}`}
+                              checked={layer.enabled}
+                              aria-label={`${layer.enabled ? "Disable" : "Enable"} ${layer.name}`}
+                              onChange={(event) =>
+                                handleFoliageLayerEnabledChange(
+                                  layer,
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                            <button
+                              className="outliner-item__select"
+                              type="button"
+                              data-testid={`foliage-layer-select-${layer.id}`}
+                              onClick={() => {
+                                setActiveFoliageLayerId(layer.id);
+                                setStatusMessage(
+                                  `${layer.name} is the active foliage layer.`
+                                );
+                              }}
+                            >
+                              <span className="outliner-item__title">
+                                {layer.name}
+                              </span>
+                              <span className="outliner-item__meta">
+                                {layer.prototypeIds.length} prototype
+                                {layer.prototypeIds.length === 1 ? "" : "s"} ·
+                                density {layer.density}
+                              </span>
+                            </button>
+                            <button
+                              className="outliner-item__delete"
+                              type="button"
+                              data-testid={`foliage-layer-delete-${layer.id}`}
+                              aria-label={`Delete ${layer.name}`}
+                              onClick={() => handleDeleteFoliageLayer(layer.id)}
+                            >
+                              x
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {activeFoliageLayer === null ? null : (
+                  <>
+                    <div className="form-section">
+                      <div className="label">Active Layer</div>
+                      <label className="form-field">
+                        <span className="label">Name</span>
+                        <input
+                          className="text-input"
+                          type="text"
+                          data-testid="foliage-layer-name"
+                          value={foliageLayerNameDraft}
+                          onChange={(event) =>
+                            setFoliageLayerNameDraft(
+                              event.currentTarget.value
+                            )
+                          }
+                          onBlur={applyActiveFoliageLayerName}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              applyActiveFoliageLayerName();
+                            } else if (event.key === "Escape") {
+                              setFoliageLayerNameDraft(
+                                activeFoliageLayer.name
+                              );
+                            }
+                          }}
+                        />
+                      </label>
+                      <label className="form-field form-field--toggle">
+                        <span className="label">Enabled</span>
+                        <input
+                          type="checkbox"
+                          data-testid="foliage-layer-enabled"
+                          checked={activeFoliageLayer.enabled}
+                          onChange={(event) =>
+                            handleFoliageLayerEnabledChange(
+                              activeFoliageLayer,
+                              event.currentTarget.checked
+                            )
+                          }
+                        />
+                      </label>
+                      <div className="material-summary">
+                        Active layer state is editor UI state. The layer data
+                        itself persists with the scene.
+                      </div>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Scatter Settings</div>
+                      <div className="vector-inputs vector-inputs--two">
+                        {FOLIAGE_LAYER_NUMERIC_INPUTS.map((input) => (
+                          <label key={input.field} className="form-field">
+                            <span className="label">{input.label}</span>
+                            <input
+                              className="text-input"
+                              type="number"
+                              data-testid={`foliage-layer-${input.field}`}
+                              min={input.min}
+                              max={input.max}
+                              step={input.step}
+                              value={foliageLayerNumberDrafts[input.field]}
+                              onChange={(event) =>
+                                handleFoliageLayerNumberDraftChange(
+                                  input.field,
+                                  event.currentTarget.value
+                                )
+                              }
+                              onBlur={() =>
+                                applyActiveFoliageLayerNumericField(
+                                  input.field
+                                )
+                              }
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(event, () =>
+                                  applyActiveFoliageLayerNumericField(
+                                    input.field
+                                  )
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(event, () =>
+                                  applyActiveFoliageLayerNumericField(
+                                    input.field
+                                  )
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(event, () =>
+                                  applyActiveFoliageLayerNumericField(
+                                    input.field
+                                  )
+                                )
+                              }
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="form-section">
+                      <div className="label">Prototype Mix</div>
+                      <div
+                        className="foliage-prototype-list"
+                        data-testid="foliage-prototype-mix"
+                      >
+                        {SORTED_BUNDLED_FOLIAGE_PROTOTYPES.map(
+                          (prototype) => (
+                            <label
+                              key={prototype.id}
+                              className="outliner-item outliner-item--compact foliage-prototype-choice"
+                            >
+                              <div className="outliner-item__row">
+                                <input
+                                  className="outliner-item__toggle"
+                                  type="checkbox"
+                                  data-testid={`foliage-prototype-checkbox-${prototype.id}`}
+                                  checked={activeFoliageLayer.prototypeIds.includes(
+                                    prototype.id
+                                  )}
+                                  onChange={(event) =>
+                                    handleFoliagePrototypeSelectionChange(
+                                      prototype.id,
+                                      event.currentTarget.checked
+                                    )
+                                  }
+                                />
+                                <span className="outliner-item__select">
+                                  <span className="outliner-item__title">
+                                    {prototype.label}
+                                  </span>
+                                  <span className="outliner-item__meta">
+                                    {prototype.category} ·{" "}
+                                    {formatFoliagePrototypeLodStatus(
+                                      prototype
+                                    )}
+                                  </span>
+                                </span>
+                              </div>
+                            </label>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </Panel>
+
               <Panel title="Project Time">
                 <div className="stat-card">
                   <div className="label">Clock</div>
