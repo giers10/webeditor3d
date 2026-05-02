@@ -7272,6 +7272,26 @@ export function validateSceneDocument(
     validateProjectAsset(asset, path, diagnostics);
   }
 
+  for (const [prototypeKey, prototype] of Object.entries(
+    document.foliagePrototypes
+  )) {
+    const path = `foliagePrototypes.${prototypeKey}`;
+
+    if (prototype.id !== prototypeKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "foliage-prototype-id-mismatch",
+          "Foliage prototype ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(prototype.id, path, seenIds, diagnostics);
+    validateFoliagePrototype(prototype, path, document, diagnostics);
+  }
+
   for (const [sequenceKey, sequence] of Object.entries(
     document.sequences.sequences
   )) {
