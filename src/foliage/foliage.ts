@@ -318,6 +318,10 @@ export function cloneFoliageLayer(layer: FoliageLayer): FoliageLayer {
     );
   }
 
+  if (typeof layer.enabled !== "boolean") {
+    throw new Error("Foliage layer enabled must be a boolean.");
+  }
+
   return {
     id: normalizeNonEmptyString(layer.id, "Foliage layer id"),
     name: normalizeNonEmptyString(layer.name, "Foliage layer name"),

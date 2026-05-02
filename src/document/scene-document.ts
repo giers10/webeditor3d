@@ -270,7 +270,12 @@ export function createEmptyProjectScene(
   overrides: Partial<
     Pick<
       ProjectScene,
-      "id" | "name" | "loadingScreen" | "editorPreferences" | "world"
+      | "id"
+      | "name"
+      | "loadingScreen"
+      | "editorPreferences"
+      | "world"
+      | "foliageLayers"
     >
   > = {}
 ): ProjectScene {
@@ -286,7 +291,7 @@ export function createEmptyProjectScene(
     world: overrides.world ?? createDefaultWorldSettings(),
     brushes: {},
     terrains: {},
-    foliageLayers: createEmptyFoliageLayerRegistry(),
+    foliageLayers: overrides.foliageLayers ?? createEmptyFoliageLayerRegistry(),
     paths: {},
     modelInstances: {},
     entities: {},
