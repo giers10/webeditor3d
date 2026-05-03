@@ -20,8 +20,12 @@ import { applyRendererRenderCategoryFromMaterial } from "../rendering/render-lay
 import { loadBundledFoliageModelTemplate } from "./bundled-foliage-model-loader";
 import {
   createFoliageInstanceMatrix,
-  createFoliageRenderBatches,
+  createFoliageRenderBatchKey,
+  createFoliageRenderResourcePlan,
+  resolveFoliageRenderChunkLod,
   type FoliageRenderBatch,
+  type FoliageRenderChunk,
+  type FoliageRenderResourcePlan,
   type FoliageRenderView
 } from "./foliage-render-batches";
 import type {
@@ -56,6 +60,32 @@ interface FoliageTemplateSourceMesh {
 }
 
 const VIEW_SIGNATURE_PRECISION = 100;
+
+function stableStringify(value: unknown): string {
+  if (
+    value === null ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "string"
+  ) {
+    return JSON.stringify(value);
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableStringify(entry)).join(",")}]`;
+  }
+
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+
+    return `{${Object.keys(record)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(String(value));
+}
 
 function cloneMaterial(material: Material): Material {
   return material.clone();
@@ -194,6 +224,24 @@ function collectTemplateSourceMeshes(template: Group): FoliageTemplateSourceMesh
   return sourceMeshes;
 }
 
+function createFoliageRenderResourceSignature(options: {
+  terrains: Record<string, Terrain>;
+  foliageLayers: FoliageLayerRegistry;
+  prototypeRegistry: FoliagePrototypeRegistry;
+  quality: FoliageQualitySettings;
+}): string {
+  return stableStringify({
+    terrains: options.terrains,
+    foliageLayers: options.foliageLayers,
+    prototypeRegistry: options.prototypeRegistry,
+    quality: {
+      enabled: options.quality.enabled,
+      densityMultiplier: options.quality.densityMultiplier,
+      shadows: options.quality.shadows
+    }
+  });
+}
+
 function createInstancedMeshForSource(
   batch: FoliageRenderBatch,
   sourceMesh: FoliageTemplateSourceMesh
@@ -246,11 +294,18 @@ export class FoliageInstancedRenderer {
 
   private requestId = 0;
   private activeBatchGroup: Group | null = null;
+  private batchGroupsByKey = new Map<string, Group>();
+  private renderChunks: FoliageRenderChunk[] = [];
   private scatter: FoliageScatterResult | null = null;
   private prototypeRegistry: FoliagePrototypeRegistry = {};
   private quality: FoliageQualitySettings = resolveFoliageQualitySettings(null);
   private currentView: FoliageRenderView | null = null;
   private viewSignature: string | null = null;
+  private renderResourceSignature: string | null = null;
+  private readonly sourceMeshPromisesByBundledPath = new Map<
+    string,
+    Promise<FoliageTemplateSourceMesh[]>
+  >();
   private readonly onRebuilt?: () => void;
   private readonly onDiagnostic?: (message: string) => void;
 
@@ -272,24 +327,40 @@ export class FoliageInstancedRenderer {
       input.foliageLayers,
       quality.densityMultiplier
     );
+    const renderResourceSignature = createFoliageRenderResourceSignature({
+      terrains,
+      foliageLayers,
+      prototypeRegistry,
+      quality
+    });
 
     this.quality = quality;
     this.prototypeRegistry = prototypeRegistry;
 
     if (!quality.enabled || quality.densityMultiplier <= 0) {
       this.scatter = null;
+      this.renderResourceSignature = null;
       this.clearActiveBatches();
       this.onRebuilt?.();
       return;
     }
 
+    if (
+      renderResourceSignature === this.renderResourceSignature &&
+      this.scatter !== null
+    ) {
+      this.applyCurrentViewToRenderResources();
+      return;
+    }
+
+    this.renderResourceSignature = renderResourceSignature;
     this.scatter = generateFoliageScatterForScene({
       terrains,
       foliageLayers,
       foliagePrototypes: input.foliagePrototypes,
       bundledFoliagePrototypes: input.bundledFoliagePrototypes
     });
-    this.rebuildCurrentBatches();
+    this.rebuildRenderResources();
   }
 
   updateView(camera: Camera) {
@@ -306,10 +377,10 @@ export class FoliageInstancedRenderer {
     }
 
     this.viewSignature = nextViewSignature;
-    this.rebuildCurrentBatches();
+    this.applyCurrentViewToRenderResources();
   }
 
-  private rebuildCurrentBatches() {
+  private rebuildRenderResources() {
     const requestId = ++this.requestId;
     const scatter = this.scatter;
 
@@ -319,29 +390,73 @@ export class FoliageInstancedRenderer {
       return;
     }
 
-    const batches = createFoliageRenderBatches(scatter, this.prototypeRegistry, {
-      view: this.currentView,
-      quality: this.quality
-    });
+    const renderResourcePlan = createFoliageRenderResourcePlan(
+      scatter,
+      this.prototypeRegistry,
+      {
+        quality: this.quality
+      }
+    );
 
-    if (batches.length === 0) {
+    if (renderResourcePlan.batches.length === 0) {
       this.clearActiveBatches();
       this.onRebuilt?.();
       return;
     }
 
-    void this.rebuildBatchesAsync(requestId, batches);
+    void this.rebuildBatchesAsync(requestId, renderResourcePlan);
+  }
+
+  private applyCurrentViewToRenderResources() {
+    if (this.activeBatchGroup === null) {
+      return;
+    }
+
+    const visibleBatchKeys = new Set<string>();
+
+    for (const chunk of this.renderChunks) {
+      const renderLod = resolveFoliageRenderChunkLod({
+        chunk,
+        view: this.currentView,
+        quality: this.quality
+      });
+
+      if (renderLod === null) {
+        continue;
+      }
+
+      visibleBatchKeys.add(
+        createFoliageRenderBatchKey({
+          chunkId: chunk.chunkId,
+          terrainId: chunk.terrainId,
+          layerId: chunk.layerId,
+          prototypeId: chunk.prototypeId,
+          lodLevel: renderLod.level,
+          bundledPath: renderLod.bundledPath
+        })
+      );
+    }
+
+    for (const [batchKey, batchGroup] of this.batchGroupsByKey) {
+      batchGroup.visible = visibleBatchKeys.has(batchKey);
+    }
   }
 
   dispose() {
     this.requestId += 1;
     this.scatter = null;
     this.prototypeRegistry = {};
+    this.currentView = null;
     this.viewSignature = null;
+    this.renderResourceSignature = null;
+    this.sourceMeshPromisesByBundledPath.clear();
     this.clearActiveBatches();
   }
 
   private clearActiveBatches() {
+    this.batchGroupsByKey.clear();
+    this.renderChunks = [];
+
     if (this.activeBatchGroup === null) {
       return;
     }
@@ -360,19 +475,41 @@ export class FoliageInstancedRenderer {
     console.warn(message);
   }
 
+  private loadTemplateSourceMeshes(
+    bundledPath: string
+  ): Promise<FoliageTemplateSourceMesh[]> {
+    const cachedSourceMeshPromise =
+      this.sourceMeshPromisesByBundledPath.get(bundledPath);
+
+    if (cachedSourceMeshPromise !== undefined) {
+      return cachedSourceMeshPromise;
+    }
+
+    const sourceMeshPromise = loadBundledFoliageModelTemplate(bundledPath)
+      .then((template) => collectTemplateSourceMeshes(template))
+      .catch((error: unknown) => {
+        this.sourceMeshPromisesByBundledPath.delete(bundledPath);
+        throw error;
+      });
+
+    this.sourceMeshPromisesByBundledPath.set(bundledPath, sourceMeshPromise);
+    return sourceMeshPromise;
+  }
+
   private async rebuildBatchesAsync(
     requestId: number,
-    batches: readonly FoliageRenderBatch[]
+    renderResourcePlan: FoliageRenderResourcePlan
   ) {
     const nextBatchGroup = new Group();
+    const nextBatchGroupsByKey = new Map<string, Group>();
     nextBatchGroup.name = "foliageInstancedBatches";
     nextBatchGroup.userData.nonPickable = true;
 
-    for (const batch of batches) {
-      let template: Group;
+    for (const batch of renderResourcePlan.batches) {
+      let sourceMeshes: FoliageTemplateSourceMesh[];
 
       try {
-        template = await loadBundledFoliageModelTemplate(batch.bundledPath);
+        sourceMeshes = await this.loadTemplateSourceMeshes(batch.bundledPath);
       } catch (error) {
         const message =
           error instanceof Error
@@ -387,8 +524,6 @@ export class FoliageInstancedRenderer {
         return;
       }
 
-      const sourceMeshes = collectTemplateSourceMeshes(template);
-
       if (sourceMeshes.length === 0) {
         this.emitDiagnostic(
           `Bundled foliage model ${batch.bundledPath} contains no renderable meshes.`
@@ -398,6 +533,7 @@ export class FoliageInstancedRenderer {
 
       const batchGroup = new Group();
       batchGroup.name = `FoliageBatch:${batch.prototypeId}`;
+      batchGroup.visible = false;
       batchGroup.userData.nonPickable = true;
       batchGroup.userData.foliageBatchKey = batch.key;
       batchGroup.userData.foliagePrototypeId = batch.prototypeId;
@@ -409,6 +545,7 @@ export class FoliageInstancedRenderer {
       }
 
       applyRendererRenderCategoryFromMaterial(batchGroup);
+      nextBatchGroupsByKey.set(batch.key, batchGroup);
       nextBatchGroup.add(batchGroup);
     }
 
@@ -426,7 +563,10 @@ export class FoliageInstancedRenderer {
     }
 
     this.activeBatchGroup = nextBatchGroup;
+    this.batchGroupsByKey = nextBatchGroupsByKey;
+    this.renderChunks = [...renderResourcePlan.chunks];
     this.group.add(nextBatchGroup);
+    this.applyCurrentViewToRenderResources();
     this.onRebuilt?.();
   }
 }
