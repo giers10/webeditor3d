@@ -41,11 +41,14 @@ import { FoliageInstancedRenderer } from "../../src/foliage/foliage-instanced-re
 const TEST_TERRAIN_ID = "terrain-renderer";
 const TEST_LAYER_ID = "foliage-layer-renderer";
 
-function createCamera(position: { x: number; y: number; z: number }) {
+function createCamera(
+  position: { x: number; y: number; z: number },
+  target: { x: number; y: number; z: number } = { x: 8, y: 0, z: 8 }
+) {
   const camera = new PerspectiveCamera(60, 1, 0.1, 500);
 
   camera.position.set(position.x, position.y, position.z);
-  camera.lookAt(8, 0, 8);
+  camera.lookAt(target.x, target.y, target.z);
   camera.updateProjectionMatrix();
   camera.updateMatrixWorld(true);
 
@@ -167,6 +170,23 @@ describe("FoliageInstancedRenderer", () => {
     expect(initialVisibleBatchKeys.some((key) => key.includes("|0|"))).toBe(
       true
     );
+
+    renderer.updateView(
+      createCamera(
+        { x: 8, y: 8, z: 8 },
+        {
+          x: 10,
+          y: 0,
+          z: 8
+        }
+      )
+    );
+    await Promise.resolve();
+
+    expect(renderer.group.children[0]).toBe(activeBatchRoot);
+    expect(getInstancedMeshes(renderer.group)).toEqual(instancedMeshes);
+    expect(loaderState.loadCalls).toHaveLength(initialLoadCallCount);
+    expect(rebuildCount).toBe(initialRebuildCount);
 
     renderer.updateView(createCamera({ x: 68, y: 8, z: 8 }));
     await Promise.resolve();
