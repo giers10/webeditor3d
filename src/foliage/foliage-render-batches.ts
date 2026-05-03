@@ -126,9 +126,15 @@ function distanceFromPointToCachedChunkCenter(
 }
 
 function getHysteresisDistance(distance: number, ratio: number): number {
+  const normalizedRatio = Math.max(0, ratio);
+
+  if (normalizedRatio <= 0) {
+    return 0;
+  }
+
   return Math.max(
     MIN_FOLIAGE_LOD_HYSTERESIS_DISTANCE,
-    Math.max(0, distance) * Math.max(0, ratio)
+    Math.max(0, distance) * normalizedRatio
   );
 }
 
@@ -569,6 +575,8 @@ export function resolveFoliageRenderChunkLod(options: {
   }
 
   if (
+    options.view.frustum !== null &&
+    options.view.frustum !== undefined &&
     shouldCullCachedFoliageRenderChunkByFrustum({
       chunk: options.chunk,
       frustum: options.view.frustum,
