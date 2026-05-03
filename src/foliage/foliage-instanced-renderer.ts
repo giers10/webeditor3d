@@ -6,6 +6,7 @@ import {
   InstancedMesh,
   Matrix4,
   Mesh,
+  Sphere,
   Vector3,
   type BufferGeometry,
   type Material
@@ -20,7 +21,6 @@ import { applyRendererRenderCategoryFromMaterial } from "../rendering/render-lay
 import { loadBundledFoliageModelTemplate } from "./bundled-foliage-model-loader";
 import {
   createFoliageInstanceMatrix,
-  createFoliageRenderBatchKey,
   createFoliageRenderResourcePlan,
   resolveFoliageRenderChunkLod,
   type FoliageRenderBatch,
@@ -31,6 +31,7 @@ import {
 import type {
   FoliageLayer,
   FoliageLayerRegistry,
+  FoliagePrototypeLodLevel,
   FoliagePrototypeRegistry
 } from "./foliage";
 import {
@@ -170,24 +171,28 @@ function scaleFoliageLayerRegistryDensities(
   );
 }
 
-function createRenderViewFromCamera(camera: Camera): FoliageRenderView {
+function writeRenderViewFromCamera(
+  camera: Camera,
+  view: FoliageRenderView,
+  cameraPosition: Vector3,
+  projectionViewMatrix: Matrix4,
+  frustum: Frustum
+): FoliageRenderView {
   camera.updateMatrixWorld();
   camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
-  const cameraPosition = new Vector3();
   camera.getWorldPosition(cameraPosition);
-  const projectionViewMatrix = new Matrix4().multiplyMatrices(
+  projectionViewMatrix.multiplyMatrices(
     camera.projectionMatrix,
     camera.matrixWorldInverse
   );
+  frustum.setFromProjectionMatrix(projectionViewMatrix);
 
-  return {
-    cameraPosition: {
-      x: cameraPosition.x,
-      y: cameraPosition.y,
-      z: cameraPosition.z
-    },
-    frustum: new Frustum().setFromProjectionMatrix(projectionViewMatrix)
-  };
+  view.cameraPosition.x = cameraPosition.x;
+  view.cameraPosition.y = cameraPosition.y;
+  view.cameraPosition.z = cameraPosition.z;
+  view.frustum = frustum;
+
+  return view;
 }
 
 function createCameraViewSignature(camera: Camera): string {
@@ -295,6 +300,11 @@ export class FoliageInstancedRenderer {
   private requestId = 0;
   private activeBatchGroup: Group | null = null;
   private batchGroupsByKey = new Map<string, Group>();
+  private activeBatchKeyByChunkKey = new Map<string, string>();
+  private activeLodLevelByChunkKey = new Map<
+    string,
+    FoliagePrototypeLodLevel
+  >();
   private renderChunks: FoliageRenderChunk[] = [];
   private scatter: FoliageScatterResult | null = null;
   private prototypeRegistry: FoliagePrototypeRegistry = {};
@@ -302,6 +312,14 @@ export class FoliageInstancedRenderer {
   private currentView: FoliageRenderView | null = null;
   private viewSignature: string | null = null;
   private renderResourceSignature: string | null = null;
+  private readonly renderViewCameraPosition = new Vector3();
+  private readonly renderViewProjectionMatrix = new Matrix4();
+  private readonly renderViewFrustum = new Frustum();
+  private readonly renderView: FoliageRenderView = {
+    cameraPosition: { x: 0, y: 0, z: 0 },
+    frustum: this.renderViewFrustum
+  };
+  private readonly chunkFrustumSphere = new Sphere();
   private readonly sourceMeshPromisesByBundledPath = new Map<
     string,
     Promise<FoliageTemplateSourceMesh[]>
@@ -319,6 +337,7 @@ export class FoliageInstancedRenderer {
   sync(input: FoliageInstancedRendererSyncInput) {
     const terrains = normalizeTerrainRegistry(input.terrains);
     const quality = resolveFoliageQualitySettings(input.quality);
+    const previousMaxDistanceMultiplier = this.quality.maxDistanceMultiplier;
     const prototypeRegistry = createFoliageScatterPrototypeRegistry({
       foliagePrototypes: input.foliagePrototypes,
       bundledFoliagePrototypes: input.bundledFoliagePrototypes
@@ -336,6 +355,10 @@ export class FoliageInstancedRenderer {
 
     this.quality = quality;
     this.prototypeRegistry = prototypeRegistry;
+
+    if (quality.maxDistanceMultiplier !== previousMaxDistanceMultiplier) {
+      this.resetActiveChunkViewState();
+    }
 
     if (!quality.enabled || quality.densityMultiplier <= 0) {
       this.scatter = null;
@@ -364,7 +387,13 @@ export class FoliageInstancedRenderer {
   }
 
   updateView(camera: Camera) {
-    this.currentView = createRenderViewFromCamera(camera);
+    this.currentView = writeRenderViewFromCamera(
+      camera,
+      this.renderView,
+      this.renderViewCameraPosition,
+      this.renderViewProjectionMatrix,
+      this.renderViewFrustum
+    );
 
     if (this.scatter === null) {
       return;
@@ -412,34 +441,60 @@ export class FoliageInstancedRenderer {
       return;
     }
 
-    const visibleBatchKeys = new Set<string>();
-
     for (const chunk of this.renderChunks) {
+      const previousBatchKey =
+        this.activeBatchKeyByChunkKey.get(chunk.key) ?? null;
+      const previousLodLevel =
+        this.activeLodLevelByChunkKey.get(chunk.key) ?? null;
       const renderLod = resolveFoliageRenderChunkLod({
         chunk,
         view: this.currentView,
-        quality: this.quality
+        quality: this.quality,
+        previousLodLevel,
+        frustumSphere: this.chunkFrustumSphere
       });
+      const nextBatchKey =
+        renderLod === null
+          ? null
+          : (chunk.batchKeysByLodLevel[renderLod.level] ?? null);
 
-      if (renderLod === null) {
+      if (nextBatchKey === previousBatchKey) {
         continue;
       }
 
-      visibleBatchKeys.add(
-        createFoliageRenderBatchKey({
-          chunkId: chunk.chunkId,
-          terrainId: chunk.terrainId,
-          layerId: chunk.layerId,
-          prototypeId: chunk.prototypeId,
-          lodLevel: renderLod.level,
-          bundledPath: renderLod.bundledPath
-        })
-      );
+      if (previousBatchKey !== null) {
+        this.setBatchGroupVisibility(previousBatchKey, false);
+      }
+
+      if (nextBatchKey === null || renderLod === null) {
+        this.activeBatchKeyByChunkKey.delete(chunk.key);
+        this.activeLodLevelByChunkKey.delete(chunk.key);
+        continue;
+      }
+
+      this.setBatchGroupVisibility(nextBatchKey, true);
+      this.activeBatchKeyByChunkKey.set(chunk.key, nextBatchKey);
+      this.activeLodLevelByChunkKey.set(chunk.key, renderLod.level);
+    }
+  }
+
+  private setBatchGroupVisibility(batchKey: string, visible: boolean) {
+    const batchGroup = this.batchGroupsByKey.get(batchKey);
+
+    if (batchGroup === undefined || batchGroup.visible === visible) {
+      return;
     }
 
-    for (const [batchKey, batchGroup] of this.batchGroupsByKey) {
-      batchGroup.visible = visibleBatchKeys.has(batchKey);
+    batchGroup.visible = visible;
+  }
+
+  private resetActiveChunkViewState() {
+    for (const batchKey of this.activeBatchKeyByChunkKey.values()) {
+      this.setBatchGroupVisibility(batchKey, false);
     }
+
+    this.activeBatchKeyByChunkKey.clear();
+    this.activeLodLevelByChunkKey.clear();
   }
 
   dispose() {
@@ -455,6 +510,8 @@ export class FoliageInstancedRenderer {
 
   private clearActiveBatches() {
     this.batchGroupsByKey.clear();
+    this.activeBatchKeyByChunkKey.clear();
+    this.activeLodLevelByChunkKey.clear();
     this.renderChunks = [];
 
     if (this.activeBatchGroup === null) {
