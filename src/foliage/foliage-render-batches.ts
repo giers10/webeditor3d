@@ -48,7 +48,10 @@ export interface FoliageRenderChunk {
   layerId: string;
   prototypeId: string;
   chunkBounds: DerivedFoliageScatterChunk["bounds"];
+  center: Vec3;
+  radius: number;
   lods: FoliageRenderLod[];
+  batchKeysByLodLevel: Partial<Record<FoliagePrototypeLodLevel, string>>;
   lodBias: number;
   maxCullDistance: number;
 }
@@ -60,6 +63,8 @@ export interface FoliageRenderResourcePlan {
 
 const IDENTITY_SOURCE_MATRIX = new Matrix4();
 const UP_VECTOR = new Vector3(0, 1, 0);
+const DEFAULT_FOLIAGE_LOD_HYSTERESIS_RATIO = 0.08;
+const MIN_FOLIAGE_LOD_HYSTERESIS_DISTANCE = 0.5;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -99,6 +104,34 @@ function cloneChunkBounds(
   };
 }
 
+function createChunkMetrics(
+  chunk: Pick<DerivedFoliageScatterChunk, "bounds">
+): { center: Vec3; radius: number } {
+  const center = getChunkCenter(chunk);
+
+  return {
+    center,
+    radius: Math.max(
+      distanceBetween(center, chunk.bounds.min),
+      distanceBetween(center, chunk.bounds.max)
+    )
+  };
+}
+
+function distanceFromPointToCachedChunkCenter(
+  chunk: Pick<FoliageRenderChunk, "center">,
+  point: Vec3
+): number {
+  return distanceBetween(chunk.center, point);
+}
+
+function getHysteresisDistance(distance: number, ratio: number): number {
+  return Math.max(
+    MIN_FOLIAGE_LOD_HYSTERESIS_DISTANCE,
+    Math.max(0, distance) * Math.max(0, ratio)
+  );
+}
+
 export function getFoliagePrototypeRenderLods(
   prototype: FoliagePrototype
 ): FoliageRenderLod[] {
@@ -125,13 +158,46 @@ export function resolveFoliageRenderLod(options: {
   cameraDistance: number;
   lodBias: number;
   maxDistanceMultiplier: number;
+  previousLodLevel?: FoliagePrototypeLodLevel | null;
+  hysteresisRatio?: number;
 }): FoliageRenderLod | null {
-  const { lods, cameraDistance, lodBias, maxDistanceMultiplier } = options;
+  const {
+    lods,
+    cameraDistance,
+    lodBias,
+    maxDistanceMultiplier,
+    previousLodLevel = null,
+    hysteresisRatio = 0
+  } = options;
   const distanceMultiplier = Math.max(0, maxDistanceMultiplier);
   const biasedDistance = Math.max(
     0,
     cameraDistance * (1 + clamp(lodBias, -1, 1) * 0.12)
   );
+  const previousLodIndex =
+    previousLodLevel === null
+      ? -1
+      : lods.findIndex((lod) => lod.level === previousLodLevel);
+
+  if (previousLodIndex >= 0) {
+    const previousLod = lods[previousLodIndex]!;
+    const lowerDistance =
+      previousLodIndex === 0
+        ? 0
+        : lods[previousLodIndex - 1]!.maxDistance * distanceMultiplier;
+    const upperDistance = previousLod.maxDistance * distanceMultiplier;
+    const hysteresisDistance = getHysteresisDistance(
+      upperDistance,
+      hysteresisRatio
+    );
+
+    if (
+      biasedDistance >= Math.max(0, lowerDistance - hysteresisDistance) &&
+      biasedDistance <= upperDistance + hysteresisDistance
+    ) {
+      return previousLod;
+    }
+  }
 
   for (const lod of lods) {
     if (biasedDistance <= lod.maxDistance * distanceMultiplier) {
@@ -165,6 +231,38 @@ export function shouldCullFoliageChunkByFrustum(options: {
   const sphere = new Sphere(createVector3(center), getChunkRadius(options.chunk));
 
   return !options.frustum.intersectsSphere(sphere);
+}
+
+function shouldCullCachedFoliageRenderChunkByDistance(options: {
+  chunk: Pick<FoliageRenderChunk, "center" | "radius">;
+  cameraPosition: Vec3;
+  maxDistance: number;
+  hysteresisDistance?: number;
+}): boolean {
+  return (
+    distanceFromPointToCachedChunkCenter(options.chunk, options.cameraPosition) -
+      options.chunk.radius >
+    options.maxDistance + (options.hysteresisDistance ?? 0)
+  );
+}
+
+function shouldCullCachedFoliageRenderChunkByFrustum(options: {
+  chunk: Pick<FoliageRenderChunk, "center" | "radius">;
+  frustum: Frustum | null | undefined;
+  sphere: Sphere;
+}): boolean {
+  if (options.frustum === null || options.frustum === undefined) {
+    return false;
+  }
+
+  options.sphere.center.set(
+    options.chunk.center.x,
+    options.chunk.center.y,
+    options.chunk.center.z
+  );
+  options.sphere.radius = options.chunk.radius;
+
+  return !options.frustum.intersectsSphere(options.sphere);
 }
 
 export function createFoliageRenderBatchKey(options: {
@@ -395,6 +493,10 @@ export function createFoliageRenderResourcePlan(
       ...group.instances.map((instance) => instance.cullDistance),
       ...renderLods.map((lod) => lod.maxDistance)
     );
+    const chunkMetrics = createChunkMetrics(group.chunk);
+    const batchKeysByLodLevel: Partial<
+      Record<FoliagePrototypeLodLevel, string>
+    > = {};
 
     chunks.push({
       key,
@@ -403,21 +505,26 @@ export function createFoliageRenderResourcePlan(
       layerId: group.layerId,
       prototypeId: group.prototypeId,
       chunkBounds: cloneChunkBounds(group.chunk.bounds),
+      center: chunkMetrics.center,
+      radius: chunkMetrics.radius,
       lods: renderLods,
+      batchKeysByLodLevel,
       lodBias,
       maxCullDistance
     });
 
     for (const renderLod of renderLods) {
+      const batchKey = createFoliageRenderBatchKey({
+        chunkId: group.chunk.id,
+        terrainId: group.terrainId,
+        layerId: group.layerId,
+        prototypeId: group.prototypeId,
+        lodLevel: renderLod.level,
+        bundledPath: renderLod.bundledPath
+      });
+      batchKeysByLodLevel[renderLod.level] = batchKey;
       batches.push({
-        key: createFoliageRenderBatchKey({
-          chunkId: group.chunk.id,
-          terrainId: group.terrainId,
-          layerId: group.layerId,
-          prototypeId: group.prototypeId,
-          lodLevel: renderLod.level,
-          bundledPath: renderLod.bundledPath
-        }),
+        key: batchKey,
         chunkId: group.chunk.id,
         terrainId: group.terrainId,
         layerId: group.layerId,
@@ -441,8 +548,13 @@ export function resolveFoliageRenderChunkLod(options: {
   chunk: FoliageRenderChunk;
   view?: FoliageRenderView | null;
   quality?: FoliageQualitySettings | null;
+  previousLodLevel?: FoliagePrototypeLodLevel | null;
+  hysteresisRatio?: number;
+  frustumSphere?: Sphere;
 }): FoliageRenderLod | null {
   const quality = resolveFoliageQualitySettings(options.quality);
+  const hysteresisRatio =
+    options.hysteresisRatio ?? DEFAULT_FOLIAGE_LOD_HYSTERESIS_RATIO;
 
   if (
     !quality.enabled ||
@@ -456,14 +568,11 @@ export function resolveFoliageRenderChunkLod(options: {
     return options.chunk.lods[0]!;
   }
 
-  const chunk = {
-    bounds: options.chunk.chunkBounds
-  };
-
   if (
-    shouldCullFoliageChunkByFrustum({
-      chunk,
-      frustum: options.view.frustum
+    shouldCullCachedFoliageRenderChunkByFrustum({
+      chunk: options.chunk,
+      frustum: options.view.frustum,
+      sphere: options.frustumSphere ?? new Sphere()
     })
   ) {
     return null;
@@ -473,10 +582,15 @@ export function resolveFoliageRenderChunkLod(options: {
     options.chunk.maxCullDistance * quality.maxDistanceMultiplier;
 
   if (
-    shouldCullFoliageChunkByDistance({
-      chunk,
+    shouldCullCachedFoliageRenderChunkByDistance({
+      chunk: options.chunk,
       cameraPosition: options.view.cameraPosition,
-      maxDistance: maxRenderDistance
+      maxDistance: maxRenderDistance,
+      hysteresisDistance:
+        options.previousLodLevel === null ||
+        options.previousLodLevel === undefined
+          ? 0
+          : getHysteresisDistance(maxRenderDistance, hysteresisRatio)
     })
   ) {
     return null;
@@ -484,12 +598,14 @@ export function resolveFoliageRenderChunkLod(options: {
 
   return resolveFoliageRenderLod({
     lods: options.chunk.lods,
-    cameraDistance: distanceBetween(
-      getChunkCenter(chunk),
+    cameraDistance: distanceFromPointToCachedChunkCenter(
+      options.chunk,
       options.view.cameraPosition
     ),
     lodBias: options.chunk.lodBias,
-    maxDistanceMultiplier: quality.maxDistanceMultiplier
+    maxDistanceMultiplier: quality.maxDistanceMultiplier,
+    previousLodLevel: options.previousLodLevel,
+    hysteresisRatio
   });
 }
 
