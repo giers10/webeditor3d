@@ -1,8 +1,5 @@
 import {
-  BoxGeometry,
   Group,
-  Mesh,
-  MeshBasicMaterial,
   PerspectiveCamera,
   type Object3D
 } from "three";
