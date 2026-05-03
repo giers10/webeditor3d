@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 import {
   createFoliageInstanceMatrix,
   createFoliageRenderBatches,
+  createFoliageRenderResourcePlan,
   getFoliagePrototypeRenderLods,
+  resolveFoliageRenderChunkLod,
   resolveFoliageRenderLod,
   shouldCullFoliageChunkByDistance
 } from "../../src/foliage/foliage-render-batches";
@@ -234,6 +236,64 @@ describe("foliage render batch helpers", () => {
     expect(new Set(batches.map((batch) => batch.lodLevel))).toEqual(
       new Set([0, 2])
     );
+  });
+
+  it("creates persistent resource batches for every bundled chunk LOD", () => {
+    const prototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
+    const plan = createFoliageRenderResourcePlan(
+      createScatter([
+        createInstance({ prototypeId: prototype.id }),
+        createInstance({ prototypeId: prototype.id })
+      ]),
+      {
+        [prototype.id]: prototype
+      }
+    );
+
+    expect(plan.chunks).toHaveLength(1);
+    expect(plan.batches).toHaveLength(prototype.lods.length);
+    expect(plan.batches.map((batch) => batch.lodLevel).sort()).toEqual([
+      0, 1, 2, 3
+    ]);
+    expect(plan.batches.every((batch) => batch.instances.length === 2)).toBe(
+      true
+    );
+  });
+
+  it("resolves chunk-level LOD and distance culling without rebatching", () => {
+    const prototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
+    const plan = createFoliageRenderResourcePlan(
+      createScatter([createInstance({ prototypeId: prototype.id })]),
+      {
+        [prototype.id]: prototype
+      }
+    );
+    const chunk = plan.chunks[0]!;
+
+    expect(
+      resolveFoliageRenderChunkLod({
+        chunk,
+        view: {
+          cameraPosition: { x: 8, y: 0, z: 8 }
+        }
+      })?.level
+    ).toBe(0);
+    expect(
+      resolveFoliageRenderChunkLod({
+        chunk,
+        view: {
+          cameraPosition: { x: 60, y: 0, z: 8 }
+        }
+      })?.level
+    ).toBe(2);
+    expect(
+      resolveFoliageRenderChunkLod({
+        chunk,
+        view: {
+          cameraPosition: { x: 500, y: 0, z: 8 }
+        }
+      })
+    ).toBeNull();
   });
 
   it("returns no batches when foliage quality is disabled", () => {
