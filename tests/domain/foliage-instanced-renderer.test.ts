@@ -19,18 +19,25 @@ const loaderState = vi.hoisted(() => ({
   loadCalls: [] as string[]
 }));
 
-vi.mock("../../src/foliage/bundled-foliage-model-loader", () => ({
-  loadBundledFoliageModelTemplate: async (bundledPath: string) => {
-    loaderState.loadCalls.push(bundledPath);
+vi.mock("../../src/foliage/bundled-foliage-model-loader", async () => {
+  const three = await vi.importActual<typeof import("three")>("three");
 
-    const template = new Group();
-    template.add(
-      new Mesh(new BoxGeometry(1, 1, 1), new MeshBasicMaterial())
-    );
+  return {
+    loadBundledFoliageModelTemplate: async (bundledPath: string) => {
+      loaderState.loadCalls.push(bundledPath);
 
-    return template;
-  }
-}));
+      const template = new three.Group();
+      template.add(
+        new three.Mesh(
+          new three.BoxGeometry(1, 1, 1),
+          new three.MeshBasicMaterial()
+        )
+      );
+
+      return template;
+    }
+  };
+});
 
 import { FoliageInstancedRenderer } from "../../src/foliage/foliage-instanced-renderer";
 
