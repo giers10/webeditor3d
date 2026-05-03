@@ -41,6 +41,23 @@ export interface FoliageRenderBatch {
   instances: DerivedFoliageInstance[];
 }
 
+export interface FoliageRenderChunk {
+  key: string;
+  chunkId: string;
+  terrainId: string;
+  layerId: string;
+  prototypeId: string;
+  chunkBounds: DerivedFoliageScatterChunk["bounds"];
+  lods: FoliageRenderLod[];
+  lodBias: number;
+  maxCullDistance: number;
+}
+
+export interface FoliageRenderResourcePlan {
+  batches: FoliageRenderBatch[];
+  chunks: FoliageRenderChunk[];
+}
+
 const IDENTITY_SOURCE_MATRIX = new Matrix4();
 const UP_VECTOR = new Vector3(0, 1, 0);
 
@@ -168,6 +185,31 @@ export function createFoliageRenderBatchKey(options: {
   ].join("|");
 }
 
+export function createFoliageRenderChunkKey(options: {
+  chunkId: string;
+  terrainId: string;
+  layerId: string;
+  prototypeId: string;
+}): string {
+  return [
+    options.chunkId,
+    options.terrainId,
+    options.layerId,
+    options.prototypeId
+  ].join("|");
+}
+
+function resolveFoliageLodCastShadow(
+  lod: FoliageRenderLod,
+  quality: FoliageQualitySettings
+): boolean {
+  return quality.shadows === "off"
+    ? false
+    : quality.shadows === "full"
+      ? lod.castShadow
+      : lod.castShadow && lod.level <= 1;
+}
+
 export function createFoliageRenderBatches(
   scatter: FoliageScatterResult,
   prototypeRegistry: FoliagePrototypeRegistry,
@@ -242,12 +284,7 @@ export function createFoliageRenderBatches(
         continue;
       }
 
-      const castShadow =
-        quality.shadows === "off"
-          ? false
-          : quality.shadows === "full"
-            ? renderLod.castShadow
-            : renderLod.castShadow && renderLod.level <= 1;
+      const castShadow = resolveFoliageLodCastShadow(renderLod, quality);
       const key = createFoliageRenderBatchKey({
         chunkId: chunk.id,
         terrainId: instance.terrainId,
@@ -281,6 +318,179 @@ export function createFoliageRenderBatches(
   return [...batches.values()].sort((left, right) =>
     left.key.localeCompare(right.key)
   );
+}
+
+export function createFoliageRenderResourcePlan(
+  scatter: FoliageScatterResult,
+  prototypeRegistry: FoliagePrototypeRegistry,
+  options: {
+    quality?: FoliageQualitySettings | null;
+  } = {}
+): FoliageRenderResourcePlan {
+  const quality = resolveFoliageQualitySettings(options.quality);
+
+  if (!quality.enabled || quality.densityMultiplier <= 0) {
+    return {
+      batches: [],
+      chunks: []
+    };
+  }
+
+  const chunkGroups = new Map<
+    string,
+    {
+      chunk: DerivedFoliageScatterChunk;
+      terrainId: string;
+      layerId: string;
+      prototypeId: string;
+      instances: DerivedFoliageInstance[];
+    }
+  >();
+
+  for (const chunk of scatter.chunks) {
+    for (const instance of chunk.instances) {
+      const key = createFoliageRenderChunkKey({
+        chunkId: chunk.id,
+        terrainId: instance.terrainId,
+        layerId: instance.layerId,
+        prototypeId: instance.prototypeId
+      });
+      let group = chunkGroups.get(key);
+
+      if (group === undefined) {
+        group = {
+          chunk,
+          terrainId: instance.terrainId,
+          layerId: instance.layerId,
+          prototypeId: instance.prototypeId,
+          instances: []
+        };
+        chunkGroups.set(key, group);
+      }
+
+      group.instances.push(instance);
+    }
+  }
+
+  const chunks: FoliageRenderChunk[] = [];
+  const batches: FoliageRenderBatch[] = [];
+
+  for (const [key, group] of chunkGroups) {
+    const prototype = prototypeRegistry[group.prototypeId];
+
+    if (prototype === undefined) {
+      continue;
+    }
+
+    const renderLods = getFoliagePrototypeRenderLods(prototype);
+
+    if (renderLods.length === 0) {
+      continue;
+    }
+
+    const lodBias =
+      group.instances.reduce((total, instance) => total + instance.lodBias, 0) /
+      group.instances.length;
+    const maxCullDistance = Math.max(
+      ...group.instances.map((instance) => instance.cullDistance),
+      ...renderLods.map((lod) => lod.maxDistance)
+    );
+
+    chunks.push({
+      key,
+      chunkId: group.chunk.id,
+      terrainId: group.terrainId,
+      layerId: group.layerId,
+      prototypeId: group.prototypeId,
+      chunkBounds: cloneChunkBounds(group.chunk.bounds),
+      lods: renderLods,
+      lodBias,
+      maxCullDistance
+    });
+
+    for (const renderLod of renderLods) {
+      batches.push({
+        key: createFoliageRenderBatchKey({
+          chunkId: group.chunk.id,
+          terrainId: group.terrainId,
+          layerId: group.layerId,
+          prototypeId: group.prototypeId,
+          lodLevel: renderLod.level,
+          bundledPath: renderLod.bundledPath
+        }),
+        chunkId: group.chunk.id,
+        terrainId: group.terrainId,
+        layerId: group.layerId,
+        prototypeId: group.prototypeId,
+        lodLevel: renderLod.level,
+        bundledPath: renderLod.bundledPath,
+        castShadow: resolveFoliageLodCastShadow(renderLod, quality),
+        chunkBounds: cloneChunkBounds(group.chunk.bounds),
+        instances: group.instances
+      });
+    }
+  }
+
+  return {
+    batches: batches.sort((left, right) => left.key.localeCompare(right.key)),
+    chunks: chunks.sort((left, right) => left.key.localeCompare(right.key))
+  };
+}
+
+export function resolveFoliageRenderChunkLod(options: {
+  chunk: FoliageRenderChunk;
+  view?: FoliageRenderView | null;
+  quality?: FoliageQualitySettings | null;
+}): FoliageRenderLod | null {
+  const quality = resolveFoliageQualitySettings(options.quality);
+
+  if (
+    !quality.enabled ||
+    quality.densityMultiplier <= 0 ||
+    options.chunk.lods.length === 0
+  ) {
+    return null;
+  }
+
+  if (options.view === null || options.view === undefined) {
+    return options.chunk.lods[0]!;
+  }
+
+  const chunk = {
+    bounds: options.chunk.chunkBounds
+  };
+
+  if (
+    shouldCullFoliageChunkByFrustum({
+      chunk,
+      frustum: options.view.frustum
+    })
+  ) {
+    return null;
+  }
+
+  const maxRenderDistance =
+    options.chunk.maxCullDistance * quality.maxDistanceMultiplier;
+
+  if (
+    shouldCullFoliageChunkByDistance({
+      chunk,
+      cameraPosition: options.view.cameraPosition,
+      maxDistance: maxRenderDistance
+    })
+  ) {
+    return null;
+  }
+
+  return resolveFoliageRenderLod({
+    lods: options.chunk.lods,
+    cameraDistance: distanceBetween(
+      getChunkCenter(chunk),
+      options.view.cameraPosition
+    ),
+    lodBias: options.chunk.lodBias,
+    maxDistanceMultiplier: quality.maxDistanceMultiplier
+  });
 }
 
 export function createFoliageInstanceMatrix(
