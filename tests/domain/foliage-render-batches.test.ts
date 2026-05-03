@@ -251,6 +251,11 @@ describe("foliage render batch helpers", () => {
     );
 
     expect(plan.chunks).toHaveLength(1);
+    expect(plan.chunks[0]?.center).toEqual({ x: 8, y: 0, z: 8 });
+    expect(plan.chunks[0]?.radius).toBeCloseTo(Math.sqrt(128));
+    expect(plan.chunks[0]?.batchKeysByLodLevel[0]).toBe(
+      plan.batches.find((batch) => batch.lodLevel === 0)?.key
+    );
     expect(plan.batches).toHaveLength(prototype.lods.length);
     expect(plan.batches.map((batch) => batch.lodLevel).sort()).toEqual([
       0, 1, 2, 3
@@ -294,6 +299,34 @@ describe("foliage render batch helpers", () => {
         }
       })
     ).toBeNull();
+  });
+
+  it("keeps chunk LOD stable near thresholds when a previous LOD is active", () => {
+    const prototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
+    const plan = createFoliageRenderResourcePlan(
+      createScatter([createInstance({ prototypeId: prototype.id })]),
+      {
+        [prototype.id]: prototype
+      }
+    );
+    const chunk = plan.chunks[0]!;
+    const thresholdHoverView = {
+      cameraPosition: { x: 27, y: 0, z: 8 }
+    };
+
+    expect(
+      resolveFoliageRenderChunkLod({
+        chunk,
+        view: thresholdHoverView
+      })?.level
+    ).toBe(1);
+    expect(
+      resolveFoliageRenderChunkLod({
+        chunk,
+        view: thresholdHoverView,
+        previousLodLevel: 0
+      })?.level
+    ).toBe(0);
   });
 
   it("returns no batches when foliage quality is disabled", () => {
