@@ -173,6 +173,7 @@ describe("entity registry defaults", () => {
     expect(createDefaultEntityInstance("npc")).toMatchObject({
       kind: "npc",
       position: { x: 0, y: 0, z: 0 },
+      targetable: false,
       yawDegrees: DEFAULT_NPC_YAW_DEGREES,
       modelAssetId: null
     });
