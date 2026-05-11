@@ -93,11 +93,13 @@ import {
 import {
   cloneCameraRigLookAroundSettings,
   cloneCameraRigTargetRef,
+  createNpcTargetAnchor,
   type CharacterColliderSettings,
   type CameraRigLookAroundSettings,
   type CameraRigRailPlacementMode,
   type CameraRigTargetRef,
   type CameraRigTransitionMode,
+  type NpcTargetAnchor,
   clonePlayerStartInputBindings,
   createPlayerStartMovementTemplate,
   createPlayerStartInputBindings,
