@@ -22,6 +22,10 @@ const DEFAULT_NPC_DIALOGUE_TARGET_RADIUS = 1.5;
 const DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS = 0.2;
 const TARGETING_ACQUISITION_REACH = 15;
 const TARGETING_MIN_VIEW_DOT = 0.1;
+const DEFAULT_RUNTIME_NPC_TARGET_ANCHOR = {
+  mode: "center",
+  offset: { x: 0, y: 0, z: 0 }
+} as const;
 
 export interface RuntimeDialogueStartSource {
   kind: "interactionLink" | "npc" | "direct";
@@ -463,7 +467,9 @@ function resolveNpcTargetAnchorCenter(
   npc: RuntimeNpc,
   bounds: { min: Vec3; max: Vec3 }
 ): Vec3 {
-  switch (npc.targetAnchor.mode) {
+  const targetAnchor = npc.targetAnchor ?? DEFAULT_RUNTIME_NPC_TARGET_ANCHOR;
+
+  switch (targetAnchor.mode) {
     case "origin":
       return npc.position;
     case "top":
@@ -485,7 +491,7 @@ function resolveNpcTargetAnchorCenter(
         z: npc.position.z
       };
     case "custom":
-      return transformNpcLocalAnchorOffset(npc, npc.targetAnchor.offset);
+      return transformNpcLocalAnchorOffset(npc, targetAnchor.offset);
     case "center":
       return {
         x: (bounds.min.x + bounds.max.x) * 0.5,
