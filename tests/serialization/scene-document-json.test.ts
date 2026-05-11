@@ -2704,7 +2704,7 @@ describe("scene document JSON", () => {
     });
     expect(migratedDocument.entities[silentNpc.id]).toMatchObject({
       kind: "npc",
-      targetable: false
+      targetable: true
     });
   });
 
