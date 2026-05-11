@@ -2995,6 +2995,7 @@ export function areEntityInstancesEqual(
         left.actorId === typedRight.actorId &&
         areNpcPresencesEqual(left.presence, typedRight.presence) &&
         left.yawDegrees === typedRight.yawDegrees &&
+        areVec3Equal(left.scale, typedRight.scale) &&
         left.modelAssetId === typedRight.modelAssetId &&
         left.defaultDialogueId === typedRight.defaultDialogueId &&
         left.dialogues.length === typedRight.dialogues.length &&
@@ -3024,6 +3025,7 @@ export function areEntityInstancesEqual(
       const typedRight = right as TriggerVolumeEntity;
       return (
         areVec3Equal(left.position, typedRight.position) &&
+        areVec3Equal(left.rotationDegrees, typedRight.rotationDegrees) &&
         areVec3Equal(left.size, typedRight.size) &&
         left.triggerOnEnter === typedRight.triggerOnEnter &&
         left.triggerOnExit === typedRight.triggerOnExit
