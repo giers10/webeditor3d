@@ -179,11 +179,26 @@ export interface NpcTimeWindowPresence {
 
 export type NpcPresence = NpcAlwaysPresence | NpcTimeWindowPresence;
 
+export const NPC_TARGET_ANCHOR_MODES = [
+  "center",
+  "eyeHeight",
+  "top",
+  "origin",
+  "custom"
+] as const;
+export type NpcTargetAnchorMode = (typeof NPC_TARGET_ANCHOR_MODES)[number];
+
+export interface NpcTargetAnchor {
+  mode: NpcTargetAnchorMode;
+  offset: Vec3;
+}
+
 export interface NpcEntity extends PositionedEntity {
   kind: "npc";
   actorId: string;
   presence: NpcPresence;
   targetable: boolean;
+  targetAnchor: NpcTargetAnchor;
   yawDegrees: number;
   scale: Vec3;
   modelAssetId: string | null;
@@ -602,6 +617,12 @@ export const DEFAULT_NPC_MODEL_ASSET_ID: string | null = null;
 export const DEFAULT_NPC_DIALOGUE_ID: string | null = null;
 export const DEFAULT_NPC_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
 export const DEFAULT_NPC_TARGETABLE = true;
+export const DEFAULT_NPC_TARGET_ANCHOR_MODE: NpcTargetAnchorMode = "center";
+export const DEFAULT_NPC_TARGET_ANCHOR_OFFSET: Vec3 = {
+  x: 0,
+  y: 0,
+  z: 0
+};
 export const DEFAULT_NPC_TIME_WINDOW_START_HOUR = 9;
 export const DEFAULT_NPC_TIME_WINDOW_END_HOUR = 17;
 export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode =
