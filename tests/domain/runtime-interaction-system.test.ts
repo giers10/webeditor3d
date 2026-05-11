@@ -11,6 +11,7 @@ import {
   createProjectSequence
 } from "../../src/sequencer/project-sequences";
 import {
+  createNpcTargetAnchor,
   createPlayerStartInputBindings,
   createPlayerStartMovementTemplate,
   DEFAULT_NPC_SCALE,
@@ -210,6 +211,7 @@ function createRuntimeNpcFixture(options: {
     name: undefined,
     visible: true,
     targetable: false,
+    targetAnchor: createNpcTargetAnchor(),
     position,
     yawDegrees: 0,
     scale: DEFAULT_NPC_SCALE,
@@ -1185,6 +1187,7 @@ describe("RuntimeInteractionSystem", () => {
         name: "Merchant",
         visible: true,
         targetable: false,
+        targetAnchor: createNpcTargetAnchor(),
         position: {
           x: 0,
           y: 1,
