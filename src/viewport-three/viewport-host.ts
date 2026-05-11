@@ -5255,7 +5255,8 @@ export class ViewportHost {
   ) {
     if (
       session.target.kind !== "brushes" &&
-      session.target.kind !== "modelInstances"
+      session.target.kind !== "modelInstances" &&
+      session.target.kind !== "entities"
     ) {
       throw new Error("Batch scale preview requires a scalable batch target.");
     }
@@ -5323,41 +5324,132 @@ export class ViewportHost {
       };
     }
 
+    if (target.kind === "modelInstances") {
+      return {
+        kind: "modelInstances" as const,
+        pivot: {
+          ...initialPivot
+        },
+        items: target.items.map((item) => {
+          const nextScale = {
+            ...item.initialScale
+          };
+
+          if (axisConstraint === null) {
+            nextScale.x = this.snapScaleValue(item.initialScale.x * scaleFactor);
+            nextScale.y = this.snapScaleValue(item.initialScale.y * scaleFactor);
+            nextScale.z = this.snapScaleValue(item.initialScale.z * scaleFactor);
+          } else {
+            const scaleAxis = resolveDominantLocalAxisForWorldAxis(
+              item.initialRotationDegrees,
+              axisConstraint
+            );
+            nextScale[scaleAxis] = this.snapScaleValue(
+              item.initialScale[scaleAxis] * scaleFactor
+            );
+          }
+
+          return {
+            modelInstanceId: item.modelInstanceId,
+            position: this.scalePositionAroundPivot(
+              item.initialPosition,
+              initialPivot,
+              scaleFactor,
+              axisConstraint
+            ),
+            rotationDegrees: {
+              ...item.initialRotationDegrees
+            },
+            scale: nextScale
+          };
+        })
+      };
+    }
+
     return {
-      kind: "modelInstances" as const,
+      kind: "entities" as const,
       pivot: {
         ...initialPivot
       },
       items: target.items.map((item) => {
-        const nextScale = {
-          ...item.initialScale
-        };
+        const nextScale = cloneEntityTransformScaleState(item.initialScale);
 
-        if (axisConstraint === null) {
-          nextScale.x = this.snapScaleValue(item.initialScale.x * scaleFactor);
-          nextScale.y = this.snapScaleValue(item.initialScale.y * scaleFactor);
-          nextScale.z = this.snapScaleValue(item.initialScale.z * scaleFactor);
-        } else {
-          const scaleAxis = resolveDominantLocalAxisForWorldAxis(
-            item.initialRotationDegrees,
-            axisConstraint
-          );
-          nextScale[scaleAxis] = this.snapScaleValue(
-            item.initialScale[scaleAxis] * scaleFactor
-          );
+        if (nextScale.kind === "scale" && item.initialScale.kind === "scale") {
+          if (axisConstraint === null) {
+            nextScale.scale.x = this.snapScaleValue(
+              item.initialScale.scale.x * scaleFactor
+            );
+            nextScale.scale.y = this.snapScaleValue(
+              item.initialScale.scale.y * scaleFactor
+            );
+            nextScale.scale.z = this.snapScaleValue(
+              item.initialScale.scale.z * scaleFactor
+            );
+          } else {
+            const scaleAxis = this.resolveEntityScaleConstraintAxis(
+              item.initialRotation,
+              axisConstraint
+            );
+            nextScale.scale[scaleAxis] = this.snapScaleValue(
+              item.initialScale.scale[scaleAxis] * scaleFactor
+            );
+          }
+        } else if (
+          nextScale.kind === "size" &&
+          item.initialScale.kind === "size"
+        ) {
+          if (axisConstraint === null) {
+            nextScale.size.x = this.snapWhiteboxSizeValue(
+              item.initialScale.size.x * scaleFactor
+            );
+            nextScale.size.y = this.snapWhiteboxSizeValue(
+              item.initialScale.size.y * scaleFactor
+            );
+            nextScale.size.z = this.snapWhiteboxSizeValue(
+              item.initialScale.size.z * scaleFactor
+            );
+          } else {
+            const scaleAxis = this.resolveEntityScaleConstraintAxis(
+              item.initialRotation,
+              axisConstraint
+            );
+            nextScale.size[scaleAxis] = this.snapWhiteboxSizeValue(
+              item.initialScale.size[scaleAxis] * scaleFactor
+            );
+          }
         }
 
         return {
-          modelInstanceId: item.modelInstanceId,
+          entityId: item.entityId,
           position: this.scalePositionAroundPivot(
             item.initialPosition,
             initialPivot,
             scaleFactor,
             axisConstraint
           ),
-          rotationDegrees: {
-            ...item.initialRotationDegrees
-          },
+          rotation:
+            item.initialRotation.kind === "yaw"
+              ? {
+                  kind: "yaw" as const,
+                  yawDegrees: item.initialRotation.yawDegrees
+                }
+              : item.initialRotation.kind === "direction"
+                ? {
+                    kind: "direction" as const,
+                    direction: {
+                      ...item.initialRotation.direction
+                    }
+                  }
+                : item.initialRotation.kind === "euler"
+                  ? {
+                      kind: "euler" as const,
+                      rotationDegrees: {
+                        ...item.initialRotation.rotationDegrees
+                      }
+                    }
+                  : {
+                      kind: "none" as const
+                    },
           scale: nextScale
         };
       })
