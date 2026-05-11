@@ -4322,6 +4322,10 @@ function readNpcEntity(
       `${label}.targetable`,
       DEFAULT_NPC_TARGETABLE
     ),
+    targetAnchor: readNpcTargetAnchor(
+      value.targetAnchor,
+      `${label}.targetAnchor`
+    ),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`),
     scale: readOptionalVec3(value.scale, `${label}.scale`, DEFAULT_NPC_SCALE),
     modelAssetId:
