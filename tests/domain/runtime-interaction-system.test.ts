@@ -12,7 +12,9 @@ import {
 } from "../../src/sequencer/project-sequences";
 import {
   createPlayerStartInputBindings,
-  createPlayerStartMovementTemplate
+  createPlayerStartMovementTemplate,
+  DEFAULT_NPC_SCALE,
+  DEFAULT_TRIGGER_VOLUME_ROTATION_DEGREES
 } from "../../src/entities/entity-instances";
 import {
   createControlInteractionLink,
@@ -113,6 +115,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
             y: 0,
             z: 0
           },
+          rotationDegrees: DEFAULT_TRIGGER_VOLUME_ROTATION_DEGREES,
           size: {
             x: 2,
             y: 2,
@@ -208,6 +211,7 @@ function createRuntimeNpcFixture(options: {
     visible: true,
     position,
     yawDegrees: 0,
+    scale: DEFAULT_NPC_SCALE,
     modelAssetId: null,
     dialogues: [
       {
@@ -1032,6 +1036,7 @@ describe("RuntimeInteractionSystem", () => {
           y: 1.2,
           z: 0
         },
+        rotationDegrees: DEFAULT_TRIGGER_VOLUME_ROTATION_DEGREES,
         size: {
           x: 2,
           y: 1,
@@ -1115,6 +1120,7 @@ describe("RuntimeInteractionSystem", () => {
           z: 1.5
         },
         yawDegrees: 180,
+        scale: DEFAULT_NPC_SCALE,
         modelAssetId: null,
         dialogues: [
           {
