@@ -1338,6 +1338,11 @@ describe("validateSceneDocument", () => {
       }
     });
     invalidColliderNpc.collider.eyeHeight = 2;
+    const invalidTargetableNpc = createNpcEntity({
+      id: "entity-npc-invalid-targetable",
+      actorId: "actor-town-targetable"
+    });
+    (invalidTargetableNpc as { targetable: unknown }).targetable = "yes";
 
     const validation = validateSceneDocument({
       ...createEmptySceneDocument(),
@@ -1363,7 +1368,8 @@ describe("validateSceneDocument", () => {
         [missingModelNpc.id]: missingModelNpc,
         [wrongKindModelNpc.id]: wrongKindModelNpc,
         [duplicateActorNpc.id]: duplicateActorNpc,
-        [invalidColliderNpc.id]: invalidColliderNpc
+        [invalidColliderNpc.id]: invalidColliderNpc,
+        [invalidTargetableNpc.id]: invalidTargetableNpc
       }
     });
 
@@ -1384,6 +1390,10 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-npc-eye-height",
           path: "entities.entity-npc-invalid-collider.collider.eyeHeight"
+        }),
+        expect.objectContaining({
+          code: "invalid-npc-targetable",
+          path: "entities.entity-npc-invalid-targetable.targetable"
         })
       ])
     );
