@@ -4106,7 +4106,7 @@ describe("scene document JSON", () => {
   it("rejects unsupported versions", () => {
     expect(() =>
       migrateSceneDocument({
-        version: 99,
+        version: SCENE_DOCUMENT_VERSION + 1,
         name: "Legacy",
         world: {},
         textures: {},
