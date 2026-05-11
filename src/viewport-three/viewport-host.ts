@@ -6040,7 +6040,6 @@ export class ViewportHost {
     switch (entity.kind) {
       case "pointLight":
       case "soundEmitter":
-      case "triggerVolume":
       case "interactable":
         renderObjects.group.position.set(
           entity.position.x,
@@ -6049,7 +6048,29 @@ export class ViewportHost {
         );
         renderObjects.group.rotation.set(0, 0, 0);
         renderObjects.group.quaternion.identity();
+        renderObjects.group.scale.set(1, 1, 1);
         break;
+      case "triggerVolume": {
+        const baseSize = renderObjects.group.userData.triggerVolumeSize as
+          | Vec3
+          | undefined;
+        renderObjects.group.position.set(
+          entity.position.x,
+          entity.position.y,
+          entity.position.z
+        );
+        renderObjects.group.rotation.set(
+          (entity.rotationDegrees.x * Math.PI) / 180,
+          (entity.rotationDegrees.y * Math.PI) / 180,
+          (entity.rotationDegrees.z * Math.PI) / 180
+        );
+        renderObjects.group.scale.set(
+          baseSize === undefined ? 1 : entity.size.x / baseSize.x,
+          baseSize === undefined ? 1 : entity.size.y / baseSize.y,
+          baseSize === undefined ? 1 : entity.size.z / baseSize.z
+        );
+        break;
+      }
       case "cameraRig":
         this.applyCameraRigGroupTransform(
           renderObjects.group,
@@ -6077,6 +6098,11 @@ export class ViewportHost {
           0,
           (entity.yawDegrees * Math.PI) / 180,
           0
+        );
+        renderObjects.group.scale.set(
+          entity.kind === "npc" ? entity.scale.x : 1,
+          entity.kind === "npc" ? entity.scale.y : 1,
+          entity.kind === "npc" ? entity.scale.z : 1
         );
         break;
     }
