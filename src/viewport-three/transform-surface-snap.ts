@@ -127,11 +127,35 @@ export function createAxisAlignedBoxSurfaceSnapSupportPoints(
   center: Vec3,
   size: Vec3
 ): Vec3[] {
+  return createOrientedBoxSurfaceSnapSupportPoints({
+    center,
+    size,
+    rotationDegrees: {
+      x: 0,
+      y: 0,
+      z: 0
+    }
+  });
+}
+
+export function createOrientedBoxSurfaceSnapSupportPoints(options: {
+  center: Vec3;
+  size: Vec3;
+  rotationDegrees: Vec3;
+}): Vec3[] {
   const halfSize = {
-    x: size.x * 0.5,
-    y: size.y * 0.5,
-    z: size.z * 0.5
+    x: options.size.x * 0.5,
+    y: options.size.y * 0.5,
+    z: options.size.z * 0.5
   };
+  const rotation = new Quaternion().setFromEuler(
+    new Euler(
+      (options.rotationDegrees.x * Math.PI) / 180,
+      (options.rotationDegrees.y * Math.PI) / 180,
+      (options.rotationDegrees.z * Math.PI) / 180,
+      "XYZ"
+    )
+  );
 
   return [
     { x: -halfSize.x, y: -halfSize.y, z: -halfSize.z },
@@ -142,7 +166,19 @@ export function createAxisAlignedBoxSurfaceSnapSupportPoints(
     { x: halfSize.x, y: -halfSize.y, z: halfSize.z },
     { x: -halfSize.x, y: halfSize.y, z: halfSize.z },
     { x: halfSize.x, y: halfSize.y, z: halfSize.z }
-  ].map((offset) => addVec3(center, offset));
+  ].map((offset) => {
+    const rotatedOffset = new Vector3(
+      offset.x,
+      offset.y,
+      offset.z
+    ).applyQuaternion(rotation);
+
+    return {
+      x: options.center.x + rotatedOffset.x,
+      y: options.center.y + rotatedOffset.y,
+      z: options.center.z + rotatedOffset.z
+    };
+  });
 }
 
 export function createModelBoundingBoxSurfaceSnapSupportPoints(options: {
