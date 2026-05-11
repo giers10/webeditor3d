@@ -668,6 +668,7 @@ export function createRuntimeNpcFromDefinition(
     name: npc.name,
     visible: npc.visible,
     targetable: npc.targetable,
+    targetAnchor: createNpcTargetAnchor(npc.targetAnchor),
     position: cloneVec3(npc.position),
     yawDegrees: npc.yawDegrees,
     scale: cloneVec3(npc.scale),
