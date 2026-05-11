@@ -38,6 +38,7 @@ import {
   ENTITY_NAMES_SCENE_DOCUMENT_VERSION,
   ENTITY_SYSTEM_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FIRST_ROOM_POLISH_SCENE_DOCUMENT_VERSION,
+  FOLIAGE_BLOCKER_MASKS_SCENE_DOCUMENT_VERSION,
   FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FOLIAGE_MASKS_SCENE_DOCUMENT_VERSION,
   FOLIAGE_QUALITY_SCENE_DOCUMENT_VERSION,
@@ -2538,6 +2539,11 @@ describe("scene document JSON", () => {
         y: 1,
         z: 0
       },
+      rotationDegrees: {
+        x: 0,
+        y: 30,
+        z: 0
+      },
       size: {
         x: 2,
         y: 3,
@@ -2620,6 +2626,11 @@ describe("scene document JSON", () => {
         z: -2
       },
       yawDegrees: 225,
+      scale: {
+        x: 1.25,
+        y: 1.5,
+        z: 0.9
+      },
       modelAssetId: modelAsset.id,
       collider: {
         mode: "box",
@@ -2643,6 +2654,90 @@ describe("scene document JSON", () => {
 
     expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
       document
+    );
+  });
+
+  it("migrates pre-entity-transform NPCs and trigger volumes to explicit transform defaults", () => {
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-legacy-transform",
+      position: {
+        x: 0,
+        y: 1,
+        z: -2
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 35,
+        z: 0
+      },
+      size: {
+        x: 3,
+        y: 2,
+        z: 4
+      },
+      triggerOnEnter: true,
+      triggerOnExit: false
+    });
+    const npc = createNpcEntity({
+      id: "entity-npc-legacy-transform",
+      actorId: "actor-legacy-guide",
+      position: {
+        x: 2,
+        y: 0,
+        z: 3
+      },
+      yawDegrees: 90,
+      scale: {
+        x: 1.5,
+        y: 2,
+        z: 0.75
+      },
+      modelAssetId: null
+    });
+    const document = {
+      ...createEmptySceneDocument({
+        name: "Legacy Entity Transform Scene"
+      }),
+      entities: {
+        [triggerVolume.id]: triggerVolume,
+        [npc.id]: npc
+      }
+    };
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(document)
+    ) as Record<string, unknown>;
+    const legacyEntities = legacyDocument.entities as Record<
+      string,
+      Record<string, unknown>
+    >;
+
+    legacyDocument.version = FOLIAGE_BLOCKER_MASKS_SCENE_DOCUMENT_VERSION;
+    delete legacyEntities[triggerVolume.id]?.rotationDegrees;
+    delete legacyEntities[npc.id]?.scale;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[triggerVolume.id]).toEqual(
+      createTriggerVolumeEntity({
+        id: triggerVolume.id,
+        position: triggerVolume.position,
+        size: triggerVolume.size,
+        triggerOnEnter: triggerVolume.triggerOnEnter,
+        triggerOnExit: triggerVolume.triggerOnExit
+      })
+    );
+    expect(migratedDocument.entities[npc.id]).toEqual(
+      createNpcEntity({
+        id: npc.id,
+        actorId: npc.actorId,
+        position: npc.position,
+        yawDegrees: npc.yawDegrees,
+        modelAssetId: npc.modelAssetId,
+        collider: npc.collider
+      })
     );
   });
 
