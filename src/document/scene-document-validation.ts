@@ -5009,7 +5009,11 @@ function validateNpcEntity(
       );
     }
 
-    if (!isFiniteVec3(entity.targetAnchor.offset)) {
+    if (
+      typeof entity.targetAnchor.offset !== "object" ||
+      entity.targetAnchor.offset === null ||
+      !isFiniteVec3(entity.targetAnchor.offset)
+    ) {
       diagnostics.push(
         createDiagnostic(
           "error",
