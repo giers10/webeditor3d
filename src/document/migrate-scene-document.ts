@@ -242,6 +242,7 @@ import {
   PROJECT_NAME_SCENE_DOCUMENT_VERSION,
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
   NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION,
+  NPC_TARGETING_DEFAULT_SCENE_DOCUMENT_VERSION,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
   NPC_TARGETING_SCENE_DOCUMENT_VERSION,
   WHITEBOX_BOX_LIGHT_VOLUME_SCENE_DOCUMENT_VERSION,
@@ -292,10 +293,7 @@ import {
   createProjectSequence,
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
-import {
-  getInteractionLinkImpulseSteps,
-  type SequenceClip
-} from "../sequencer/project-sequence-steps";
+import { type SequenceClip } from "../sequencer/project-sequence-steps";
 import {
   createScenePath,
   createScenePathPoint,
