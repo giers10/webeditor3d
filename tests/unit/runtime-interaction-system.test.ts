@@ -34,6 +34,7 @@ function createNpc(overrides: Partial<RuntimeNpc> & { entityId: string }): Runti
     visible: overrides.visible ?? true,
     position: overrides.position ?? { x: 0, y: 0, z: 0 },
     yawDegrees: overrides.yawDegrees ?? 0,
+    scale: overrides.scale ?? { x: 1, y: 1, z: 1 },
     modelAssetId: overrides.modelAssetId ?? null,
     dialogues: overrides.dialogues ?? [],
     defaultDialogueId: overrides.defaultDialogueId ?? null,
