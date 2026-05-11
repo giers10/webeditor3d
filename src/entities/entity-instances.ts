@@ -184,6 +184,7 @@ export interface NpcEntity extends PositionedEntity {
   actorId: string;
   presence: NpcPresence;
   yawDegrees: number;
+  scale: Vec3;
   modelAssetId: string | null;
   dialogues: ProjectDialogue[];
   defaultDialogueId: string | null;
@@ -383,6 +384,7 @@ export interface SoundEmitterEntity extends PositionedEntity {
 
 export interface TriggerVolumeEntity extends PositionedEntity {
   kind: "triggerVolume";
+  rotationDegrees: Vec3;
   size: Vec3;
   triggerOnEnter: boolean;
   triggerOnExit: boolean;
@@ -590,6 +592,11 @@ export const DEFAULT_PLAYER_START_GAMEPAD_BINDINGS: PlayerStartGamepadBindings =
   };
 export const DEFAULT_SCENE_ENTRY_YAW_DEGREES = 0;
 export const DEFAULT_NPC_YAW_DEGREES = 0;
+export const DEFAULT_NPC_SCALE: Vec3 = {
+  x: 1,
+  y: 1,
+  z: 1
+};
 export const DEFAULT_NPC_MODEL_ASSET_ID: string | null = null;
 export const DEFAULT_NPC_DIALOGUE_ID: string | null = null;
 export const DEFAULT_NPC_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
@@ -620,6 +627,11 @@ export const DEFAULT_TRIGGER_VOLUME_SIZE: Vec3 = {
   x: 2,
   y: 2,
   z: 2
+};
+export const DEFAULT_TRIGGER_VOLUME_ROTATION_DEGREES: Vec3 = {
+  x: 0,
+  y: 0,
+  z: 0
 };
 export const DEFAULT_TELEPORT_TARGET_YAW_DEGREES = 0;
 export const DEFAULT_INTERACTABLE_RADIUS = 1.5;
