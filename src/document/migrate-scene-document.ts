@@ -34,7 +34,9 @@ import {
   DEFAULT_PLAYER_START_GAMEPAD_BINDINGS,
   DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
+  DEFAULT_NPC_SCALE,
   DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET,
+  DEFAULT_TRIGGER_VOLUME_ROTATION_DEGREES,
   createNpcAlwaysPresence,
   createNpcEntity,
   createNpcColliderSettings,
@@ -178,6 +180,7 @@ import {
   CONTROL_SURFACE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   DISTANCE_FOG_SCENE_DOCUMENT_VERSION,
   DYNAMIC_GLOBAL_ILLUMINATION_SCENE_DOCUMENT_VERSION,
+  ENTITY_TRANSFORMS_SCENE_DOCUMENT_VERSION,
   FOLIAGE_BLOCKER_MASKS_SCENE_DOCUMENT_VERSION,
   FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FOLIAGE_MASKS_SCENE_DOCUMENT_VERSION,
@@ -4115,6 +4118,11 @@ function readTriggerVolumeEntity(
       DEFAULT_ENTITY_ENABLED
     ),
     position: readVec3(value.position, `${label}.position`),
+    rotationDegrees: readOptionalVec3(
+      value.rotationDegrees,
+      `${label}.rotationDegrees`,
+      DEFAULT_TRIGGER_VOLUME_ROTATION_DEGREES
+    ),
     size,
     triggerOnEnter: expectBoolean(
       value.triggerOnEnter,
@@ -4281,6 +4289,7 @@ function readNpcEntity(
     actorId: expectString(value.actorId, `${label}.actorId`),
     presence: readNpcPresence(value.presence, `${label}.presence`),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`),
+    scale: readOptionalVec3(value.scale, `${label}.scale`, DEFAULT_NPC_SCALE),
     modelAssetId:
       value.modelAssetId === undefined || value.modelAssetId === null
         ? undefined
@@ -6116,7 +6125,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== SCENE_DOCUMENT_VERSION &&
     source.version !== PLAYER_START_EDGE_ASSIST_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_FACE_CLIMBABLE_SCENE_DOCUMENT_VERSION &&
-    source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION
+    source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION &&
+    source.version !== ENTITY_TRANSFORMS_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
       `Unsupported scene document version: ${String(source.version)}.`
