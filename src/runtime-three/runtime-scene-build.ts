@@ -375,6 +375,7 @@ export interface RuntimeNpc {
   actorId: string;
   name?: string;
   visible: boolean;
+  targetable: boolean;
   position: Vec3;
   yawDegrees: number;
   scale: Vec3;
@@ -663,6 +664,7 @@ export function createRuntimeNpcFromDefinition(
     actorId: npc.actorId,
     name: npc.name,
     visible: npc.visible,
+    targetable: npc.targetable,
     position: cloneVec3(npc.position),
     yawDegrees: npc.yawDegrees,
     scale: cloneVec3(npc.scale),
@@ -1742,6 +1744,7 @@ function buildRuntimeSceneCollections(
           actorId: entity.actorId,
           name: entity.name,
           visible: entity.visible,
+          targetable: entity.targetable,
           position: cloneVec3(entity.position),
           active: true,
           activeRoutineId: null,

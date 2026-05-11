@@ -4972,6 +4972,18 @@ function validateNpcEntity(
   }
 
   validateNpcPresence(entity.presence, `${path}.presence`, diagnostics);
+
+  if (typeof entity.targetable !== "boolean") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-targetable",
+        "NPC targetable must remain a boolean.",
+        `${path}.targetable`
+      )
+    );
+  }
+
   validateNpcModelAssetId(entity, path, document, diagnostics);
   const seenNpcDialogueIds = new Map<string, string>();
 
