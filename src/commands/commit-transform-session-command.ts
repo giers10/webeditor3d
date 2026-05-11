@@ -215,7 +215,7 @@ function createUpdatedBrushFromPreview(
 
 export function createCommitTransformSessionCommand(document: SceneDocument, session: ActiveTransformSession): EditorCommand {
   switch (session.target.kind) {
-    case "brush":
+    case "brush": {
       if (session.preview.kind !== "brush") {
         throw new Error("Brush transform preview is invalid.");
       }
@@ -242,6 +242,8 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
             label: createTransformCommandLabel(session)
           });
       }
+      throw new Error(`Unsupported transform operation: ${session.operation}.`);
+    }
     case "brushes":
       if (session.preview.kind !== "brushes") {
         throw new Error("Whitebox multi-transform preview is invalid.");
