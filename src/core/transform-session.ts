@@ -175,6 +175,7 @@ export interface EntityTransformTarget {
   entityKind: EntityKind;
   initialPosition: Vec3;
   initialRotation: EntityTransformRotationState;
+  initialScale: EntityTransformScaleState;
 }
 
 export interface BrushesTransformTarget {
@@ -252,6 +253,7 @@ export interface EntityTransformPreview {
   kind: "entity";
   position: Vec3;
   rotation: EntityTransformRotationState;
+  scale: EntityTransformScaleState;
 }
 
 export interface BrushTransformPreviewItem {
@@ -285,6 +287,7 @@ export interface EntityTransformPreviewItem {
   entityId: string;
   position: Vec3;
   rotation: EntityTransformRotationState;
+  scale: EntityTransformScaleState;
 }
 
 export interface EntitiesTransformPreview {
@@ -381,6 +384,32 @@ function cloneEntityTransformRotationState(
         kind: "direction",
         direction: cloneVec3(rotation.direction)
       };
+    case "euler":
+      return {
+        kind: "euler",
+        rotationDegrees: cloneVec3(rotation.rotationDegrees)
+      };
+  }
+}
+
+function cloneEntityTransformScaleState(
+  scale: EntityTransformScaleState
+): EntityTransformScaleState {
+  switch (scale.kind) {
+    case "none":
+      return {
+        kind: "none"
+      };
+    case "scale":
+      return {
+        kind: "scale",
+        scale: cloneVec3(scale.scale)
+      };
+    case "size":
+      return {
+        kind: "size",
+        size: cloneVec3(scale.size)
+      };
   }
 }
 
@@ -413,7 +442,8 @@ function cloneEntityTransformPreviewItem(
   return {
     entityId: preview.entityId,
     position: cloneVec3(preview.position),
-    rotation: cloneEntityTransformRotationState(preview.rotation)
+    rotation: cloneEntityTransformRotationState(preview.rotation),
+    scale: cloneEntityTransformScaleState(preview.scale)
   };
 }
 
@@ -449,7 +479,8 @@ function areEntityTransformPreviewItemsEqual(
   return (
     left.entityId === right.entityId &&
     areVec3Equal(left.position, right.position) &&
-    areEntityTransformRotationsEqual(left.rotation, right.rotation)
+    areEntityTransformRotationsEqual(left.rotation, right.rotation) &&
+    areEntityTransformScalesEqual(left.scale, right.scale)
   );
 }
 
@@ -526,6 +557,29 @@ function areEntityTransformRotationsEqual(
         right.kind === "direction" &&
         areVec3Equal(left.direction, right.direction)
       );
+    case "euler":
+      return (
+        right.kind === "euler" &&
+        areVec3Equal(left.rotationDegrees, right.rotationDegrees)
+      );
+  }
+}
+
+function areEntityTransformScalesEqual(
+  left: EntityTransformScaleState,
+  right: EntityTransformScaleState
+): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+
+  switch (left.kind) {
+    case "none":
+      return true;
+    case "scale":
+      return right.kind === "scale" && areVec3Equal(left.scale, right.scale);
+    case "size":
+      return right.kind === "size" && areVec3Equal(left.size, right.size);
   }
 }
 
@@ -634,7 +688,8 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
         initialPosition: cloneVec3(target.initialPosition),
         initialRotation: cloneEntityTransformRotationState(
           target.initialRotation
-        )
+        ),
+        initialScale: cloneEntityTransformScaleState(target.initialScale)
       };
     case "entities":
       return {
@@ -688,7 +743,8 @@ export function cloneTransformPreview(
       return {
         kind: "entity",
         position: cloneVec3(preview.position),
-        rotation: cloneEntityTransformRotationState(preview.rotation)
+        rotation: cloneEntityTransformRotationState(preview.rotation),
+        scale: cloneEntityTransformScaleState(preview.scale)
       };
     case "entities":
       return {
@@ -869,7 +925,8 @@ function areTransformTargetsEqual(
         areEntityTransformRotationsEqual(
           left.initialRotation,
           right.initialRotation
-        )
+        ) &&
+        areEntityTransformScalesEqual(left.initialScale, right.initialScale)
       );
     case "entities":
       return (
@@ -935,7 +992,8 @@ function areTransformPreviewsEqual(
       return (
         right.kind === "entity" &&
         areVec3Equal(left.position, right.position) &&
-        areEntityTransformRotationsEqual(left.rotation, right.rotation)
+        areEntityTransformRotationsEqual(left.rotation, right.rotation) &&
+        areEntityTransformScalesEqual(left.scale, right.scale)
       );
     case "entities":
       return (
@@ -1026,7 +1084,8 @@ export function createTransformPreviewFromTarget(
       return {
         kind: "entity",
         position: cloneVec3(target.initialPosition),
-        rotation: cloneEntityTransformRotationState(target.initialRotation)
+        rotation: cloneEntityTransformRotationState(target.initialRotation),
+        scale: cloneEntityTransformScaleState(target.initialScale)
       };
     case "entities":
       return {
@@ -1035,7 +1094,8 @@ export function createTransformPreviewFromTarget(
         items: target.items.map((item) => ({
           entityId: item.entityId,
           position: cloneVec3(item.initialPosition),
-          rotation: cloneEntityTransformRotationState(item.initialRotation)
+          rotation: cloneEntityTransformRotationState(item.initialRotation),
+          scale: cloneEntityTransformScaleState(item.initialScale)
         }))
       };
   }
@@ -1137,6 +1197,10 @@ export function doesTransformSessionChangeTarget(
           !areEntityTransformRotationsEqual(
             session.preview.rotation,
             session.target.initialRotation
+          ) ||
+          !areEntityTransformScalesEqual(
+            session.preview.scale,
+            session.target.initialScale
           ))
       );
     case "entities":
@@ -1154,6 +1218,10 @@ export function doesTransformSessionChangeTarget(
               !areEntityTransformRotationsEqual(
                 item.rotation,
                 targetItem.initialRotation
+              ) ||
+              !areEntityTransformScalesEqual(
+                item.scale,
+                targetItem.initialScale
               )
             );
           }))
@@ -1229,16 +1297,40 @@ export function getSupportedTransformOperations(
     case "modelInstance":
     case "modelInstances":
       return ["translate", "rotate", "scale"];
-    case "entity":
-      return target.initialRotation.kind === "none"
-        ? ["translate"]
-        : ["translate", "rotate"];
-    case "entities":
-      return target.items.every(
-        (item) => getSupportedTransformOperations(item).includes("rotate")
-      )
-        ? ["translate", "rotate"]
-        : ["translate"];
+    case "entity": {
+      const operations: TransformOperation[] = ["translate"];
+
+      if (target.initialRotation.kind !== "none") {
+        operations.push("rotate");
+      }
+
+      if (target.initialScale.kind !== "none") {
+        operations.push("scale");
+      }
+
+      return operations;
+    }
+    case "entities": {
+      const operations: TransformOperation[] = ["translate"];
+
+      if (
+        target.items.every((item) =>
+          getSupportedTransformOperations(item).includes("rotate")
+        )
+      ) {
+        operations.push("rotate");
+      }
+
+      if (
+        target.items.every((item) =>
+          getSupportedTransformOperations(item).includes("scale")
+        )
+      ) {
+        operations.push("scale");
+      }
+
+      return operations;
+    }
   }
 }
 
@@ -1297,6 +1389,16 @@ export function supportsTransformAxisConstraint(
         session.target.kind === "brushes"
       ) {
         return true;
+      }
+
+      if (session.target.kind === "entity") {
+        return session.target.initialScale.kind !== "none";
+      }
+
+      if (session.target.kind === "entities") {
+        return session.target.items.every(
+          (item) => item.initialScale.kind !== "none"
+        );
       }
 
       if (
@@ -1423,8 +1525,38 @@ function resolveEntityRotation(
       };
     case "pointLight":
     case "soundEmitter":
-    case "triggerVolume":
     case "interactable":
+      return {
+        kind: "none"
+      };
+    case "triggerVolume":
+      return {
+        kind: "euler",
+        rotationDegrees: cloneVec3(entity.rotationDegrees)
+      };
+  }
+}
+
+function resolveEntityScale(entity: EntityInstance): EntityTransformScaleState {
+  switch (entity.kind) {
+    case "npc":
+      return {
+        kind: "scale",
+        scale: cloneVec3(entity.scale)
+      };
+    case "triggerVolume":
+      return {
+        kind: "size",
+        size: cloneVec3(entity.size)
+      };
+    case "cameraRig":
+    case "interactable":
+    case "playerStart":
+    case "pointLight":
+    case "sceneEntry":
+    case "soundEmitter":
+    case "spotLight":
+    case "teleportTarget":
       return {
         kind: "none"
       };
@@ -1660,7 +1792,8 @@ function createEntityTransformTarget(
       entityId: clonedEntity.id,
       entityKind: clonedEntity.kind,
       initialPosition: cloneVec3(entity.position),
-      initialRotation: resolveEntityRotation(clonedEntity)
+      initialRotation: resolveEntityRotation(clonedEntity),
+      initialScale: resolveEntityScale(clonedEntity)
     },
     message: null
   };
