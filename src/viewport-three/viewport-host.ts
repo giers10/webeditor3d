@@ -7822,6 +7822,7 @@ export class ViewportHost {
         return this.createTriggerVolumeRenderObjects(
           entity.id,
           entity.position,
+          entity.rotationDegrees,
           entity.size,
           selected
         );
@@ -8537,6 +8538,7 @@ export class ViewportHost {
   private createTriggerVolumeRenderObjects(
     entityId: string,
     position: Vec3,
+    rotationDegrees: Vec3,
     size: Vec3,
     selected: boolean,
     markerColor = selected
@@ -8545,6 +8547,14 @@ export class ViewportHost {
   ): EntityRenderObjects {
     const group = new Group();
     group.position.set(position.x, position.y, position.z);
+    group.rotation.set(
+      (rotationDegrees.x * Math.PI) / 180,
+      (rotationDegrees.y * Math.PI) / 180,
+      (rotationDegrees.z * Math.PI) / 180
+    );
+    group.userData.triggerVolumeSize = {
+      ...size
+    };
 
     const fill = new Mesh(
       new BoxGeometry(size.x, size.y, size.z),
@@ -11844,6 +11854,7 @@ export class ViewportHost {
             previewGroup = this.createTriggerVolumeRenderObjects(
               "creation-preview",
               previewPosition,
+              DEFAULT_TRIGGER_VOLUME_ROTATION_DEGREES,
               DEFAULT_TRIGGER_VOLUME_SIZE,
               false,
               BOX_CREATE_PREVIEW_FILL
