@@ -252,6 +252,69 @@ describe("runtime interaction targeting", () => {
     ).toEqual([]);
   });
 
+  it("resolves NPC target anchors from scaled bounds and local offsets", () => {
+    const centerNpc = createNpc({
+      entityId: "npc-center-anchor",
+      targetable: true,
+      scale: { x: 1, y: 2, z: 1 }
+    });
+    const eyeNpc = createNpc({
+      entityId: "npc-eye-anchor",
+      targetable: true,
+      scale: { x: 1, y: 2, z: 1 },
+      targetAnchor: createNpcTargetAnchor({ mode: "eyeHeight" })
+    });
+    const topNpc = createNpc({
+      entityId: "npc-top-anchor",
+      targetable: true,
+      scale: { x: 1, y: 2, z: 1 },
+      targetAnchor: createNpcTargetAnchor({ mode: "top" })
+    });
+    const customNpc = createNpc({
+      entityId: "npc-custom-anchor",
+      targetable: true,
+      position: { x: 10, y: 0, z: 5 },
+      yawDegrees: 90,
+      scale: { x: 2, y: 3, z: 4 },
+      targetAnchor: createNpcTargetAnchor({
+        mode: "custom",
+        offset: { x: 1, y: 0.5, z: 1 }
+      })
+    });
+    const scene = createRuntimeSceneFixture({
+      npcs: [centerNpc, eyeNpc, topNpc, customNpc]
+    });
+
+    expect(
+      resolveRuntimeTargetReference(scene, {
+        kind: "npc",
+        entityId: centerNpc.entityId
+      })?.center.y
+    ).toBeCloseTo(1.8);
+    expect(
+      resolveRuntimeTargetReference(scene, {
+        kind: "npc",
+        entityId: eyeNpc.entityId
+      })?.center.y
+    ).toBeCloseTo(3.2);
+    expect(
+      resolveRuntimeTargetReference(scene, {
+        kind: "npc",
+        entityId: topNpc.entityId
+      })?.center.y
+    ).toBeCloseTo(3.6);
+    expect(
+      resolveRuntimeTargetReference(scene, {
+        kind: "npc",
+        entityId: customNpc.entityId
+      })?.center
+    ).toMatchObject({
+      x: 14,
+      y: 1.5,
+      z: 3
+    });
+  });
+
   it("captures off-center targets without ray dead zones", () => {
     const npc = createNpc({
       entityId: "npc-dead-zone",
