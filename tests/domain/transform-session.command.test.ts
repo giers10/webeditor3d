@@ -1890,7 +1890,7 @@ describe("transform session commit commands", () => {
     expect(store.getState().document.entities[entityB.id]).toEqual(entityB);
   });
 
-  it("disables unsupported mixed-capability entity rotation for batch selections", () => {
+  it("disables unsupported mixed-capability entity scaling for batch selections", () => {
     const playerStart = createPlayerStartEntity({
       id: "entity-mixed-player-start"
     });
@@ -1914,7 +1914,7 @@ describe("transform session commit commands", () => {
     }
 
     expect(supportsTransformOperation(target, "translate")).toBe(true);
-    expect(supportsTransformOperation(target, "rotate")).toBe(false);
+    expect(supportsTransformOperation(target, "rotate")).toBe(true);
     expect(supportsTransformOperation(target, "scale")).toBe(false);
   });
 });
