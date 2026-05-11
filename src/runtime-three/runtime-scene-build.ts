@@ -49,7 +49,10 @@ import {
   type WhiteboxVertexId,
   type FaceUvState
 } from "../document/brushes";
-import type { ProjectDocument, SceneDocument } from "../document/scene-document";
+import type {
+  ProjectDocument,
+  SceneDocument
+} from "../document/scene-document";
 import {
   cloneProjectTimeSettings,
   type ProjectTimeSettings
@@ -761,9 +764,7 @@ function buildRuntimePlayerMovement(
     jump: clonePlayerStartJumpSettings(resolvedTemplate.jump),
     sprint: clonePlayerStartSprintSettings(resolvedTemplate.sprint),
     crouch: clonePlayerStartCrouchSettings(resolvedTemplate.crouch),
-    edgeAssist: clonePlayerStartEdgeAssistSettings(
-      resolvedTemplate.edgeAssist
-    )
+    edgeAssist: clonePlayerStartEdgeAssistSettings(resolvedTemplate.edgeAssist)
   };
 }
 
@@ -1196,7 +1197,9 @@ function combineColliderBounds(
   };
 }
 
-function getRuntimeTerrainSceneBounds(terrain: RuntimeTerrain): RuntimeSceneBounds {
+function getRuntimeTerrainSceneBounds(
+  terrain: RuntimeTerrain
+): RuntimeSceneBounds {
   const bounds = getTerrainBounds({
     ...terrain,
     kind: "terrain",
@@ -1397,9 +1400,7 @@ function buildRuntimeControlSurface(
       capabilities.push("actorPathFollow");
     }
 
-    targets.push(
-      createControlTargetDescriptor(target, capabilities)
-    );
+    targets.push(createControlTargetDescriptor(target, capabilities));
     resolved.discrete.push(
       createResolvedActorAnimationPlaybackState({
         target,
@@ -1559,7 +1560,9 @@ function buildRuntimeControlSurface(
       authoredModelInstance === undefined
         ? undefined
         : document.assets[authoredModelInstance.assetId];
-    const target = createModelInstanceControlTargetRef(modelInstance.instanceId);
+    const target = createModelInstanceControlTargetRef(
+      modelInstance.instanceId
+    );
     const hasAnimationPlayback =
       asset !== undefined &&
       asset.kind === "model" &&
@@ -2013,7 +2016,9 @@ export function buildRuntimeSceneFromDocument(
         case "stopSound":
           return enabledEntityIds.has(link.action.targetSoundEmitterId);
         case "runSequence":
-          return getInteractionLinkImpulseSteps(link, document.sequences).length > 0;
+          return (
+            getInteractionLinkImpulseSteps(link, document.sequences).length > 0
+          );
         case "control":
           switch (link.action.effect.target.kind) {
             case "entity":

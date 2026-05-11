@@ -159,7 +159,7 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
           prompt: "Disabled Prompt",
           interactionEnabled: false
         }
-      ],
+      ]
     },
     interactionLinks: [],
     control: createEmptyRuntimeControlSurfaceDefinition(),
@@ -288,7 +288,7 @@ describe("RuntimeInteractionSystem", () => {
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {},
+        stopSound: () => {}
       }
     );
     interactionSystem.updatePlayerPosition(
@@ -309,7 +309,7 @@ describe("RuntimeInteractionSystem", () => {
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {},
+        stopSound: () => {}
       }
     );
 
@@ -423,7 +423,7 @@ describe("RuntimeInteractionSystem", () => {
           dispatches.push(`${link.id}:${instanceId}`);
         },
         playSound: () => {},
-        stopSound: () => {},
+        stopSound: () => {}
       }
     );
 
@@ -462,7 +462,9 @@ describe("RuntimeInteractionSystem", () => {
             throw new Error("Expected a camera rig entity control target.");
           }
 
-          dispatches.push(`${link.id}:${effect.type}:${effect.target.entityId}`);
+          dispatches.push(
+            `${link.id}:${effect.type}:${effect.target.entityId}`
+          );
         }
       })
     );
@@ -480,7 +482,9 @@ describe("RuntimeInteractionSystem", () => {
             throw new Error("Expected a camera rig entity control target.");
           }
 
-          dispatches.push(`${link.id}:${effect.type}:${effect.target.entityId}`);
+          dispatches.push(
+            `${link.id}:${effect.type}:${effect.target.entityId}`
+          );
         }
       })
     );
@@ -515,7 +519,9 @@ describe("RuntimeInteractionSystem", () => {
             throw new Error("Expected a camera rig entity control target.");
           }
 
-          dispatches.push(`${link.id}:${effect.type}:${effect.target.entityId}`);
+          dispatches.push(
+            `${link.id}:${effect.type}:${effect.target.entityId}`
+          );
         }
       })
     );
@@ -564,7 +570,7 @@ describe("RuntimeInteractionSystem", () => {
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {},
+        stopSound: () => {}
       }
     );
     interactionSystem.updatePlayerPosition(
@@ -590,7 +596,7 @@ describe("RuntimeInteractionSystem", () => {
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {},
+        stopSound: () => {}
       }
     );
 
@@ -728,7 +734,7 @@ describe("RuntimeInteractionSystem", () => {
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {},
+        stopSound: () => {}
       }
     );
 
@@ -779,7 +785,7 @@ describe("RuntimeInteractionSystem", () => {
         },
         stopSound: (soundEmitterId, link) => {
           dispatches.push(`${link.id}:${soundEmitterId}`);
-        },
+        }
       }
     );
 
@@ -1402,7 +1408,9 @@ describe("RuntimeInteractionSystem", () => {
       runtimeScene,
       {
         teleportPlayer: () => {
-          throw new Error("Teleport should not dispatch for a scene transition.");
+          throw new Error(
+            "Teleport should not dispatch for a scene transition."
+          );
         },
         startSceneTransition: (request) => {
           dispatches.push(
@@ -1410,12 +1418,14 @@ describe("RuntimeInteractionSystem", () => {
           );
         },
         toggleBrushVisibility: () => {
-          throw new Error("Visibility should not dispatch for a scene transition.");
+          throw new Error(
+            "Visibility should not dispatch for a scene transition."
+          );
         },
         playAnimation: () => {},
         stopAnimation: () => {},
         playSound: () => {},
-        stopSound: () => {},
+        stopSound: () => {}
       }
     );
 

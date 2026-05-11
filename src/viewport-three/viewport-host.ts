@@ -441,8 +441,7 @@ function isTerrainFoliageMaskTool(
   tool: TerrainBrushTool | null | undefined
 ): boolean {
   return (
-    isTerrainFoliageLayerMaskTool(tool) ||
-    isTerrainFoliageBlockerMaskTool(tool)
+    isTerrainFoliageLayerMaskTool(tool) || isTerrainFoliageBlockerMaskTool(tool)
   );
 }
 
@@ -1265,9 +1264,8 @@ export class ViewportHost {
       versionInfo?.frameVersion ?? this.currentSimulationFrameVersion + 1;
     this.currentSimulationMembershipSignatures =
       createViewportSimulationMembershipSignatures(runtimeScene);
-    this.simulationActiveNpcEntityIds = this.collectActiveSimulationNpcEntityIds(
-      runtimeScene
-    );
+    this.simulationActiveNpcEntityIds =
+      this.collectActiveSimulationNpcEntityIds(runtimeScene);
     this.simulationSceneIdentityMismatchWarned = false;
     this.simulationInteractableEnabledById.clear();
     this.cacheSimulationInteractableEnabledState(runtimeScene);
@@ -1384,11 +1382,15 @@ export class ViewportHost {
 
     return nextTerrainIds.every(
       (terrainId) =>
-        previousDocument.terrains[terrainId] === nextDocument.terrains[terrainId]
+        previousDocument.terrains[terrainId] ===
+        nextDocument.terrains[terrainId]
     );
   }
 
-  updateSelection(selection: EditorSelection, activeSelectionId: string | null) {
+  updateSelection(
+    selection: EditorSelection,
+    activeSelectionId: string | null
+  ) {
     const previousSelection = this.currentSelection;
     const selectionChanged = !areEditorSelectionsEqual(
       previousSelection,
@@ -1721,7 +1723,12 @@ export class ViewportHost {
       this.cancelActiveTerrainBrushStroke(false);
     }
 
-    if (terrainChanged || toolChanged || layerChanged || terrainBrushState === null) {
+    if (
+      terrainChanged ||
+      toolChanged ||
+      layerChanged ||
+      terrainBrushState === null
+    ) {
       this.rebuildDisplayedTerrainState();
     }
 
@@ -1855,8 +1862,7 @@ export class ViewportHost {
     const fitZoom =
       Math.min(visibleWidth, ORTHOGRAPHIC_FRUSTUM_HEIGHT) / fitSize;
 
-    this.orthographicCamera.zoom =
-      this.clampOrthographicCameraZoom(fitZoom);
+    this.orthographicCamera.zoom = this.clampOrthographicCameraZoom(fitZoom);
     this.applyOrthographicCameraPose();
     this.emitCameraStateChange();
   }
@@ -1990,8 +1996,7 @@ export class ViewportHost {
 
     traceUpdateLoopEvent("ViewportHost.emitCameraStateChange", {
       panelId: this.panelId,
-      previousCameraState:
-        summarizeUpdateLoopCameraState(previousCameraState),
+      previousCameraState: summarizeUpdateLoopCameraState(previousCameraState),
       nextCameraState: summarizeUpdateLoopCameraState(nextCameraState),
       equalityGuardConsideredDifferent:
         previousCameraState === null ? null : !cameraStatesEqual,
@@ -4089,18 +4094,18 @@ export class ViewportHost {
 
       return {
         kind: "entity" as const,
-          position: {
-            ...session.target.initialPosition
-          },
-          rotation: {
-            kind: "yaw" as const,
-            yawDegrees: normalizeYawDegrees(
-              session.target.initialRotation.yawDegrees + pointerDeltaDegrees
-            )
-          },
-          scale: cloneEntityTransformScaleState(session.target.initialScale)
-        };
-      }
+        position: {
+          ...session.target.initialPosition
+        },
+        rotation: {
+          kind: "yaw" as const,
+          yawDegrees: normalizeYawDegrees(
+            session.target.initialRotation.yawDegrees + pointerDeltaDegrees
+          )
+        },
+        scale: cloneEntityTransformScaleState(session.target.initialScale)
+      };
+    }
 
     if (session.target.initialRotation.kind === "direction") {
       const initialOrientation = new Quaternion().setFromUnitVectors(
@@ -5358,9 +5363,15 @@ export class ViewportHost {
           };
 
           if (axisConstraint === null) {
-            nextScale.x = this.snapScaleValue(item.initialScale.x * scaleFactor);
-            nextScale.y = this.snapScaleValue(item.initialScale.y * scaleFactor);
-            nextScale.z = this.snapScaleValue(item.initialScale.z * scaleFactor);
+            nextScale.x = this.snapScaleValue(
+              item.initialScale.x * scaleFactor
+            );
+            nextScale.y = this.snapScaleValue(
+              item.initialScale.y * scaleFactor
+            );
+            nextScale.z = this.snapScaleValue(
+              item.initialScale.z * scaleFactor
+            );
           } else {
             const scaleAxis = resolveDominantLocalAxisForWorldAxis(
               item.initialRotationDegrees,
@@ -6199,7 +6210,8 @@ export class ViewportHost {
     }
 
     for (const modelInstanceId of targetIds.modelInstanceIds) {
-      const modelInstance = this.currentDocument.modelInstances[modelInstanceId];
+      const modelInstance =
+        this.currentDocument.modelInstances[modelInstanceId];
 
       if (modelInstance === undefined) {
         continue;
@@ -6698,9 +6710,8 @@ export class ViewportHost {
       return;
     }
 
-    const nextActiveNpcEntityIds = this.collectActiveSimulationNpcEntityIds(
-      runtimeScene
-    );
+    const nextActiveNpcEntityIds =
+      this.collectActiveSimulationNpcEntityIds(runtimeScene);
 
     for (const runtimeNpc of runtimeScene.npcDefinitions) {
       const authoredEntity = this.currentDocument.entities[runtimeNpc.entityId];
@@ -6779,9 +6790,7 @@ export class ViewportHost {
     let addedRenderGroup = false;
 
     for (const modelInstance of runtimeScene.modelInstances) {
-      const renderGroup = this.modelRenderObjects.get(
-        modelInstance.instanceId
-      );
+      const renderGroup = this.modelRenderObjects.get(modelInstance.instanceId);
 
       if (renderGroup === undefined) {
         const displayedModelInstance = this.getDisplayedModelInstanceById(
@@ -7005,7 +7014,9 @@ export class ViewportHost {
     return this.currentDocument.materials[materialId] ?? null;
   }
 
-  private getTerrainFoliageMaskPreviewLayerId(terrainId: string): string | null {
+  private getTerrainFoliageMaskPreviewLayerId(
+    terrainId: string
+  ): string | null {
     const brushState = this.currentTerrainBrushState;
 
     if (brushState === null || brushState.terrainId !== terrainId) {
@@ -7022,9 +7033,7 @@ export class ViewportHost {
     return brushState.foliageLayerId;
   }
 
-  private isTerrainFoliageBlockerMaskPreviewActive(
-    terrainId: string
-  ): boolean {
+  private isTerrainFoliageBlockerMaskPreviewActive(terrainId: string): boolean {
     return (
       this.currentTerrainBrushState !== null &&
       this.currentTerrainBrushState.terrainId === terrainId &&
@@ -7084,12 +7093,14 @@ export class ViewportHost {
 
     return createTerrainLayerBlendMaterial({
       layerTextures,
-      foliageMaskPreviewColorHex:
-        this.getTerrainFoliageMaskPreviewColor(terrain.id),
-      foliageMaskPreviewOpacity:
-        !this.isTerrainFoliageMaskPreviewActive(terrain.id)
-          ? 0
-          : 0.62,
+      foliageMaskPreviewColorHex: this.getTerrainFoliageMaskPreviewColor(
+        terrain.id
+      ),
+      foliageMaskPreviewOpacity: !this.isTerrainFoliageMaskPreviewActive(
+        terrain.id
+      )
+        ? 0
+        : 0.62,
       emissiveHex: active
         ? TERRAIN_ACTIVE_EMISSIVE
         : selected
@@ -7106,17 +7117,21 @@ export class ViewportHost {
     const selected = isTerrainSelected(this.currentSelection, terrain.id);
     const hovered = isTerrainSelected(this.hoveredSelection, terrain.id);
     const layerColors = terrain.layers.map((layer) =>
-      getTerrainLayerPreviewColor(this.resolveTerrainLayerMaterial(layer.materialId))
+      getTerrainLayerPreviewColor(
+        this.resolveTerrainLayerMaterial(layer.materialId)
+      )
     ) as [number, number, number, number];
 
     return createTerrainLayerColorBlendMaterial({
       layerColors,
-      foliageMaskPreviewColorHex:
-        this.getTerrainFoliageMaskPreviewColor(terrain.id),
-      foliageMaskPreviewOpacity:
-        !this.isTerrainFoliageMaskPreviewActive(terrain.id)
-          ? 0
-          : 0.62,
+      foliageMaskPreviewColorHex: this.getTerrainFoliageMaskPreviewColor(
+        terrain.id
+      ),
+      foliageMaskPreviewOpacity: !this.isTerrainFoliageMaskPreviewActive(
+        terrain.id
+      )
+        ? 0
+        : 0.62,
       emissiveHex: active
         ? TERRAIN_ACTIVE_EMISSIVE
         : selected
@@ -7201,7 +7216,11 @@ export class ViewportHost {
       foliageMaskLayerId: this.getTerrainFoliageMaskPreviewLayerId(terrain.id)
     });
 
-    group.position.set(terrain.position.x, terrain.position.y, terrain.position.z);
+    group.position.set(
+      terrain.position.x,
+      terrain.position.y,
+      terrain.position.z
+    );
 
     for (const chunk of lodMeshData.chunks) {
       const levelGeometries = chunk.levels.map((level) => level.geometry);
@@ -7321,7 +7340,10 @@ export class ViewportHost {
         continue;
       }
 
-      this.refreshDisplayedTerrainDirtyBounds(terrain.id, dirtyState.dirtyBounds);
+      this.refreshDisplayedTerrainDirtyBounds(
+        terrain.id,
+        dirtyState.dirtyBounds
+      );
     }
   }
 
@@ -8601,7 +8623,11 @@ export class ViewportHost {
       selected,
       previewShellColor ?? (selected ? NPC_SELECTED_COLOR : NPC_COLOR)
     );
-    renderObjects.group.scale.set(entity.scale.x, entity.scale.y, entity.scale.z);
+    renderObjects.group.scale.set(
+      entity.scale.x,
+      entity.scale.y,
+      entity.scale.z
+    );
     return renderObjects;
   }
 
@@ -9695,15 +9721,16 @@ export class ViewportHost {
         this.createFaceMaterial(
           brush,
           faceId,
-          this.currentDocument?.materials[
-            brush.faces[faceId].materialId ?? ""
-          ],
+          this.currentDocument?.materials[brush.faces[faceId].materialId ?? ""],
           this.getFaceHighlightState(brush.id, faceId),
           volumeRenderPaths,
           contactPatches
         )
       );
-    this.configureFogVolumeMesh(renderObjects.mesh, renderObjects.mesh.material);
+    this.configureFogVolumeMesh(
+      renderObjects.mesh,
+      renderObjects.mesh.material
+    );
     applyRendererRenderCategoryFromMaterial(renderObjects.mesh);
 
     this.disposeUniqueMaterials(previousMaterials);
@@ -9778,11 +9805,13 @@ export class ViewportHost {
       return;
     }
 
-    const displayedTerrain = this.getDisplayedTerrainState(terrainId) ?? terrain;
+    const displayedTerrain =
+      this.getDisplayedTerrainState(terrainId) ?? terrain;
     const previousDetailMaterial = renderObjects.detailMaterial;
     const previousDistantMaterial = renderObjects.distantMaterial;
     const nextDetailMaterial = this.createTerrainMaterial(displayedTerrain);
-    const nextDistantMaterial = this.createTerrainDistantMaterial(displayedTerrain);
+    const nextDistantMaterial =
+      this.createTerrainDistantMaterial(displayedTerrain);
 
     for (const chunk of renderObjects.chunks) {
       chunk.mesh.material =
@@ -9884,8 +9913,9 @@ export class ViewportHost {
         chunk.startSampleZ,
         undefined,
         {
-          foliageMaskLayerId:
-            this.getTerrainFoliageMaskPreviewLayerId(terrain.id)
+          foliageMaskLayerId: this.getTerrainFoliageMaskPreviewLayerId(
+            terrain.id
+          )
         }
       );
 
@@ -10179,8 +10209,8 @@ export class ViewportHost {
       layerIndex: toolState.tool === "paint" ? toolState.layerIndex : null,
       foliageLayerId:
         toolState.tool === "foliagePaint" || toolState.tool === "foliageErase"
-        ? toolState.foliageLayerId
-        : null
+          ? toolState.foliageLayerId
+          : null
     });
   }
 
@@ -10233,7 +10263,9 @@ export class ViewportHost {
     const foliageBlockerMaskValueIndices = new Set<number>();
     let lastAppliedPoint = from;
     const stepCount = Math.floor(distance / spacing);
-    const mergeDirtyBounds = (nextBounds: TerrainBrushDirtySampleBounds | null) => {
+    const mergeDirtyBounds = (
+      nextBounds: TerrainBrushDirtySampleBounds | null
+    ) => {
       if (nextBounds === null) {
         return;
       }
@@ -10457,8 +10489,7 @@ export class ViewportHost {
       );
       this.activeTerrainBrushStroke = {
         ...this.activeTerrainBrushStroke,
-        changed:
-          this.activeTerrainBrushStroke.changed || segmentResult.changed,
+        changed: this.activeTerrainBrushStroke.changed || segmentResult.changed,
         dirtyBounds: this.mergeTerrainBrushDirtyBounds(
           this.activeTerrainBrushStroke.dirtyBounds,
           segmentResult.dirtyBounds
@@ -10514,17 +10545,15 @@ export class ViewportHost {
     const foliageBlockerMaskValueIndices = new Set(
       activeStroke.foliageBlockerMaskValueIndices
     );
-    const mergeStampIndices = (
-      result: {
-        heightSampleIndices: readonly number[];
-        paintWeightIndices: readonly number[];
-        foliageMaskValueIndices?: ReturnType<
-          typeof applyTerrainBrushStampInPlace
-        >["foliageMaskValueIndices"];
-        foliageMaskValueKeys?: readonly string[];
-        foliageBlockerMaskValueIndices?: readonly number[];
-      }
-    ) => {
+    const mergeStampIndices = (result: {
+      heightSampleIndices: readonly number[];
+      paintWeightIndices: readonly number[];
+      foliageMaskValueIndices?: ReturnType<
+        typeof applyTerrainBrushStampInPlace
+      >["foliageMaskValueIndices"];
+      foliageMaskValueKeys?: readonly string[];
+      foliageBlockerMaskValueIndices?: readonly number[];
+    }) => {
       for (const sampleIndex of result.heightSampleIndices) {
         heightSampleIndices.add(sampleIndex);
       }
@@ -10533,7 +10562,8 @@ export class ViewportHost {
         paintWeightIndices.add(paintWeightIndex);
       }
 
-      for (const foliageMaskValueIndex of result.foliageMaskValueIndices ?? []) {
+      for (const foliageMaskValueIndex of result.foliageMaskValueIndices ??
+        []) {
         foliageMaskValueKeys.add(
           createTerrainFoliageMaskValueKey(
             foliageMaskValueIndex.layerId,

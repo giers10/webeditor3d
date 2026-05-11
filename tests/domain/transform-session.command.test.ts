@@ -248,19 +248,25 @@ describe("transform session commit commands", () => {
 
     expect(
       supportsTransformOperation(
-        pathPointResolved.target as NonNullable<typeof pathPointResolved.target>,
+        pathPointResolved.target as NonNullable<
+          typeof pathPointResolved.target
+        >,
         "translate"
       )
     ).toBe(true);
     expect(
       supportsTransformOperation(
-        pathPointResolved.target as NonNullable<typeof pathPointResolved.target>,
+        pathPointResolved.target as NonNullable<
+          typeof pathPointResolved.target
+        >,
         "rotate"
       )
     ).toBe(false);
     expect(
       supportsTransformOperation(
-        pathPointResolved.target as NonNullable<typeof pathPointResolved.target>,
+        pathPointResolved.target as NonNullable<
+          typeof pathPointResolved.target
+        >,
         "scale"
       )
     ).toBe(false);
@@ -1343,12 +1349,13 @@ describe("transform session commit commands", () => {
     };
 
     store.executeCommand(
-      createCommitTransformSessionCommand(store.getState().document, scaleSession)
+      createCommitTransformSessionCommand(
+        store.getState().document,
+        scaleSession
+      )
     );
 
-    expect(
-      store.getState().document.entities[triggerVolume.id]
-    ).toMatchObject({
+    expect(store.getState().document.entities[triggerVolume.id]).toMatchObject({
       position: {
         x: 1,
         y: 1,
@@ -1367,9 +1374,7 @@ describe("transform session commit commands", () => {
     });
 
     expect(store.undo()).toBe(true);
-    expect(
-      store.getState().document.entities[triggerVolume.id]
-    ).toMatchObject({
+    expect(store.getState().document.entities[triggerVolume.id]).toMatchObject({
       rotationDegrees: {
         x: 0,
         y: 45,
@@ -1379,9 +1384,7 @@ describe("transform session commit commands", () => {
     });
 
     expect(store.redo()).toBe(true);
-    expect(
-      store.getState().document.entities[triggerVolume.id]
-    ).toMatchObject({
+    expect(store.getState().document.entities[triggerVolume.id]).toMatchObject({
       size: {
         x: 4,
         y: 3,
@@ -1726,7 +1729,9 @@ describe("transform session commit commands", () => {
       createCommitTransformSessionCommand(store.getState().document, session)
     );
 
-    expect(store.getState().document.modelInstances[modelInstanceA.id]).toMatchObject({
+    expect(
+      store.getState().document.modelInstances[modelInstanceA.id]
+    ).toMatchObject({
       position: {
         x: -2,
         y: 0,
@@ -1738,7 +1743,9 @@ describe("transform session commit commands", () => {
         z: 2
       }
     });
-    expect(store.getState().document.modelInstances[modelInstanceB.id]).toMatchObject({
+    expect(
+      store.getState().document.modelInstances[modelInstanceB.id]
+    ).toMatchObject({
       position: {
         x: 2,
         y: 0,
@@ -1760,7 +1767,9 @@ describe("transform session commit commands", () => {
     );
 
     expect(store.redo()).toBe(true);
-    expect(store.getState().document.modelInstances[modelInstanceA.id]).toMatchObject({
+    expect(
+      store.getState().document.modelInstances[modelInstanceA.id]
+    ).toMatchObject({
       position: {
         x: -2,
         y: 0,

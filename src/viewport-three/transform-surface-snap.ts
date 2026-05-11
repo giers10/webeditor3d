@@ -1,10 +1,4 @@
-import {
-  Euler,
-  Matrix3,
-  Quaternion,
-  Vector3,
-  type Object3D
-} from "three";
+import { Euler, Matrix3, Quaternion, Vector3, type Object3D } from "three";
 
 import type { ProjectAssetBoundingBox } from "../assets/project-assets";
 import type { TransformPreview } from "../core/transform-session";

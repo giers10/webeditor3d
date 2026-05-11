@@ -237,9 +237,11 @@ describe("scene document JSON", () => {
     ) as Record<string, unknown>;
 
     legacyDocument.version = FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION;
-    delete ((legacyDocument.terrains as Record<string, Record<string, unknown>>)[
-      terrain.id
-    ] as Record<string, unknown>).foliageMasks;
+    delete (
+      (legacyDocument.terrains as Record<string, Record<string, unknown>>)[
+        terrain.id
+      ] as Record<string, unknown>
+    ).foliageMasks;
 
     const migratedDocument = parseSceneDocumentJson(
       JSON.stringify(legacyDocument)
@@ -264,18 +266,18 @@ describe("scene document JSON", () => {
     ) as Record<string, unknown>;
 
     legacyDocument.version = FOLIAGE_QUALITY_SCENE_DOCUMENT_VERSION;
-    delete ((legacyDocument.terrains as Record<string, Record<string, unknown>>)[
-      terrain.id
-    ] as Record<string, unknown>).foliageBlockerMask;
+    delete (
+      (legacyDocument.terrains as Record<string, Record<string, unknown>>)[
+        terrain.id
+      ] as Record<string, unknown>
+    ).foliageBlockerMask;
 
     const migratedDocument = parseSceneDocumentJson(
       JSON.stringify(legacyDocument)
     );
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(
-      migratedDocument.terrains[terrain.id]?.foliageBlockerMask
-    ).toEqual({
+    expect(migratedDocument.terrains[terrain.id]?.foliageBlockerMask).toEqual({
       resolutionX: 2,
       resolutionZ: 2,
       values: [0, 0, 0, 0]
@@ -805,9 +807,7 @@ describe("scene document JSON", () => {
     const migratedDocument = migrateSceneDocument(legacyDocument);
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
-    expect(
-      migratedDocument.brushes[brush.id].faces.posZ.climbable
-    ).toBe(false);
+    expect(migratedDocument.brushes[brush.id].faces.posZ.climbable).toBe(false);
   });
 
   it("round-trips whitebox box volume settings", () => {

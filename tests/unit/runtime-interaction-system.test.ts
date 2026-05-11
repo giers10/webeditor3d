@@ -26,7 +26,9 @@ function createClickLink(sourceEntityId: string): InteractionLink {
   };
 }
 
-function createNpc(overrides: Partial<RuntimeNpc> & { entityId: string }): RuntimeNpc {
+function createNpc(
+  overrides: Partial<RuntimeNpc> & { entityId: string }
+): RuntimeNpc {
   return {
     entityId: overrides.entityId,
     actorId: overrides.actorId ?? "",
@@ -38,13 +40,12 @@ function createNpc(overrides: Partial<RuntimeNpc> & { entityId: string }): Runti
     modelAssetId: overrides.modelAssetId ?? null,
     dialogues: overrides.dialogues ?? [],
     defaultDialogueId: overrides.defaultDialogueId ?? null,
-    collider:
-      overrides.collider ?? {
-        mode: "capsule",
-        radius: 0.35,
-        height: 1.8,
-        eyeHeight: 1.6
-      },
+    collider: overrides.collider ?? {
+      mode: "capsule",
+      radius: 0.35,
+      height: 1.8,
+      eyeHeight: 1.6
+    },
     activeRoutineTitle: overrides.activeRoutineTitle ?? null,
     animationClipName: overrides.animationClipName ?? null,
     animationLoop: overrides.animationLoop,
@@ -102,7 +103,10 @@ describe("runtime interaction targeting", () => {
     const scene = createRuntimeSceneFixture({
       npcs: [centerNpc],
       interactables: [sideInteractable],
-      links: [createClickLink(centerNpc.entityId), createClickLink(sideInteractable.entityId)]
+      links: [
+        createClickLink(centerNpc.entityId),
+        createClickLink(sideInteractable.entityId)
+      ]
     });
 
     const candidates = resolveRuntimeTargetCandidates({

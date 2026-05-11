@@ -9,9 +9,7 @@ import {
   createProjectAssetStorageKey,
   type ModelAssetRecord
 } from "../../src/assets/project-assets";
-import type {
-  ActiveTransformSession
-} from "../../src/core/transform-session";
+import type { ActiveTransformSession } from "../../src/core/transform-session";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import { createPlayerStartEntity } from "../../src/entities/entity-instances";
@@ -275,7 +273,9 @@ async function renderMultiSelectionFixtureApp() {
 
   await waitFor(() => {
     expect(viewportHostInstances.length).toBeGreaterThan(0);
-    expect(getTopLeftViewportHost().setBrushSelectionChangeHandler).toHaveBeenCalled();
+    expect(
+      getTopLeftViewportHost().setBrushSelectionChangeHandler
+    ).toHaveBeenCalled();
   });
 
   return {
@@ -611,9 +611,10 @@ describe("transform foundation integration", () => {
     });
 
     expect(store.getState().whiteboxSelectionMode).toBe("edge");
-    expect(
-      screen.getByTestId("whitebox-selection-mode-edge")
-    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("whitebox-selection-mode-edge")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
 
     fireEvent.keyDown(window, {
       key: "3",
@@ -635,7 +636,9 @@ describe("transform foundation integration", () => {
     expect(
       screen.getByTestId("whitebox-selection-mode-object")
     ).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText(/selection mode set to object/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/selection mode set to object/i)
+    ).toBeInTheDocument();
   });
 
   it("keeps outliner and viewport selection state synchronized for same-kind multi-selection", async () => {
@@ -660,9 +663,10 @@ describe("transform foundation integration", () => {
     expect(screen.getByText("2 selected")).toBeInTheDocument();
     expect(screen.getByText("Brush Multi B")).toBeInTheDocument();
 
-    const selectionHandler = viewportHost.setBrushSelectionChangeHandler.mock.calls.at(
-      -1
-    )?.[0] as ((selection: { kind: "entities"; ids: string[] }) => void);
+    const selectionHandler =
+      viewportHost.setBrushSelectionChangeHandler.mock.calls.at(
+        -1
+      )?.[0] as (selection: { kind: "entities"; ids: string[] }) => void;
 
     act(() => {
       selectionHandler({
