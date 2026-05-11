@@ -6501,7 +6501,6 @@ export class ViewportHost {
               break;
             case "pointLight":
             case "soundEmitter":
-            case "triggerVolume":
             case "interactable":
               this.applyEntityRenderObjectTransform({
                 ...currentEntity,
@@ -6510,6 +6509,20 @@ export class ViewportHost {
               this.applyLocalLightRenderObjectTransform({
                 ...currentEntity,
                 position: previewItem.position
+              });
+              break;
+            case "triggerVolume":
+              this.applyEntityRenderObjectTransform({
+                ...currentEntity,
+                position: previewItem.position,
+                rotationDegrees:
+                  previewItem.rotation.kind === "euler"
+                    ? previewItem.rotation.rotationDegrees
+                    : currentEntity.rotationDegrees,
+                size:
+                  previewItem.scale.kind === "size"
+                    ? previewItem.scale.size
+                    : currentEntity.size
               });
               break;
             case "spotLight":
@@ -6532,7 +6545,6 @@ export class ViewportHost {
               break;
             case "playerStart":
             case "sceneEntry":
-            case "npc":
             case "teleportTarget":
               this.applyEntityRenderObjectTransform({
                 ...currentEntity,
@@ -6541,6 +6553,20 @@ export class ViewportHost {
                   previewItem.rotation.kind === "yaw"
                     ? previewItem.rotation.yawDegrees
                     : currentEntity.yawDegrees
+              });
+              break;
+            case "npc":
+              this.applyEntityRenderObjectTransform({
+                ...currentEntity,
+                position: previewItem.position,
+                yawDegrees:
+                  previewItem.rotation.kind === "yaw"
+                    ? previewItem.rotation.yawDegrees
+                    : currentEntity.yawDegrees,
+                scale:
+                  previewItem.scale.kind === "scale"
+                    ? previewItem.scale.scale
+                    : currentEntity.scale
               });
               break;
           }
