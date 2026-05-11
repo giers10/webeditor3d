@@ -705,6 +705,9 @@ describe("transform foundation integration", () => {
         rotation: {
           kind: "yaw" as const,
           yawDegrees: playerStart.yawDegrees
+        },
+        scale: {
+          kind: "none" as const
         }
       }
     };
@@ -748,6 +751,9 @@ describe("transform foundation integration", () => {
         rotation: {
           kind: "yaw",
           yawDegrees: playerStart.yawDegrees
+        },
+        scale: {
+          kind: "none"
         }
       }
     });
