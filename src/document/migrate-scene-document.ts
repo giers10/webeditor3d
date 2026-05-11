@@ -5231,14 +5231,8 @@ function readProjectSequenceLibrary(
   };
 }
 
-function hasLegacyNpcTargetingInteractionLink(
-  link: InteractionLink,
-  sequences: ProjectSequenceLibrary
-): boolean {
-  return (
-    link.trigger === "click" &&
-    getInteractionLinkImpulseSteps(link, sequences).length > 0
-  );
+function hasLegacyNpcTargetingInteractionLink(link: InteractionLink): boolean {
+  return link.trigger === "click";
 }
 
 function migrateLegacySceneNpcTargetability(
