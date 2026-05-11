@@ -21,6 +21,7 @@ import {
 import { createScenePath } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
+  createNpcEntity,
   createPlayerStartEntity,
   createTriggerVolumeEntity
 } from "../../src/entities/entity-instances";
@@ -1131,6 +1132,261 @@ describe("transform session commit commands", () => {
         z: -4
       },
       yawDegrees: 90
+    });
+  });
+
+  it("commits NPC scale transforms with undo and redo", () => {
+    const npc = createNpcEntity({
+      id: "entity-npc-scaled",
+      position: {
+        x: 1,
+        y: 0,
+        z: -1
+      },
+      yawDegrees: 30,
+      scale: {
+        x: 1,
+        y: 1,
+        z: 1
+      }
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "NPC Scale Transform Fixture" }),
+        entities: {
+          [npc.id]: npc
+        }
+      }
+    });
+    const target = resolveTransformTarget(store.getState().document, {
+      kind: "entities",
+      ids: [npc.id]
+    }).target;
+
+    if (target === null || target.kind !== "entity") {
+      throw new Error("Expected an NPC transform target.");
+    }
+
+    expect(supportsTransformOperation(target, "rotate")).toBe(true);
+    expect(supportsTransformOperation(target, "scale")).toBe(true);
+
+    const session = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "scale",
+      target
+    });
+
+    session.preview = {
+      kind: "entity",
+      position: {
+        x: 2,
+        y: 0,
+        z: -3
+      },
+      rotation: {
+        kind: "yaw",
+        yawDegrees: 75
+      },
+      scale: {
+        kind: "scale",
+        scale: {
+          x: 1.5,
+          y: 2,
+          z: 0.75
+        }
+      }
+    };
+
+    store.executeCommand(
+      createCommitTransformSessionCommand(store.getState().document, session)
+    );
+
+    expect(store.getState().document.entities[npc.id]).toMatchObject({
+      position: {
+        x: 2,
+        y: 0,
+        z: -3
+      },
+      yawDegrees: 75,
+      scale: {
+        x: 1.5,
+        y: 2,
+        z: 0.75
+      }
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.entities[npc.id]).toEqual(npc);
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.entities[npc.id]).toMatchObject({
+      scale: {
+        x: 1.5,
+        y: 2,
+        z: 0.75
+      }
+    });
+  });
+
+  it("commits trigger volume rotate and scale transforms with undo and redo", () => {
+    const triggerVolume = createTriggerVolumeEntity({
+      id: "entity-trigger-transform",
+      position: {
+        x: 0,
+        y: 1,
+        z: 0
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      size: {
+        x: 2,
+        y: 2,
+        z: 2
+      }
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({
+          name: "Trigger Volume Transform Fixture"
+        }),
+        entities: {
+          [triggerVolume.id]: triggerVolume
+        }
+      }
+    });
+    const rotateTarget = resolveTransformTarget(store.getState().document, {
+      kind: "entities",
+      ids: [triggerVolume.id]
+    }).target;
+
+    if (rotateTarget === null || rotateTarget.kind !== "entity") {
+      throw new Error("Expected a trigger volume transform target.");
+    }
+
+    expect(supportsTransformOperation(rotateTarget, "rotate")).toBe(true);
+    expect(supportsTransformOperation(rotateTarget, "scale")).toBe(true);
+
+    const rotateSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "rotate",
+      target: rotateTarget
+    });
+
+    rotateSession.preview = {
+      kind: "entity",
+      position: triggerVolume.position,
+      rotation: {
+        kind: "euler",
+        rotationDegrees: {
+          x: 0,
+          y: 45,
+          z: 0
+        }
+      },
+      scale: {
+        kind: "size",
+        size: triggerVolume.size
+      }
+    };
+
+    store.executeCommand(
+      createCommitTransformSessionCommand(
+        store.getState().document,
+        rotateSession
+      )
+    );
+
+    const scaleTarget = resolveTransformTarget(store.getState().document, {
+      kind: "entities",
+      ids: [triggerVolume.id]
+    }).target;
+
+    if (scaleTarget === null || scaleTarget.kind !== "entity") {
+      throw new Error("Expected a trigger volume scale target.");
+    }
+
+    const scaleSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "scale",
+      target: scaleTarget
+    });
+
+    scaleSession.preview = {
+      kind: "entity",
+      position: {
+        x: 1,
+        y: 1,
+        z: -1
+      },
+      rotation: {
+        kind: "euler",
+        rotationDegrees: {
+          x: 0,
+          y: 45,
+          z: 0
+        }
+      },
+      scale: {
+        kind: "size",
+        size: {
+          x: 4,
+          y: 3,
+          z: 2
+        }
+      }
+    };
+
+    store.executeCommand(
+      createCommitTransformSessionCommand(store.getState().document, scaleSession)
+    );
+
+    expect(
+      store.getState().document.entities[triggerVolume.id]
+    ).toMatchObject({
+      position: {
+        x: 1,
+        y: 1,
+        z: -1
+      },
+      rotationDegrees: {
+        x: 0,
+        y: 45,
+        z: 0
+      },
+      size: {
+        x: 4,
+        y: 3,
+        z: 2
+      }
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(
+      store.getState().document.entities[triggerVolume.id]
+    ).toMatchObject({
+      rotationDegrees: {
+        x: 0,
+        y: 45,
+        z: 0
+      },
+      size: triggerVolume.size
+    });
+
+    expect(store.redo()).toBe(true);
+    expect(
+      store.getState().document.entities[triggerVolume.id]
+    ).toMatchObject({
+      size: {
+        x: 4,
+        y: 3,
+        z: 2
+      }
     });
   });
 
