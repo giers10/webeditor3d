@@ -1099,6 +1099,9 @@ describe("transform session commit commands", () => {
       rotation: {
         kind: "yaw",
         yawDegrees: 90
+      },
+      scale: {
+        kind: "none"
       }
     };
 
@@ -1582,6 +1585,9 @@ describe("transform session commit commands", () => {
           rotation: {
             kind: "yaw",
             yawDegrees: 90
+          },
+          scale: {
+            kind: "none"
           }
         },
         {
@@ -1594,6 +1600,9 @@ describe("transform session commit commands", () => {
           rotation: {
             kind: "yaw",
             yawDegrees: 90
+          },
+          scale: {
+            kind: "none"
           }
         }
       ]
