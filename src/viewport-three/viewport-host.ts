@@ -4923,12 +4923,18 @@ export class ViewportHost {
 
         const entity = this.currentDocument.entities[session.target.entityId];
 
-        return entity?.kind === "triggerVolume"
-          ? createAxisAlignedBoxSurfaceSnapSupportPoints(
-              preview.position,
-              entity.size
-            )
-          : [];
+        if (entity?.kind !== "triggerVolume") {
+          return [];
+        }
+
+        return createOrientedBoxSurfaceSnapSupportPoints({
+          center: preview.position,
+          rotationDegrees:
+            preview.rotation.kind === "euler"
+              ? preview.rotation.rotationDegrees
+              : entity.rotationDegrees,
+          size: preview.scale.kind === "size" ? preview.scale.size : entity.size
+        });
       }
       case "entities": {
         if (preview.kind !== "entities" || this.currentDocument === null) {
@@ -4955,10 +4961,17 @@ export class ViewportHost {
           }
 
           supportPoints.push(
-            ...createAxisAlignedBoxSurfaceSnapSupportPoints(
-              previewItem.position,
-              entity.size
-            )
+            ...createOrientedBoxSurfaceSnapSupportPoints({
+              center: previewItem.position,
+              rotationDegrees:
+                previewItem.rotation.kind === "euler"
+                  ? previewItem.rotation.rotationDegrees
+                  : entity.rotationDegrees,
+              size:
+                previewItem.scale.kind === "size"
+                  ? previewItem.scale.size
+                  : entity.size
+            })
           );
         }
 
