@@ -4430,9 +4430,13 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
       setSoundEmitterAutoplayDraft(false);
       setSoundEmitterLoopDraft(false);
       setTriggerVolumeSizeDraft(createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE));
+      setTriggerVolumeRotationDraft(
+        createVec3Draft(DEFAULT_TRIGGER_VOLUME_ROTATION_DEGREES)
+      );
       setSceneEntryYawDraft(String(DEFAULT_SCENE_ENTRY_YAW_DEGREES));
       setNpcActorIdDraft("");
       setNpcYawDraft(String(DEFAULT_NPC_YAW_DEGREES));
+      setNpcScaleDraft(createVec3Draft(DEFAULT_NPC_SCALE));
       setNpcColliderModeDraft(createNpcColliderSettings().mode);
       setNpcEyeHeightDraft(String(createNpcColliderSettings().eyeHeight));
       setNpcCapsuleRadiusDraft(
@@ -4631,6 +4635,7 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
       case "npc":
         setNpcActorIdDraft(selectedEntity.actorId);
         setNpcYawDraft(String(selectedEntity.yawDegrees));
+        setNpcScaleDraft(createVec3Draft(selectedEntity.scale));
         setNpcColliderModeDraft(selectedEntity.collider.mode);
         setNpcEyeHeightDraft(String(selectedEntity.collider.eyeHeight));
         setNpcCapsuleRadiusDraft(String(selectedEntity.collider.capsuleRadius));
@@ -4648,6 +4653,9 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
         break;
       case "triggerVolume":
         setTriggerVolumeSizeDraft(createVec3Draft(selectedEntity.size));
+        setTriggerVolumeRotationDraft(
+          createVec3Draft(selectedEntity.rotationDegrees)
+        );
         break;
       case "teleportTarget":
         setTeleportTargetYawDraft(String(selectedEntity.yawDegrees));
