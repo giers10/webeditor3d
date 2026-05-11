@@ -914,6 +914,11 @@ describe("buildRuntimeSceneFromDocument", () => {
             z: -2
           },
           yawDegrees: 45,
+          scale: {
+            x: 1,
+            y: 1,
+            z: 1
+          },
           modelAssetId: modelAsset.id,
           dialogues: [
             {
@@ -963,6 +968,11 @@ describe("buildRuntimeSceneFromDocument", () => {
             x: 0,
             y: 1,
             z: 2
+          },
+          rotationDegrees: {
+            x: 0,
+            y: 0,
+            z: 0
           },
           size: {
             x: 2,
