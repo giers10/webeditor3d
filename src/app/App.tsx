@@ -25647,6 +25647,120 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                   {selectedTriggerVolume !== null ? (
                     <>
                       <div className="form-section">
+                        <div className="label">Rotation</div>
+                        <div className="vector-inputs">
+                          <label className="form-field">
+                            <span className="label">X</span>
+                            <input
+                              data-testid="trigger-volume-rotation-x"
+                              className="text-input"
+                              type="number"
+                              step="1"
+                              value={triggerVolumeRotationDraft.x}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setTriggerVolumeRotationDraft((draft) => ({
+                                  ...draft,
+                                  x: nextValue
+                                }));
+                              }}
+                              onBlur={applyTriggerVolumeChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Y</span>
+                            <input
+                              data-testid="trigger-volume-rotation-y"
+                              className="text-input"
+                              type="number"
+                              step="1"
+                              value={triggerVolumeRotationDraft.y}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setTriggerVolumeRotationDraft((draft) => ({
+                                  ...draft,
+                                  y: nextValue
+                                }));
+                              }}
+                              onBlur={applyTriggerVolumeChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Z</span>
+                            <input
+                              data-testid="trigger-volume-rotation-z"
+                              className="text-input"
+                              type="number"
+                              step="1"
+                              value={triggerVolumeRotationDraft.z}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setTriggerVolumeRotationDraft((draft) => ({
+                                  ...draft,
+                                  z: nextValue
+                                }));
+                              }}
+                              onBlur={applyTriggerVolumeChange}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyTriggerVolumeChange
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="form-section">
                         <div className="label">Size</div>
                         <div className="vector-inputs">
                           <label className="form-field">
