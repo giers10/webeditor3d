@@ -3901,7 +3901,8 @@ export class ViewportHost {
                 }
               : {
                   kind: "none" as const
-                }
+                },
+        scale: cloneEntityTransformScaleState(session.target.initialScale)
       };
     }
 
@@ -4486,7 +4487,8 @@ export class ViewportHost {
                 }
               : {
                   kind: "none" as const
-                }
+                },
+        scale: cloneEntityTransformScaleState(item.initialScale)
       }))
     };
   }
