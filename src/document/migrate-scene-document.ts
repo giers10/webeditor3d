@@ -5240,9 +5240,7 @@ function migrateLegacySceneNpcTargetability(
 ): SceneDocument {
   const targetableNpcIds = new Set(
     Object.values(document.interactionLinks)
-      .filter((link) =>
-        hasLegacyNpcTargetingInteractionLink(link, document.sequences)
-      )
+      .filter(hasLegacyNpcTargetingInteractionLink)
       .map((link) => link.sourceEntityId)
   );
 
@@ -5292,9 +5290,7 @@ function migrateLegacyProjectNpcTargetability(
   for (const [sceneId, scene] of Object.entries(document.scenes)) {
     const targetableNpcIds = new Set(
       Object.values(scene.interactionLinks)
-        .filter((link) =>
-          hasLegacyNpcTargetingInteractionLink(link, document.sequences)
-        )
+        .filter(hasLegacyNpcTargetingInteractionLink)
         .map((link) => link.sourceEntityId)
     );
 
