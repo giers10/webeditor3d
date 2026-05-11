@@ -4376,6 +4376,36 @@ function readNpcPresence(value: unknown, label: string): NpcPresence {
   }
 }
 
+function readNpcTargetAnchor(value: unknown, label: string): NpcTargetAnchor {
+  if (value === undefined) {
+    return createNpcTargetAnchor();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const mode =
+    value.mode === undefined
+      ? DEFAULT_NPC_TARGET_ANCHOR_MODE
+      : expectString(value.mode, `${label}.mode`);
+
+  if (!isNpcTargetAnchorMode(mode)) {
+    throw new Error(
+      `${label}.mode must be center, eyeHeight, top, origin, or custom.`
+    );
+  }
+
+  return createNpcTargetAnchor({
+    mode,
+    offset: readOptionalVec3(
+      value.offset,
+      `${label}.offset`,
+      DEFAULT_NPC_TARGET_ANCHOR_OFFSET
+    )
+  });
+}
+
 function readEntityInstance(
   value: unknown,
   label: string,
