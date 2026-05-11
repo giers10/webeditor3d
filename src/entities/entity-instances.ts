@@ -183,6 +183,7 @@ export interface NpcEntity extends PositionedEntity {
   kind: "npc";
   actorId: string;
   presence: NpcPresence;
+  targetable: boolean;
   yawDegrees: number;
   scale: Vec3;
   modelAssetId: string | null;
@@ -600,6 +601,7 @@ export const DEFAULT_NPC_SCALE: Vec3 = {
 export const DEFAULT_NPC_MODEL_ASSET_ID: string | null = null;
 export const DEFAULT_NPC_DIALOGUE_ID: string | null = null;
 export const DEFAULT_NPC_COLLIDER_MODE: PlayerStartColliderMode = "capsule";
+export const DEFAULT_NPC_TARGETABLE = false;
 export const DEFAULT_NPC_TIME_WINDOW_START_HOUR = 9;
 export const DEFAULT_NPC_TIME_WINDOW_END_HOUR = 17;
 export const DEFAULT_PLAYER_START_COLLIDER_MODE: PlayerStartColliderMode =
@@ -2467,6 +2469,7 @@ export function createNpcEntity(
       | "position"
       | "actorId"
       | "presence"
+      | "targetable"
       | "yawDegrees"
       | "scale"
       | "modelAssetId"
@@ -2480,6 +2483,7 @@ export function createNpcEntity(
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
   const actorId = normalizeNpcActorId(overrides.actorId);
   const presence = normalizeNpcPresence(overrides.presence);
+  const targetable = overrides.targetable ?? DEFAULT_NPC_TARGETABLE;
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_NPC_YAW_DEGREES;
   const scale = cloneVec3(overrides.scale ?? DEFAULT_NPC_SCALE);
   const modelAssetId = normalizeNpcModelAssetId(
@@ -2499,6 +2503,8 @@ export function createNpcEntity(
     throw new Error("NPC yaw must be a finite number.");
   }
 
+  assertBoolean(targetable, "NPC targetable");
+
   return {
     id: overrides.id ?? createOpaqueId("entity-npc"),
     kind: "npc",
@@ -2508,6 +2514,7 @@ export function createNpcEntity(
     position,
     actorId,
     presence,
+    targetable,
     yawDegrees: normalizeYawDegrees(yawDegrees),
     scale,
     modelAssetId,
@@ -2992,6 +2999,7 @@ export function areEntityInstancesEqual(
         areVec3Equal(left.position, typedRight.position) &&
         left.actorId === typedRight.actorId &&
         areNpcPresencesEqual(left.presence, typedRight.presence) &&
+        left.targetable === typedRight.targetable &&
         left.yawDegrees === typedRight.yawDegrees &&
         areVec3Equal(left.scale, typedRight.scale) &&
         left.modelAssetId === typedRight.modelAssetId &&
