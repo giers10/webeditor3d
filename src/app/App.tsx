@@ -315,7 +315,10 @@ import {
   DEFAULT_INTERACTABLE_RADIUS,
   DEFAULT_NPC_MODEL_ASSET_ID,
   DEFAULT_NPC_SCALE,
+  DEFAULT_NPC_TARGET_ANCHOR_MODE,
+  DEFAULT_NPC_TARGET_ANCHOR_OFFSET,
   DEFAULT_NPC_YAW_DEGREES,
+  NPC_TARGET_ANCHOR_MODES,
   DEFAULT_POINT_LIGHT_COLOR_HEX,
   DEFAULT_POINT_LIGHT_DISTANCE,
   DEFAULT_POINT_LIGHT_INTENSITY,
@@ -363,6 +366,7 @@ import {
   createNpcAlwaysPresence,
   createNpcColliderSettings,
   createNpcEntity,
+  createNpcTargetAnchor,
   createPointLightEntity,
   inferPlayerStartMovementTemplateKind,
   createPlayerStartInputBindings,
@@ -398,6 +402,7 @@ import {
   type PlayerStartSystemAction,
   type PlayerStartMovementTemplate,
   type PlayerStartNavigationMode,
+  type NpcTargetAnchorMode,
   type EntityInstance,
   type EntityKind
 } from "../entities/entity-instances";
@@ -942,6 +947,21 @@ function createVec3Draft(vector: Vec3): Vec3Draft {
     y: String(vector.y),
     z: String(vector.z)
   };
+}
+
+function formatNpcTargetAnchorMode(mode: NpcTargetAnchorMode): string {
+  switch (mode) {
+    case "center":
+      return "Center";
+    case "eyeHeight":
+      return "Eye Height";
+    case "top":
+      return "Top";
+    case "origin":
+      return "Origin";
+    case "custom":
+      return "Custom Offset";
+  }
 }
 
 function formatRuntimeDayPhaseLabel(
