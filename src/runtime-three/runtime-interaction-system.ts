@@ -509,9 +509,14 @@ function getNpcHorizontalTargetRadius(
 ): number {
   switch (npc.collider.mode) {
     case "capsule":
-      return npc.collider.radius;
+      return npc.collider.radius * Math.max(npc.scale.x, npc.scale.z);
     case "box":
-      return Math.max(npc.collider.size.x, npc.collider.size.z) * 0.5;
+      return (
+        Math.max(
+          npc.collider.size.x * npc.scale.x,
+          npc.collider.size.z * npc.scale.z
+        ) * 0.5
+      );
     case "none":
       return Math.max(
         bounds.max.x - bounds.min.x,
