@@ -35,7 +35,8 @@ import {
   type FoliagePrototypeRegistry
 } from "../foliage/foliage";
 
-export const SCENE_DOCUMENT_VERSION = 96 as const;
+export const SCENE_DOCUMENT_VERSION = 97 as const;
+export const NPC_TARGETING_SCENE_DOCUMENT_VERSION = 97 as const;
 export const ENTITY_TRANSFORMS_SCENE_DOCUMENT_VERSION = 96 as const;
 export const FOLIAGE_BLOCKER_MASKS_SCENE_DOCUMENT_VERSION = 95 as const;
 export const FOLIAGE_QUALITY_SCENE_DOCUMENT_VERSION = 94 as const;
