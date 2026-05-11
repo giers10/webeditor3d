@@ -3248,12 +3248,18 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
   const [triggerVolumeSizeDraft, setTriggerVolumeSizeDraft] = useState(
     createVec3Draft(DEFAULT_TRIGGER_VOLUME_SIZE)
   );
+  const [triggerVolumeRotationDraft, setTriggerVolumeRotationDraft] = useState(
+    createVec3Draft(DEFAULT_TRIGGER_VOLUME_ROTATION_DEGREES)
+  );
   const [sceneEntryYawDraft, setSceneEntryYawDraft] = useState(
     String(DEFAULT_SCENE_ENTRY_YAW_DEGREES)
   );
   const [npcActorIdDraft, setNpcActorIdDraft] = useState("");
   const [npcYawDraft, setNpcYawDraft] = useState(
     String(DEFAULT_NPC_YAW_DEGREES)
+  );
+  const [npcScaleDraft, setNpcScaleDraft] = useState(
+    createVec3Draft(DEFAULT_NPC_SCALE)
   );
   const [npcColliderModeDraft, setNpcColliderModeDraft] =
     useState<PlayerStartColliderMode>(createNpcColliderSettings().mode);
