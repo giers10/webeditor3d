@@ -1763,7 +1763,9 @@ export class RuntimeHost {
       x: npc.position.x,
       y:
         npc.position.y +
-        npc.collider.eyeHeight * DIALOGUE_ATTENTION_NPC_FOCUS_HEIGHT_FACTOR,
+        npc.collider.eyeHeight *
+          npc.scale.y *
+          DIALOGUE_ATTENTION_NPC_FOCUS_HEIGHT_FACTOR,
       z: npc.position.z
     };
   }
@@ -1811,9 +1813,14 @@ export class RuntimeHost {
   private resolveNpcShapeHorizontalRadius(npc: RuntimeNpc) {
     switch (npc.collider.mode) {
       case "capsule":
-        return npc.collider.radius;
+        return npc.collider.radius * Math.max(npc.scale.x, npc.scale.z);
       case "box":
-        return Math.max(npc.collider.size.x, npc.collider.size.z) * 0.5;
+        return (
+          Math.max(
+            npc.collider.size.x * npc.scale.x,
+            npc.collider.size.z * npc.scale.z
+          ) * 0.5
+        );
       case "none":
         return 0;
     }
@@ -5960,7 +5967,7 @@ export class RuntimeHost {
           case "capsule":
             return (
               Math.max(
-                npc.collider.radius,
+                npc.collider.radius * Math.max(npc.scale.x, npc.scale.z),
                 TARGETING_VISIBILITY_TARGET_CLEARANCE
               ) + TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING
             );
@@ -5968,9 +5975,9 @@ export class RuntimeHost {
             return (
               clampScalar(
                 Math.max(
-                  npc.collider.size.x,
-                  npc.collider.size.y,
-                  npc.collider.size.z
+                  npc.collider.size.x * npc.scale.x,
+                  npc.collider.size.y * npc.scale.y,
+                  npc.collider.size.z * npc.scale.z
                 ) * 0.25,
                 0.35,
                 0.75
@@ -6021,11 +6028,13 @@ export class RuntimeHost {
         switch (npc.collider.mode) {
           case "capsule": {
             const collider = npc.collider;
+            const radius = collider.radius * Math.max(npc.scale.x, npc.scale.z);
+            const height = collider.height * npc.scale.y;
             const sampleClearance =
-              Math.max(collider.radius, TARGETING_VISIBILITY_TARGET_CLEARANCE) +
+              Math.max(radius, TARGETING_VISIBILITY_TARGET_CLEARANCE) +
               TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
             const yAt = (factor: number) =>
-              npc.position.y + collider.height * factor;
+              npc.position.y + height * factor;
 
             return [
               {
@@ -6045,15 +6054,19 @@ export class RuntimeHost {
           }
           case "box": {
             const collider = npc.collider;
+            const size = {
+              x: collider.size.x * npc.scale.x,
+              y: collider.size.y * npc.scale.y,
+              z: collider.size.z * npc.scale.z
+            };
             const sampleClearance =
               clampScalar(
-                Math.max(collider.size.x, collider.size.y, collider.size.z) *
-                  0.25,
+                Math.max(size.x, size.y, size.z) * 0.25,
                 0.35,
                 0.75
               ) + TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
             const yAt = (factor: number) =>
-              npc.position.y + collider.size.y * factor;
+              npc.position.y + size.y * factor;
 
             return [
               {
