@@ -10278,6 +10278,7 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
           DEFAULT_GRID_SIZE
         ),
         yawDegrees: readYawDegreesDraft(npcYawDraft),
+        scale: readPositiveVec3Draft(npcScaleDraft, "NPC scale"),
         modelAssetId:
           overrides.modelAssetId !== undefined
             ? overrides.modelAssetId
@@ -10534,6 +10535,10 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
         position: snapVec3ToGrid(
           readVec3Draft(entityPositionDraft, "Trigger Volume position"),
           DEFAULT_GRID_SIZE
+        ),
+        rotationDegrees: readVec3Draft(
+          triggerVolumeRotationDraft,
+          "Trigger Volume rotation"
         ),
         size: snapPositiveSizeToGrid(
           readVec3Draft(triggerVolumeSizeDraft, "Trigger Volume size"),
@@ -25050,6 +25055,96 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                             }
                           />
                         </label>
+                      </div>
+
+                      <div className="form-section">
+                        <div className="label">Scale</div>
+                        <div className="vector-inputs">
+                          <label className="form-field">
+                            <span className="label">X</span>
+                            <input
+                              data-testid="npc-scale-x"
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={npcScaleDraft.x}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setNpcScaleDraft((draft) => ({
+                                  ...draft,
+                                  x: nextValue
+                                }));
+                              }}
+                              onBlur={() => applyNpcChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(event, applyNpcChange)
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(event, applyNpcChange)
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(event, applyNpcChange)
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Y</span>
+                            <input
+                              data-testid="npc-scale-y"
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={npcScaleDraft.y}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setNpcScaleDraft((draft) => ({
+                                  ...draft,
+                                  y: nextValue
+                                }));
+                              }}
+                              onBlur={() => applyNpcChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(event, applyNpcChange)
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(event, applyNpcChange)
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(event, applyNpcChange)
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Z</span>
+                            <input
+                              data-testid="npc-scale-z"
+                              className="text-input"
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={npcScaleDraft.z}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setNpcScaleDraft((draft) => ({
+                                  ...draft,
+                                  z: nextValue
+                                }));
+                              }}
+                              onBlur={() => applyNpcChange()}
+                              onKeyDown={(event) =>
+                                handleDraftVectorKeyDown(event, applyNpcChange)
+                              }
+                              onKeyUp={(event) =>
+                                handleNumberInputKeyUp(event, applyNpcChange)
+                              }
+                              onPointerUp={(event) =>
+                                handleNumberInputPointerUp(event, applyNpcChange)
+                              }
+                            />
+                          </label>
+                        </div>
                       </div>
 
                       <div className="form-section">
