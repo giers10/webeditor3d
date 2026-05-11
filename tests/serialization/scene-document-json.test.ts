@@ -2658,6 +2658,57 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("migrates pre-NPC-targeting documents by preserving click-linked NPC targetability", () => {
+    const linkedNpc = createNpcEntity({
+      id: "entity-npc-linked",
+      actorId: "actor-linked"
+    });
+    const silentNpc = createNpcEntity({
+      id: "entity-npc-silent",
+      actorId: "actor-silent"
+    });
+    const soundEmitter = createSoundEmitterEntity({
+      id: "entity-sound-chime",
+      audioAssetId: "asset-audio-chime"
+    });
+    const document = createEmptySceneDocument({
+      name: "Legacy NPC Targeting Scene"
+    });
+    document.entities[linkedNpc.id] = linkedNpc;
+    document.entities[silentNpc.id] = silentNpc;
+    document.entities[soundEmitter.id] = soundEmitter;
+    document.interactionLinks["link-npc-sound"] = createPlaySoundInteractionLink({
+      id: "link-npc-sound",
+      sourceEntityId: linkedNpc.id,
+      trigger: "click",
+      targetSoundEmitterId: soundEmitter.id
+    });
+
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(document)
+    ) as Record<string, unknown>;
+    const legacyEntities = legacyDocument.entities as Record<
+      string,
+      Record<string, unknown>
+    >;
+    legacyDocument.version = FOLIAGE_BLOCKER_MASKS_SCENE_DOCUMENT_VERSION;
+    delete legacyEntities[linkedNpc.id]?.targetable;
+    delete legacyEntities[silentNpc.id]?.targetable;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.entities[linkedNpc.id]).toMatchObject({
+      kind: "npc",
+      targetable: true
+    });
+    expect(migratedDocument.entities[silentNpc.id]).toMatchObject({
+      kind: "npc",
+      targetable: false
+    });
+  });
+
   it("migrates pre-entity-transform NPCs and trigger volumes to explicit transform defaults", () => {
     const triggerVolume = createTriggerVolumeEntity({
       id: "entity-trigger-legacy-transform",
