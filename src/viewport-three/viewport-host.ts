@@ -2993,6 +2993,16 @@ export class ViewportHost {
     );
   }
 
+  private resolveEntityScaleConstraintAxis(
+    rotation: EntityTransformRotationState,
+    worldAxis: TransformAxis
+  ): TransformAxis {
+    return resolveDominantLocalAxisForWorldAxis(
+      getRotationDegreesFromEntityRotationState(rotation),
+      worldAxis
+    );
+  }
+
   private normalizeDegrees(value: number): number {
     const normalized = value % 360;
     return normalized < 0 ? normalized + 360 : normalized;
