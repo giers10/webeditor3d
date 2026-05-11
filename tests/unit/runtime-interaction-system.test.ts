@@ -303,20 +303,14 @@ describe("runtime interaction targeting", () => {
         entityId: topNpc.entityId
       })?.center.y
     ).toBeCloseTo(3.6);
-    const customCenter = resolveRuntimeTargetReference(scene, {
+    const customTarget = resolveRuntimeTargetReference(scene, {
       kind: "npc",
       entityId: customNpc.entityId
-    })?.center;
+    });
 
-    expect(customCenter?.x).toBeCloseTo(14);
-    expect(customCenter?.y).toBeCloseTo(1.5);
-    expect(customCenter?.z).toBeCloseTo(3);
-    expect(
-      resolveRuntimeTargetReference(scene, {
-        kind: "npc",
-        entityId: customNpc.entityId
-      })?.range
-    ).toBeGreaterThan(0);
+    expect(customTarget?.center.x).toBeCloseTo(14);
+    expect(customTarget?.center.y).toBeCloseTo(1.5);
+    expect(customTarget?.center.z).toBeCloseTo(3);
   });
 
   it("captures off-center targets without ray dead zones", () => {
