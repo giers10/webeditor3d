@@ -26,6 +26,7 @@ import {
   isCameraRigRailPlacementMode,
   isCameraRigTransitionMode,
   isNpcPresenceMode,
+  isNpcTargetAnchorMode,
   isPlayerStartColliderMode,
   isPlayerStartGamepadActionBinding,
   isPlayerStartGamepadCameraLookBinding,
