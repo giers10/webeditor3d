@@ -3275,6 +3275,11 @@ export function App({
   const [npcScaleDraft, setNpcScaleDraft] = useState(
     createVec3Draft(DEFAULT_NPC_SCALE)
   );
+  const [npcTargetAnchorModeDraft, setNpcTargetAnchorModeDraft] =
+    useState<NpcTargetAnchorMode>(DEFAULT_NPC_TARGET_ANCHOR_MODE);
+  const [npcTargetAnchorOffsetDraft, setNpcTargetAnchorOffsetDraft] = useState(
+    createVec3Draft(DEFAULT_NPC_TARGET_ANCHOR_OFFSET)
+  );
   const [npcColliderModeDraft, setNpcColliderModeDraft] =
     useState<PlayerStartColliderMode>(createNpcColliderSettings().mode);
   const [npcEyeHeightDraft, setNpcEyeHeightDraft] = useState(
@@ -4450,6 +4455,10 @@ export function App({
       setNpcActorIdDraft("");
       setNpcYawDraft(String(DEFAULT_NPC_YAW_DEGREES));
       setNpcScaleDraft(createVec3Draft(DEFAULT_NPC_SCALE));
+      setNpcTargetAnchorModeDraft(DEFAULT_NPC_TARGET_ANCHOR_MODE);
+      setNpcTargetAnchorOffsetDraft(
+        createVec3Draft(DEFAULT_NPC_TARGET_ANCHOR_OFFSET)
+      );
       setNpcColliderModeDraft(createNpcColliderSettings().mode);
       setNpcEyeHeightDraft(String(createNpcColliderSettings().eyeHeight));
       setNpcCapsuleRadiusDraft(
@@ -4649,6 +4658,10 @@ export function App({
         setNpcActorIdDraft(selectedEntity.actorId);
         setNpcYawDraft(String(selectedEntity.yawDegrees));
         setNpcScaleDraft(createVec3Draft(selectedEntity.scale));
+        setNpcTargetAnchorModeDraft(selectedEntity.targetAnchor.mode);
+        setNpcTargetAnchorOffsetDraft(
+          createVec3Draft(selectedEntity.targetAnchor.offset)
+        );
         setNpcColliderModeDraft(selectedEntity.collider.mode);
         setNpcEyeHeightDraft(String(selectedEntity.collider.eyeHeight));
         setNpcCapsuleRadiusDraft(String(selectedEntity.collider.capsuleRadius));
