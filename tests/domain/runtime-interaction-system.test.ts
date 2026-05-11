@@ -316,6 +316,69 @@ describe("RuntimeInteractionSystem", () => {
     expect(dispatches).toEqual(["link-teleport:entity-teleport-main:8"]);
   });
 
+  it("uses trigger volume rotation when resolving player enter checks", () => {
+    const runtimeScene = createRuntimeSceneFixture();
+    runtimeScene.entities.triggerVolumes = [
+      {
+        entityId: "entity-trigger-main",
+        position: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        rotationDegrees: {
+          x: 0,
+          y: 90,
+          z: 0
+        },
+        size: {
+          x: 4,
+          y: 2,
+          z: 2
+        },
+        triggerOnEnter: true,
+        triggerOnExit: false
+      }
+    ];
+    runtimeScene.interactionLinks = [
+      createTeleportPlayerInteractionLink({
+        id: "link-rotated-trigger",
+        sourceEntityId: "entity-trigger-main",
+        trigger: "enter",
+        targetEntityId: "entity-teleport-main"
+      })
+    ];
+
+    const interactionSystem = new RuntimeInteractionSystem();
+    const dispatches: string[] = [];
+    const dispatcher = createDispatcher({
+      teleportPlayer: (target, link) => {
+        dispatches.push(`${link.id}:${target.entityId}`);
+      }
+    });
+
+    interactionSystem.updatePlayerPosition(
+      {
+        x: 0,
+        y: 0,
+        z: 3
+      },
+      runtimeScene,
+      dispatcher
+    );
+    interactionSystem.updatePlayerPosition(
+      {
+        x: 0,
+        y: 0,
+        z: 1.5
+      },
+      runtimeScene,
+      dispatcher
+    );
+
+    expect(dispatches).toEqual(["link-rotated-trigger:entity-teleport-main"]);
+  });
+
   it("dispatches animation actions with the authored target model instance and clip", () => {
     const runtimeScene = createRuntimeSceneFixture();
     runtimeScene.interactionLinks = [
