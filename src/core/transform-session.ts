@@ -1122,7 +1122,7 @@ export function doesTransformSessionChangeTarget(
             session.target.initialGeometry
           ))
       );
-    case "brushes":
+    case "brushes": {
       const brushesTarget = session.target;
       return (
         session.preview.kind === "brushes" &&
@@ -1143,6 +1143,7 @@ export function doesTransformSessionChangeTarget(
             );
           }))
       );
+    }
     case "modelInstance":
       return (
         session.preview.kind === "modelInstance" &&
@@ -1156,7 +1157,7 @@ export function doesTransformSessionChangeTarget(
           ) ||
           !areVec3Equal(session.preview.scale, session.target.initialScale))
       );
-    case "modelInstances":
+    case "modelInstances": {
       const modelInstancesTarget = session.target;
       return (
         session.preview.kind === "modelInstances" &&
@@ -1179,6 +1180,7 @@ export function doesTransformSessionChangeTarget(
             );
           }))
       );
+    }
     case "pathPoint":
       return (
         session.preview.kind === "pathPoint" &&
@@ -1203,7 +1205,7 @@ export function doesTransformSessionChangeTarget(
             session.target.initialScale
           ))
       );
-    case "entities":
+    case "entities": {
       const entitiesTarget = session.target;
       return (
         session.preview.kind === "entities" &&
@@ -1226,6 +1228,7 @@ export function doesTransformSessionChangeTarget(
             );
           }))
       );
+    }
   }
 }
 
