@@ -198,6 +198,58 @@ describe("runtime interaction targeting", () => {
     ).toBeNull();
   });
 
+  it("uses explicit NPC targetability for Lux candidates without creating click prompts", () => {
+    const npc = createNpc({
+      entityId: "npc-targetable",
+      name: "Lookout",
+      targetable: true,
+      position: { x: 0, y: 0, z: 4 }
+    });
+    const scene = createRuntimeSceneFixture({
+      npcs: [npc]
+    });
+    const system = new RuntimeInteractionSystem();
+
+    expect(
+      resolveRuntimeTargetCandidates({
+        interactionOrigin: { x: 0, y: 1, z: 0 },
+        cameraPosition: { x: 0, y: 1.6, z: -1 },
+        cameraForward: { x: 0, y: 0, z: 1 },
+        runtimeScene: scene
+      }).map((candidate) => candidate.entityId)
+    ).toEqual(["npc-targetable"]);
+    expect(
+      system.resolveClickInteractionPrompt(
+        { x: 0, y: 1, z: 0 },
+        centerView,
+        5,
+        30,
+        scene
+      )
+    ).toBeNull();
+  });
+
+  it("does not use click links alone for Lux NPC targetability", () => {
+    const npc = createNpc({
+      entityId: "npc-click-only",
+      name: "Guide",
+      position: { x: 0, y: 0, z: 4 }
+    });
+    const scene = createRuntimeSceneFixture({
+      npcs: [npc],
+      links: [createClickLink(npc.entityId)]
+    });
+
+    expect(
+      resolveRuntimeTargetCandidates({
+        interactionOrigin: { x: 0, y: 1, z: 0 },
+        cameraPosition: { x: 0, y: 1.6, z: -1 },
+        cameraForward: { x: 0, y: 0, z: 1 },
+        runtimeScene: scene
+      })
+    ).toEqual([]);
+  });
+
   it("captures off-center targets without ray dead zones", () => {
     const npc = createNpc({
       entityId: "npc-dead-zone",
