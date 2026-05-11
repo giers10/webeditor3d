@@ -304,6 +304,7 @@ import {
   createAxisAlignedBoxSurfaceSnapSupportPoints,
   createBrushSurfaceSnapSupportPoints,
   createModelBoundingBoxSurfaceSnapSupportPoints,
+  createOrientedBoxSurfaceSnapSupportPoints,
   resolveSurfaceSnapHitFromIntersections
 } from "./transform-surface-snap";
 import {
