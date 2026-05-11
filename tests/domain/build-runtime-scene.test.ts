@@ -908,6 +908,14 @@ describe("buildRuntimeSceneFromDocument", () => {
           name: undefined,
           visible: true,
           targetable: true,
+          targetAnchor: {
+            mode: "center",
+            offset: {
+              x: 0,
+              y: 0,
+              z: 0
+            }
+          },
           position: {
             x: -1,
             y: 0,
