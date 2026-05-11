@@ -6326,7 +6326,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     interactionLinks: readInteractionLinks(source.interactionLinks)
   };
 
-  if (source.version < NPC_TARGETING_SCENE_DOCUMENT_VERSION) {
+  if (source.version < NPC_TARGETING_DEFAULT_SCENE_DOCUMENT_VERSION) {
     migratedDocument = migrateLegacySceneNpcTargetability(migratedDocument);
   }
 
@@ -6477,7 +6477,7 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       foliagePrototypes: readFoliagePrototypes(source.foliagePrototypes, assets)
     };
 
-    if (source.version < NPC_TARGETING_SCENE_DOCUMENT_VERSION) {
+    if (source.version < NPC_TARGETING_DEFAULT_SCENE_DOCUMENT_VERSION) {
       migratedDocument = migrateLegacyProjectNpcTargetability(migratedDocument);
     }
 
