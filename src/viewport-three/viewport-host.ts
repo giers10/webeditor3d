@@ -5016,7 +5016,8 @@ export class ViewportHost {
                 yawDegrees: normalizeYawDegrees(
                   item.initialRotation.yawDegrees + pointerDeltaDegrees
                 )
-              }
+              },
+              scale: cloneEntityTransformScaleState(item.initialScale)
             };
           }
 
@@ -5040,7 +5041,8 @@ export class ViewportHost {
             rotation: {
               kind: "yaw" as const,
               yawDegrees: normalizeYawDegrees(nextRotationDegrees.y)
-            }
+            },
+            scale: cloneEntityTransformScaleState(item.initialScale)
           };
         }
 
@@ -5067,7 +5069,44 @@ export class ViewportHost {
                 y: direction.y,
                 z: direction.z
               }
-            }
+            },
+            scale: cloneEntityTransformScaleState(item.initialScale)
+          };
+        }
+
+        if (item.initialRotation.kind === "euler") {
+          let nextRotationDegrees = {
+            ...item.initialRotation.rotationDegrees
+          };
+
+          if (axisConstraint === null) {
+            nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(
+              nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees
+            );
+          } else {
+            nextRotationDegrees = this.getQuaternionEulerDegrees(
+              deltaRotation
+                .clone()
+                .multiply(
+                  this.createRotationQuaternion(
+                    item.initialRotation.rotationDegrees
+                  )
+                )
+            );
+          }
+
+          return {
+            entityId: item.entityId,
+            position: {
+              x: nextPosition.x,
+              y: nextPosition.y,
+              z: nextPosition.z
+            },
+            rotation: {
+              kind: "euler" as const,
+              rotationDegrees: nextRotationDegrees
+            },
+            scale: cloneEntityTransformScaleState(item.initialScale)
           };
         }
 
@@ -5080,7 +5119,8 @@ export class ViewportHost {
           },
           rotation: {
             kind: "none" as const
-          }
+          },
+          scale: cloneEntityTransformScaleState(item.initialScale)
         };
       })
     };
