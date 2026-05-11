@@ -1989,6 +1989,7 @@ export class RuntimeHost {
 
   private syncNpcRenderGroupTransform(renderGroup: Group, npc: RuntimeNpc) {
     renderGroup.position.set(npc.position.x, npc.position.y, npc.position.z);
+    renderGroup.scale.set(npc.scale.x, npc.scale.y, npc.scale.z);
     const facingGroup = renderGroup.getObjectByName("npcFacingGroup");
 
     if (facingGroup !== undefined) {
@@ -4306,6 +4307,7 @@ export class RuntimeHost {
     });
 
     group.position.set(npc.position.x, npc.position.y, npc.position.z);
+    group.scale.set(npc.scale.x, npc.scale.y, npc.scale.z);
 
     switch (npc.collider.mode) {
       case "capsule": {
@@ -4461,11 +4463,7 @@ export class RuntimeHost {
                   y: npc.yawDegrees,
                   z: 0
                 },
-                scale: {
-                  x: 1,
-                  y: 1,
-                  z: 1
-                },
+                scale: npc.scale,
                 collision: {
                   mode: "none",
                   visible: false
