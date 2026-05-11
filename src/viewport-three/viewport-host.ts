@@ -3505,10 +3505,7 @@ export class ViewportHost {
       }
     } else if (
       session.operation === "scale" &&
-      (session.target.kind === "modelInstance" ||
-        session.target.kind === "brush" ||
-        session.target.kind === "brushFace" ||
-        session.target.kind === "brushEdge")
+      supportsTransformOperation(session.target, "scale")
     ) {
       for (const axis of ["x", "y", "z"] as const) {
         this.transformGizmoGroup.add(
