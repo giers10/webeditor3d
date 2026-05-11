@@ -1749,6 +1749,7 @@ function buildRuntimeSceneCollections(
           name: entity.name,
           visible: entity.visible,
           targetable: entity.targetable,
+          targetAnchor: createNpcTargetAnchor(entity.targetAnchor),
           position: cloneVec3(entity.position),
           active: true,
           activeRoutineId: null,
