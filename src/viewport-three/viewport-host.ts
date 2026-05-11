@@ -2889,6 +2889,10 @@ export class ViewportHost {
                 preview.rotation.direction.z
               ).normalize()
             );
+          case "euler":
+            return this.createRotationQuaternion(
+              preview.rotation.rotationDegrees
+            );
           case "none":
             return null;
         }
@@ -2931,6 +2935,10 @@ export class ViewportHost {
               ).normalize()
             );
           }
+          case "euler":
+            return this.createRotationQuaternion(
+              activeEntityPreview.rotation.rotationDegrees
+            );
           case "none":
           case undefined:
             return null;
