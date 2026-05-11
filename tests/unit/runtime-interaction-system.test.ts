@@ -93,6 +93,7 @@ describe("runtime interaction targeting", () => {
     const centerNpc = createNpc({
       entityId: "npc-center",
       name: "Center",
+      targetable: true,
       position: { x: 0, y: 0, z: 3 }
     });
     const sideInteractable = createInteractable({
@@ -158,6 +159,7 @@ describe("runtime interaction targeting", () => {
     const distantNpc = createNpc({
       entityId: "npc-distant",
       name: "Far Guard",
+      targetable: true,
       position: { x: 0, y: 0, z: 14.4 }
     });
     const distantInteractable = createInteractable({
