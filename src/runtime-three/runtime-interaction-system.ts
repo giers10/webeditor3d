@@ -131,6 +131,10 @@ function clampUnitInterval(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
+function clampScalar(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
 function distanceBetweenVec3(left: Vec3, right: Vec3): number {
   return Math.sqrt(lengthSquaredVec3(subtractVec3(left, right)));
 }
@@ -422,6 +426,75 @@ function getNpcDialoguePrompt(npc: RuntimeNpc, hasClickLinks: boolean): string {
       : "Talk";
 }
 
+function resolveYawRotatedBoxHalfExtents(size: Vec3, yawDegrees: number): {
+  x: number;
+  z: number;
+} {
+  const halfX = size.x * 0.5;
+  const halfZ = size.z * 0.5;
+  const yawRadians = (yawDegrees * Math.PI) / 180;
+  const cosine = Math.abs(Math.cos(yawRadians));
+  const sine = Math.abs(Math.sin(yawRadians));
+
+  return {
+    x: halfX * cosine + halfZ * sine,
+    z: halfX * sine + halfZ * cosine
+  };
+}
+
+function transformNpcLocalAnchorOffset(npc: RuntimeNpc, offset: Vec3): Vec3 {
+  const scaledOffset = {
+    x: offset.x * npc.scale.x,
+    y: offset.y * npc.scale.y,
+    z: offset.z * npc.scale.z
+  };
+  const yawRadians = (npc.yawDegrees * Math.PI) / 180;
+  const cosine = Math.cos(yawRadians);
+  const sine = Math.sin(yawRadians);
+
+  return {
+    x: npc.position.x + scaledOffset.x * cosine + scaledOffset.z * sine,
+    y: npc.position.y + scaledOffset.y,
+    z: npc.position.z - scaledOffset.x * sine + scaledOffset.z * cosine
+  };
+}
+
+function resolveNpcTargetAnchorCenter(
+  npc: RuntimeNpc,
+  bounds: { min: Vec3; max: Vec3 }
+): Vec3 {
+  switch (npc.targetAnchor.mode) {
+    case "origin":
+      return npc.position;
+    case "top":
+      return {
+        x: npc.position.x,
+        y: bounds.max.y,
+        z: npc.position.z
+      };
+    case "eyeHeight":
+      return {
+        x: npc.position.x,
+        y:
+          npc.position.y +
+          clampScalar(
+            npc.collider.eyeHeight * npc.scale.y,
+            0,
+            bounds.max.y - bounds.min.y
+          ),
+        z: npc.position.z
+      };
+    case "custom":
+      return transformNpcLocalAnchorOffset(npc, npc.targetAnchor.offset);
+    case "center":
+      return {
+        x: (bounds.min.x + bounds.max.x) * 0.5,
+        y: (bounds.min.y + bounds.max.y) * 0.5,
+        z: (bounds.min.z + bounds.max.z) * 0.5
+      };
+  }
+}
+
 function getNpcDialogueTargetBounds(npc: RuntimeNpc): {
   min: Vec3;
   max: Vec3;
@@ -432,7 +505,7 @@ function getNpcDialogueTargetBounds(npc: RuntimeNpc): {
     case "capsule": {
       const radius = npc.collider.radius * Math.max(npc.scale.x, npc.scale.z);
       const height = npc.collider.height * npc.scale.y;
-      return {
+      const bounds = {
         min: {
           x: npc.position.x - radius,
           y: npc.position.y,
@@ -442,12 +515,12 @@ function getNpcDialogueTargetBounds(npc: RuntimeNpc): {
           x: npc.position.x + radius,
           y: npc.position.y + height,
           z: npc.position.z + radius
-        },
-        center: {
-          x: npc.position.x,
-          y: npc.position.y + height * 0.5,
-          z: npc.position.z
-        },
+        }
+      };
+
+      return {
+        ...bounds,
+        center: resolveNpcTargetAnchorCenter(npc, bounds),
         range: Math.max(DEFAULT_NPC_DIALOGUE_TARGET_RADIUS, height * 0.5)
       };
     }
@@ -457,47 +530,60 @@ function getNpcDialogueTargetBounds(npc: RuntimeNpc): {
         y: npc.collider.size.y * npc.scale.y,
         z: npc.collider.size.z * npc.scale.z
       };
-      return {
+      const rotatedHalfExtents = resolveYawRotatedBoxHalfExtents(
+        size,
+        npc.yawDegrees
+      );
+      const bounds = {
         min: {
-          x: npc.position.x - size.x * 0.5,
+          x: npc.position.x - rotatedHalfExtents.x,
           y: npc.position.y,
-          z: npc.position.z - size.z * 0.5
+          z: npc.position.z - rotatedHalfExtents.z
         },
         max: {
-          x: npc.position.x + size.x * 0.5,
+          x: npc.position.x + rotatedHalfExtents.x,
           y: npc.position.y + size.y,
-          z: npc.position.z + size.z * 0.5
-        },
-        center: {
-          x: npc.position.x,
-          y: npc.position.y + size.y * 0.5,
-          z: npc.position.z
-        },
+          z: npc.position.z + rotatedHalfExtents.z
+        }
+      };
+
+      return {
+        ...bounds,
+        center: resolveNpcTargetAnchorCenter(npc, bounds),
         range: Math.max(
           DEFAULT_NPC_DIALOGUE_TARGET_RADIUS,
           Math.max(size.x, size.y, size.z) * 0.5
         )
       };
     }
-    case "none":
-      return {
+    case "none": {
+      const radius =
+        DEFAULT_NPC_DIALOGUE_TARGET_RADIUS *
+        0.5 *
+        Math.max(npc.scale.x, npc.scale.z);
+      const height = Math.max(
+        1.8 * npc.scale.y,
+        npc.collider.eyeHeight * npc.scale.y
+      );
+      const bounds = {
         min: {
-          x: npc.position.x - DEFAULT_NPC_DIALOGUE_TARGET_RADIUS * 0.5,
+          x: npc.position.x - radius,
           y: npc.position.y,
-          z: npc.position.z - DEFAULT_NPC_DIALOGUE_TARGET_RADIUS * 0.5
+          z: npc.position.z - radius
         },
         max: {
-          x: npc.position.x + DEFAULT_NPC_DIALOGUE_TARGET_RADIUS * 0.5,
-          y: npc.position.y + 1.8,
-          z: npc.position.z + DEFAULT_NPC_DIALOGUE_TARGET_RADIUS * 0.5
-        },
-        center: {
-          x: npc.position.x,
-          y: npc.position.y + 0.9,
-          z: npc.position.z
-        },
-        range: DEFAULT_NPC_DIALOGUE_TARGET_RADIUS
+          x: npc.position.x + radius,
+          y: npc.position.y + height,
+          z: npc.position.z + radius
+        }
       };
+
+      return {
+        ...bounds,
+        center: resolveNpcTargetAnchorCenter(npc, bounds),
+        range: Math.max(DEFAULT_NPC_DIALOGUE_TARGET_RADIUS, height * 0.5)
+      };
+    }
   }
 }
 
