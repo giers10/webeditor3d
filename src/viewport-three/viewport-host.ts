@@ -684,6 +684,55 @@ function collectTransformPreviewTargetIds(
   return targetIds;
 }
 
+function cloneEntityTransformScaleState(
+  scale: EntityTransformScaleState
+): EntityTransformScaleState {
+  switch (scale.kind) {
+    case "none":
+      return {
+        kind: "none"
+      };
+    case "scale":
+      return {
+        kind: "scale",
+        scale: {
+          ...scale.scale
+        }
+      };
+    case "size":
+      return {
+        kind: "size",
+        size: {
+          ...scale.size
+        }
+      };
+  }
+}
+
+function getRotationDegreesFromEntityRotationState(
+  rotation: EntityTransformRotationState
+): Vec3 {
+  switch (rotation.kind) {
+    case "yaw":
+      return {
+        x: 0,
+        y: rotation.yawDegrees,
+        z: 0
+      };
+    case "euler":
+      return {
+        ...rotation.rotationDegrees
+      };
+    case "direction":
+    case "none":
+      return {
+        x: 0,
+        y: 0,
+        z: 0
+      };
+  }
+}
+
 interface CachedMaterialTexture {
   signature: string;
   textureSet: StarterMaterialTextureSet;
