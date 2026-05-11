@@ -8500,11 +8500,7 @@ export class ViewportHost {
             y: entity.yawDegrees,
             z: 0
           },
-          scale: {
-            x: 1,
-            y: 1,
-            z: 1
-          },
+          scale: entity.scale,
           collision: {
             mode: "none",
             visible: false
@@ -8526,7 +8522,7 @@ export class ViewportHost {
       };
     }
 
-    return this.createNpcColliderRenderObjects(
+    const renderObjects = this.createNpcColliderRenderObjects(
       entity.id,
       entity.position,
       entity.yawDegrees,
@@ -8534,6 +8530,8 @@ export class ViewportHost {
       selected,
       previewShellColor ?? (selected ? NPC_SELECTED_COLOR : NPC_COLOR)
     );
+    renderObjects.group.scale.set(entity.scale.x, entity.scale.y, entity.scale.z);
+    return renderObjects;
   }
 
   private createTriggerVolumeRenderObjects(
