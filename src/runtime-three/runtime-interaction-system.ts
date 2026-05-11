@@ -1,4 +1,5 @@
 import type { Vec3 } from "../core/vector";
+import { Euler, Quaternion, Vector3 } from "three";
 import type { ControlEffect } from "../controls/control-surface";
 import {
   type InteractionLink
@@ -155,10 +156,41 @@ function normalizeVec3(vector: Vec3): Vec3 | null {
   return scaleVec3(vector, 1 / Math.sqrt(lengthSquared));
 }
 
+function transformPointToTriggerVolumeLocal(
+  position: Vec3,
+  triggerVolume: RuntimeTriggerVolume
+): Vec3 {
+  const inverseRotation = new Quaternion()
+    .setFromEuler(
+      new Euler(
+        (triggerVolume.rotationDegrees.x * Math.PI) / 180,
+        (triggerVolume.rotationDegrees.y * Math.PI) / 180,
+        (triggerVolume.rotationDegrees.z * Math.PI) / 180,
+        "XYZ"
+      )
+    )
+    .invert();
+  const localPoint = new Vector3(
+    position.x - triggerVolume.position.x,
+    position.y - triggerVolume.position.y,
+    position.z - triggerVolume.position.z
+  ).applyQuaternion(inverseRotation);
+
+  return {
+    x: localPoint.x,
+    y: localPoint.y,
+    z: localPoint.z
+  };
+}
+
 function isPointInsideTriggerVolume(
   position: Vec3,
   triggerVolume: RuntimeTriggerVolume
 ): boolean {
+  const localPosition = transformPointToTriggerVolumeLocal(
+    position,
+    triggerVolume
+  );
   const halfSize = {
     x: triggerVolume.size.x * 0.5,
     y: triggerVolume.size.y * 0.5,
@@ -166,12 +198,12 @@ function isPointInsideTriggerVolume(
   };
 
   return (
-    position.x >= triggerVolume.position.x - halfSize.x &&
-    position.x <= triggerVolume.position.x + halfSize.x &&
-    position.y >= triggerVolume.position.y - halfSize.y &&
-    position.y <= triggerVolume.position.y + halfSize.y &&
-    position.z >= triggerVolume.position.z - halfSize.z &&
-    position.z <= triggerVolume.position.z + halfSize.z
+    localPosition.x >= -halfSize.x &&
+    localPosition.x <= halfSize.x &&
+    localPosition.y >= -halfSize.y &&
+    localPosition.y <= halfSize.y &&
+    localPosition.z >= -halfSize.z &&
+    localPosition.z <= halfSize.z
   );
 }
 
@@ -288,21 +320,29 @@ function isPlayerInsideTriggerVolume(
     y: triggerVolume.size.y * 0.5,
     z: triggerVolume.size.z * 0.5
   };
+  const localFeetPosition = transformPointToTriggerVolumeLocal(
+    feetPosition,
+    triggerVolume
+  );
+  const localEyePosition = transformPointToTriggerVolumeLocal(
+    eyePosition,
+    triggerVolume
+  );
 
   return (
     rayAxisAlignedBoxHitDistance(
-      feetPosition,
-      subtractVec3(eyePosition, feetPosition),
+      localFeetPosition,
+      subtractVec3(localEyePosition, localFeetPosition),
       {
         min: {
-          x: triggerVolume.position.x - halfSize.x,
-          y: triggerVolume.position.y - halfSize.y,
-          z: triggerVolume.position.z - halfSize.z
+          x: -halfSize.x,
+          y: -halfSize.y,
+          z: -halfSize.z
         },
         max: {
-          x: triggerVolume.position.x + halfSize.x,
-          y: triggerVolume.position.y + halfSize.y,
-          z: triggerVolume.position.z + halfSize.z
+          x: halfSize.x,
+          y: halfSize.y,
+          z: halfSize.z
         }
       }
     ) !== null
