@@ -301,7 +301,6 @@ import {
   SURFACE_SNAP_OFFSET,
   applyRigidDeltaToTransformPreview,
   computeSurfaceSnapDelta,
-  createAxisAlignedBoxSurfaceSnapSupportPoints,
   createBrushSurfaceSnapSupportPoints,
   createModelBoundingBoxSurfaceSnapSupportPoints,
   createOrientedBoxSurfaceSnapSupportPoints,
