@@ -35,6 +35,7 @@ import {
   DEFAULT_PLAYER_START_INTERACTION_REACH_METERS,
   DEFAULT_PLAYER_START_KEYBOARD_BINDINGS,
   DEFAULT_NPC_SCALE,
+  DEFAULT_NPC_TARGETABLE,
   DEFAULT_PLAYER_START_TARGET_BUTTON_CYCLES_ACTIVE_TARGET,
   DEFAULT_TRIGGER_VOLUME_ROTATION_DEGREES,
   createNpcAlwaysPresence,
@@ -242,6 +243,7 @@ import {
   NPC_COLLIDER_SCENE_DOCUMENT_VERSION,
   NPC_ENTITY_FOUNDATION_SCENE_DOCUMENT_VERSION,
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
+  NPC_TARGETING_SCENE_DOCUMENT_VERSION,
   WHITEBOX_BOX_LIGHT_VOLUME_SCENE_DOCUMENT_VERSION,
   CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
@@ -290,7 +292,10 @@ import {
   createProjectSequence,
   type ProjectSequenceLibrary
 } from "../sequencer/project-sequences";
-import { type SequenceClip } from "../sequencer/project-sequence-steps";
+import {
+  getInteractionLinkImpulseSteps,
+  type SequenceClip
+} from "../sequencer/project-sequence-steps";
 import {
   createScenePath,
   createScenePathPoint,
@@ -4308,6 +4313,11 @@ function readNpcEntity(
     position: readVec3(value.position, `${label}.position`),
     actorId: expectString(value.actorId, `${label}.actorId`),
     presence: readNpcPresence(value.presence, `${label}.presence`),
+    targetable: readOptionalBoolean(
+      value.targetable,
+      `${label}.targetable`,
+      DEFAULT_NPC_TARGETABLE
+    ),
     yawDegrees: expectFiniteNumber(value.yawDegrees, `${label}.yawDegrees`),
     scale: readOptionalVec3(value.scale, `${label}.scale`, DEFAULT_NPC_SCALE),
     modelAssetId:
