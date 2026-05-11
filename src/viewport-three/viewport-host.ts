@@ -6377,7 +6377,6 @@ export class ViewportHost {
             break;
           case "pointLight":
           case "soundEmitter":
-          case "triggerVolume":
           case "interactable":
             this.applyEntityRenderObjectTransform({
               ...currentEntity,
@@ -6386,6 +6385,34 @@ export class ViewportHost {
             this.applyLocalLightRenderObjectTransform({
               ...currentEntity,
               position: this.currentTransformSession.preview.position
+            });
+            break;
+          case "triggerVolume":
+            this.applyEntityRenderObjectTransform({
+              ...currentEntity,
+              position: this.currentTransformSession.preview.position,
+              rotationDegrees:
+                this.currentTransformSession.preview.rotation.kind === "euler"
+                  ? this.currentTransformSession.preview.rotation
+                      .rotationDegrees
+                  : currentEntity.rotationDegrees,
+              size:
+                this.currentTransformSession.preview.scale.kind === "size"
+                  ? this.currentTransformSession.preview.scale.size
+                  : currentEntity.size
+            });
+            this.applyLocalLightRenderObjectTransform({
+              ...currentEntity,
+              position: this.currentTransformSession.preview.position,
+              rotationDegrees:
+                this.currentTransformSession.preview.rotation.kind === "euler"
+                  ? this.currentTransformSession.preview.rotation
+                      .rotationDegrees
+                  : currentEntity.rotationDegrees,
+              size:
+                this.currentTransformSession.preview.scale.kind === "size"
+                  ? this.currentTransformSession.preview.scale.size
+                  : currentEntity.size
             });
             break;
           case "spotLight":
@@ -6410,7 +6437,6 @@ export class ViewportHost {
             break;
           case "playerStart":
           case "sceneEntry":
-          case "npc":
           case "teleportTarget":
             this.applyEntityRenderObjectTransform({
               ...currentEntity,
@@ -6427,6 +6453,20 @@ export class ViewportHost {
                 this.currentTransformSession.preview.rotation.kind === "yaw"
                   ? this.currentTransformSession.preview.rotation.yawDegrees
                   : currentEntity.yawDegrees
+            });
+            break;
+          case "npc":
+            this.applyEntityRenderObjectTransform({
+              ...currentEntity,
+              position: this.currentTransformSession.preview.position,
+              yawDegrees:
+                this.currentTransformSession.preview.rotation.kind === "yaw"
+                  ? this.currentTransformSession.preview.rotation.yawDegrees
+                  : currentEntity.yawDegrees,
+              scale:
+                this.currentTransformSession.preview.scale.kind === "scale"
+                  ? this.currentTransformSession.preview.scale.scale
+                  : currentEntity.scale
             });
             break;
         }
