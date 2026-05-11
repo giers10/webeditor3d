@@ -2667,21 +2667,20 @@ describe("scene document JSON", () => {
       id: "entity-npc-silent",
       actorId: "actor-silent"
     });
-    const soundEmitter = createSoundEmitterEntity({
-      id: "entity-sound-chime",
-      audioAssetId: "asset-audio-chime"
+    const targetBrush = createBoxBrush({
+      id: "brush-npc-targeting-door"
     });
     const document = createEmptySceneDocument({
       name: "Legacy NPC Targeting Scene"
     });
+    document.brushes[targetBrush.id] = targetBrush;
     document.entities[linkedNpc.id] = linkedNpc;
     document.entities[silentNpc.id] = silentNpc;
-    document.entities[soundEmitter.id] = soundEmitter;
-    document.interactionLinks["link-npc-sound"] = createPlaySoundInteractionLink({
-      id: "link-npc-sound",
+    document.interactionLinks["link-npc-toggle"] = createToggleVisibilityInteractionLink({
+      id: "link-npc-toggle",
       sourceEntityId: linkedNpc.id,
       trigger: "click",
-      targetSoundEmitterId: soundEmitter.id
+      targetBrushId: targetBrush.id
     });
 
     const legacyDocument = JSON.parse(
