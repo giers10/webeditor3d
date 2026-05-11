@@ -378,6 +378,7 @@ export interface RuntimeNpc {
   name?: string;
   visible: boolean;
   targetable: boolean;
+  targetAnchor: NpcTargetAnchor;
   position: Vec3;
   yawDegrees: number;
   scale: Vec3;
