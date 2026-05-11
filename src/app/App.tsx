@@ -10245,6 +10245,7 @@ export function App({
 
   const applyNpcChange = (
     overrides: {
+      targetable?: boolean;
       modelAssetId?: string | null;
       colliderMode?: PlayerStartColliderMode;
     } = {}
@@ -10263,6 +10264,7 @@ export function App({
         name: selectedNpc.name,
         actorId: npcActorIdDraft,
         presence: createNpcAlwaysPresence(),
+        targetable: overrides.targetable ?? selectedNpc.targetable,
         position: snapVec3ToGrid(
           readVec3Draft(entityPositionDraft, "NPC position"),
           DEFAULT_GRID_SIZE
@@ -25005,6 +25007,26 @@ export function App({
                         selectedNpc,
                         selectedNpcLinks
                       )}
+
+                      <div className="form-section">
+                        <div className="label">Targeting</div>
+                        <label className="form-field form-field--toggle">
+                          <span className="label">Targetable</span>
+                          <input
+                            data-testid="npc-targetable"
+                            type="checkbox"
+                            checked={selectedNpc.targetable}
+                            onChange={(event) =>
+                              applyNpcChange({
+                                targetable: event.currentTarget.checked
+                              })
+                            }
+                          />
+                        </label>
+                        <div className="material-summary">
+                          Lets Lux acquire this NPC as a third-person target.
+                        </div>
+                      </div>
 
                       <div className="form-section">
                         <div className="label">Facing</div>
