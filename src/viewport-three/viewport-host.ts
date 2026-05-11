@@ -11829,6 +11829,7 @@ export class ViewportHost {
                 enabled: true,
                 position: previewPosition,
                 yawDegrees: DEFAULT_NPC_YAW_DEGREES,
+                scale: DEFAULT_NPC_SCALE,
                 actorId: "creation-preview",
                 presence: createNpcAlwaysPresence(),
                 modelAssetId: toolPreview.target.modelAssetId ?? null,
