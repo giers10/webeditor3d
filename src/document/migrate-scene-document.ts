@@ -6283,7 +6283,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== PLAYER_START_EDGE_ASSIST_SCENE_DOCUMENT_VERSION &&
     source.version !== WHITEBOX_FACE_CLIMBABLE_SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION &&
-    source.version !== ENTITY_TRANSFORMS_SCENE_DOCUMENT_VERSION
+    source.version !== ENTITY_TRANSFORMS_SCENE_DOCUMENT_VERSION &&
+    source.version !== NPC_TARGETING_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
       `Unsupported scene document version: ${String(source.version)}.`
@@ -6303,7 +6304,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     }
   );
 
-  const migratedDocument: SceneDocument = {
+  let migratedDocument: SceneDocument = {
     version: SCENE_DOCUMENT_VERSION,
     name: expectString(source.name, "name"),
     time: readProjectTimeSettings(source.time, "time", {
@@ -6336,6 +6337,10 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     }),
     interactionLinks: readInteractionLinks(source.interactionLinks)
   };
+
+  if (source.version < NPC_TARGETING_SCENE_DOCUMENT_VERSION) {
+    migratedDocument = migrateLegacySceneNpcTargetability(migratedDocument);
+  }
 
   return source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
     ? migrateLegacySceneNpcPresenceToScheduler(migratedDocument)
@@ -6460,7 +6465,7 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       );
     }
 
-    const migratedDocument: ProjectDocument = {
+    let migratedDocument: ProjectDocument = {
       version: SCENE_DOCUMENT_VERSION,
       name: readProjectName(source.name, "name", {
         allowMissing: allowMissingProjectName
@@ -6483,6 +6488,10 @@ export function migrateProjectDocument(source: unknown): ProjectDocument {
       assets,
       foliagePrototypes: readFoliagePrototypes(source.foliagePrototypes, assets)
     };
+
+    if (source.version < NPC_TARGETING_SCENE_DOCUMENT_VERSION) {
+      migratedDocument = migrateLegacyProjectNpcTargetability(migratedDocument);
+    }
 
     return source.version < PROJECT_SCHEDULER_FOUNDATION_SCENE_DOCUMENT_VERSION
       ? migrateLegacyProjectNpcPresenceToScheduler(migratedDocument)
