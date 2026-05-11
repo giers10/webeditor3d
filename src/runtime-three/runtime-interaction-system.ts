@@ -1,9 +1,7 @@
 import type { Vec3 } from "../core/vector";
 import { Euler, Quaternion, Vector3 } from "three";
 import type { ControlEffect } from "../controls/control-surface";
-import {
-  type InteractionLink
-} from "../interactions/interaction-links";
+import { type InteractionLink } from "../interactions/interaction-links";
 import {
   getInteractionLinkImpulseSteps,
   type ImpulseSequenceStep,
@@ -380,7 +378,9 @@ function resolveEffectiveInteractionTrigger(
     runtimeScene.entities.interactables.some(
       (entity) => entity.entityId === link.sourceEntityId
     ) ||
-    runtimeScene.entities.npcs.some((entity) => entity.entityId === link.sourceEntityId)
+    runtimeScene.entities.npcs.some(
+      (entity) => entity.entityId === link.sourceEntityId
+    )
   ) {
     return "click";
   }
@@ -402,10 +402,7 @@ function getInteractableTargetRadius(
   return Math.min(DEFAULT_INTERACTABLE_TARGET_RADIUS, interactable.radius);
 }
 
-function getNpcDialoguePrompt(
-  npc: RuntimeNpc,
-  hasClickLinks: boolean
-): string {
+function getNpcDialoguePrompt(npc: RuntimeNpc, hasClickLinks: boolean): string {
   const trimmedName = npc.name?.trim() ?? "";
   const hasNpcDialogue =
     npc.defaultDialogueId !== null || npc.dialogues.length > 0;
@@ -451,10 +448,7 @@ function getNpcDialogueTargetBounds(npc: RuntimeNpc): {
           y: npc.position.y + height * 0.5,
           z: npc.position.z
         },
-        range: Math.max(
-          DEFAULT_NPC_DIALOGUE_TARGET_RADIUS,
-          height * 0.5
-        )
+        range: Math.max(DEFAULT_NPC_DIALOGUE_TARGET_RADIUS, height * 0.5)
       };
     }
     case "box": {
@@ -558,10 +552,9 @@ function getNpcHorizontalTargetRadius(
         ) * 0.5
       );
     case "none":
-      return Math.max(
-        bounds.max.x - bounds.min.x,
-        bounds.max.z - bounds.min.z
-      ) * 0.5;
+      return (
+        Math.max(bounds.max.x - bounds.min.x, bounds.max.z - bounds.min.z) * 0.5
+      );
   }
 }
 
@@ -583,7 +576,10 @@ function collectRuntimeInteractionTargetSources(
       continue;
     }
 
-    const distance = distanceBetweenVec3(interactionOrigin, interactable.position);
+    const distance = distanceBetweenVec3(
+      interactionOrigin,
+      interactable.position
+    );
     const horizontalDistance = distanceBetweenVec2(
       {
         x: interactionOrigin.x,
@@ -708,7 +704,10 @@ export function resolveRuntimeTargetCandidates(options: {
     const interactionDistanceScore =
       1 / (1 + source.distance / Math.max(source.range, 0.001));
     const acquisitionDistanceScore =
-      1 - clampUnitInterval(source.distance / Math.max(source.acquisitionRange, 0.001));
+      1 -
+      clampUnitInterval(
+        source.distance / Math.max(source.acquisitionRange, 0.001)
+      );
     const cameraDistanceScore = 1 / (1 + cameraDistance * 0.12);
     const stabilityBonus = source.entityId === previousId ? 0.12 : 0;
     const score =
@@ -919,7 +918,8 @@ export class RuntimeInteractionSystem {
       const offsetX = candidate.center.x - interactionOrigin.x;
       const offsetZ = candidate.center.z - interactionOrigin.z;
       const forwardDistance =
-        offsetX * horizontalViewDirection.x + offsetZ * horizontalViewDirection.y;
+        offsetX * horizontalViewDirection.x +
+        offsetZ * horizontalViewDirection.y;
       const lateralDistance =
         offsetX * -horizontalViewDirection.y +
         offsetZ * horizontalViewDirection.x;
@@ -930,7 +930,8 @@ export class RuntimeInteractionSystem {
         coneSlope * paddedForwardDistance +
         candidate.horizontalRadius;
       const minForwardDistance =
-        -DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS - candidate.horizontalRadius;
+        -DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS -
+        candidate.horizontalRadius;
       const maxForwardDistance =
         interactionReachMeters +
         DEFAULT_INTERACTION_PROMPT_NEAR_FIELD_RADIUS +
@@ -1009,7 +1010,10 @@ export class RuntimeInteractionSystem {
         continue;
       }
 
-      for (const step of getInteractionLinkImpulseSteps(link, runtimeScene.sequences)) {
+      for (const step of getInteractionLinkImpulseSteps(
+        link,
+        runtimeScene.sequences
+      )) {
         this.dispatchSequenceStep(step, link, runtimeScene, dispatcher);
       }
     }

@@ -57,19 +57,19 @@ function createTransformCommandLabel(session: ActiveTransformSession): string {
         session.target.entityKind === "cameraRig"
           ? "camera rig"
           : session.target.entityKind === "playerStart"
-          ? "player start"
-          : session.target.entityKind === "npc"
-            ? "NPC"
-            : session.target.entityKind === "pointLight"
-              ? "point light"
-              : session.target.entityKind === "spotLight"
-                ? "spot light"
-                : session.target.entityKind === "soundEmitter"
-                  ? "sound emitter"
-                  : session.target.entityKind === "triggerVolume"
-                    ? "trigger volume"
-                    : session.target.entityKind === "sceneEntry"
-                      ? "scene entry"
+            ? "player start"
+            : session.target.entityKind === "npc"
+              ? "NPC"
+              : session.target.entityKind === "pointLight"
+                ? "point light"
+                : session.target.entityKind === "spotLight"
+                  ? "spot light"
+                  : session.target.entityKind === "soundEmitter"
+                    ? "sound emitter"
+                    : session.target.entityKind === "triggerVolume"
+                      ? "trigger volume"
+                      : session.target.entityKind === "sceneEntry"
+                        ? "scene entry"
                         : session.target.entityKind === "teleportTarget"
                           ? "teleport target"
                           : session.target.entityKind === "interactable"
@@ -213,7 +213,10 @@ function createUpdatedBrushFromPreview(
   });
 }
 
-export function createCommitTransformSessionCommand(document: SceneDocument, session: ActiveTransformSession): EditorCommand {
+export function createCommitTransformSessionCommand(
+  document: SceneDocument,
+  session: ActiveTransformSession
+): EditorCommand {
   switch (session.target.kind) {
     case "brush": {
       if (session.preview.kind !== "brush") {
@@ -332,10 +335,13 @@ export function createCommitTransformSessionCommand(document: SceneDocument, ses
         throw new Error("Model instance transform preview is invalid.");
       }
 
-      const modelInstance = document.modelInstances[session.target.modelInstanceId];
+      const modelInstance =
+        document.modelInstances[session.target.modelInstanceId];
 
       if (modelInstance === undefined) {
-        throw new Error(`Model instance ${session.target.modelInstanceId} does not exist.`);
+        throw new Error(
+          `Model instance ${session.target.modelInstanceId} does not exist.`
+        );
       }
 
       return createUpsertModelInstanceCommand({

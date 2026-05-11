@@ -1242,8 +1242,7 @@ export function createPlayerStartInputBindings(
       overrides.keyboard?.crouch ??
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.crouch,
     climb:
-      overrides.keyboard?.climb ??
-      DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.climb,
+      overrides.keyboard?.climb ?? DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.climb,
     interact:
       overrides.keyboard?.interact ??
       DEFAULT_PLAYER_START_KEYBOARD_BINDINGS.interact,
@@ -1485,8 +1484,7 @@ export function createPlayerStartMovementTemplate(
   const edgeAssist: PlayerStartEdgeAssistSettings = {
     enabled: overrides.edgeAssist?.enabled ?? preset.edgeAssist.enabled,
     pushToTopHeight:
-      overrides.edgeAssist?.pushToTopHeight ??
-      preset.edgeAssist.pushToTopHeight
+      overrides.edgeAssist?.pushToTopHeight ?? preset.edgeAssist.pushToTopHeight
   };
 
   assertPositiveFiniteNumber(moveSpeed, "Player Start move speed");

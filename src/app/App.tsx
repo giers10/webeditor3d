@@ -253,9 +253,7 @@ import {
   TERRAIN_LAYER_COUNT,
   type Terrain
 } from "../document/terrains";
-import {
-  BUNDLED_FOLIAGE_PROTOTYPES
-} from "../foliage/bundled-foliage-manifest";
+import { BUNDLED_FOLIAGE_PROTOTYPES } from "../foliage/bundled-foliage-manifest";
 import {
   createFoliageLayer,
   type FoliageLayer,
@@ -852,12 +850,7 @@ const TERRAIN_SCULPT_BRUSH_TOOLS: Exclude<
   | "foliageErase"
   | "foliageBlockerPaint"
   | "foliageBlockerErase"
->[] = [
-  "raise",
-  "lower",
-  "smooth",
-  "flatten"
-];
+>[] = ["raise", "lower", "smooth", "flatten"];
 const MIN_VIEWPORT_QUAD_SPLIT = 0.2;
 const MAX_VIEWPORT_QUAD_SPLIT = 0.8;
 
@@ -2474,7 +2467,8 @@ function getFoliageLayerList(
   foliageLayers: FoliageLayerRegistry
 ): FoliageLayer[] {
   return Object.values(foliageLayers).sort(
-    (left, right) => left.name.localeCompare(right.name) || left.id.localeCompare(right.id)
+    (left, right) =>
+      left.name.localeCompare(right.name) || left.id.localeCompare(right.id)
   );
 }
 
@@ -2511,9 +2505,7 @@ function formatMeters(value: number): string {
   return Number.isInteger(value) ? `${value}m` : `${value.toFixed(1)}m`;
 }
 
-function formatFoliagePrototypeLodStatus(
-  prototype: FoliagePrototype
-): string {
+function formatFoliagePrototypeLodStatus(prototype: FoliagePrototype): string {
   const levels = prototype.lods.map((lod) => lod.level).sort();
 
   return `${levels.length} LOD${levels.length === 1 ? "" : "s"} · LOD ${levels.join(", ")}`;
@@ -2610,7 +2602,11 @@ function createProjectDownloadName(projectName: string): string {
   return `${slug.length > 0 ? slug : "project"}${PROJECT_PACKAGE_FILE_EXTENSION}`;
 }
 
-export function App({ store, draftStorage = null, initialStatusMessage }: AppProps) {
+export function App({
+  store,
+  draftStorage = null,
+  initialStatusMessage
+}: AppProps) {
   const editorState = useEditorStoreState(store);
   const sceneList = Object.values(editorState.projectDocument.scenes);
   const activeProjectScene =
@@ -2631,9 +2627,7 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
   const customFoliagePrototypeList = useMemo(
     () =>
       Object.values(editorState.document.foliagePrototypes)
-        .filter(
-          (prototype) => !BUNDLED_FOLIAGE_PROTOTYPE_IDS.has(prototype.id)
-        )
+        .filter((prototype) => !BUNDLED_FOLIAGE_PROTOTYPE_IDS.has(prototype.id))
         .sort(
           (left, right) =>
             left.category.localeCompare(right.category) ||
@@ -3308,10 +3302,8 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
   const [terrainSampleCountXDraft, setTerrainSampleCountXDraft] = useState("9");
   const [terrainSampleCountZDraft, setTerrainSampleCountZDraft] = useState("9");
   const [terrainCellSizeDraft, setTerrainCellSizeDraft] = useState("1");
-  const [
-    terrainLodGridVisibleTerrainIds,
-    setTerrainLodGridVisibleTerrainIds
-  ] = useState<readonly string[]>([]);
+  const [terrainLodGridVisibleTerrainIds, setTerrainLodGridVisibleTerrainIds] =
+    useState<readonly string[]>([]);
   const [activeFoliageLayerId, setActiveFoliageLayerId] = useState<
     string | null
   >(null);
@@ -3527,8 +3519,7 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
     setAdvancedRenderingFoliageMaxDistanceMultiplierDraft
   ] = useState(
     String(
-      editorState.document.world.advancedRendering.foliage
-        .maxDistanceMultiplier
+      editorState.document.world.advancedRendering.foliage.maxDistanceMultiplier
     )
   );
   const [
@@ -3635,7 +3626,9 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
     advancedRenderingDistanceFogNearDistanceDraft,
     setAdvancedRenderingDistanceFogNearDistanceDraft
   ] = useState(
-    String(editorState.document.world.advancedRendering.distanceFog.nearDistance)
+    String(
+      editorState.document.world.advancedRendering.distanceFog.nearDistance
+    )
   );
   const [
     advancedRenderingDistanceFogFarDistanceDraft,
@@ -5078,10 +5071,7 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
     }
 
     autosaveControllerRef.current?.schedule("document");
-  }, [
-    autosaveAvailable,
-    editorState.projectDocument
-  ]);
+  }, [autosaveAvailable, editorState.projectDocument]);
 
   useEffect(() => {
     if (!autosaveAvailable) {
@@ -9406,7 +9396,7 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
           ? ` for ${activeFoliageLayer?.name ?? "the active foliage layer"}`
           : tool === "foliageBlockerPaint" || tool === "foliageBlockerErase"
             ? " for the global foliage blocker"
-        : "";
+            : "";
     setStatusMessage(
       `Armed ${getTerrainBrushToolLabel(tool)} terrain brush${paintLayerLabel} for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Drag in the viewport to edit the selected terrain.`
     );
@@ -15879,11 +15869,10 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                   onCameraStateChange={(cameraState) => {
                     const previousCameraState =
                       editorState.viewportPanels[panelId].cameraState;
-                    const cameraStatesEqual =
-                      areViewportPanelCameraStatesEqual(
-                        previousCameraState,
-                        cameraState
-                      );
+                    const cameraStatesEqual = areViewportPanelCameraStatesEqual(
+                      previousCameraState,
+                      cameraState
+                    );
 
                     traceUpdateLoopEvent("App.onCameraStateChange", {
                       panelId,
@@ -16463,9 +16452,7 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                             activeFoliageLayerId === layer.id
                               ? "outliner-item--selected"
                               : ""
-                          } ${
-                            layer.enabled ? "" : "outliner-item--disabled"
-                          }`}
+                          } ${layer.enabled ? "" : "outliner-item--disabled"}`}
                         >
                           <div className="outliner-item__row">
                             <input
@@ -16529,18 +16516,14 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                           data-testid="foliage-layer-name"
                           value={foliageLayerNameDraft}
                           onChange={(event) =>
-                            setFoliageLayerNameDraft(
-                              event.currentTarget.value
-                            )
+                            setFoliageLayerNameDraft(event.currentTarget.value)
                           }
                           onBlur={applyActiveFoliageLayerName}
                           onKeyDown={(event) => {
                             if (event.key === "Enter") {
                               applyActiveFoliageLayerName();
                             } else if (event.key === "Escape") {
-                              setFoliageLayerNameDraft(
-                                activeFoliageLayer.name
-                              );
+                              setFoliageLayerNameDraft(activeFoliageLayer.name);
                             }
                           }}
                         />
@@ -16586,9 +16569,7 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                                 )
                               }
                               onBlur={() =>
-                                applyActiveFoliageLayerNumericField(
-                                  input.field
-                                )
+                                applyActiveFoliageLayerNumericField(input.field)
                               }
                               onKeyDown={(event) =>
                                 handleDraftVectorKeyDown(event, () =>
@@ -16623,42 +16604,38 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                         className="foliage-prototype-list"
                         data-testid="foliage-prototype-mix"
                       >
-                        {SORTED_BUNDLED_FOLIAGE_PROTOTYPES.map(
-                          (prototype) => (
-                            <label
-                              key={prototype.id}
-                              className="outliner-item outliner-item--compact foliage-prototype-choice"
-                            >
-                              <div className="outliner-item__row">
-                                <input
-                                  className="outliner-item__toggle"
-                                  type="checkbox"
-                                  data-testid={`foliage-prototype-checkbox-${prototype.id}`}
-                                  checked={activeFoliageLayer.prototypeIds.includes(
-                                    prototype.id
-                                  )}
-                                  onChange={(event) =>
-                                    handleFoliagePrototypeSelectionChange(
-                                      prototype.id,
-                                      event.currentTarget.checked
-                                    )
-                                  }
-                                />
-                                <span className="outliner-item__select">
-                                  <span className="outliner-item__title">
-                                    {prototype.label}
-                                  </span>
-                                  <span className="outliner-item__meta">
-                                    {prototype.category} ·{" "}
-                                    {formatFoliagePrototypeLodStatus(
-                                      prototype
-                                    )}
-                                  </span>
+                        {SORTED_BUNDLED_FOLIAGE_PROTOTYPES.map((prototype) => (
+                          <label
+                            key={prototype.id}
+                            className="outliner-item outliner-item--compact foliage-prototype-choice"
+                          >
+                            <div className="outliner-item__row">
+                              <input
+                                className="outliner-item__toggle"
+                                type="checkbox"
+                                data-testid={`foliage-prototype-checkbox-${prototype.id}`}
+                                checked={activeFoliageLayer.prototypeIds.includes(
+                                  prototype.id
+                                )}
+                                onChange={(event) =>
+                                  handleFoliagePrototypeSelectionChange(
+                                    prototype.id,
+                                    event.currentTarget.checked
+                                  )
+                                }
+                              />
+                              <span className="outliner-item__select">
+                                <span className="outliner-item__title">
+                                  {prototype.label}
                                 </span>
-                              </div>
-                            </label>
-                          )
-                        )}
+                                <span className="outliner-item__meta">
+                                  {prototype.category} ·{" "}
+                                  {formatFoliagePrototypeLodStatus(prototype)}
+                                </span>
+                              </span>
+                            </div>
+                          </label>
+                        ))}
                       </div>
                     </div>
                   </>
@@ -19112,12 +19089,8 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                           <input
                             className="text-input"
                             type="number"
-                            min={
-                              MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER
-                            }
-                            max={
-                              MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER
-                            }
+                            min={MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER}
+                            max={MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER}
                             step="0.05"
                             value={
                               advancedRenderingFoliageMaxDistanceMultiplierDraft
@@ -19978,7 +19951,9 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                                 min="0"
                                 max="1"
                                 step="0.05"
-                                value={advancedRenderingDistanceFogStrengthDraft}
+                                value={
+                                  advancedRenderingDistanceFogStrengthDraft
+                                }
                                 onChange={(event) =>
                                   setAdvancedRenderingDistanceFogStrengthDraft(
                                     event.currentTarget.value
@@ -20095,7 +20070,9 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                                 min="0"
                                 max="1"
                                 step="0.05"
-                                value={advancedRenderingDistanceFogSkyBlendDraft}
+                                value={
+                                  advancedRenderingDistanceFogSkyBlendDraft
+                                }
                                 onChange={(event) =>
                                   setAdvancedRenderingDistanceFogSkyBlendDraft(
                                     event.currentTarget.value
@@ -20406,17 +20383,13 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                                 min="0.25"
                                 max="3"
                                 step="0.05"
-                                value={
-                                  advancedRenderingGodRaysSourceSizeDraft
-                                }
+                                value={advancedRenderingGodRaysSourceSizeDraft}
                                 onChange={(event) =>
                                   setAdvancedRenderingGodRaysSourceSizeDraft(
                                     event.currentTarget.value
                                   )
                                 }
-                                onBlur={
-                                  applyAdvancedRenderingGodRaysSourceSize
-                                }
+                                onBlur={applyAdvancedRenderingGodRaysSourceSize}
                                 onKeyDown={(event) =>
                                   handleDraftVectorKeyDown(
                                     event,
@@ -20849,10 +20822,9 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                               armedTerrainBrushTool === "foliageErase"
                             ? `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)} on ${activeFoliageLayer?.name ?? "no foliage layer"}.`
                             : armedTerrainBrushTool === "foliageBlockerPaint" ||
-                                armedTerrainBrushTool ===
-                                  "foliageBlockerErase"
+                                armedTerrainBrushTool === "foliageBlockerErase"
                               ? `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)}.`
-                          : `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Click the active tool again to disarm it.`}
+                              : `${getTerrainBrushToolLabel(armedTerrainBrushTool)} is armed for ${getTerrainLabelById(selectedTerrain.id, terrainList)}. Click the active tool again to disarm it.`}
                     </div>
                   </div>
 
@@ -20943,7 +20915,9 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                         data-testid="terrain-brush-tool-foliage-paint"
                         aria-pressed={armedTerrainBrushTool === "foliagePaint"}
                         disabled={activeFoliageLayer === null}
-                        onClick={() => handleArmTerrainBrushTool("foliagePaint")}
+                        onClick={() =>
+                          handleArmTerrainBrushTool("foliagePaint")
+                        }
                       >
                         Paint Mask
                       </button>
@@ -20953,7 +20927,9 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                         data-testid="terrain-brush-tool-foliage-erase"
                         aria-pressed={armedTerrainBrushTool === "foliageErase"}
                         disabled={activeFoliageLayer === null}
-                        onClick={() => handleArmTerrainBrushTool("foliageErase")}
+                        onClick={() =>
+                          handleArmTerrainBrushTool("foliageErase")
+                        }
                       >
                         Erase Mask
                       </button>
@@ -25084,7 +25060,10 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                                 handleNumberInputKeyUp(event, applyNpcChange)
                               }
                               onPointerUp={(event) =>
-                                handleNumberInputPointerUp(event, applyNpcChange)
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyNpcChange
+                                )
                               }
                             />
                           </label>
@@ -25112,7 +25091,10 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                                 handleNumberInputKeyUp(event, applyNpcChange)
                               }
                               onPointerUp={(event) =>
-                                handleNumberInputPointerUp(event, applyNpcChange)
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyNpcChange
+                                )
                               }
                             />
                           </label>
@@ -25140,7 +25122,10 @@ export function App({ store, draftStorage = null, initialStatusMessage }: AppPro
                                 handleNumberInputKeyUp(event, applyNpcChange)
                               }
                               onPointerUp={(event) =>
-                                handleNumberInputPointerUp(event, applyNpcChange)
+                                handleNumberInputPointerUp(
+                                  event,
+                                  applyNpcChange
+                                )
                               }
                             />
                           </label>

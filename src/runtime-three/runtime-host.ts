@@ -747,7 +747,10 @@ export class RuntimeHost {
     string,
     Mesh<BufferGeometry, Material[]>
   >();
-  private readonly terrainMeshes = new Map<string, RuntimeTerrainRenderObjects>();
+  private readonly terrainMeshes = new Map<
+    string,
+    RuntimeTerrainRenderObjects
+  >();
   private volumeTime = 0;
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
   private readonly runtimeWaterContactUniforms: RuntimeWaterContactUniformBinding[] =
@@ -4126,7 +4129,11 @@ export class RuntimeHost {
       const group = new Group();
       const chunks: RuntimeTerrainRenderChunkObjects[] = [];
 
-      group.position.set(terrain.position.x, terrain.position.y, terrain.position.z);
+      group.position.set(
+        terrain.position.x,
+        terrain.position.y,
+        terrain.position.z
+      );
       group.visible = terrain.visible;
 
       for (const chunk of lodMeshData.chunks) {
@@ -4214,7 +4221,9 @@ export class RuntimeHost {
     });
   }
 
-  private createRuntimeTerrainDistantMaterial(terrain: RuntimeTerrain): Material {
+  private createRuntimeTerrainDistantMaterial(
+    terrain: RuntimeTerrain
+  ): Material {
     const layerColors = terrain.layers.map((layer) =>
       getTerrainLayerPreviewColor(layer.material)
     ) as [number, number, number, number];
@@ -5948,7 +5957,9 @@ export class RuntimeHost {
   }
 
   private resolveRuntimePlayerInputBindings() {
-    return createPlayerStartInputBindings(this.runtimeScene?.playerInputBindings);
+    return createPlayerStartInputBindings(
+      this.runtimeScene?.playerInputBindings
+    );
   }
 
   private resolveRuntimeTargetVisibilityClearance(target: {
@@ -6033,8 +6044,7 @@ export class RuntimeHost {
             const sampleClearance =
               Math.max(radius, TARGETING_VISIBILITY_TARGET_CLEARANCE) +
               TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
-            const yAt = (factor: number) =>
-              npc.position.y + height * factor;
+            const yAt = (factor: number) => npc.position.y + height * factor;
 
             return [
               {
@@ -6060,13 +6070,9 @@ export class RuntimeHost {
               z: collider.size.z * npc.scale.z
             };
             const sampleClearance =
-              clampScalar(
-                Math.max(size.x, size.y, size.z) * 0.25,
-                0.35,
-                0.75
-              ) + TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
-            const yAt = (factor: number) =>
-              npc.position.y + size.y * factor;
+              clampScalar(Math.max(size.x, size.y, size.z) * 0.25, 0.35, 0.75) +
+              TARGETING_VISIBILITY_TARGET_CLEARANCE_PADDING;
+            const yAt = (factor: number) => npc.position.y + size.y * factor;
 
             return [
               {
@@ -6272,7 +6278,9 @@ export class RuntimeHost {
         return false;
       }
 
-      const screenPoint = this.resolveRuntimeTargetScreenPoint(candidate.center);
+      const screenPoint = this.resolveRuntimeTargetScreenPoint(
+        candidate.center
+      );
 
       return (
         screenPoint !== null &&

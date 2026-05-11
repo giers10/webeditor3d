@@ -2305,7 +2305,10 @@ function readTerrain(value: unknown, label: string): Terrain {
               return [
                 layerId,
                 {
-                  layerId: expectString(maskValue.layerId, `${maskLabel}.layerId`),
+                  layerId: expectString(
+                    maskValue.layerId,
+                    `${maskLabel}.layerId`
+                  ),
                   resolutionX: expectFiniteNumber(
                     maskValue.resolutionX,
                     `${maskLabel}.resolutionX`
@@ -2438,7 +2441,10 @@ function readFoliagePrototypeLod(
   }
 
   if (source === "projectAsset") {
-    const modelAssetId = expectString(value.modelAssetId, `${label}.modelAssetId`);
+    const modelAssetId = expectString(
+      value.modelAssetId,
+      `${label}.modelAssetId`
+    );
     const asset = assets[modelAssetId];
 
     if (asset === undefined) {
@@ -2498,7 +2504,10 @@ function readFoliagePrototype(
       `${label}.maxScale`
     ),
     randomYaw: expectBoolean(value.randomYaw, `${label}.randomYaw`),
-    alignToNormal: expectFiniteNumber(value.alignToNormal, `${label}.alignToNormal`),
+    alignToNormal: expectFiniteNumber(
+      value.alignToNormal,
+      `${label}.alignToNormal`
+    ),
     densityWeight: expectNonNegativeFiniteNumber(
       value.densityWeight,
       `${label}.densityWeight`
@@ -2563,10 +2572,19 @@ function readFoliageLayer(value: unknown, label: string): FoliageLayer {
   return createFoliageLayer({
     id: expectString(value.id, `${label}.id`),
     name: expectString(value.name, `${label}.name`),
-    prototypeIds: expectStringArray(value.prototypeIds, `${label}.prototypeIds`),
+    prototypeIds: expectStringArray(
+      value.prototypeIds,
+      `${label}.prototypeIds`
+    ),
     density: expectNonNegativeFiniteNumber(value.density, `${label}.density`),
-    minScale: expectNonNegativeFiniteNumber(value.minScale, `${label}.minScale`),
-    maxScale: expectNonNegativeFiniteNumber(value.maxScale, `${label}.maxScale`),
+    minScale: expectNonNegativeFiniteNumber(
+      value.minScale,
+      `${label}.minScale`
+    ),
+    maxScale: expectNonNegativeFiniteNumber(
+      value.maxScale,
+      `${label}.maxScale`
+    ),
     minSlopeDegrees: expectFiniteNumber(
       value.minSlopeDegrees,
       `${label}.minSlopeDegrees`
@@ -2615,7 +2633,9 @@ function readFoliageLayers(value: unknown): SceneDocument["foliageLayers"] {
     const layer = readFoliageLayer(layerValue, `foliageLayers.${layerId}`);
 
     if (layer.id !== layerId) {
-      throw new Error(`foliageLayers.${layerId}.id must match the registry key.`);
+      throw new Error(
+        `foliageLayers.${layerId}.id must match the registry key.`
+      );
     }
 
     layers[layerId] = layer;

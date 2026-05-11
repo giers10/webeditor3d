@@ -1,8 +1,5 @@
 import { createOpaqueId } from "./ids";
-import {
-  resolveSelectionActiveId,
-  type EditorSelection
-} from "./selection";
+import { resolveSelectionActiveId, type EditorSelection } from "./selection";
 import type { WhiteboxSelectionMode } from "./whitebox-selection-mode";
 import type { Vec3 } from "./vector";
 import {
@@ -1139,7 +1136,10 @@ export function doesTransformSessionChangeTarget(
                 targetItem.initialRotationDegrees
               ) ||
               !areVec3Equal(item.size, targetItem.initialSize) ||
-              !areBrushGeometriesEqual(item.geometry, targetItem.initialGeometry)
+              !areBrushGeometriesEqual(
+                item.geometry,
+                targetItem.initialGeometry
+              )
             );
           }))
       );
@@ -1184,10 +1184,7 @@ export function doesTransformSessionChangeTarget(
     case "pathPoint":
       return (
         session.preview.kind === "pathPoint" &&
-        !areVec3Equal(
-          session.preview.position,
-          session.target.initialPosition
-        )
+        !areVec3Equal(session.preview.position, session.target.initialPosition)
       );
     case "entity":
       return (
@@ -1387,8 +1384,7 @@ export function supportsTransformAxisConstraint(
       if (
         session.target.kind === "modelInstance" ||
         session.target.kind === "modelInstances" ||
-        session.target.kind === "brush"
-        ||
+        session.target.kind === "brush" ||
         session.target.kind === "brushes"
       ) {
         return true;
@@ -1424,9 +1420,10 @@ export function supportsTransformAxisConstraint(
           return false;
         }
 
-        return getBrushEdgeScaleAxes(brushTarget, session.target.edgeId).includes(
-          axis
-        );
+        return getBrushEdgeScaleAxes(
+          brushTarget,
+          session.target.edgeId
+        ).includes(axis);
       }
 
       return false;
@@ -1622,7 +1619,10 @@ function createBrushesTransformTarget(
   for (const brushId of brushIds) {
     const itemResolution = createBrushTransformTarget(document, brushId);
 
-    if (itemResolution.target === null || itemResolution.target.kind !== "brush") {
+    if (
+      itemResolution.target === null ||
+      itemResolution.target.kind !== "brush"
+    ) {
       return itemResolution;
     }
 
@@ -1812,7 +1812,10 @@ function createEntitiesTransformTarget(
   for (const entityId of entityIds) {
     const itemResolution = createEntityTransformTarget(document, entityId);
 
-    if (itemResolution.target === null || itemResolution.target.kind !== "entity") {
+    if (
+      itemResolution.target === null ||
+      itemResolution.target.kind !== "entity"
+    ) {
       return itemResolution;
     }
 
@@ -2021,7 +2024,11 @@ export function resolveTransformTarget(
 
       return selection.ids.length === 1
         ? createBrushTransformTarget(document, selection.ids[0])
-        : createBrushesTransformTarget(document, selection.ids, activeSelectionId);
+        : createBrushesTransformTarget(
+            document,
+            selection.ids,
+            activeSelectionId
+          );
     case "terrains":
       return {
         target: null,
@@ -2038,12 +2045,15 @@ export function resolveTransformTarget(
 
       return selection.ids.length === 1
         ? createEntityTransformTarget(document, selection.ids[0])
-        : createEntitiesTransformTarget(document, selection.ids, activeSelectionId);
+        : createEntitiesTransformTarget(
+            document,
+            selection.ids,
+            activeSelectionId
+          );
     case "paths":
       return {
         target: null,
-        message:
-          "Select a path point before transforming a path."
+        message: "Select a path point before transforming a path."
       };
     case "pathPoint":
       return createPathPointTransformTarget(
