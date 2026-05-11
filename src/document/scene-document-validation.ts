@@ -4985,6 +4985,42 @@ function validateNpcEntity(
     );
   }
 
+  if (
+    typeof entity.targetAnchor !== "object" ||
+    entity.targetAnchor === null
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-npc-target-anchor",
+        "NPC target anchor must remain an object.",
+        `${path}.targetAnchor`
+      )
+    );
+  } else {
+    if (!isNpcTargetAnchorMode(entity.targetAnchor.mode)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-npc-target-anchor-mode",
+          "NPC target anchor mode must be center, eyeHeight, top, origin, or custom.",
+          `${path}.targetAnchor.mode`
+        )
+      );
+    }
+
+    if (!isFiniteVec3(entity.targetAnchor.offset)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-npc-target-anchor-offset",
+          "NPC target anchor offset must remain finite on every axis.",
+          `${path}.targetAnchor.offset`
+        )
+      );
+    }
+  }
+
   validateNpcModelAssetId(entity, path, document, diagnostics);
   const seenNpcDialogueIds = new Map<string, string>();
 
