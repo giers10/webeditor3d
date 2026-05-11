@@ -2522,6 +2522,7 @@ export function createNpcEntity(
       | "actorId"
       | "presence"
       | "targetable"
+      | "targetAnchor"
       | "yawDegrees"
       | "scale"
       | "modelAssetId"
@@ -2536,6 +2537,7 @@ export function createNpcEntity(
   const actorId = normalizeNpcActorId(overrides.actorId);
   const presence = normalizeNpcPresence(overrides.presence);
   const targetable = overrides.targetable ?? DEFAULT_NPC_TARGETABLE;
+  const targetAnchor = createNpcTargetAnchor(overrides.targetAnchor);
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_NPC_YAW_DEGREES;
   const scale = cloneVec3(overrides.scale ?? DEFAULT_NPC_SCALE);
   const modelAssetId = normalizeNpcModelAssetId(
@@ -2567,6 +2569,7 @@ export function createNpcEntity(
     actorId,
     presence,
     targetable,
+    targetAnchor,
     yawDegrees: normalizeYawDegrees(yawDegrees),
     scale,
     modelAssetId,
@@ -3052,6 +3055,8 @@ export function areEntityInstancesEqual(
         left.actorId === typedRight.actorId &&
         areNpcPresencesEqual(left.presence, typedRight.presence) &&
         left.targetable === typedRight.targetable &&
+        left.targetAnchor.mode === typedRight.targetAnchor.mode &&
+        areVec3Equal(left.targetAnchor.offset, typedRight.targetAnchor.offset) &&
         left.yawDegrees === typedRight.yawDegrees &&
         areVec3Equal(left.scale, typedRight.scale) &&
         left.modelAssetId === typedRight.modelAssetId &&
