@@ -102,7 +102,15 @@ function createUpdatedEntityFromPreview(
     rotation:
       | { kind: "none" }
       | { kind: "yaw"; yawDegrees: number }
-      | { kind: "direction"; direction: { x: number; y: number; z: number } };
+      | { kind: "direction"; direction: { x: number; y: number; z: number } }
+      | {
+          kind: "euler";
+          rotationDegrees: { x: number; y: number; z: number };
+        };
+    scale:
+      | { kind: "none" }
+      | { kind: "scale"; scale: { x: number; y: number; z: number } }
+      | { kind: "size"; size: { x: number; y: number; z: number } };
   }
 ) {
   switch (entity.kind) {
@@ -152,7 +160,9 @@ function createUpdatedEntityFromPreview(
         yawDegrees:
           preview.rotation.kind === "yaw"
             ? preview.rotation.yawDegrees
-            : entity.yawDegrees
+            : entity.yawDegrees,
+        scale:
+          preview.scale.kind === "scale" ? preview.scale.scale : entity.scale
       });
     case "soundEmitter":
       return createSoundEmitterEntity({
@@ -162,7 +172,12 @@ function createUpdatedEntityFromPreview(
     case "triggerVolume":
       return createTriggerVolumeEntity({
         ...entity,
-        position: preview.position
+        position: preview.position,
+        rotationDegrees:
+          preview.rotation.kind === "euler"
+            ? preview.rotation.rotationDegrees
+            : entity.rotationDegrees,
+        size: preview.scale.kind === "size" ? preview.scale.size : entity.size
       });
     case "teleportTarget":
       return createTeleportTargetEntity({
