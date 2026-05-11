@@ -2709,6 +2709,53 @@ describe("scene document JSON", () => {
     });
   });
 
+  it("repairs v97 NPCs that were saved untargetable despite click links", () => {
+    const linkedNpc = createNpcEntity({
+      id: "entity-npc-v97-linked",
+      actorId: "actor-v97-linked",
+      targetable: false
+    });
+    const silentNpc = createNpcEntity({
+      id: "entity-npc-v97-silent",
+      actorId: "actor-v97-silent",
+      targetable: false
+    });
+    const targetBrush = createBoxBrush({
+      id: "brush-v97-npc-targeting-door"
+    });
+    const document = createEmptySceneDocument({
+      name: "V97 NPC Targeting Scene"
+    });
+    document.brushes[targetBrush.id] = targetBrush;
+    document.entities[linkedNpc.id] = linkedNpc;
+    document.entities[silentNpc.id] = silentNpc;
+    document.interactionLinks["link-v97-npc-toggle"] =
+      createToggleVisibilityInteractionLink({
+        id: "link-v97-npc-toggle",
+        sourceEntityId: linkedNpc.id,
+        trigger: "click",
+        targetBrushId: targetBrush.id
+      });
+
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(document)
+    ) as Record<string, unknown>;
+    legacyDocument.version = NPC_TARGETING_SCENE_DOCUMENT_VERSION;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.entities[linkedNpc.id]).toMatchObject({
+      kind: "npc",
+      targetable: true
+    });
+    expect(migratedDocument.entities[silentNpc.id]).toMatchObject({
+      kind: "npc",
+      targetable: false
+    });
+  });
+
   it("migrates pre-entity-transform NPCs and trigger volumes to explicit transform defaults", () => {
     const triggerVolume = createTriggerVolumeEntity({
       id: "entity-trigger-legacy-transform",
