@@ -5233,6 +5233,133 @@ function readProjectSequenceLibrary(
   };
 }
 
+function hasLegacyNpcTargetingInteractionLink(
+  link: InteractionLink,
+  sequences: ProjectSequenceLibrary
+): boolean {
+  return (
+    link.trigger === "click" &&
+    getInteractionLinkImpulseSteps(link, sequences).length > 0
+  );
+}
+
+function migrateLegacySceneNpcTargetability(
+  document: SceneDocument
+): SceneDocument {
+  const targetableNpcIds = new Set(
+    Object.values(document.interactionLinks)
+      .filter((link) =>
+        hasLegacyNpcTargetingInteractionLink(link, document.sequences)
+      )
+      .map((link) => link.sourceEntityId)
+  );
+
+  if (targetableNpcIds.size === 0) {
+    return document;
+  }
+
+  let nextEntities = document.entities;
+  let changed = false;
+
+  for (const [entityId, entity] of Object.entries(document.entities)) {
+    if (
+      entity.kind !== "npc" ||
+      entity.targetable ||
+      !targetableNpcIds.has(entityId)
+    ) {
+      continue;
+    }
+
+    if (!changed) {
+      nextEntities = {
+        ...document.entities
+      };
+      changed = true;
+    }
+
+    nextEntities[entityId] = createNpcEntity({
+      ...entity,
+      targetable: true
+    });
+  }
+
+  return changed
+    ? {
+        ...document,
+        entities: nextEntities
+      }
+    : document;
+}
+
+function migrateLegacyProjectNpcTargetability(
+  document: ProjectDocument
+): ProjectDocument {
+  let nextScenes = document.scenes;
+  let changed = false;
+
+  for (const [sceneId, scene] of Object.entries(document.scenes)) {
+    const targetableNpcIds = new Set(
+      Object.values(scene.interactionLinks)
+        .filter((link) =>
+          hasLegacyNpcTargetingInteractionLink(link, document.sequences)
+        )
+        .map((link) => link.sourceEntityId)
+    );
+
+    if (targetableNpcIds.size === 0) {
+      continue;
+    }
+
+    let nextEntities = scene.entities;
+    let sceneChanged = false;
+
+    for (const [entityId, entity] of Object.entries(scene.entities)) {
+      if (
+        entity.kind !== "npc" ||
+        entity.targetable ||
+        !targetableNpcIds.has(entityId)
+      ) {
+        continue;
+      }
+
+      if (!sceneChanged) {
+        nextEntities = {
+          ...scene.entities
+        };
+        sceneChanged = true;
+      }
+
+      nextEntities[entityId] = createNpcEntity({
+        ...entity,
+        targetable: true
+      });
+    }
+
+    if (!sceneChanged) {
+      continue;
+    }
+
+    if (!changed) {
+      nextScenes = {
+        ...document.scenes
+      };
+      changed = true;
+    }
+
+    nextScenes[sceneId] = {
+      ...scene,
+      entities: nextEntities
+    };
+  }
+
+  return changed
+    ? {
+        ...document,
+        scenes: nextScenes
+      }
+    : document;
+}
+
 function migrateLegacySceneNpcPresenceToScheduler(
   document: SceneDocument
 ): SceneDocument {
