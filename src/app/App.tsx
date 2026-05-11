@@ -10279,6 +10279,7 @@ export function App({
   const applyNpcChange = (
     overrides: {
       targetable?: boolean;
+      targetAnchorMode?: NpcTargetAnchorMode;
       modelAssetId?: string | null;
       colliderMode?: PlayerStartColliderMode;
     } = {}
@@ -10291,6 +10292,8 @@ export function App({
     try {
       const trimmedModelAssetId = npcModelAssetIdDraft.trim();
       const colliderMode = overrides.colliderMode ?? npcColliderModeDraft;
+      const targetAnchorMode =
+        overrides.targetAnchorMode ?? npcTargetAnchorModeDraft;
 
       const nextEntity = createNpcEntity({
         id: selectedNpc.id,
@@ -10298,6 +10301,13 @@ export function App({
         actorId: npcActorIdDraft,
         presence: createNpcAlwaysPresence(),
         targetable: overrides.targetable ?? selectedNpc.targetable,
+        targetAnchor: createNpcTargetAnchor({
+          mode: targetAnchorMode,
+          offset: readVec3Draft(
+            npcTargetAnchorOffsetDraft,
+            "NPC target anchor offset"
+          )
+        }),
         position: snapVec3ToGrid(
           readVec3Draft(entityPositionDraft, "NPC position"),
           DEFAULT_GRID_SIZE
