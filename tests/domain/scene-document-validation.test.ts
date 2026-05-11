@@ -1343,6 +1343,12 @@ describe("validateSceneDocument", () => {
       actorId: "actor-town-targetable"
     });
     (invalidTargetableNpc as { targetable: unknown }).targetable = "yes";
+    const invalidTargetAnchorNpc = createNpcEntity({
+      id: "entity-npc-invalid-target-anchor",
+      actorId: "actor-town-target-anchor"
+    });
+    invalidTargetAnchorNpc.targetAnchor.mode = "feet" as never;
+    invalidTargetAnchorNpc.targetAnchor.offset.x = Number.NaN;
 
     const validation = validateSceneDocument({
       ...createEmptySceneDocument(),
@@ -1369,7 +1375,8 @@ describe("validateSceneDocument", () => {
         [wrongKindModelNpc.id]: wrongKindModelNpc,
         [duplicateActorNpc.id]: duplicateActorNpc,
         [invalidColliderNpc.id]: invalidColliderNpc,
-        [invalidTargetableNpc.id]: invalidTargetableNpc
+        [invalidTargetableNpc.id]: invalidTargetableNpc,
+        [invalidTargetAnchorNpc.id]: invalidTargetAnchorNpc
       }
     });
 
@@ -1394,6 +1401,14 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-npc-targetable",
           path: "entities.entity-npc-invalid-targetable.targetable"
+        }),
+        expect.objectContaining({
+          code: "invalid-npc-target-anchor-mode",
+          path: "entities.entity-npc-invalid-target-anchor.targetAnchor.mode"
+        }),
+        expect.objectContaining({
+          code: "invalid-npc-target-anchor-offset",
+          path: "entities.entity-npc-invalid-target-anchor.targetAnchor.offset"
         })
       ])
     );
