@@ -374,6 +374,7 @@ export interface RuntimeNpc {
   visible: boolean;
   position: Vec3;
   yawDegrees: number;
+  scale: Vec3;
   modelAssetId: string | null;
   dialogues: ProjectDialogue[];
   defaultDialogueId: string | null;
@@ -419,6 +420,7 @@ export interface RuntimeSoundEmitter {
 export interface RuntimeTriggerVolume {
   entityId: string;
   position: Vec3;
+  rotationDegrees: Vec3;
   size: Vec3;
   triggerOnEnter: boolean;
   triggerOnExit: boolean;
@@ -660,6 +662,7 @@ export function createRuntimeNpcFromDefinition(
     visible: npc.visible,
     position: cloneVec3(npc.position),
     yawDegrees: npc.yawDegrees,
+    scale: cloneVec3(npc.scale),
     modelAssetId: npc.modelAssetId,
     dialogues: npc.dialogues.map(cloneProjectDialogue),
     defaultDialogueId: npc.defaultDialogueId,
