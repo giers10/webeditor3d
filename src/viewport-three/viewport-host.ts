@@ -8370,6 +8370,8 @@ export class ViewportHost {
     });
     const meshes: Mesh[] = [];
 
+    group.rotation.y = (yawDegrees * Math.PI) / 180;
+
     switch (collider.mode) {
       case "capsule": {
         const collisionMesh = new Mesh(
@@ -8545,7 +8547,7 @@ export class ViewportHost {
     }
 
     const facingGroup = new Group();
-    facingGroup.rotation.y = (yawDegrees * Math.PI) / 180;
+    facingGroup.name = "npcFacingGroup";
     group.add(facingGroup);
     const colliderTop = getNpcColliderHeight(collider) ?? 0.18;
 
