@@ -2470,6 +2470,7 @@ export function createNpcEntity(
       | "actorId"
       | "presence"
       | "yawDegrees"
+      | "scale"
       | "modelAssetId"
       | "dialogues"
       | "defaultDialogueId"
@@ -2482,6 +2483,7 @@ export function createNpcEntity(
   const actorId = normalizeNpcActorId(overrides.actorId);
   const presence = normalizeNpcPresence(overrides.presence);
   const yawDegrees = overrides.yawDegrees ?? DEFAULT_NPC_YAW_DEGREES;
+  const scale = cloneVec3(overrides.scale ?? DEFAULT_NPC_SCALE);
   const modelAssetId = normalizeNpcModelAssetId(
     overrides.modelAssetId ?? DEFAULT_NPC_MODEL_ASSET_ID
   );
@@ -2493,6 +2495,7 @@ export function createNpcEntity(
   const collider = createNpcColliderSettings(overrides.collider);
 
   assertFiniteVec3(position, "NPC position");
+  assertPositiveFiniteVec3(scale, "NPC scale");
 
   if (!Number.isFinite(yawDegrees)) {
     throw new Error("NPC yaw must be a finite number.");
@@ -2508,6 +2511,7 @@ export function createNpcEntity(
     actorId,
     presence,
     yawDegrees: normalizeYawDegrees(yawDegrees),
+    scale,
     modelAssetId,
     dialogues,
     defaultDialogueId,
@@ -2584,6 +2588,7 @@ export function createTriggerVolumeEntity(
       | "visible"
       | "enabled"
       | "position"
+      | "rotationDegrees"
       | "size"
       | "triggerOnEnter"
       | "triggerOnExit"
@@ -2591,11 +2596,15 @@ export function createTriggerVolumeEntity(
   > = {}
 ): TriggerVolumeEntity {
   const position = cloneVec3(overrides.position ?? DEFAULT_ENTITY_POSITION);
+  const rotationDegrees = cloneVec3(
+    overrides.rotationDegrees ?? DEFAULT_TRIGGER_VOLUME_ROTATION_DEGREES
+  );
   const size = cloneVec3(overrides.size ?? DEFAULT_TRIGGER_VOLUME_SIZE);
   const triggerOnEnter = overrides.triggerOnEnter ?? true;
   const triggerOnExit = overrides.triggerOnExit ?? false;
 
   assertFiniteVec3(position, "Trigger Volume position");
+  assertFiniteVec3(rotationDegrees, "Trigger Volume rotation");
   assertPositiveFiniteVec3(size, "Trigger Volume size");
   assertBoolean(triggerOnEnter, "Trigger Volume triggerOnEnter");
   assertBoolean(triggerOnExit, "Trigger Volume triggerOnExit");
@@ -2607,6 +2616,7 @@ export function createTriggerVolumeEntity(
     visible: resolveAuthoredEntityVisibility(overrides.visible),
     enabled: resolveAuthoredEntityEnabled(overrides.enabled),
     position,
+    rotationDegrees,
     size,
     triggerOnEnter,
     triggerOnExit
