@@ -1737,6 +1737,7 @@ function buildRuntimeSceneCollections(
           authoredPosition: cloneVec3(entity.position),
           yawDegrees: entity.yawDegrees,
           authoredYawDegrees: entity.yawDegrees,
+          scale: cloneVec3(entity.scale),
           modelAssetId: entity.modelAssetId,
           dialogues: entity.dialogues.map(cloneProjectDialogue),
           defaultDialogueId: entity.defaultDialogueId,
@@ -1764,6 +1765,7 @@ function buildRuntimeSceneCollections(
         runtimeEntities.triggerVolumes.push({
           entityId: entity.id,
           position: cloneVec3(entity.position),
+          rotationDegrees: cloneVec3(entity.rotationDegrees),
           size: cloneVec3(entity.size),
           // Derive from links so flags are always correct regardless of stored entity state
           triggerOnEnter: Object.values(document.interactionLinks).some(
