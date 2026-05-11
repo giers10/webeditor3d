@@ -6312,6 +6312,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== WHITEBOX_FACE_CLIMBABLE_SCENE_DOCUMENT_VERSION &&
     source.version !== FOLLOW_ACTOR_PATH_SMOOTH_SCENE_DOCUMENT_VERSION &&
     source.version !== ENTITY_TRANSFORMS_SCENE_DOCUMENT_VERSION &&
+    source.version !== NPC_TARGETING_DEFAULT_SCENE_DOCUMENT_VERSION &&
+    source.version !== NPC_TARGET_ANCHOR_SCENE_DOCUMENT_VERSION &&
     source.version !== NPC_TARGETING_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
