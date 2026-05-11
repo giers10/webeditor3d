@@ -564,6 +564,7 @@ function collectRuntimeInteractionTargetSources(
   options: {
     useTargetingReach?: boolean;
     interactionReachMeters?: number;
+    requireNpcTargetable?: boolean;
   } = {}
 ): RuntimeInteractionTargetSource[] {
   const candidates: RuntimeInteractionTargetSource[] = [];
@@ -623,8 +624,13 @@ function collectRuntimeInteractionTargetSources(
     }
 
     const hasClickLinks = hasTriggerLinks(runtimeScene, npc.entityId, "click");
+    const requiresTargetable = options.requireNpcTargetable ?? false;
 
-    if (!hasClickLinks) {
+    if (requiresTargetable) {
+      if (!npc.targetable) {
+        continue;
+      }
+    } else if (!hasClickLinks) {
       continue;
     }
 
@@ -684,7 +690,7 @@ export function resolveRuntimeTargetCandidates(options: {
   for (const source of collectRuntimeInteractionTargetSources(
     options.interactionOrigin,
     options.runtimeScene,
-    { useTargetingReach: true }
+    { useTargetingReach: true, requireNpcTargetable: true }
   )) {
     const toTarget = subtractVec3(source.center, options.cameraPosition);
     const cameraDistanceSquared = lengthSquaredVec3(toTarget);
@@ -776,7 +782,7 @@ export function resolveRuntimeTargetReference(
       if (
         npc === null ||
         !npc.visible ||
-        !hasTriggerLinks(runtimeScene, npc.entityId, "click")
+        !npc.targetable
       ) {
         return null;
       }
