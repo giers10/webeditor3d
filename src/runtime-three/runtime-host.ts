@@ -2003,8 +2003,8 @@ export class RuntimeHost {
     const facingGroup = renderGroup.getObjectByName("npcFacingGroup");
 
     if (facingGroup !== undefined) {
-      renderGroup.rotation.set(0, 0, 0);
-      facingGroup.rotation.set(0, (npc.yawDegrees * Math.PI) / 180, 0);
+      renderGroup.rotation.set(0, (npc.yawDegrees * Math.PI) / 180, 0);
+      facingGroup.rotation.set(0, 0, 0);
       return;
     }
 
@@ -4323,6 +4323,7 @@ export class RuntimeHost {
     });
 
     group.position.set(npc.position.x, npc.position.y, npc.position.z);
+    group.rotation.y = (npc.yawDegrees * Math.PI) / 180;
     group.scale.set(npc.scale.x, npc.scale.y, npc.scale.z);
 
     switch (npc.collider.mode) {
@@ -4359,7 +4360,6 @@ export class RuntimeHost {
 
     const facingGroup = new Group();
     facingGroup.name = "npcFacingGroup";
-    facingGroup.rotation.y = (npc.yawDegrees * Math.PI) / 180;
     group.add(facingGroup);
     const colliderTop =
       getNpcColliderHeight({
