@@ -393,52 +393,55 @@ function getNpcDialogueTargetBounds(npc: RuntimeNpc): {
 } {
   switch (npc.collider.mode) {
     case "capsule": {
+      const radius = npc.collider.radius * Math.max(npc.scale.x, npc.scale.z);
+      const height = npc.collider.height * npc.scale.y;
       return {
         min: {
-          x: npc.position.x - npc.collider.radius,
+          x: npc.position.x - radius,
           y: npc.position.y,
-          z: npc.position.z - npc.collider.radius
+          z: npc.position.z - radius
         },
         max: {
-          x: npc.position.x + npc.collider.radius,
-          y: npc.position.y + npc.collider.height,
-          z: npc.position.z + npc.collider.radius
+          x: npc.position.x + radius,
+          y: npc.position.y + height,
+          z: npc.position.z + radius
         },
         center: {
           x: npc.position.x,
-          y: npc.position.y + npc.collider.height * 0.5,
+          y: npc.position.y + height * 0.5,
           z: npc.position.z
         },
         range: Math.max(
           DEFAULT_NPC_DIALOGUE_TARGET_RADIUS,
-          npc.collider.height * 0.5
+          height * 0.5
         )
       };
     }
     case "box": {
+      const size = {
+        x: npc.collider.size.x * npc.scale.x,
+        y: npc.collider.size.y * npc.scale.y,
+        z: npc.collider.size.z * npc.scale.z
+      };
       return {
         min: {
-          x: npc.position.x - npc.collider.size.x * 0.5,
+          x: npc.position.x - size.x * 0.5,
           y: npc.position.y,
-          z: npc.position.z - npc.collider.size.z * 0.5
+          z: npc.position.z - size.z * 0.5
         },
         max: {
-          x: npc.position.x + npc.collider.size.x * 0.5,
-          y: npc.position.y + npc.collider.size.y,
-          z: npc.position.z + npc.collider.size.z * 0.5
+          x: npc.position.x + size.x * 0.5,
+          y: npc.position.y + size.y,
+          z: npc.position.z + size.z * 0.5
         },
         center: {
           x: npc.position.x,
-          y: npc.position.y + npc.collider.size.y * 0.5,
+          y: npc.position.y + size.y * 0.5,
           z: npc.position.z
         },
         range: Math.max(
           DEFAULT_NPC_DIALOGUE_TARGET_RADIUS,
-          Math.max(
-            npc.collider.size.x,
-            npc.collider.size.y,
-            npc.collider.size.z
-          ) * 0.5
+          Math.max(size.x, size.y, size.z) * 0.5
         )
       };
     }
