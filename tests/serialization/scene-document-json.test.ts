@@ -2627,6 +2627,7 @@ describe("scene document JSON", () => {
         y: 0,
         z: -2
       },
+      targetable: true,
       yawDegrees: 225,
       scale: {
         x: 1.25,
