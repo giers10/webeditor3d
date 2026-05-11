@@ -25069,6 +25069,133 @@ export function App({
                         <div className="material-summary">
                           Lets Lux acquire this NPC as a third-person target.
                         </div>
+                        <label className="form-field">
+                          <span className="label">Anchor</span>
+                          <select
+                            data-testid="npc-target-anchor-mode"
+                            className="select-input"
+                            value={npcTargetAnchorModeDraft}
+                            onChange={(event) => {
+                              const nextMode = event.currentTarget
+                                .value as NpcTargetAnchorMode;
+                              setNpcTargetAnchorModeDraft(nextMode);
+                              scheduleDraftCommit(() =>
+                                applyNpcChange({
+                                  targetAnchorMode: nextMode
+                                })
+                              );
+                            }}
+                          >
+                            {NPC_TARGET_ANCHOR_MODES.map((mode) => (
+                              <option key={mode} value={mode}>
+                                {formatNpcTargetAnchorMode(mode)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        {npcTargetAnchorModeDraft === "custom" ? (
+                          <div className="vector-inputs">
+                            <label className="form-field">
+                              <span className="label">X</span>
+                              <input
+                                data-testid="npc-target-anchor-offset-x"
+                                className="text-input"
+                                type="number"
+                                step="0.1"
+                                value={npcTargetAnchorOffsetDraft.x}
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
+                                  setNpcTargetAnchorOffsetDraft((draft) => ({
+                                    ...draft,
+                                    x: nextValue
+                                  }));
+                                }}
+                                onBlur={() => applyNpcChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(event, applyNpcChange)
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Y</span>
+                              <input
+                                data-testid="npc-target-anchor-offset-y"
+                                className="text-input"
+                                type="number"
+                                step="0.1"
+                                value={npcTargetAnchorOffsetDraft.y}
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
+                                  setNpcTargetAnchorOffsetDraft((draft) => ({
+                                    ...draft,
+                                    y: nextValue
+                                  }));
+                                }}
+                                onBlur={() => applyNpcChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(event, applyNpcChange)
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Z</span>
+                              <input
+                                data-testid="npc-target-anchor-offset-z"
+                                className="text-input"
+                                type="number"
+                                step="0.1"
+                                value={npcTargetAnchorOffsetDraft.z}
+                                onChange={(event) => {
+                                  const nextValue = event.currentTarget.value;
+                                  setNpcTargetAnchorOffsetDraft((draft) => ({
+                                    ...draft,
+                                    z: nextValue
+                                  }));
+                                }}
+                                onBlur={() => applyNpcChange()}
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(event, applyNpcChange)
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyNpcChange
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        ) : null}
                       </div>
 
                       <div className="form-section">
