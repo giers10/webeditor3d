@@ -907,7 +907,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           actorId: "actor-house-guide",
           name: undefined,
           visible: true,
-          targetable: false,
+          targetable: true,
           position: {
             x: -1,
             y: 0,
