@@ -2629,6 +2629,14 @@ describe("scene document JSON", () => {
         z: -2
       },
       targetable: true,
+      targetAnchor: createNpcTargetAnchor({
+        mode: "custom",
+        offset: {
+          x: 0.2,
+          y: 1.1,
+          z: -0.3
+        }
+      }),
       yawDegrees: 225,
       scale: {
         x: 1.25,
