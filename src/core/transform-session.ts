@@ -64,6 +64,11 @@ export interface DirectionEntityRotationState {
   direction: Vec3;
 }
 
+export interface EulerEntityRotationState {
+  kind: "euler";
+  rotationDegrees: Vec3;
+}
+
 export interface NoEntityRotationState {
   kind: "none";
 }
@@ -71,7 +76,27 @@ export interface NoEntityRotationState {
 export type EntityTransformRotationState =
   | NoEntityRotationState
   | YawEntityRotationState
-  | DirectionEntityRotationState;
+  | DirectionEntityRotationState
+  | EulerEntityRotationState;
+
+export interface NoEntityScaleState {
+  kind: "none";
+}
+
+export interface VectorEntityScaleState {
+  kind: "scale";
+  scale: Vec3;
+}
+
+export interface SizeEntityScaleState {
+  kind: "size";
+  size: Vec3;
+}
+
+export type EntityTransformScaleState =
+  | NoEntityScaleState
+  | VectorEntityScaleState
+  | SizeEntityScaleState;
 
 export interface BrushTransformTarget {
   kind: "brush";
