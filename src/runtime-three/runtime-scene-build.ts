@@ -1084,6 +1084,10 @@ export function buildRuntimeNpcCollider(
 
   switch (npc.collider.mode) {
     case "capsule": {
+      const radius = npc.collider.radius * Math.max(npc.scale.x, npc.scale.z);
+      const height = npc.collider.height * npc.scale.y;
+      const eyeHeight = npc.collider.eyeHeight * npc.scale.y;
+
       return {
         kind: "character",
         source: "npc",
@@ -1092,29 +1096,34 @@ export function buildRuntimeNpcCollider(
         rotationDegrees,
         shape: {
           mode: "capsule",
-          radius: npc.collider.radius,
-          height: npc.collider.height,
-          eyeHeight: npc.collider.eyeHeight
+          radius,
+          height,
+          eyeHeight
         },
         worldBounds: {
           min: {
-            x: npc.position.x - npc.collider.radius,
+            x: npc.position.x - radius,
             y: npc.position.y,
-            z: npc.position.z - npc.collider.radius
+            z: npc.position.z - radius
           },
           max: {
-            x: npc.position.x + npc.collider.radius,
-            y: npc.position.y + npc.collider.height,
-            z: npc.position.z + npc.collider.radius
+            x: npc.position.x + radius,
+            y: npc.position.y + height,
+            z: npc.position.z + radius
           }
         }
       };
     }
     case "box": {
+      const size = {
+        x: npc.collider.size.x * npc.scale.x,
+        y: npc.collider.size.y * npc.scale.y,
+        z: npc.collider.size.z * npc.scale.z
+      };
       const halfExtents = {
-        x: npc.collider.size.x * 0.5,
-        y: npc.collider.size.y * 0.5,
-        z: npc.collider.size.z * 0.5
+        x: size.x * 0.5,
+        y: size.y * 0.5,
+        z: size.z * 0.5
       };
       const yawRadians = (rotationDegrees.y * Math.PI) / 180;
       const cosine = Math.abs(Math.cos(yawRadians));
@@ -1130,8 +1139,8 @@ export function buildRuntimeNpcCollider(
         rotationDegrees,
         shape: {
           mode: "box",
-          size: cloneVec3(npc.collider.size),
-          eyeHeight: npc.collider.eyeHeight
+          size,
+          eyeHeight: npc.collider.eyeHeight * npc.scale.y
         },
         worldBounds: {
           min: {
@@ -1141,7 +1150,7 @@ export function buildRuntimeNpcCollider(
           },
           max: {
             x: npc.position.x + rotatedHalfX,
-            y: npc.position.y + npc.collider.size.y,
+            y: npc.position.y + size.y,
             z: npc.position.z + rotatedHalfZ
           }
         }
