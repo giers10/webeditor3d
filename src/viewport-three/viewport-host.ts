@@ -11936,6 +11936,7 @@ export class ViewportHost {
                 scale: DEFAULT_NPC_SCALE,
                 actorId: "creation-preview",
                 presence: createNpcAlwaysPresence(),
+                targetable: false,
                 modelAssetId: toolPreview.target.modelAssetId ?? null,
                 dialogues: [],
                 defaultDialogueId: null,
