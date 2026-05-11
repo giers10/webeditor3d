@@ -8512,6 +8512,8 @@ export class ViewportHost {
     });
     const meshes: Mesh[] = [];
 
+    group.rotation.y = (yawDegrees * Math.PI) / 180;
+
     switch (collider.mode) {
       case "capsule": {
         const collisionMesh = new Mesh(
