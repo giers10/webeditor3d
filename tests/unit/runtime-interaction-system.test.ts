@@ -13,6 +13,7 @@ import type {
   RuntimeNpc,
   RuntimeSceneDefinition
 } from "../../src/runtime-three/runtime-scene-build";
+import { createNpcTargetAnchor } from "../../src/entities/entity-instances";
 
 function createClickLink(sourceEntityId: string): InteractionLink {
   return {
@@ -35,6 +36,7 @@ function createNpc(
     name: overrides.name,
     visible: overrides.visible ?? true,
     targetable: overrides.targetable ?? false,
+    targetAnchor: createNpcTargetAnchor(overrides.targetAnchor),
     position: overrides.position ?? { x: 0, y: 0, z: 0 },
     yawDegrees: overrides.yawDegrees ?? 0,
     scale: overrides.scale ?? { x: 1, y: 1, z: 1 },
