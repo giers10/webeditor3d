@@ -2669,6 +2669,45 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("migrates pre-NPC-target-anchor documents to centered NPC targets", () => {
+    const npc = createNpcEntity({
+      id: "entity-npc-anchor-legacy",
+      actorId: "actor-anchor-legacy"
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Legacy NPC Target Anchor Scene" }),
+      entities: {
+        [npc.id]: npc
+      }
+    };
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(document)
+    ) as Record<string, unknown>;
+    const legacyEntities = legacyDocument.entities as Record<
+      string,
+      Record<string, unknown>
+    >;
+    legacyDocument.version = NPC_TARGETING_DEFAULT_SCENE_DOCUMENT_VERSION;
+    delete legacyEntities[npc.id]?.targetAnchor;
+
+    const migratedDocument = parseSceneDocumentJson(
+      JSON.stringify(legacyDocument)
+    );
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.entities[npc.id]).toMatchObject({
+      kind: "npc",
+      targetAnchor: {
+        mode: "center",
+        offset: {
+          x: 0,
+          y: 0,
+          z: 0
+        }
+      }
+    });
+  });
+
   it("migrates pre-NPC-targeting documents by preserving click-linked NPC targetability", () => {
     const linkedNpc = createNpcEntity({
       id: "entity-npc-linked",
