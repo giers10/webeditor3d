@@ -4064,23 +4064,25 @@ export class ViewportHost {
           rotation: {
             kind: "yaw" as const,
             yawDegrees: normalizeYawDegrees(nextRotationDegrees.y)
-          }
+          },
+          scale: cloneEntityTransformScaleState(session.target.initialScale)
         };
       }
 
       return {
         kind: "entity" as const,
-        position: {
-          ...session.target.initialPosition
-        },
-        rotation: {
-          kind: "yaw" as const,
-          yawDegrees: normalizeYawDegrees(
-            session.target.initialRotation.yawDegrees + pointerDeltaDegrees
-          )
-        }
-      };
-    }
+          position: {
+            ...session.target.initialPosition
+          },
+          rotation: {
+            kind: "yaw" as const,
+            yawDegrees: normalizeYawDegrees(
+              session.target.initialRotation.yawDegrees + pointerDeltaDegrees
+            )
+          },
+          scale: cloneEntityTransformScaleState(session.target.initialScale)
+        };
+      }
 
     if (session.target.initialRotation.kind === "direction") {
       const initialOrientation = new Quaternion().setFromUnitVectors(
@@ -4117,7 +4119,47 @@ export class ViewportHost {
             y: direction.y,
             z: direction.z
           }
-        }
+        },
+        scale: cloneEntityTransformScaleState(session.target.initialScale)
+      };
+    }
+
+    if (session.target.initialRotation.kind === "euler") {
+      let nextRotationDegrees = {
+        ...session.target.initialRotation.rotationDegrees
+      };
+
+      if (axisConstraint !== null) {
+        const initialOrientation = this.createRotationQuaternion(
+          session.target.initialRotation.rotationDegrees
+        );
+        const deltaRotation = new Quaternion().setFromAxisAngle(
+          this.axisVector(effectiveAxis),
+          pointerDeltaRadians
+        );
+
+        nextRotationDegrees = this.getQuaternionEulerDegrees(
+          axisConstraintSpace === "local" &&
+            supportsLocalTransformAxisConstraint(session, effectiveAxis)
+            ? initialOrientation.multiply(deltaRotation)
+            : deltaRotation.multiply(initialOrientation)
+        );
+      } else {
+        nextRotationDegrees[effectiveAxis] = this.normalizeDegrees(
+          nextRotationDegrees[effectiveAxis] + pointerDeltaDegrees
+        );
+      }
+
+      return {
+        kind: "entity" as const,
+        position: {
+          ...session.target.initialPosition
+        },
+        rotation: {
+          kind: "euler" as const,
+          rotationDegrees: nextRotationDegrees
+        },
+        scale: cloneEntityTransformScaleState(session.target.initialScale)
       };
     }
 
@@ -4128,7 +4170,8 @@ export class ViewportHost {
       },
       rotation: {
         kind: "none" as const
-      }
+      },
+      scale: cloneEntityTransformScaleState(session.target.initialScale)
     };
   }
 
