@@ -2836,7 +2836,7 @@ export class ViewportHost {
         }
 
         return this.createRotationQuaternion(preview.rotationDegrees);
-      case "brushes":
+      case "brushes": {
         if (preview.kind !== "brushes") {
           return null;
         }
@@ -2848,13 +2848,14 @@ export class ViewportHost {
         return this.createRotationQuaternion(
           activeBrushPreview?.rotationDegrees ?? { x: 0, y: 0, z: 0 }
         );
+      }
       case "modelInstance":
         if (preview.kind !== "modelInstance") {
           return null;
         }
 
         return this.createRotationQuaternion(preview.rotationDegrees);
-      case "modelInstances":
+      case "modelInstances": {
         if (preview.kind !== "modelInstances") {
           return null;
         }
@@ -2866,9 +2867,10 @@ export class ViewportHost {
         return this.createRotationQuaternion(
           activeModelInstancePreview?.rotationDegrees ?? { x: 0, y: 0, z: 0 }
         );
+      }
       case "pathPoint":
         return null;
-      case "entity":
+      case "entity": {
         if (preview.kind !== "entity") {
           return null;
         }
@@ -2896,7 +2898,9 @@ export class ViewportHost {
           case "none":
             return null;
         }
-      case "entities":
+        return null;
+      }
+      case "entities": {
         if (preview.kind !== "entities") {
           return null;
         }
@@ -2913,10 +2917,7 @@ export class ViewportHost {
           case "yaw":
             return this.createRotationQuaternion({
               x: 0,
-              y:
-                activeEntityPreview.rotation.kind === "yaw"
-                  ? activeEntityPreview.rotation.yawDegrees
-                  : 0,
+              y: activeEntityPreview.rotation.yawDegrees,
               z: 0
             });
           case "direction": {
@@ -2943,6 +2944,8 @@ export class ViewportHost {
           case undefined:
             return null;
         }
+        return null;
+      }
       case "brushFace":
       case "brushEdge":
       case "brushVertex":
