@@ -4897,7 +4897,7 @@ export class ViewportHost {
               boundingBox: this.getModelAssetBoundingBox(session.target.assetId)
             })
           : [];
-      case "modelInstances":
+      case "modelInstances": {
         if (preview.kind !== "modelInstances") {
           return [];
         }
@@ -4914,6 +4914,7 @@ export class ViewportHost {
             )
           })
         );
+      }
       case "entity": {
         if (
           preview.kind !== "entity" ||
