@@ -34,6 +34,7 @@ function createNpc(
     actorId: overrides.actorId ?? "",
     name: overrides.name,
     visible: overrides.visible ?? true,
+    targetable: overrides.targetable ?? false,
     position: overrides.position ?? { x: 0, y: 0, z: 0 },
     yawDegrees: overrides.yawDegrees ?? 0,
     scale: overrides.scale ?? { x: 1, y: 1, z: 1 },
