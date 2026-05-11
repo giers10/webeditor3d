@@ -4183,7 +4183,8 @@ export class ViewportHost {
   ) {
     if (
       session.target.kind === "brushes" ||
-      session.target.kind === "modelInstances"
+      session.target.kind === "modelInstances" ||
+      session.target.kind === "entities"
     ) {
       return this.buildBatchScaledPreview(
         session,
@@ -4257,9 +4258,119 @@ export class ViewportHost {
       };
     }
 
+    if (session.target.kind === "entity") {
+      const nextScale = cloneEntityTransformScaleState(
+        session.target.initialScale
+      );
+
+      if (nextScale.kind === "none") {
+        throw new Error("Scale preview requires a scalable entity target.");
+      }
+
+      if (axisConstraint === null) {
+        const uniformFactor =
+          1 + (current.x - origin.x - (current.y - origin.y)) * 0.01;
+
+        if (nextScale.kind === "scale") {
+          nextScale.scale.x = this.snapScaleValue(
+            session.target.initialScale.kind === "scale"
+              ? session.target.initialScale.scale.x * uniformFactor
+              : nextScale.scale.x
+          );
+          nextScale.scale.y = this.snapScaleValue(
+            session.target.initialScale.kind === "scale"
+              ? session.target.initialScale.scale.y * uniformFactor
+              : nextScale.scale.y
+          );
+          nextScale.scale.z = this.snapScaleValue(
+            session.target.initialScale.kind === "scale"
+              ? session.target.initialScale.scale.z * uniformFactor
+              : nextScale.scale.z
+          );
+        } else {
+          nextScale.size.x = this.snapWhiteboxSizeValue(
+            session.target.initialScale.kind === "size"
+              ? session.target.initialScale.size.x * uniformFactor
+              : nextScale.size.x
+          );
+          nextScale.size.y = this.snapWhiteboxSizeValue(
+            session.target.initialScale.kind === "size"
+              ? session.target.initialScale.size.y * uniformFactor
+              : nextScale.size.y
+          );
+          nextScale.size.z = this.snapWhiteboxSizeValue(
+            session.target.initialScale.kind === "size"
+              ? session.target.initialScale.size.z * uniformFactor
+              : nextScale.size.z
+          );
+        }
+      } else {
+        const scaleAxis = this.resolveEntityScaleConstraintAxis(
+          session.target.initialRotation,
+          axisConstraint
+        );
+        const scaleFactor =
+          1 +
+          this.getAxisMovementDistance(
+            axisConstraint,
+            session.target.initialPosition,
+            origin,
+            current
+          ) *
+            0.45;
+
+        if (
+          nextScale.kind === "scale" &&
+          session.target.initialScale.kind === "scale"
+        ) {
+          nextScale.scale[scaleAxis] = this.snapScaleValue(
+            session.target.initialScale.scale[scaleAxis] * scaleFactor
+          );
+        } else if (
+          nextScale.kind === "size" &&
+          session.target.initialScale.kind === "size"
+        ) {
+          nextScale.size[scaleAxis] = this.snapWhiteboxSizeValue(
+            session.target.initialScale.size[scaleAxis] * scaleFactor
+          );
+        }
+      }
+
+      return {
+        kind: "entity" as const,
+        position: {
+          ...session.target.initialPosition
+        },
+        rotation:
+          session.target.initialRotation.kind === "yaw"
+            ? {
+                kind: "yaw" as const,
+                yawDegrees: session.target.initialRotation.yawDegrees
+              }
+            : session.target.initialRotation.kind === "direction"
+              ? {
+                  kind: "direction" as const,
+                  direction: {
+                    ...session.target.initialRotation.direction
+                  }
+                }
+              : session.target.initialRotation.kind === "euler"
+                ? {
+                    kind: "euler" as const,
+                    rotationDegrees: {
+                      ...session.target.initialRotation.rotationDegrees
+                    }
+                  }
+                : {
+                    kind: "none" as const
+                  },
+        scale: nextScale
+      };
+    }
+
     if (session.target.kind !== "modelInstance") {
       throw new Error(
-        "Scale previews are only supported for model instances and whitebox boxes."
+        "Scale previews are only supported for model instances, scalable entities, and whitebox boxes."
       );
     }
 
