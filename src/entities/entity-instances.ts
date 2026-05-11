@@ -1891,6 +1891,15 @@ export function isNpcPresenceMode(value: unknown): value is NpcPresenceMode {
   );
 }
 
+export function isNpcTargetAnchorMode(
+  value: unknown
+): value is NpcTargetAnchorMode {
+  return (
+    typeof value === "string" &&
+    NPC_TARGET_ANCHOR_MODES.includes(value as NpcTargetAnchorMode)
+  );
+}
+
 export function createNpcAlwaysPresence(): NpcAlwaysPresence {
   return {
     mode: "always"
@@ -1961,6 +1970,28 @@ function normalizeNpcPresence(presence: NpcPresence | undefined): NpcPresence {
     case "timeWindow":
       return createNpcTimeWindowPresence(presence);
   }
+}
+
+export function createNpcTargetAnchor(
+  overrides: Partial<NpcTargetAnchor> = {}
+): NpcTargetAnchor {
+  const mode = overrides.mode ?? DEFAULT_NPC_TARGET_ANCHOR_MODE;
+  const offset = cloneVec3(
+    overrides.offset ?? DEFAULT_NPC_TARGET_ANCHOR_OFFSET
+  );
+
+  if (!isNpcTargetAnchorMode(mode)) {
+    throw new Error(
+      "NPC target anchor mode must be center, eyeHeight, top, origin, or custom."
+    );
+  }
+
+  assertFiniteVec3(offset, "NPC target anchor offset");
+
+  return {
+    mode,
+    offset
+  };
 }
 
 function normalizeNpcActorId(actorId: string | undefined): string {
