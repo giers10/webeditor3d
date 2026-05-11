@@ -209,6 +209,7 @@ function createRuntimeNpcFixture(options: {
     actorId: `${options.entityId}-actor`,
     name: undefined,
     visible: true,
+    targetable: false,
     position,
     yawDegrees: 0,
     scale: DEFAULT_NPC_SCALE,
@@ -1183,6 +1184,7 @@ describe("RuntimeInteractionSystem", () => {
         actorId: "actor-merchant",
         name: "Merchant",
         visible: true,
+        targetable: false,
         position: {
           x: 0,
           y: 1,
