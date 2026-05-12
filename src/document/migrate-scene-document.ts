@@ -5702,6 +5702,18 @@ function readScenePathValue(value: unknown, label: string): ScenePath {
               DEFAULT_SCENE_PATH_SAMPLED_RESOLUTION
             )
           ),
+    glueToTerrain: readOptionalBoolean(
+      value.glueToTerrain,
+      `${label}.glueToTerrain`,
+      DEFAULT_SCENE_PATH_GLUE_TO_TERRAIN
+    ),
+    terrainOffset: normalizeScenePathTerrainOffset(
+      readOptionalFiniteNumber(
+        value.terrainOffset,
+        `${label}.terrainOffset`,
+        DEFAULT_SCENE_PATH_TERRAIN_OFFSET
+      )
+    ),
     points: value.points.map((pointValue, index) =>
       readScenePathPointValue(pointValue, `${label}.points.${index}`)
     )
