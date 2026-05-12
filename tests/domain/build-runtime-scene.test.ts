@@ -711,6 +711,8 @@ describe("buildRuntimeSceneFromDocument", () => {
         loop: false,
         curveMode: "linear",
         sampledResolution: 12,
+        glueToTerrain: false,
+        terrainOffset: 0,
         points: [
           {
             pointId: "path-point-a",
