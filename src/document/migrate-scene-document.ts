@@ -6407,6 +6407,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== NPC_TARGET_ANCHOR_SCENE_DOCUMENT_VERSION &&
     source.version !== SPLINE_PATH_SCENE_DOCUMENT_VERSION &&
     source.version !== PATH_TERRAIN_GLUE_SCENE_DOCUMENT_VERSION &&
+    source.version !== PATH_ROAD_PREVIEW_SCENE_DOCUMENT_VERSION &&
+    source.version !== DYNAMIC_TERRAIN_LAYERS_SCENE_DOCUMENT_VERSION &&
     source.version !== NPC_TARGETING_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
