@@ -90,18 +90,34 @@ describe("terrain mesh generation", () => {
       expect.closeTo(0.2, 5),
       expect.closeTo(0.3, 5),
       expect.closeTo(0.1, 5),
+      0,
+      0,
+      0,
+      0,
       expect.closeTo(0.5, 5),
       expect.closeTo(0, 5),
       expect.closeTo(0.5, 5),
       expect.closeTo(0, 5),
+      0,
+      0,
+      0,
+      0,
       expect.closeTo(0.7, 5),
       expect.closeTo(0.1, 5),
       expect.closeTo(0.1, 5),
       expect.closeTo(0.1, 5),
+      0,
+      0,
+      0,
+      0,
       expect.closeTo(0.25, 5),
       expect.closeTo(0.25, 5),
       expect.closeTo(0.25, 5),
-      expect.closeTo(0.25, 5)
+      expect.closeTo(0.25, 5),
+      0,
+      0,
+      0,
+      0
     ]);
   });
 
@@ -208,13 +224,17 @@ describe("terrain mesh generation", () => {
     for (
       let offset = 0;
       offset < level!.layerWeights.length;
-      offset += 4
+      offset += 8
     ) {
       const sum =
         level!.layerWeights[offset]! +
         level!.layerWeights[offset + 1]! +
         level!.layerWeights[offset + 2]! +
-        level!.layerWeights[offset + 3]!;
+        level!.layerWeights[offset + 3]! +
+        level!.layerWeights[offset + 4]! +
+        level!.layerWeights[offset + 5]! +
+        level!.layerWeights[offset + 6]! +
+        level!.layerWeights[offset + 7]!;
 
       expect(sum).toBeCloseTo(1, 5);
     }
