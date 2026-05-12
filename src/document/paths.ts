@@ -1,5 +1,9 @@
 import { createOpaqueId } from "../core/ids";
 import type { Vec3 } from "../core/vector";
+import {
+  sampleTerrainHeightAtWorldPosition,
+  type Terrain
+} from "./terrains";
 
 export interface ScenePathPoint {
   id: string;
@@ -17,6 +21,8 @@ export interface ScenePath {
   loop: boolean;
   curveMode: ScenePathCurveMode;
   sampledResolution: number;
+  glueToTerrain: boolean;
+  terrainOffset: number;
   points: ScenePathPoint[];
 }
 
@@ -36,6 +42,8 @@ export interface ResolvedScenePath {
   loop: boolean;
   curveMode: ScenePathCurveMode;
   sampledResolution: number;
+  glueToTerrain: boolean;
+  terrainOffset: number;
   points: ScenePathPoint[];
   segments: ResolvedScenePathSegment[];
   totalLength: number;
@@ -45,6 +53,8 @@ export interface ResolvedScenePathProjectionSource {
   loop: boolean;
   curveMode?: ScenePathCurveMode;
   sampledResolution?: number;
+  glueToTerrain?: boolean;
+  terrainOffset?: number;
   points: Array<{
     position: Vec3;
   }>;
@@ -104,6 +114,8 @@ interface ResolvedPathLike<
   loop: boolean;
   curveMode?: ScenePathCurveMode;
   sampledResolution?: number;
+  glueToTerrain?: boolean;
+  terrainOffset?: number;
   points: TPoint[];
   segments: TSegment[];
   totalLength: number;
@@ -115,11 +127,17 @@ interface SmoothedPathSample {
   tangent: Vec3;
 }
 
+export interface ResolveScenePathOptions {
+  terrains?: readonly Terrain[];
+}
+
 export const DEFAULT_SCENE_PATH_VISIBLE = true;
 export const DEFAULT_SCENE_PATH_ENABLED = true;
 export const DEFAULT_SCENE_PATH_LOOP = false;
 export const DEFAULT_SCENE_PATH_CURVE_MODE: ScenePathCurveMode = "linear";
 export const DEFAULT_SCENE_PATH_SAMPLED_RESOLUTION = 12;
+export const DEFAULT_SCENE_PATH_GLUE_TO_TERRAIN = false;
+export const DEFAULT_SCENE_PATH_TERRAIN_OFFSET = 0;
 export const MIN_SCENE_PATH_SAMPLED_RESOLUTION = 1;
 export const MAX_SCENE_PATH_SAMPLED_RESOLUTION = 64;
 export const MIN_SCENE_PATH_POINT_COUNT = 2;
