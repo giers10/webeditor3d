@@ -128,6 +128,41 @@ describe("transform-surface-snap", () => {
     });
   });
 
+  it("applies one rigid delta to multi-path-point previews", () => {
+    const preview = applyRigidDeltaToTransformPreview(
+      {
+        kind: "pathPoints",
+        pivot: { x: 1, y: 0, z: 1 },
+        items: [
+          {
+            pointId: "point-a",
+            position: { x: 0, y: 0, z: 0 }
+          },
+          {
+            pointId: "point-b",
+            position: { x: 2, y: 0, z: 2 }
+          }
+        ]
+      },
+      { x: 3, y: 4, z: -1 }
+    );
+
+    expect(preview).toEqual({
+      kind: "pathPoints",
+      pivot: { x: 4, y: 4, z: 0 },
+      items: [
+        {
+          pointId: "point-a",
+          position: { x: 3, y: 4, z: -1 }
+        },
+        {
+          pointId: "point-b",
+          position: { x: 5, y: 4, z: 1 }
+        }
+      ]
+    });
+  });
+
   it("resolves the closest valid front-face hit while excluding the moving selection", () => {
     const excludedMesh = new Mesh(
       new BoxGeometry(1, 1, 1),
