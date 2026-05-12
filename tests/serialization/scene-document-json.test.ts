@@ -751,6 +751,43 @@ describe("scene document JSON", () => {
     });
   });
 
+  it("migrates pre-road-preview paths to disabled road defaults", () => {
+    const path = createScenePath({
+      id: "path-legacy-road-defaults"
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Legacy Road Preview Scene" }),
+      paths: {
+        [path.id]: path
+      }
+    };
+    const legacyDocument = JSON.parse(serializeSceneDocument(document)) as {
+      version: number;
+      paths: Record<
+        string,
+        {
+          road?: unknown;
+        }
+      >;
+    };
+
+    legacyDocument.version = PATH_TERRAIN_GLUE_SCENE_DOCUMENT_VERSION;
+    delete legacyDocument.paths[path.id]!.road;
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.paths[path.id]?.road).toEqual({
+      enabled: false,
+      width: 2,
+      shoulderWidth: 1,
+      falloff: 0.5,
+      heightOffset: 0.03,
+      terrainConform: true,
+      materialId: null
+    });
+  });
+
   it("round-trips a document containing a canonical box brush", () => {
     const brush = createBoxBrush({
       id: "brush-box-room",
