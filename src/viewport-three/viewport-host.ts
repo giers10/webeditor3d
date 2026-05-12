@@ -115,7 +115,7 @@ import {
   getTerrainRenderDirtyBoundsSince,
   getTerrainRenderDirtyRevision,
   getTerrains,
-  sampleTerrainHeightAtWorldPosition,
+  sampleTerrainHeightAtWorldPosition as sampleDocumentTerrainHeightAtWorldPosition,
   type Terrain
 } from "../document/terrains";
 import {
@@ -7581,7 +7581,7 @@ export class ViewportHost {
     let highestWorldY: number | null = null;
 
     for (const terrain of this.getPathTerrainGlueTerrains()) {
-      const terrainHeight = sampleTerrainHeightAtWorldPosition(
+      const terrainHeight = sampleDocumentTerrainHeightAtWorldPosition(
         terrain,
         point.x,
         point.z,
