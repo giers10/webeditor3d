@@ -7791,6 +7791,12 @@ export class ViewportHost {
     }
   }
 
+  private addPathRoadMeshes(roadMeshes: PathRenderObjects["roadMeshes"]) {
+    for (const roadMesh of roadMeshes) {
+      this.pathGroup.add(roadMesh);
+    }
+  }
+
   private disposePathSegmentMeshes(segments: PathRenderObjects["segments"]) {
     for (const segment of segments) {
       this.pathGroup.remove(segment.outlineMesh);
@@ -7799,6 +7805,14 @@ export class ViewportHost {
       segment.outlineMesh.material.dispose();
       segment.mesh.geometry.dispose();
       segment.mesh.material.dispose();
+    }
+  }
+
+  private disposePathRoadMeshes(roadMeshes: PathRenderObjects["roadMeshes"]) {
+    for (const roadMesh of roadMeshes) {
+      this.pathGroup.remove(roadMesh);
+      roadMesh.geometry.dispose();
+      roadMesh.material.dispose();
     }
   }
 
@@ -7814,6 +7828,7 @@ export class ViewportHost {
       }
 
       const renderObjects = this.createPathRenderObjects(path, selection);
+      this.addPathRoadMeshes(renderObjects.roadMeshes);
       this.pathGroup.add(renderObjects.line);
       this.addPathSegmentMeshes(renderObjects.segments);
       for (const pointMesh of renderObjects.pointMeshes) {
@@ -7845,6 +7860,7 @@ export class ViewportHost {
     line.renderOrder = PATH_RENDER_ORDER + 1;
     line.userData.pathId = path.id;
 
+    const roadMeshes = this.createPathRoadPreviewMeshes(path);
     const segments = this.createPathSegmentMeshes(path);
     const resolvedPointPositions =
       this.createResolvedPathPointPositionMap(path);
@@ -7891,6 +7907,7 @@ export class ViewportHost {
 
     return {
       line,
+      roadMeshes,
       segments,
       pointMeshes
     };
@@ -7900,6 +7917,7 @@ export class ViewportHost {
     this.pathGroup.remove(renderObjects.line);
     renderObjects.line.geometry.dispose();
     renderObjects.line.material.dispose();
+    this.disposePathRoadMeshes(renderObjects.roadMeshes);
     this.disposePathSegmentMeshes(renderObjects.segments);
 
     for (const pointMesh of renderObjects.pointMeshes) {
@@ -7937,6 +7955,7 @@ export class ViewportHost {
         path,
         this.currentSelection
       );
+      this.addPathRoadMeshes(renderObjects.roadMeshes);
       this.pathGroup.add(renderObjects.line);
       this.addPathSegmentMeshes(renderObjects.segments);
       for (const pointMesh of renderObjects.pointMeshes) {
@@ -7962,6 +7981,9 @@ export class ViewportHost {
 
     renderObjects.line.geometry.dispose();
     renderObjects.line.geometry = this.createPathLineGeometry(path);
+    this.disposePathRoadMeshes(renderObjects.roadMeshes);
+    renderObjects.roadMeshes = this.createPathRoadPreviewMeshes(path);
+    this.addPathRoadMeshes(renderObjects.roadMeshes);
     this.disposePathSegmentMeshes(renderObjects.segments);
     renderObjects.segments = this.createPathSegmentMeshes(path);
     this.addPathSegmentMeshes(renderObjects.segments);
