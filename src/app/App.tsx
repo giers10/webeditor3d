@@ -1604,6 +1604,8 @@ function describeSelection(
         pointIndex === -1 ? "Path Point" : `Point ${pointIndex + 1}`;
       return `${pointLabel} selected (${getPathLabelById(selection.pathId, paths)})`;
     }
+    case "pathPoints":
+      return `${selection.pointIds.length} path points selected (${getPathLabelById(selection.pathId, paths)})`;
     case "entities":
       return `${selection.ids.length} entit${selection.ids.length === 1 ? "y" : "ies"} selected (${getEntityDisplayLabelById(resolveSelectionActiveId(selection, activeSelectionId) ?? selection.ids[0], entities, assets)})`;
     case "modelInstances":
@@ -1990,6 +1992,7 @@ function selectionCanBeDuplicated(selection: EditorSelection): boolean {
     case "brushVertex":
       return true;
     case "pathPoint":
+    case "pathPoints":
     case "none":
       return false;
   }
@@ -8193,6 +8196,11 @@ export function App({
         );
         break;
       }
+      case "pathPoints":
+        setStatusMessage(
+          `Selected ${selection.pointIds.length} path points on ${getPathLabelById(selection.pathId, pathList)} from the ${source}${suffix}.`
+        );
+        break;
       case "entities":
         setStatusMessage(
           selection.ids.length === 1
