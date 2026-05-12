@@ -267,6 +267,10 @@ interface RuntimeTerrainRenderObjects {
   distantMaterial: Material;
 }
 
+interface RuntimeRoadSurfaceRenderObjects {
+  mesh: Mesh<BufferGeometry, Material>;
+}
+
 function createRuntimeGeometryBrush(brush: RuntimeBoxBrushInstance): Brush {
   const faces = Object.fromEntries(
     Object.entries(brush.faces).map(([faceId, face]) => [
