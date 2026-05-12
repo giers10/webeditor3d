@@ -62,6 +62,7 @@ import {
   resolveScenePath,
   type ScenePath,
   type ScenePathCurveMode,
+  type ScenePathRoadSettings,
   type ScenePathPoint
 } from "../document/paths";
 import {
@@ -513,6 +514,7 @@ export interface RuntimePath {
   sampledResolution: number;
   glueToTerrain: boolean;
   terrainOffset: number;
+  road: ScenePathRoadSettings;
   points: RuntimePathPoint[];
   segments: RuntimePathSegment[];
   totalLength: number;
@@ -1013,6 +1015,7 @@ function buildRuntimePath(
     sampledResolution: resolvedPath.sampledResolution,
     glueToTerrain: resolvedPath.glueToTerrain,
     terrainOffset: resolvedPath.terrainOffset,
+    road: { ...path.road },
     points: resolvedPath.points.map(buildRuntimePathPoint),
     segments: resolvedPath.segments.map((segment) => ({
       index: segment.index,
