@@ -174,7 +174,7 @@ describe("Path point editing integration", () => {
     vi.restoreAllMocks();
   });
 
-  it("moves selected path points and supports Shift+W add, delete, undo, and redo", async () => {
+  it("moves selected path points and supports keyboard add, delete, undo, and redo", async () => {
     const path = createScenePath({
       id: "path-edit-main",
       name: "Patrol Route",
@@ -285,14 +285,31 @@ describe("Path point editing integration", () => {
       expect(store.getState().document.paths[path.id]?.points).toHaveLength(3);
     });
 
-    const selectionAfterAdd = store.getState().selection;
+    const selectionAfterShiftWAdd = store.getState().selection;
 
-    expect(selectionAfterAdd.kind).toBe("pathPoint");
-    if (selectionAfterAdd.kind !== "pathPoint") {
-      throw new Error("Expected the appended path point to be selected.");
+    expect(selectionAfterShiftWAdd.kind).toBe("pathPoint");
+    if (selectionAfterShiftWAdd.kind !== "pathPoint") {
+      throw new Error("Expected the Shift+W appended point to be selected.");
     }
 
-    const appendedPointId = selectionAfterAdd.pointId;
+    fireEvent.keyDown(window, {
+      key: "D",
+      code: "KeyD",
+      shiftKey: true
+    });
+
+    await waitFor(() => {
+      expect(store.getState().document.paths[path.id]?.points).toHaveLength(4);
+    });
+
+    const selectionAfterShiftDAdd = store.getState().selection;
+
+    expect(selectionAfterShiftDAdd.kind).toBe("pathPoint");
+    if (selectionAfterShiftDAdd.kind !== "pathPoint") {
+      throw new Error("Expected the Shift+D appended point to be selected.");
+    }
+
+    const appendedPointId = selectionAfterShiftDAdd.pointId;
 
     fireEvent.keyDown(window, {
       key: "Delete",
@@ -300,7 +317,7 @@ describe("Path point editing integration", () => {
     });
 
     await waitFor(() => {
-      expect(store.getState().document.paths[path.id]?.points).toHaveLength(2);
+      expect(store.getState().document.paths[path.id]?.points).toHaveLength(3);
     });
 
     expect(
@@ -308,6 +325,14 @@ describe("Path point editing integration", () => {
         (point) => point.id === appendedPointId
       )
     ).toBe(false);
+
+    fireEvent.keyDown(window, {
+      key: "z",
+      code: "KeyZ",
+      ctrlKey: true
+    });
+
+    expect(store.getState().document.paths[path.id]?.points).toHaveLength(3);
 
     fireEvent.keyDown(window, {
       key: "z",
@@ -350,6 +375,11 @@ describe("Path point editing integration", () => {
       code: "KeyY",
       ctrlKey: true
     });
+    fireEvent.keyDown(window, {
+      key: "y",
+      code: "KeyY",
+      ctrlKey: true
+    });
 
     expect(
       store.getState().document.paths[path.id]?.points[1]?.position
@@ -358,6 +388,6 @@ describe("Path point editing integration", () => {
       y: 0,
       z: 0
     });
-    expect(store.getState().document.paths[path.id]?.points).toHaveLength(2);
+    expect(store.getState().document.paths[path.id]?.points).toHaveLength(3);
   });
 });
