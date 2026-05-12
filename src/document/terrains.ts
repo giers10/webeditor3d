@@ -945,6 +945,49 @@ function sampleTerrainHeightAtGridCoordinate(
   );
 }
 
+export function sampleTerrainHeightAtLocalPosition(
+  terrain: Terrain,
+  localX: number,
+  localZ: number,
+  clampToBounds = false
+): number | null {
+  const sampleSpaceX = localX / terrain.cellSize;
+  const sampleSpaceZ = localZ / terrain.cellSize;
+  const maxSampleX = terrain.sampleCountX - 1;
+  const maxSampleZ = terrain.sampleCountZ - 1;
+
+  if (!clampToBounds) {
+    if (
+      sampleSpaceX < 0 ||
+      sampleSpaceX > maxSampleX ||
+      sampleSpaceZ < 0 ||
+      sampleSpaceZ > maxSampleZ
+    ) {
+      return null;
+    }
+  }
+
+  return sampleTerrainHeightAtGridCoordinate(
+    terrain,
+    sampleSpaceX,
+    sampleSpaceZ
+  );
+}
+
+export function sampleTerrainHeightAtWorldPosition(
+  terrain: Terrain,
+  worldX: number,
+  worldZ: number,
+  clampToBounds = false
+): number | null {
+  return sampleTerrainHeightAtLocalPosition(
+    terrain,
+    worldX - terrain.position.x,
+    worldZ - terrain.position.z,
+    clampToBounds
+  );
+}
+
 function getStoredTerrainPaintWeightAtSample(
   terrain: Terrain,
   sampleX: number,
