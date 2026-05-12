@@ -709,6 +709,8 @@ describe("buildRuntimeSceneFromDocument", () => {
         visible: true,
         enabled: true,
         loop: false,
+        curveMode: "linear",
+        sampledResolution: 12,
         points: [
           {
             pointId: "path-point-a",
