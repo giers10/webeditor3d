@@ -3023,12 +3023,15 @@ function validateTerrain(
     }
   }
 
-  if (terrain.layers.length !== TERRAIN_LAYER_COUNT) {
+  if (
+    terrain.layers.length < MIN_TERRAIN_LAYER_COUNT ||
+    terrain.layers.length > MAX_TERRAIN_LAYER_COUNT
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
         "invalid-terrain-layer-count",
-        `Terrain layers must contain exactly ${TERRAIN_LAYER_COUNT} authored layer slots.`,
+        `Terrain layers must contain between ${MIN_TERRAIN_LAYER_COUNT} and ${MAX_TERRAIN_LAYER_COUNT} authored layer slots.`,
         `${path}.layers`
       )
     );
@@ -3054,7 +3057,9 @@ function validateTerrain(
   }
 
   const expectedPaintWeightCount =
-    terrain.sampleCountX * terrain.sampleCountZ * (TERRAIN_LAYER_COUNT - 1);
+    terrain.sampleCountX *
+    terrain.sampleCountZ *
+    getTerrainStoredPaintWeightCount(terrain.layers.length);
 
   if (terrain.paintWeights.length !== expectedPaintWeightCount) {
     diagnostics.push(
