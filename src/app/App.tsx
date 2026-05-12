@@ -23,11 +23,13 @@ import { createDeleteFoliageLayerCommand } from "../commands/delete-foliage-laye
 import { createDeleteProjectAssetCommand } from "../commands/delete-project-asset-command";
 import { createDeleteSelectionCommand } from "../commands/delete-selection-command";
 import { createDeleteTerrainCommand } from "../commands/delete-terrain-command";
+import { createDeleteTerrainLayerCommand } from "../commands/delete-terrain-layer-command";
 import { createDuplicateSelectionCommand } from "../commands/duplicate-selection-command";
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
 import { createImportModelAssetCommand } from "../commands/import-model-asset-command";
 import { createAddPathPointCommand } from "../commands/add-path-point-command";
+import { createAddTerrainLayerCommand } from "../commands/add-terrain-layer-command";
 import { createApplySplineRoadToTerrainCommand } from "../commands/apply-spline-road-to-terrain-command";
 import { createDeletePathCommand } from "../commands/delete-path-command";
 import { createDeletePathPointCommand } from "../commands/delete-path-point-command";
