@@ -201,6 +201,28 @@ function clampProgress(progress: number): number {
   return progress;
 }
 
+export function isScenePathCurveMode(
+  value: unknown
+): value is ScenePathCurveMode {
+  return value === "linear" || value === "catmullRom";
+}
+
+export function normalizeScenePathSampledResolution(value: number): number {
+  if (!Number.isFinite(value) || !Number.isInteger(value)) {
+    throw new Error("Path sampled resolution must be a finite integer.");
+  }
+
+  if (value < MIN_SCENE_PATH_SAMPLED_RESOLUTION) {
+    return MIN_SCENE_PATH_SAMPLED_RESOLUTION;
+  }
+
+  if (value > MAX_SCENE_PATH_SAMPLED_RESOLUTION) {
+    return MAX_SCENE_PATH_SAMPLED_RESOLUTION;
+  }
+
+  return value;
+}
+
 function resolvePathSegmentSample(
   path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>,
   progress: number
@@ -265,6 +287,38 @@ function lerpVec3(start: Vec3, end: Vec3, t: number): Vec3 {
     x: start.x + (end.x - start.x) * t,
     y: start.y + (end.y - start.y) * t,
     z: start.z + (end.z - start.z) * t
+  };
+}
+
+function catmullRomVec3(
+  previous: Vec3,
+  start: Vec3,
+  end: Vec3,
+  next: Vec3,
+  t: number
+): Vec3 {
+  const t2 = t * t;
+  const t3 = t2 * t;
+
+  return {
+    x:
+      0.5 *
+      (2 * start.x +
+        (-previous.x + end.x) * t +
+        (2 * previous.x - 5 * start.x + 4 * end.x - next.x) * t2 +
+        (-previous.x + 3 * start.x - 3 * end.x + next.x) * t3),
+    y:
+      0.5 *
+      (2 * start.y +
+        (-previous.y + end.y) * t +
+        (2 * previous.y - 5 * start.y + 4 * end.y - next.y) * t2 +
+        (-previous.y + 3 * start.y - 3 * end.y + next.y) * t3),
+    z:
+      0.5 *
+      (2 * start.z +
+        (-previous.z + end.z) * t +
+        (2 * previous.z - 5 * start.z + 4 * end.z - next.z) * t2 +
+        (-previous.z + 3 * start.z - 3 * end.z + next.z) * t3)
   };
 }
 
@@ -504,7 +558,17 @@ export function createDefaultScenePathPoints(anchor?: Vec3): ScenePathPoint[] {
 
 export function createScenePath(
   overrides: Partial<
-    Pick<ScenePath, "id" | "name" | "visible" | "enabled" | "loop" | "points">
+    Pick<
+      ScenePath,
+      | "id"
+      | "name"
+      | "visible"
+      | "enabled"
+      | "loop"
+      | "curveMode"
+      | "sampledResolution"
+      | "points"
+    >
   > = {}
 ): ScenePath {
   const points =
@@ -514,6 +578,10 @@ export function createScenePath(
   const visible = overrides.visible ?? DEFAULT_SCENE_PATH_VISIBLE;
   const enabled = overrides.enabled ?? DEFAULT_SCENE_PATH_ENABLED;
   const loop = overrides.loop ?? DEFAULT_SCENE_PATH_LOOP;
+  const curveMode = overrides.curveMode ?? DEFAULT_SCENE_PATH_CURVE_MODE;
+  const sampledResolution = normalizeScenePathSampledResolution(
+    overrides.sampledResolution ?? DEFAULT_SCENE_PATH_SAMPLED_RESOLUTION
+  );
 
   if (points.length < MIN_SCENE_PATH_POINT_COUNT) {
     throw new Error(
@@ -531,6 +599,10 @@ export function createScenePath(
 
   if (typeof loop !== "boolean") {
     throw new Error("Path loop must be a boolean.");
+  }
+
+  if (!isScenePathCurveMode(curveMode)) {
+    throw new Error("Path curve mode must be linear or catmullRom.");
   }
 
   const seenPointIds = new Set<string>();
@@ -554,6 +626,8 @@ export function createScenePath(
     visible,
     enabled,
     loop,
+    curveMode,
+    sampledResolution,
     points
   };
 }
@@ -570,6 +644,8 @@ export function areScenePathsEqual(left: ScenePath, right: ScenePath): boolean {
     left.visible === right.visible &&
     left.enabled === right.enabled &&
     left.loop === right.loop &&
+    left.curveMode === right.curveMode &&
+    left.sampledResolution === right.sampledResolution &&
     left.points.length === right.points.length &&
     left.points.every(
       (point, index) =>
