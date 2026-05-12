@@ -6393,6 +6393,47 @@ export class ViewportHost {
         });
         break;
       }
+      case "pathPoints": {
+        const activeTransformSession = this.currentTransformSession;
+
+        if (
+          activeTransformSession.kind !== "active" ||
+          activeTransformSession.target.kind !== "pathPoints" ||
+          activeTransformSession.preview.kind !== "pathPoints" ||
+          this.currentDocument === null
+        ) {
+          break;
+        }
+
+        const currentPath =
+          this.currentDocument.paths[activeTransformSession.target.pathId];
+
+        if (currentPath === undefined) {
+          break;
+        }
+
+        const previewPositionsByPointId = new Map(
+          activeTransformSession.preview.items.map((item) => [
+            item.pointId,
+            item.position
+          ])
+        );
+
+        this.updatePathRenderObjectState({
+          ...currentPath,
+          points: currentPath.points.map((point) => {
+            const previewPosition = previewPositionsByPointId.get(point.id);
+
+            return previewPosition === undefined
+              ? point
+              : {
+                  ...point,
+                  position: previewPosition
+                };
+          })
+        });
+        break;
+      }
       case "entity": {
         if (
           this.currentTransformSession.preview.kind !== "entity" ||
