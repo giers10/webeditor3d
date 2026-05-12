@@ -179,6 +179,61 @@ describe("scene paths", () => {
     expect(smoothedTangent.z).toBeGreaterThan(0);
   });
 
+  it("resolves Catmull-Rom spline paths into sampled arc-length segments", () => {
+    const path = createScenePath({
+      id: "path-spline-corner",
+      curveMode: "catmullRom",
+      sampledResolution: 8,
+      points: [
+        {
+          id: "point-a",
+          position: {
+            x: 0,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "point-b",
+          position: {
+            x: 0,
+            y: 0,
+            z: 3
+          }
+        },
+        {
+          id: "point-c",
+          position: {
+            x: 4,
+            y: 0,
+            z: 3
+          }
+        }
+      ]
+    });
+    const resolvedPath = resolveScenePath(path);
+    const midpoint = sampleScenePathPosition(path, 0.5);
+    const nearest = resolveNearestPointOnResolvedScenePath(resolvedPath, {
+      x: 0.5,
+      y: 0,
+      z: 3.5
+    });
+
+    expect(resolvedPath.curveMode).toBe("catmullRom");
+    expect(resolvedPath.sampledResolution).toBe(8);
+    expect(resolvedPath.segments).toHaveLength(16);
+    expect(resolvedPath.totalLength).toBeGreaterThan(0);
+    expect(midpoint).not.toEqual({
+      x: 0.5,
+      y: 0,
+      z: 3
+    });
+    expect(nearest.segmentIndex).not.toBeNull();
+    expect(nearest.progress).toBeGreaterThan(0);
+    expect(nearest.progress).toBeLessThan(1);
+    expect(nearest.distanceAlongPath).toBeGreaterThan(0);
+  });
+
   it("projects world points onto the nearest resolved path segment and returns progress", () => {
     const path = createScenePath({
       id: "path-nearest-point",
