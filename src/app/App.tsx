@@ -9613,6 +9613,7 @@ export function App({
         sampledResolution: selectedPath.sampledResolution,
         glueToTerrain: selectedPath.glueToTerrain,
         terrainOffset: selectedPath.terrainOffset,
+        road: selectedPath.road,
         points: selectedPath.points.map((point, index) => ({
           id: point.id,
           position: readVec3Draft(
@@ -9716,6 +9717,27 @@ export function App({
     });
 
     commitPathChange(selectedPath, nextPath, "Updated Path terrain offset.");
+  };
+
+  const handlePathRoadChange = (
+    road: ScenePath["road"],
+    successMessage: string
+  ) => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before changing road settings.");
+      return;
+    }
+
+    try {
+      const nextPath = createScenePath({
+        ...selectedPath,
+        road
+      });
+
+      commitPathChange(selectedPath, nextPath, successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
   };
 
   const handlePathPointDraftChange = (
