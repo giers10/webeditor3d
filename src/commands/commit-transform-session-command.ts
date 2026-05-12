@@ -3,6 +3,7 @@ import { createApplyBatchSelectionTransformCommand } from "./apply-batch-selecti
 import { createResizeBoxBrushCommand } from "./resize-box-brush-command";
 import { createRotateBoxBrushCommand } from "./rotate-box-brush-command";
 import { createSetPathPointPositionCommand } from "./set-path-point-position-command";
+import { createSetPathPointPositionsCommand } from "./set-path-point-positions-command";
 import { createSetBoxBrushTransformCommand } from "./set-box-brush-transform-command";
 import { createUpsertEntityCommand } from "./upsert-entity-command";
 import { createUpsertModelInstanceCommand } from "./upsert-model-instance-command";
@@ -51,6 +52,12 @@ function createTransformCommandLabel(session: ActiveTransformSession): string {
       break;
     case "pathPoint":
       targetLabel = "path point";
+      break;
+    case "pathPoints":
+      targetLabel =
+        session.target.items.length === 1
+          ? "path point"
+          : `${session.target.items.length} path points`;
       break;
     case "entity":
       targetLabel =
@@ -328,6 +335,19 @@ export function createCommitTransformSessionCommand(
         pathId: session.target.pathId,
         pointId: session.target.pointId,
         position: session.preview.position,
+        label: createTransformCommandLabel(session)
+      });
+    case "pathPoints":
+      if (session.preview.kind !== "pathPoints") {
+        throw new Error("Path point multi-transform preview is invalid.");
+      }
+
+      return createSetPathPointPositionsCommand({
+        pathId: session.target.pathId,
+        updates: session.preview.items.map((item) => ({
+          pointId: item.pointId,
+          position: item.position
+        })),
         label: createTransformCommandLabel(session)
       });
     case "modelInstance": {
