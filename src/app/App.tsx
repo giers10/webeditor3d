@@ -22264,8 +22264,9 @@ export function App({
                     <div className="material-summary">
                       Road preview draws a temporary corridor along the resolved
                       spline. Applying it patches terrain heights, terrain paint
-                      weights when the material already exists on a terrain
-                      layer, and foliage blocker masks. It does not generate a
+                      weights, auto-adds the selected road material to terrain
+                      layers when there is room, and patches foliage blocker
+                      masks. It does not generate a
                       road mesh yet.
                     </div>
                   </div>
