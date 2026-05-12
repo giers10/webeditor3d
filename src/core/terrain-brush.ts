@@ -1,4 +1,7 @@
-import { TERRAIN_LAYER_COUNT } from "../document/terrains";
+import {
+  MAX_TERRAIN_LAYER_COUNT,
+  TERRAIN_LAYER_COUNT
+} from "../document/terrains";
 
 export type TerrainBrushTool =
   | "raise"
@@ -129,15 +132,20 @@ export function createDefaultTerrainBrushSettings(): TerrainBrushSettings {
   };
 }
 
-export function clampTerrainPaintLayerIndex(layerIndex: number): number {
+export function clampTerrainPaintLayerIndex(
+  layerIndex: number,
+  layerCount = TERRAIN_LAYER_COUNT
+): number {
   if (!Number.isFinite(layerIndex)) {
     return 0;
   }
 
-  return Math.min(
-    TERRAIN_LAYER_COUNT - 1,
-    Math.max(0, Math.round(layerIndex))
-  );
+  const normalizedLayerCount =
+    Number.isInteger(layerCount) && layerCount > 0
+      ? Math.min(layerCount, MAX_TERRAIN_LAYER_COUNT)
+      : TERRAIN_LAYER_COUNT;
+
+  return Math.min(normalizedLayerCount - 1, Math.max(0, Math.round(layerIndex)));
 }
 
 export function getTerrainBrushToolLabel(tool: TerrainBrushTool): string {
