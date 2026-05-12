@@ -681,6 +681,40 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("migrates pre-spline paths to linear curve defaults", () => {
+    const path = createScenePath({
+      id: "path-legacy-spline-defaults"
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Legacy Path Scene" }),
+      paths: {
+        [path.id]: path
+      }
+    };
+    const legacyDocument = JSON.parse(serializeSceneDocument(document)) as {
+      version: number;
+      paths: Record<
+        string,
+        {
+          curveMode?: string;
+          sampledResolution?: number;
+        }
+      >;
+    };
+
+    legacyDocument.version = NPC_TARGET_ANCHOR_SCENE_DOCUMENT_VERSION;
+    delete legacyDocument.paths[path.id]!.curveMode;
+    delete legacyDocument.paths[path.id]!.sampledResolution;
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.paths[path.id]).toMatchObject({
+      curveMode: "linear",
+      sampledResolution: 12
+    });
+  });
+
   it("round-trips a document containing a canonical box brush", () => {
     const brush = createBoxBrush({
       id: "brush-box-room",
