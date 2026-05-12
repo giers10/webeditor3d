@@ -9655,7 +9655,7 @@ export function App({
     );
   };
 
-  const handleAddPathPoint = () => {
+  const handleAddPathPoint = (options?: { startGrab?: boolean }) => {
     if (selectedPath === null) {
       setStatusMessage("Select a path before adding a point.");
       return;
@@ -9671,12 +9671,57 @@ export function App({
           label: "Add path point"
         })
       );
-      requestViewportFocus(
-        {
-          kind: "pathPoint",
-          pathId: selectedPath.id,
-          pointId: nextPoint.id
-        },
+
+      const addedSelection: EditorSelection = {
+        kind: "pathPoint",
+        pathId: selectedPath.id,
+        pointId: nextPoint.id
+      };
+
+      if (options?.startGrab === true) {
+        const nextState = store.getState();
+        const transformSourcePanelId =
+          layoutMode === "quad"
+            ? (hoveredViewportPanelId ?? activePanelId)
+            : activePanelId;
+        const transformTargetResult = resolveTransformTarget(
+          nextState.document,
+          addedSelection,
+          whiteboxSelectionMode,
+          nextState.activeSelectionId
+        );
+        const transformTarget = transformTargetResult.target;
+
+        if (
+          transformTarget !== null &&
+          supportsTransformOperation(transformTarget, "translate")
+        ) {
+          if (nextState.activeViewportPanelId !== transformSourcePanelId) {
+            store.setActiveViewportPanel(transformSourcePanelId);
+          }
+
+          const nextTransformSession = createTransformSession({
+            source: "keyboard",
+            sourcePanelId: transformSourcePanelId,
+            operation: "translate",
+            target: transformTarget
+          });
+          latestActiveTransformSessionRef.current = nextTransformSession;
+          store.setTransformSession(nextTransformSession);
+          setStatusMessage(
+            `Appended path point ${selectedPath.points.length + 1}. Move the pointer, click or press Enter to place it.`
+          );
+          return;
+        }
+
+        setStatusMessage(
+          transformTargetResult.message ??
+            "Appended path point, but could not start grab mode."
+        );
+        return;
+      }
+
+      setStatusMessage(
         `Appended path point ${selectedPath.points.length + 1} to ${getPathLabelById(selectedPath.id, pathList)}.`
       );
     } catch (error) {
