@@ -2645,6 +2645,7 @@ function validateEntityName(
 function validateScenePath(
   pathValue: ScenePath,
   path: string,
+  document: SceneDocument,
   diagnostics: SceneDiagnostic[]
 ) {
   if (!isBoolean(pathValue.visible)) {
@@ -2738,6 +2739,104 @@ function validateScenePath(
         "invalid-path-terrain-offset",
         "Path terrain offset must be a finite number.",
         `${path}.terrainOffset`
+      )
+    );
+  }
+
+  if (!isBoolean(pathValue.road.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-enabled",
+        "Path road enabled must remain a boolean.",
+        `${path}.road.enabled`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      pathValue.road.width,
+      MIN_SCENE_PATH_ROAD_WIDTH,
+      MAX_SCENE_PATH_ROAD_WIDTH
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-width",
+        `Path road width must be from ${MIN_SCENE_PATH_ROAD_WIDTH} to ${MAX_SCENE_PATH_ROAD_WIDTH}.`,
+        `${path}.road.width`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      pathValue.road.shoulderWidth,
+      MIN_SCENE_PATH_ROAD_SHOULDER_WIDTH,
+      MAX_SCENE_PATH_ROAD_SHOULDER_WIDTH
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-shoulder-width",
+        `Path road shoulder width must be from ${MIN_SCENE_PATH_ROAD_SHOULDER_WIDTH} to ${MAX_SCENE_PATH_ROAD_SHOULDER_WIDTH}.`,
+        `${path}.road.shoulderWidth`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      pathValue.road.falloff,
+      MIN_SCENE_PATH_ROAD_FALLOFF,
+      MAX_SCENE_PATH_ROAD_FALLOFF
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-falloff",
+        `Path road falloff must be from ${MIN_SCENE_PATH_ROAD_FALLOFF} to ${MAX_SCENE_PATH_ROAD_FALLOFF}.`,
+        `${path}.road.falloff`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(pathValue.road.heightOffset)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-height-offset",
+        "Path road height offset must be a finite number.",
+        `${path}.road.heightOffset`
+      )
+    );
+  }
+
+  if (!isBoolean(pathValue.road.terrainConform)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-terrain-conform",
+        "Path road terrain conform must remain a boolean.",
+        `${path}.road.terrainConform`
+      )
+    );
+  }
+
+  if (
+    pathValue.road.materialId !== null &&
+    document.materials[pathValue.road.materialId] === undefined
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-material",
+        `Path road material reference ${pathValue.road.materialId} does not exist in the document material registry.`,
+        `${path}.road.materialId`
       )
     );
   }
