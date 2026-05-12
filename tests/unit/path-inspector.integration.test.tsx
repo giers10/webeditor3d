@@ -132,6 +132,8 @@ describe("Path inspector", () => {
 
     expect(screen.getByTestId("path-name")).toHaveValue("");
     expect(screen.getByTestId("path-loop")).not.toBeChecked();
+    expect(screen.getByTestId("path-curve-mode")).toHaveValue("linear");
+    expect(screen.getByTestId("path-sampled-resolution")).toHaveValue(12);
     expect(screen.getByTestId("path-point-0-x")).toHaveValue(-1);
     expect(screen.getByTestId("path-point-1-x")).toHaveValue(1);
 
@@ -142,6 +144,16 @@ describe("Path inspector", () => {
     });
     fireEvent.blur(screen.getByTestId("path-name"));
     fireEvent.click(screen.getByTestId("path-loop"));
+    fireEvent.change(screen.getByTestId("path-curve-mode"), {
+      target: {
+        value: "catmullRom"
+      }
+    });
+    fireEvent.change(screen.getByTestId("path-sampled-resolution"), {
+      target: {
+        value: "16"
+      }
+    });
     fireEvent.change(screen.getByTestId("path-point-1-z"), {
       target: {
         value: "2"
@@ -155,7 +167,9 @@ describe("Path inspector", () => {
 
       expect(updatedPath).toMatchObject({
         name: "Patrol Route",
-        loop: true
+        loop: true,
+        curveMode: "catmullRom",
+        sampledResolution: 16
       });
       expect(updatedPath?.points).toHaveLength(3);
       expect(updatedPath?.points[1]?.position).toEqual({
