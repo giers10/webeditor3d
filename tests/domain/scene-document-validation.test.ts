@@ -2087,6 +2087,8 @@ describe("validateSceneDocument", () => {
     });
 
     invalidPath.name = "   ";
+    invalidPath.glueToTerrain = "yes" as never;
+    invalidPath.terrainOffset = Number.NaN;
     invalidPath.points = [
       {
         id: "path-point-a",
@@ -2114,6 +2116,14 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-path-point-count",
           path: "paths.path-invalid.points"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-glue-to-terrain",
+          path: "paths.path-invalid.glueToTerrain"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-terrain-offset",
+          path: "paths.path-invalid.terrainOffset"
         })
       ])
     );
