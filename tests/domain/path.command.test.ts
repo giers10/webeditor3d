@@ -4,6 +4,8 @@ import { createAddPathPointCommand } from "../../src/commands/add-path-point-com
 import { createEditorStore } from "../../src/app/editor-store";
 import { createDeletePathCommand } from "../../src/commands/delete-path-command";
 import { createDeletePathPointCommand } from "../../src/commands/delete-path-point-command";
+import { createDeletePathPointsCommand } from "../../src/commands/delete-path-points-command";
+import { createSetPathPointPositionsCommand } from "../../src/commands/set-path-point-positions-command";
 import { createSetPathNameCommand } from "../../src/commands/set-path-name-command";
 import { createUpsertPathCommand } from "../../src/commands/upsert-path-command";
 import { createScenePath, createScenePathPoint } from "../../src/document/paths";
@@ -184,5 +186,156 @@ describe("path commands", () => {
 
     expect(store.redo()).toBe(true);
     expect(store.getState().document.paths[path.id]?.points).toHaveLength(2);
+  });
+
+  it("moves and deletes multiple path points with undo and redo", () => {
+    const path = createScenePath({
+      id: "path-point-batch-ops",
+      points: [
+        {
+          id: "path-point-a",
+          position: {
+            x: -2,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-point-b",
+          position: {
+            x: 0,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-point-c",
+          position: {
+            x: 2,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-point-d",
+          position: {
+            x: 4,
+            y: 0,
+            z: 0
+          }
+        }
+      ]
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({
+          name: "Path Point Batch Command Scene"
+        }),
+        paths: {
+          [path.id]: path
+        }
+      }
+    });
+
+    store.setSelection({
+      kind: "pathPoints",
+      pathId: path.id,
+      pointIds: [path.points[0].id, path.points[2].id]
+    });
+
+    store.executeCommand(
+      createSetPathPointPositionsCommand({
+        pathId: path.id,
+        updates: [
+          {
+            pointId: path.points[0].id,
+            position: {
+              x: -3,
+              y: 1,
+              z: 2
+            }
+          },
+          {
+            pointId: path.points[2].id,
+            position: {
+              x: 3,
+              y: 1,
+              z: 2
+            }
+          }
+        ]
+      })
+    );
+
+    expect(store.getState().document.paths[path.id]?.points).toEqual([
+      {
+        ...path.points[0],
+        position: {
+          x: -3,
+          y: 1,
+          z: 2
+        }
+      },
+      path.points[1],
+      {
+        ...path.points[2],
+        position: {
+          x: 3,
+          y: 1,
+          z: 2
+        }
+      },
+      path.points[3]
+    ]);
+    expect(store.getState().selection).toEqual({
+      kind: "pathPoints",
+      pathId: path.id,
+      pointIds: [path.points[0].id, path.points[2].id]
+    });
+
+    store.executeCommand(
+      createDeletePathPointsCommand({
+        pathId: path.id,
+        pointIds: [path.points[0].id, path.points[2].id]
+      })
+    );
+
+    expect(store.getState().document.paths[path.id]?.points).toEqual([
+      path.points[1],
+      path.points[3]
+    ]);
+    expect(store.getState().selection).toEqual({
+      kind: "pathPoint",
+      pathId: path.id,
+      pointId: path.points[1].id
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.paths[path.id]?.points).toHaveLength(4);
+    expect(store.getState().selection).toEqual({
+      kind: "pathPoints",
+      pathId: path.id,
+      pointIds: [path.points[0].id, path.points[2].id]
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.paths[path.id]?.points).toEqual(
+      path.points
+    );
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.paths[path.id]?.points[0]?.position).toEqual(
+      {
+        x: -3,
+        y: 1,
+        z: 2
+      }
+    );
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.paths[path.id]?.points).toEqual([
+      path.points[1],
+      path.points[3]
+    ]);
   });
 });
