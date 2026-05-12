@@ -7569,6 +7569,221 @@ export class ViewportHost {
     );
   }
 
+  private samplePathRoadPreviewWorldY(
+    path: ScenePath,
+    point: Vector3,
+    fallbackY: number
+  ): number {
+    if (!path.road.terrainConform) {
+      return fallbackY + path.road.heightOffset;
+    }
+
+    let highestWorldY: number | null = null;
+
+    for (const terrain of this.getPathTerrainGlueTerrains()) {
+      const terrainHeight = sampleTerrainHeightAtWorldPosition(
+        terrain,
+        point.x,
+        point.z,
+        false
+      );
+
+      if (terrainHeight === null) {
+        continue;
+      }
+
+      const worldY = terrain.position.y + terrainHeight;
+
+      if (highestWorldY === null || worldY > highestWorldY) {
+        highestWorldY = worldY;
+      }
+    }
+
+    return (highestWorldY ?? fallbackY) + path.road.heightOffset;
+  }
+
+  private resolvePathRoadPreviewPoint(
+    path: ScenePath,
+    point: Vector3,
+    fallbackY: number
+  ): Vector3 {
+    return point.setY(this.samplePathRoadPreviewWorldY(path, point, fallbackY));
+  }
+
+  private createPathRoadPreviewGeometry(
+    path: ScenePath,
+    width: number
+  ): BufferGeometry | null {
+    const resolvedPath = resolveScenePath(path, {
+      terrains: this.getPathTerrainGlueTerrains()
+    });
+
+    if (resolvedPath.segments.length === 0 || width <= 0) {
+      return null;
+    }
+
+    const positions: number[] = [];
+    const indices: number[] = [];
+
+    for (const segment of resolvedPath.segments) {
+      const horizontalTangent = new Vector3(
+        segment.tangent.x,
+        0,
+        segment.tangent.z
+      );
+
+      if (horizontalTangent.lengthSq() <= 0.000001) {
+        continue;
+      }
+
+      horizontalTangent.normalize();
+      const perpendicular = new Vector3(
+        -horizontalTangent.z,
+        0,
+        horizontalTangent.x
+      ).multiplyScalar(width * 0.5);
+      const startCenter = new Vector3(
+        segment.start.x,
+        segment.start.y,
+        segment.start.z
+      );
+      const endCenter = new Vector3(segment.end.x, segment.end.y, segment.end.z);
+      const leftStart = this.resolvePathRoadPreviewPoint(
+        path,
+        startCenter.clone().add(perpendicular),
+        startCenter.y
+      );
+      const rightStart = this.resolvePathRoadPreviewPoint(
+        path,
+        startCenter.clone().sub(perpendicular),
+        startCenter.y
+      );
+      const leftEnd = this.resolvePathRoadPreviewPoint(
+        path,
+        endCenter.clone().add(perpendicular),
+        endCenter.y
+      );
+      const rightEnd = this.resolvePathRoadPreviewPoint(
+        path,
+        endCenter.clone().sub(perpendicular),
+        endCenter.y
+      );
+      const vertexOffset = positions.length / 3;
+
+      positions.push(
+        leftStart.x,
+        leftStart.y,
+        leftStart.z,
+        rightStart.x,
+        rightStart.y,
+        rightStart.z,
+        leftEnd.x,
+        leftEnd.y,
+        leftEnd.z,
+        rightEnd.x,
+        rightEnd.y,
+        rightEnd.z
+      );
+      indices.push(
+        vertexOffset,
+        vertexOffset + 1,
+        vertexOffset + 2,
+        vertexOffset + 2,
+        vertexOffset + 1,
+        vertexOffset + 3
+      );
+    }
+
+    if (positions.length === 0) {
+      return null;
+    }
+
+    const geometry = new BufferGeometry();
+    geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    return geometry;
+  }
+
+  private getPathRoadPreviewColor(path: ScenePath): number {
+    const material =
+      path.road.materialId === null || this.currentDocument === null
+        ? null
+        : (this.currentDocument.materials[path.road.materialId] ?? null);
+
+    if (material === null) {
+      return PATH_ROAD_PREVIEW_COLOR;
+    }
+
+    return Number.parseInt(material.swatchColorHex.replace("#", ""), 16);
+  }
+
+  private createPathRoadPreviewMesh(
+    path: ScenePath,
+    width: number,
+    color: number,
+    opacity: number
+  ): Mesh<BufferGeometry, MeshBasicMaterial> | null {
+    const geometry = this.createPathRoadPreviewGeometry(path, width);
+
+    if (geometry === null) {
+      return null;
+    }
+
+    const mesh = new Mesh(
+      geometry,
+      new MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity,
+        depthTest: false,
+        depthWrite: false,
+        side: DoubleSide
+      })
+    );
+    mesh.renderOrder = PATH_RENDER_ORDER - 1;
+    mesh.userData.nonPickable = true;
+    mesh.userData.pathId = path.id;
+    return mesh;
+  }
+
+  private createPathRoadPreviewMeshes(
+    path: ScenePath
+  ): PathRenderObjects["roadMeshes"] {
+    if (!path.road.enabled) {
+      return [];
+    }
+
+    const roadMeshes: PathRenderObjects["roadMeshes"] = [];
+    const shoulderWidth = path.road.width + path.road.shoulderWidth * 2;
+
+    if (path.road.shoulderWidth > 0) {
+      const shoulderMesh = this.createPathRoadPreviewMesh(
+        path,
+        shoulderWidth,
+        PATH_ROAD_SHOULDER_PREVIEW_COLOR,
+        0.24 + path.road.falloff * 0.2
+      );
+
+      if (shoulderMesh !== null) {
+        roadMeshes.push(shoulderMesh);
+      }
+    }
+
+    const roadMesh = this.createPathRoadPreviewMesh(
+      path,
+      path.road.width,
+      this.getPathRoadPreviewColor(path),
+      0.62
+    );
+
+    if (roadMesh !== null) {
+      roadMeshes.push(roadMesh);
+    }
+
+    return roadMeshes;
+  }
+
   private addPathSegmentMeshes(segments: PathRenderObjects["segments"]) {
     for (const segment of segments) {
       this.pathGroup.add(segment.outlineMesh);
