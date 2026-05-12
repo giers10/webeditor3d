@@ -77,6 +77,7 @@ import {
   buildTerrainLodMeshData,
   resolveTerrainLodLevelIndexWithHysteresis
 } from "../geometry/terrain-mesh";
+import { buildSplineRoadMeshGeometry } from "../geometry/spline-road-mesh";
 import {
   createStarterMaterialSignature,
   createStarterMaterialTextureSet,
@@ -232,6 +233,7 @@ import type {
   RuntimeBoxBrushInstance,
   RuntimeLocalLightCollection,
   RuntimeNavigationMode,
+  RuntimePath,
   RuntimeSceneDefinition,
   RuntimeTerrain,
   RuntimeTeleportTarget
