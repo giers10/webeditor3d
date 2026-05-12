@@ -8,6 +8,8 @@ import {
   getTerrainFoliageMask,
   getTerrainFoliageMaskValueAtSample,
   getTerrainPaintWeightSampleOffset,
+  createTerrainWithAddedLayer,
+  createTerrainWithRemovedLayer,
   sampleTerrainFoliageBlockerMaskAtWorldPosition,
   sampleTerrainFoliageMaskAtWorldPosition,
   updateTerrainBoundsCacheAfterHeightPatch,
@@ -89,6 +91,74 @@ describe("terrain grid resizing", () => {
       z: 0
     });
     expect(terrain.heights).toEqual([0, 2, 4, 6]);
+  });
+});
+
+describe("terrain material layers", () => {
+  it("adds a layer by expanding compact paint weights with zero influence", () => {
+    const terrain = createTerrain({
+      id: "terrain-add-layer",
+      sampleCountX: 2,
+      sampleCountZ: 2,
+      paintWeights: [
+        0.2,
+        0.3,
+        0.1,
+        0.4,
+        0.1,
+        0,
+        0,
+        0.5,
+        0,
+        0.25,
+        0.25,
+        0.25
+      ]
+    });
+
+    const nextTerrain = createTerrainWithAddedLayer(terrain, "road-material");
+    const firstSampleOffset = getTerrainPaintWeightSampleOffset(
+      nextTerrain,
+      0,
+      0
+    );
+    const secondSampleOffset = getTerrainPaintWeightSampleOffset(
+      nextTerrain,
+      1,
+      0
+    );
+
+    expect(nextTerrain.layers).toHaveLength(5);
+    expect(nextTerrain.layers[4]).toEqual({ materialId: "road-material" });
+    expect(nextTerrain.paintWeights.slice(firstSampleOffset, firstSampleOffset + 4)).toEqual([
+      0.2,
+      0.3,
+      0.1,
+      0
+    ]);
+    expect(nextTerrain.paintWeights.slice(secondSampleOffset, secondSampleOffset + 4)).toEqual([
+      0.4,
+      0.1,
+      0,
+      0
+    ]);
+  });
+
+  it("removes non-base layers by compacting explicit weights", () => {
+    const terrain = createTerrainWithAddedLayer(
+      createTerrain({
+        id: "terrain-remove-layer",
+        sampleCountX: 2,
+        sampleCountZ: 1,
+        paintWeights: [0.2, 0.3, 0.1, 0.4, 0.1, 0]
+      }),
+      "fifth-material"
+    );
+
+    const nextTerrain = createTerrainWithRemovedLayer(terrain, 2);
+
+    expect(nextTerrain.layers).toHaveLength(4);
+    expect(nextTerrain.paintWeights).toEqual([0.2, 0.1, 0, 0.4, 0, 0]);
   });
 });
 
