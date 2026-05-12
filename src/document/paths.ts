@@ -990,23 +990,48 @@ function buildCatmullRomResolvedPathSegments(
 
 export function resolveScenePath(
   path: Pick<ScenePath, "loop" | "points"> &
-    Partial<Pick<ScenePath, "curveMode" | "sampledResolution">>
+    Partial<
+      Pick<
+        ScenePath,
+        "curveMode" | "sampledResolution" | "glueToTerrain" | "terrainOffset"
+      >
+    >,
+  options: ResolveScenePathOptions = {}
 ): ResolvedScenePath {
-  const points = path.points.map(cloneScenePathPoint);
+  const authoredPoints = path.points.map(cloneScenePathPoint);
   const curveMode = path.curveMode ?? DEFAULT_SCENE_PATH_CURVE_MODE;
   const sampledResolution = normalizeScenePathSampledResolution(
     path.sampledResolution ?? DEFAULT_SCENE_PATH_SAMPLED_RESOLUTION
   );
-  const segments =
+  const glueToTerrain =
+    path.glueToTerrain ?? DEFAULT_SCENE_PATH_GLUE_TO_TERRAIN;
+  const terrainOffset = normalizeScenePathTerrainOffset(
+    path.terrainOffset ?? DEFAULT_SCENE_PATH_TERRAIN_OFFSET
+  );
+  const authoredSegments =
     curveMode === "catmullRom"
-      ? buildCatmullRomResolvedPathSegments(points, path.loop, sampledResolution)
-      : buildLinearResolvedPathSegments(points, path.loop);
+      ? buildCatmullRomResolvedPathSegments(
+          authoredPoints,
+          path.loop,
+          sampledResolution
+        )
+      : buildLinearResolvedPathSegments(authoredPoints, path.loop);
+  const points = glueToTerrain
+    ? authoredPoints.map((point) =>
+        applyTerrainGlueToPoint(point, options, terrainOffset)
+      )
+    : authoredPoints;
+  const segments = glueToTerrain
+    ? applyTerrainGlueToSegments(authoredSegments, options, terrainOffset)
+    : authoredSegments;
   const totalLength = segments.at(-1)?.distanceEnd ?? 0;
 
   return {
     loop: path.loop,
     curveMode,
     sampledResolution,
+    glueToTerrain,
+    terrainOffset,
     points,
     segments,
     totalLength
@@ -1015,9 +1040,15 @@ export function resolveScenePath(
 
 export function getScenePathLength(
   path: Pick<ScenePath, "loop" | "points"> &
-    Partial<Pick<ScenePath, "curveMode" | "sampledResolution">>
+    Partial<
+      Pick<
+        ScenePath,
+        "curveMode" | "sampledResolution" | "glueToTerrain" | "terrainOffset"
+      >
+    >,
+  options: ResolveScenePathOptions = {}
 ): number {
-  return resolveScenePath(path).totalLength;
+  return resolveScenePath(path, options).totalLength;
 }
 
 export function sampleResolvedScenePathPosition(
