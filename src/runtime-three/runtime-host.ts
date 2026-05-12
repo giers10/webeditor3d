@@ -903,6 +903,7 @@ export class RuntimeHost {
     this.scene.add(this.lightVolumeGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.terrainGroup);
+    this.scene.add(this.roadSurfaceGroup);
     this.scene.add(this.foliageRenderer.group);
     this.scene.add(this.modelGroup);
     this.targetingLuxMesh.renderOrder = 10000;
@@ -1230,6 +1231,7 @@ export class RuntimeHost {
     this.rebuildLightVolumes(runtimeScene.volumes.light);
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildTerrainMeshes(runtimeScene.terrains);
+    this.rebuildRoadSurfaces(runtimeScene);
     this.rebuildFoliage(runtimeScene);
     this.rebuildModelRenderObjects(
       runtimeScene.modelInstances,
@@ -1427,6 +1429,7 @@ export class RuntimeHost {
     this.clearLightVolumes();
     this.clearBrushMeshes();
     this.clearTerrainMeshes();
+    this.clearRoadSurfaces();
     this.foliageRenderer.dispose();
     this.clearModelRenderObjects();
     this.collisionWorldRequestId += 1;
