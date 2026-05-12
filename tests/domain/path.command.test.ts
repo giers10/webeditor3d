@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createAddPathPointCommand } from "../../src/commands/add-path-point-command";
+import { createApplySplineRoadToTerrainCommand } from "../../src/commands/apply-spline-road-to-terrain-command";
 import { createEditorStore } from "../../src/app/editor-store";
 import { createDeletePathCommand } from "../../src/commands/delete-path-command";
 import { createDeletePathPointCommand } from "../../src/commands/delete-path-point-command";
@@ -10,6 +11,7 @@ import { createSetPathNameCommand } from "../../src/commands/set-path-name-comma
 import { createUpsertPathCommand } from "../../src/commands/upsert-path-command";
 import { createScenePath, createScenePathPoint } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
+import { createTerrain } from "../../src/document/terrains";
 
 describe("path commands", () => {
   it("creates, renames, and deletes authored paths through undo and redo", () => {
@@ -337,5 +339,111 @@ describe("path commands", () => {
       path.points[1],
       path.points[3]
     ]);
+  });
+
+  it("applies a spline road to terrain as one undoable terrain patch", () => {
+    const terrain = createTerrain({
+      id: "terrain-road-apply",
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      sampleCountX: 5,
+      sampleCountZ: 5,
+      cellSize: 1,
+      heights: new Array(25).fill(0),
+      layers: [
+        {
+          materialId: "base-material"
+        },
+        {
+          materialId: "road-material"
+        },
+        {
+          materialId: null
+        },
+        {
+          materialId: null
+        }
+      ]
+    });
+    const path = createScenePath({
+      id: "path-road-apply",
+      road: {
+        enabled: true,
+        width: 2,
+        shoulderWidth: 1,
+        falloff: 0.5,
+        heightOffset: 0,
+        terrainConform: false,
+        materialId: "road-material"
+      },
+      points: [
+        {
+          id: "path-point-road-a",
+          position: {
+            x: 0,
+            y: 1,
+            z: 2
+          }
+        },
+        {
+          id: "path-point-road-b",
+          position: {
+            x: 4,
+            y: 1,
+            z: 2
+          }
+        }
+      ]
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({
+          name: "Path Road Apply Scene"
+        }),
+        paths: {
+          [path.id]: path
+        },
+        terrains: {
+          [terrain.id]: terrain
+        }
+      }
+    });
+
+    store.setSelection({
+      kind: "paths",
+      ids: [path.id]
+    });
+
+    store.executeCommand(
+      createApplySplineRoadToTerrainCommand({
+        pathId: path.id
+      })
+    );
+
+    const appliedTerrain = store.getState().document.terrains[terrain.id];
+
+    expect(appliedTerrain?.heights[12]).toBe(1);
+    expect(appliedTerrain?.paintWeights[12 * 3]).toBe(1);
+    expect(appliedTerrain?.foliageBlockerMask.values[12]).toBe(1);
+    expect(store.getState().selection).toEqual({
+      kind: "paths",
+      ids: [path.id]
+    });
+
+    expect(store.undo()).toBe(true);
+
+    const restoredTerrain = store.getState().document.terrains[terrain.id];
+
+    expect(restoredTerrain?.heights).toEqual(terrain.heights);
+    expect(restoredTerrain?.paintWeights).toEqual(terrain.paintWeights);
+    expect(restoredTerrain?.foliageBlockerMask.values).toEqual(
+      terrain.foliageBlockerMask.values
+    );
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.terrains[terrain.id]?.heights[12]).toBe(1);
   });
 });
