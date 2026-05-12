@@ -716,6 +716,40 @@ describe("scene document JSON", () => {
     });
   });
 
+  it("migrates pre-terrain-glue paths to disabled terrain glue defaults", () => {
+    const path = createScenePath({
+      id: "path-legacy-terrain-glue-defaults"
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Legacy Terrain Glue Scene" }),
+      paths: {
+        [path.id]: path
+      }
+    };
+    const legacyDocument = JSON.parse(serializeSceneDocument(document)) as {
+      version: number;
+      paths: Record<
+        string,
+        {
+          glueToTerrain?: boolean;
+          terrainOffset?: number;
+        }
+      >;
+    };
+
+    legacyDocument.version = SPLINE_PATH_SCENE_DOCUMENT_VERSION;
+    delete legacyDocument.paths[path.id]!.glueToTerrain;
+    delete legacyDocument.paths[path.id]!.terrainOffset;
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.paths[path.id]).toMatchObject({
+      glueToTerrain: false,
+      terrainOffset: 0
+    });
+  });
+
   it("round-trips a document containing a canonical box brush", () => {
     const brush = createBoxBrush({
       id: "brush-box-room",
