@@ -10932,6 +10932,16 @@ export class ViewportHost {
       selected ? PATH_SELECTED_COLOR : hovered ? PATH_HOVERED_COLOR : PATH_COLOR
     );
 
+    for (const segment of renderObjects.segments) {
+      segment.mesh.material.color.setHex(
+        selected
+          ? PATH_SELECTED_COLOR
+          : hovered
+            ? PATH_HOVERED_COLOR
+            : PATH_COLOR
+      );
+    }
+
     for (const pointMesh of renderObjects.pointMeshes) {
       const pointSelected = isPathPointSelected(
         this.currentSelection,
@@ -10950,6 +10960,13 @@ export class ViewportHost {
           : pointHovered || selected
             ? PATH_POINT_HOVERED_COLOR
             : PATH_POINT_COLOR
+      );
+      pointMesh.outlineMesh.scale.setScalar(
+        pointSelected
+          ? PATH_POINT_SELECTED_SCALE
+          : pointHovered
+            ? PATH_POINT_HOVERED_SCALE
+            : 1
       );
       pointMesh.mesh.scale.setScalar(
         pointSelected
@@ -11310,7 +11327,14 @@ export class ViewportHost {
         ),
         ...Array.from(this.pathRenderObjects.values(), (renderObjects) => [
           renderObjects.line,
-          ...renderObjects.pointMeshes.map((pointMesh) => pointMesh.mesh)
+          ...renderObjects.segments.flatMap((segment) => [
+            segment.outlineMesh,
+            segment.mesh
+          ]),
+          ...renderObjects.pointMeshes.flatMap((pointMesh) => [
+            pointMesh.outlineMesh,
+            pointMesh.mesh
+          ])
         ]).flat(),
         ...Array.from(
           this.terrainRenderObjects.values(),
