@@ -5678,6 +5678,26 @@ function readScenePathValue(value: unknown, label: string): ScenePath {
     visible: expectBoolean(value.visible, `${label}.visible`),
     enabled: expectBoolean(value.enabled, `${label}.enabled`),
     loop: expectBoolean(value.loop, `${label}.loop`),
+    curveMode:
+      value.curveMode === undefined
+        ? DEFAULT_SCENE_PATH_CURVE_MODE
+        : isScenePathCurveMode(value.curveMode)
+          ? value.curveMode
+          : expectLiteralString(
+              value.curveMode,
+              DEFAULT_SCENE_PATH_CURVE_MODE,
+              `${label}.curveMode`
+            ),
+    sampledResolution:
+      value.sampledResolution === undefined
+        ? DEFAULT_SCENE_PATH_SAMPLED_RESOLUTION
+        : normalizeScenePathSampledResolution(
+            readOptionalPositiveInteger(
+              value.sampledResolution,
+              `${label}.sampledResolution`,
+              DEFAULT_SCENE_PATH_SAMPLED_RESOLUTION
+            )
+          ),
     points: value.points.map((pointValue, index) =>
       readScenePathPointValue(pointValue, `${label}.points.${index}`)
     )
