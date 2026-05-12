@@ -21771,6 +21771,12 @@ export function App({
                         Selected in viewport: Point {selectedPathPointIndex + 1}
                       </div>
                     )}
+                    {selectedPathPointIndex === null &&
+                    selectedPathPointCount > 1 ? (
+                      <div className="material-summary">
+                        Selected in viewport: {selectedPathPointCount} points
+                      </div>
+                    ) : null}
                     {selectedPath.points.map((point, pointIndex) => (
                       <div key={point.id} className="stat-card">
                         <div className="label">Point {pointIndex + 1}</div>
