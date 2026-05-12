@@ -21992,6 +21992,169 @@ export function App({
                   </div>
 
                   <div className="form-section">
+                    <div className="label">Road Preview</div>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Enable road corridor</span>
+                      <input
+                        data-testid="path-road-enabled"
+                        type="checkbox"
+                        checked={selectedPath.road.enabled}
+                        onChange={(event) =>
+                          handlePathRoadChange(
+                            {
+                              ...selectedPath.road,
+                              enabled: event.currentTarget.checked
+                            },
+                            event.currentTarget.checked
+                              ? "Enabled Path road preview."
+                              : "Disabled Path road preview."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Width</span>
+                      <input
+                        className="text-input"
+                        data-testid="path-road-width"
+                        type="number"
+                        min={0.1}
+                        step={0.1}
+                        value={selectedPath.road.width}
+                        onChange={(event) =>
+                          handlePathRoadChange(
+                            {
+                              ...selectedPath.road,
+                              width: normalizeScenePathRoadWidth(
+                                Number(event.currentTarget.value)
+                              )
+                            },
+                            "Updated Path road width."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Shoulder Width</span>
+                      <input
+                        className="text-input"
+                        data-testid="path-road-shoulder-width"
+                        type="number"
+                        min={0}
+                        step={0.1}
+                        value={selectedPath.road.shoulderWidth}
+                        onChange={(event) =>
+                          handlePathRoadChange(
+                            {
+                              ...selectedPath.road,
+                              shoulderWidth:
+                                normalizeScenePathRoadShoulderWidth(
+                                  Number(event.currentTarget.value)
+                                )
+                            },
+                            "Updated Path road shoulder."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Falloff</span>
+                      <input
+                        className="text-input"
+                        data-testid="path-road-falloff"
+                        type="number"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        value={selectedPath.road.falloff}
+                        onChange={(event) =>
+                          handlePathRoadChange(
+                            {
+                              ...selectedPath.road,
+                              falloff: normalizeScenePathRoadFalloff(
+                                Number(event.currentTarget.value)
+                              )
+                            },
+                            "Updated Path road falloff."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Height Offset</span>
+                      <input
+                        className="text-input"
+                        data-testid="path-road-height-offset"
+                        type="number"
+                        step={0.01}
+                        value={selectedPath.road.heightOffset}
+                        onChange={(event) =>
+                          handlePathRoadChange(
+                            {
+                              ...selectedPath.road,
+                              heightOffset:
+                                normalizeScenePathRoadHeightOffset(
+                                  Number(event.currentTarget.value)
+                                )
+                            },
+                            "Updated Path road height offset."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Conform preview to terrain</span>
+                      <input
+                        data-testid="path-road-terrain-conform"
+                        type="checkbox"
+                        checked={selectedPath.road.terrainConform}
+                        onChange={(event) =>
+                          handlePathRoadChange(
+                            {
+                              ...selectedPath.road,
+                              terrainConform: event.currentTarget.checked
+                            },
+                            event.currentTarget.checked
+                              ? "Enabled Path road terrain conform."
+                              : "Disabled Path road terrain conform."
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Material Placeholder</span>
+                      <select
+                        className="select-input"
+                        data-testid="path-road-material"
+                        value={selectedPath.road.materialId ?? ""}
+                        onChange={(event) =>
+                          handlePathRoadChange(
+                            {
+                              ...selectedPath.road,
+                              materialId: normalizeScenePathRoadMaterialId(
+                                event.currentTarget.value
+                              )
+                            },
+                            "Updated Path road material placeholder."
+                          )
+                        }
+                      >
+                        <option value="">Unassigned preview</option>
+                        {materialList.map((material) => (
+                          <option key={material.id} value={material.id}>
+                            {material.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="material-summary">
+                      Road preview draws a temporary corridor along the resolved
+                      spline. Width affects the visible strip; shoulder and
+                      falloff are stored for the terrain-apply command next.
+                    </div>
+                  </div>
+
+                  <div className="form-section">
                     <div className="label">Points</div>
                     <div className="material-summary">
                       Edit authored point positions directly. Keep at least{" "}
