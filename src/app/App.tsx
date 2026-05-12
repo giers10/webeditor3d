@@ -21926,6 +21926,45 @@ export function App({
                   </div>
 
                   <div className="form-section">
+                    <div className="label">Terrain</div>
+                    <label className="form-field form-field--toggle">
+                      <span className="label">Glue to Terrain</span>
+                      <input
+                        data-testid="path-glue-to-terrain"
+                        type="checkbox"
+                        checked={selectedPath.glueToTerrain}
+                        onChange={(event) =>
+                          handlePathGlueToTerrainChange(
+                            event.currentTarget.checked
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Terrain Offset</span>
+                      <input
+                        className="text-input"
+                        data-testid="path-terrain-offset"
+                        type="number"
+                        step={0.05}
+                        value={selectedPath.terrainOffset}
+                        disabled={!selectedPath.glueToTerrain}
+                        onChange={(event) =>
+                          handlePathTerrainOffsetChange(
+                            Number(event.currentTarget.value)
+                          )
+                        }
+                      />
+                    </label>
+                    <div className="material-summary">
+                      Glued paths keep authored control point X/Z, but resolved
+                      runtime and viewport samples follow the highest enabled
+                      terrain below them. Authored Y is used where no terrain is
+                      found.
+                    </div>
+                  </div>
+
+                  <div className="form-section">
                     <div className="label">Points</div>
                     <div className="material-summary">
                       Edit authored point positions directly. Keep at least{" "}
