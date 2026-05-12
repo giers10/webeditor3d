@@ -262,9 +262,9 @@ import {
   getTerrainKindLabel,
   getTerrainLayerLabel,
   getTerrains,
+  MAX_TERRAIN_LAYER_COUNT,
   MIN_TERRAIN_SAMPLE_COUNT,
   resizeTerrainGrid,
-  TERRAIN_LAYER_COUNT,
   type Terrain
 } from "../document/terrains";
 import { BUNDLED_FOLIAGE_PROTOTYPES } from "../foliage/bundled-foliage-manifest";
