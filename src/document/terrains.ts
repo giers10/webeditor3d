@@ -248,6 +248,24 @@ function normalizeTerrainLayers(
   });
 }
 
+export function normalizeTerrainLayerCount(layerCount: number): number {
+  if (
+    !Number.isInteger(layerCount) ||
+    layerCount < MIN_TERRAIN_LAYER_COUNT ||
+    layerCount > MAX_TERRAIN_LAYER_COUNT
+  ) {
+    throw new Error(
+      `Terrain layer count must be an integer between ${MIN_TERRAIN_LAYER_COUNT} and ${MAX_TERRAIN_LAYER_COUNT}.`
+    );
+  }
+
+  return layerCount;
+}
+
+export function getTerrainStoredPaintWeightCount(layerCount: number): number {
+  return Math.max(0, normalizeTerrainLayerCount(layerCount) - 1);
+}
+
 export function createFlatTerrainHeights(
   sampleCountX: number,
   sampleCountZ: number,
@@ -271,7 +289,8 @@ export function createFlatTerrainHeights(
 
 export function createFlatTerrainPaintWeights(
   sampleCountX: number,
-  sampleCountZ: number
+  sampleCountZ: number,
+  layerCount = TERRAIN_LAYER_COUNT
 ): number[] {
   const normalizedSampleCountX = normalizeTerrainSampleCount(
     sampleCountX,
@@ -281,11 +300,12 @@ export function createFlatTerrainPaintWeights(
     sampleCountZ,
     "Terrain sampleCountZ"
   );
+  const normalizedLayerCount = normalizeTerrainLayerCount(layerCount);
 
   return new Array(
     normalizedSampleCountX *
       normalizedSampleCountZ *
-      (TERRAIN_LAYER_COUNT - 1)
+      getTerrainStoredPaintWeightCount(normalizedLayerCount)
   ).fill(0);
 }
 
@@ -345,11 +365,14 @@ export function getTerrainSampleIndex(
 }
 
 export function getTerrainPaintWeightSampleOffset(
-  terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ">,
+  terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "layers">,
   sampleX: number,
   sampleZ: number
 ): number {
-  return getTerrainSampleIndex(terrain, sampleX, sampleZ) * (TERRAIN_LAYER_COUNT - 1);
+  return (
+    getTerrainSampleIndex(terrain, sampleX, sampleZ) *
+    getTerrainStoredPaintWeightCount(terrain.layers.length)
+  );
 }
 
 export function getTerrainHeightAtSample(
@@ -363,13 +386,14 @@ export function getTerrainHeightAtSample(
 function normalizeTerrainPaintWeights(
   sampleCountX: number,
   sampleCountZ: number,
+  layerCount: number,
   paintWeights: readonly number[] | undefined
 ): number[] {
-  const expectedLength =
-    sampleCountX * sampleCountZ * (TERRAIN_LAYER_COUNT - 1);
+  const storedWeightCount = getTerrainStoredPaintWeightCount(layerCount);
+  const expectedLength = sampleCountX * sampleCountZ * storedWeightCount;
   const normalizedPaintWeights =
     paintWeights === undefined
-      ? createFlatTerrainPaintWeights(sampleCountX, sampleCountZ)
+      ? createFlatTerrainPaintWeights(sampleCountX, sampleCountZ, layerCount)
       : [...paintWeights];
 
   if (normalizedPaintWeights.length !== expectedLength) {
@@ -383,14 +407,10 @@ function normalizeTerrainPaintWeights(
     sampleIndex < sampleCountX * sampleCountZ;
     sampleIndex += 1
   ) {
-    const offset = sampleIndex * (TERRAIN_LAYER_COUNT - 1);
+    const offset = sampleIndex * storedWeightCount;
     let weightSum = 0;
 
-    for (
-      let layerOffset = 0;
-      layerOffset < TERRAIN_LAYER_COUNT - 1;
-      layerOffset += 1
-    ) {
+    for (let layerOffset = 0; layerOffset < storedWeightCount; layerOffset += 1) {
       const value = normalizedPaintWeights[offset + layerOffset];
 
       if (!Number.isFinite(value)) {
@@ -408,11 +428,7 @@ function normalizeTerrainPaintWeights(
 
     const scale = 1 / weightSum;
 
-    for (
-      let layerOffset = 0;
-      layerOffset < TERRAIN_LAYER_COUNT - 1;
-      layerOffset += 1
-    ) {
+    for (let layerOffset = 0; layerOffset < storedWeightCount; layerOffset += 1) {
       normalizedPaintWeights[offset + layerOffset] *= scale;
     }
   }
