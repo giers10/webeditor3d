@@ -1780,7 +1780,7 @@ describe("validateSceneDocument", () => {
       foliage: {
         ...document.world.advancedRendering.foliage,
         enabled: "yes",
-        densityMultiplier: 3,
+        densityMultiplier: 9,
         maxDistanceMultiplier: 0,
         shadows: "close"
       }

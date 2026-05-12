@@ -7,6 +7,7 @@ import {
   type Terrain
 } from "../../src/document/terrains";
 import {
+  DEFAULT_MAX_FOLIAGE_SCATTER_INSTANCES_PER_CHUNK,
   generateFoliageScatterForScene,
   generateFoliageScatterForTerrain,
   sampleFoliageScatterTerrainNormal,
@@ -255,6 +256,34 @@ describe("foliage scatter generation", () => {
 
     expect(highDensity.instanceCount).toBeGreaterThan(
       lowDensity.instanceCount
+    );
+  });
+
+  it("keeps full-mask density above two meaningful with the default chunk cap", () => {
+    const densityTwo = generateForFixture({
+      terrain: createMaskedTerrain({ maskValue: 1 }),
+      layer: createTestLayer({ density: 2 })
+    });
+    const densityFour = generateForFixture({
+      terrain: createMaskedTerrain({ maskValue: 1 }),
+      layer: createTestLayer({ density: 4 })
+    });
+
+    expect(densityTwo.instanceCount).toBeGreaterThan(0);
+    expect(densityFour.instanceCount).toBeGreaterThan(
+      densityTwo.instanceCount
+    );
+  });
+
+  it("caps extremely high density at the default max instances per chunk", () => {
+    const result = generateForFixture({
+      terrain: createMaskedTerrain({ maskValue: 1 }),
+      layer: createTestLayer({ density: 100 })
+    });
+
+    expect(result.chunks).toHaveLength(1);
+    expect(result.instanceCount).toBe(
+      DEFAULT_MAX_FOLIAGE_SCATTER_INSTANCES_PER_CHUNK
     );
   });
 
