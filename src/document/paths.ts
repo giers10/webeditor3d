@@ -12,6 +12,16 @@ export interface ScenePathPoint {
 
 export type ScenePathCurveMode = "linear" | "catmullRom";
 
+export interface ScenePathRoadSettings {
+  enabled: boolean;
+  width: number;
+  shoulderWidth: number;
+  falloff: number;
+  heightOffset: number;
+  terrainConform: boolean;
+  materialId: string | null;
+}
+
 export interface ScenePath {
   id: string;
   kind: "path";
@@ -23,6 +33,7 @@ export interface ScenePath {
   sampledResolution: number;
   glueToTerrain: boolean;
   terrainOffset: number;
+  road: ScenePathRoadSettings;
   points: ScenePathPoint[];
 }
 
@@ -138,6 +149,19 @@ export const DEFAULT_SCENE_PATH_CURVE_MODE: ScenePathCurveMode = "linear";
 export const DEFAULT_SCENE_PATH_SAMPLED_RESOLUTION = 12;
 export const DEFAULT_SCENE_PATH_GLUE_TO_TERRAIN = false;
 export const DEFAULT_SCENE_PATH_TERRAIN_OFFSET = 0;
+export const DEFAULT_SCENE_PATH_ROAD_ENABLED = false;
+export const DEFAULT_SCENE_PATH_ROAD_WIDTH = 2;
+export const DEFAULT_SCENE_PATH_ROAD_SHOULDER_WIDTH = 1;
+export const DEFAULT_SCENE_PATH_ROAD_FALLOFF = 0.5;
+export const DEFAULT_SCENE_PATH_ROAD_HEIGHT_OFFSET = 0.03;
+export const DEFAULT_SCENE_PATH_ROAD_TERRAIN_CONFORM = true;
+export const DEFAULT_SCENE_PATH_ROAD_MATERIAL_ID = null;
+export const MIN_SCENE_PATH_ROAD_WIDTH = 0.1;
+export const MAX_SCENE_PATH_ROAD_WIDTH = 100;
+export const MIN_SCENE_PATH_ROAD_SHOULDER_WIDTH = 0;
+export const MAX_SCENE_PATH_ROAD_SHOULDER_WIDTH = 100;
+export const MIN_SCENE_PATH_ROAD_FALLOFF = 0;
+export const MAX_SCENE_PATH_ROAD_FALLOFF = 1;
 export const MIN_SCENE_PATH_SAMPLED_RESOLUTION = 1;
 export const MAX_SCENE_PATH_SAMPLED_RESOLUTION = 64;
 export const MIN_SCENE_PATH_POINT_COUNT = 2;
