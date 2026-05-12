@@ -227,7 +227,7 @@ export function buildTerrainDerivedMeshData(
   const vertexCount = terrain.sampleCountX * terrain.sampleCountZ;
   const positions = new Float32Array(vertexCount * 3);
   const uvs = new Float32Array(vertexCount * 2);
-  const layerWeights = new Float32Array(vertexCount * TERRAIN_LAYER_COUNT);
+  const layerWeights = new Float32Array(vertexCount * TERRAIN_SHADER_LAYER_COUNT);
   const foliageMaskWeights = new Float32Array(vertexCount);
   const foliageMask =
     options.foliageMaskLayerId === undefined ||
@@ -268,13 +268,13 @@ export function buildTerrainDerivedMeshData(
 
       for (
         let layerIndex = 0;
-        layerIndex < TERRAIN_LAYER_COUNT;
+        layerIndex < TERRAIN_SHADER_LAYER_COUNT;
         layerIndex += 1
       ) {
         layerWeights[layerWeightOffset + layerIndex] =
-          sampleLayerWeights[layerIndex];
+          sampleLayerWeights[layerIndex] ?? 0;
       }
-      layerWeightOffset += TERRAIN_LAYER_COUNT;
+      layerWeightOffset += TERRAIN_SHADER_LAYER_COUNT;
       foliageMaskWeights[foliageMaskWeightOffset] =
         options.foliageBlockerMask === true
           ? getTerrainFoliageBlockerMaskValueAtSample(
@@ -327,10 +327,7 @@ export function buildTerrainDerivedMeshData(
   const geometry = new BufferGeometry();
   geometry.setAttribute("position", new BufferAttribute(positions, 3));
   geometry.setAttribute("uv", new BufferAttribute(uvs, 2));
-  geometry.setAttribute(
-    "terrainLayerWeights",
-    new BufferAttribute(layerWeights, TERRAIN_LAYER_COUNT)
-  );
+  setTerrainLayerWeightAttributes(geometry, layerWeights);
   geometry.setAttribute(
     "terrainFoliageMask",
     new BufferAttribute(foliageMaskWeights, 1)
@@ -446,9 +443,7 @@ function pushTerrainLodVertex(
   positions.push(localX, localY, localZ);
   uvs.push(terrain.position.x + localX, terrain.position.z + localZ);
 
-  for (const weight of sampleLayerWeights) {
-    layerWeights.push(weight);
-  }
+  pushPaddedTerrainLayerWeights(layerWeights, sampleLayerWeights);
 
   const foliageMask =
     options.foliageMaskLayerId === undefined ||
@@ -680,10 +675,7 @@ function buildTerrainLodLevelMeshData(
 
   geometry.setAttribute("position", new BufferAttribute(typedPositions, 3));
   geometry.setAttribute("uv", new BufferAttribute(typedUvs, 2));
-  geometry.setAttribute(
-    "terrainLayerWeights",
-    new BufferAttribute(typedLayerWeights, TERRAIN_LAYER_COUNT)
-  );
+  setTerrainLayerWeightAttributes(geometry, typedLayerWeights);
   geometry.setAttribute(
     "terrainFoliageMask",
     new BufferAttribute(typedFoliageMaskWeights, 1)
