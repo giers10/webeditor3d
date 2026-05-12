@@ -8,7 +8,8 @@ import type { EditorCommand } from "./command";
 function selectionIncludesPath(selection: EditorSelection, pathId: string): boolean {
   return (
     (selection.kind === "paths" && selection.ids.includes(pathId)) ||
-    (selection.kind === "pathPoint" && selection.pathId === pathId)
+    (selection.kind === "pathPoint" && selection.pathId === pathId) ||
+    (selection.kind === "pathPoints" && selection.pathId === pathId)
   );
 }
 
