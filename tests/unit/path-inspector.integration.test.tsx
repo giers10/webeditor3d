@@ -136,6 +136,13 @@ describe("Path inspector", () => {
     expect(screen.getByTestId("path-sampled-resolution")).toHaveValue(12);
     expect(screen.getByTestId("path-glue-to-terrain")).not.toBeChecked();
     expect(screen.getByTestId("path-terrain-offset")).toHaveValue(0);
+    expect(screen.getByTestId("path-road-enabled")).not.toBeChecked();
+    expect(screen.getByTestId("path-road-width")).toHaveValue(2);
+    expect(screen.getByTestId("path-road-shoulder-width")).toHaveValue(1);
+    expect(screen.getByTestId("path-road-falloff")).toHaveValue(0.5);
+    expect(screen.getByTestId("path-road-height-offset")).toHaveValue(0.03);
+    expect(screen.getByTestId("path-road-terrain-conform")).toBeChecked();
+    expect(screen.getByTestId("path-road-material")).toHaveValue("");
     expect(screen.getByTestId("path-point-0-x")).toHaveValue(-1);
     expect(screen.getByTestId("path-point-1-x")).toHaveValue(1);
 
@@ -162,6 +169,28 @@ describe("Path inspector", () => {
         value: "0.25"
       }
     });
+    fireEvent.click(screen.getByTestId("path-road-enabled"));
+    fireEvent.change(screen.getByTestId("path-road-width"), {
+      target: {
+        value: "3.5"
+      }
+    });
+    fireEvent.change(screen.getByTestId("path-road-shoulder-width"), {
+      target: {
+        value: "1.25"
+      }
+    });
+    fireEvent.change(screen.getByTestId("path-road-falloff"), {
+      target: {
+        value: "0.75"
+      }
+    });
+    fireEvent.change(screen.getByTestId("path-road-height-offset"), {
+      target: {
+        value: "0.08"
+      }
+    });
+    fireEvent.click(screen.getByTestId("path-road-terrain-conform"));
     fireEvent.change(screen.getByTestId("path-point-1-z"), {
       target: {
         value: "2"
@@ -179,7 +208,16 @@ describe("Path inspector", () => {
         curveMode: "catmullRom",
         sampledResolution: 16,
         glueToTerrain: true,
-        terrainOffset: 0.25
+        terrainOffset: 0.25,
+        road: {
+          enabled: true,
+          width: 3.5,
+          shoulderWidth: 1.25,
+          falloff: 0.75,
+          heightOffset: 0.08,
+          terrainConform: false,
+          materialId: null
+        }
       });
       expect(updatedPath?.points).toHaveLength(3);
       expect(updatedPath?.points[1]?.position).toEqual({
