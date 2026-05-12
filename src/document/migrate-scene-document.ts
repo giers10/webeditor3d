@@ -5667,6 +5667,50 @@ function readScenePathPointValue(
   });
 }
 
+function readScenePathRoadSettingsValue(
+  value: unknown,
+  label: string
+): ScenePathRoadSettings {
+  if (value === undefined) {
+    return createScenePathRoadSettings();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return createScenePathRoadSettings({
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, false),
+    width:
+      value.width === undefined
+        ? undefined
+        : expectFiniteNumber(value.width, `${label}.width`),
+    shoulderWidth:
+      value.shoulderWidth === undefined
+        ? undefined
+        : expectFiniteNumber(value.shoulderWidth, `${label}.shoulderWidth`),
+    falloff:
+      value.falloff === undefined
+        ? undefined
+        : expectFiniteNumber(value.falloff, `${label}.falloff`),
+    heightOffset:
+      value.heightOffset === undefined
+        ? undefined
+        : expectFiniteNumber(value.heightOffset, `${label}.heightOffset`),
+    terrainConform: readOptionalBoolean(
+      value.terrainConform,
+      `${label}.terrainConform`,
+      true
+    ),
+    materialId:
+      value.materialId === undefined || value.materialId === null
+        ? null
+        : normalizeScenePathRoadMaterialId(
+            expectString(value.materialId, `${label}.materialId`)
+          )
+  });
+}
+
 function readScenePathValue(value: unknown, label: string): ScenePath {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
@@ -5717,6 +5761,7 @@ function readScenePathValue(value: unknown, label: string): ScenePath {
         DEFAULT_SCENE_PATH_TERRAIN_OFFSET
       )
     ),
+    road: readScenePathRoadSettingsValue(value.road, `${label}.road`),
     points: value.points.map((pointValue, index) =>
       readScenePathPointValue(pointValue, `${label}.points.${index}`)
     )
