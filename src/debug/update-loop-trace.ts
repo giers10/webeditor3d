@@ -29,6 +29,7 @@ interface UpdateLoopSelection {
   vertexId?: string;
   pathId?: string;
   pointId?: string;
+  pointIds?: readonly string[];
 }
 
 const TRACE_WINDOW_MS = 1000;
@@ -179,6 +180,12 @@ export function summarizeUpdateLoopSelection(
         kind: selection.kind,
         pathId: selection.pathId ?? null,
         pointId: selection.pointId ?? null
+      };
+    case "pathPoints":
+      return {
+        kind: selection.kind,
+        pathId: selection.pathId ?? null,
+        pointIds: summarizeStringList(selection.pointIds ?? [])
       };
     default:
       return {
