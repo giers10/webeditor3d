@@ -304,9 +304,12 @@ import {
   createScenePath,
   createScenePathPoint,
   DEFAULT_SCENE_PATH_CURVE_MODE,
+  DEFAULT_SCENE_PATH_GLUE_TO_TERRAIN,
   DEFAULT_SCENE_PATH_SAMPLED_RESOLUTION,
+  DEFAULT_SCENE_PATH_TERRAIN_OFFSET,
   isScenePathCurveMode,
   normalizeScenePathSampledResolution,
+  normalizeScenePathTerrainOffset,
   type ScenePath,
   type ScenePathPoint
 } from "./paths";
