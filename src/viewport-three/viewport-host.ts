@@ -353,6 +353,7 @@ interface BrushRenderObjects {
 
 interface PathRenderObjects {
   line: Line<BufferGeometry, LineBasicMaterial>;
+  roadMeshes: Array<Mesh<BufferGeometry, MeshBasicMaterial>>;
   segments: Array<{
     outlineMesh: Mesh<CylinderGeometry, MeshBasicMaterial>;
     mesh: Mesh<CylinderGeometry, MeshBasicMaterial>;
