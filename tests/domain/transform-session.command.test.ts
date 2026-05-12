@@ -12,7 +12,8 @@ import {
   resolveTransformTarget,
   supportsLocalTransformAxisConstraint,
   supportsTransformAxisConstraint,
-  supportsTransformOperation
+  supportsTransformOperation,
+  supportsTransformSurfaceSnapTarget
 } from "../../src/core/transform-session";
 import {
   cloneBoxBrushGeometry,
@@ -153,6 +154,16 @@ describe("transform session commit commands", () => {
       pathId: path.id,
       pointId: path.points[1].id
     });
+    const pathPointsResolved = resolveTransformTarget(
+      document,
+      {
+        kind: "pathPoints",
+        pathId: path.id,
+        pointIds: [path.points[0].id, path.points[1].id]
+      },
+      "object",
+      path.points[1].id
+    );
 
     expect(faceWrongModeResolved.target).toBeNull();
     expect(faceWrongModeResolved.message).toContain("Face mode");
@@ -187,6 +198,30 @@ describe("transform session commit commands", () => {
       pathId: path.id,
       pointId: path.points[1].id,
       initialPosition: path.points[1].position
+    });
+    expect(pathPointsResolved.target).toMatchObject({
+      kind: "pathPoints",
+      pathId: path.id,
+      activePointId: path.points[1].id,
+      initialPivot: {
+        x: 0.5,
+        y: 0.5,
+        z: 0
+      },
+      items: [
+        {
+          kind: "pathPoint",
+          pathId: path.id,
+          pointId: path.points[0].id,
+          initialPosition: path.points[0].position
+        },
+        {
+          kind: "pathPoint",
+          pathId: path.id,
+          pointId: path.points[1].id,
+          initialPosition: path.points[1].position
+        }
+      ]
     });
     expect(objectResolved.target).not.toBeNull();
     expect(
@@ -270,6 +305,29 @@ describe("transform session commit commands", () => {
         "scale"
       )
     ).toBe(false);
+    expect(
+      supportsTransformOperation(
+        pathPointsResolved.target as NonNullable<
+          typeof pathPointsResolved.target
+        >,
+        "translate"
+      )
+    ).toBe(true);
+    expect(
+      supportsTransformOperation(
+        pathPointsResolved.target as NonNullable<
+          typeof pathPointsResolved.target
+        >,
+        "rotate"
+      )
+    ).toBe(false);
+    expect(
+      supportsTransformSurfaceSnapTarget(
+        pathPointsResolved.target as NonNullable<
+          typeof pathPointsResolved.target
+        >
+      )
+    ).toBe(true);
   });
 
   it("applies axis-constraint rules across object and component transform sessions", () => {
@@ -586,6 +644,146 @@ describe("transform session commit commands", () => {
       x: 4,
       y: 2,
       z: -3
+    });
+  });
+
+  it("commits translated multi-selected path points through the shared transform command path", () => {
+    const path = createScenePath({
+      id: "path-transform-batch",
+      points: [
+        {
+          id: "path-transform-batch-a",
+          position: {
+            x: -1,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-transform-batch-b",
+          position: {
+            x: 1,
+            y: 0,
+            z: 1
+          }
+        },
+        {
+          id: "path-transform-batch-c",
+          position: {
+            x: 3,
+            y: 0,
+            z: 0
+          }
+        }
+      ]
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Path Batch Transform Fixture" }),
+        paths: {
+          [path.id]: path
+        }
+      }
+    });
+    const target = resolveTransformTarget(
+      store.getState().document,
+      {
+        kind: "pathPoints",
+        pathId: path.id,
+        pointIds: [path.points[0].id, path.points[2].id]
+      },
+      "object",
+      path.points[2].id
+    ).target;
+
+    if (target === null || target.kind !== "pathPoints") {
+      throw new Error("Expected a path points transform target.");
+    }
+
+    const translateSession = createTransformSession({
+      source: "keyboard",
+      sourcePanelId: "topLeft",
+      operation: "translate",
+      target
+    });
+
+    translateSession.preview = {
+      kind: "pathPoints",
+      pivot: {
+        x: 2,
+        y: 3,
+        z: -1
+      },
+      items: [
+        {
+          pointId: path.points[0].id,
+          position: {
+            x: 0,
+            y: 2,
+            z: -1
+          }
+        },
+        {
+          pointId: path.points[2].id,
+          position: {
+            x: 4,
+            y: 4,
+            z: -1
+          }
+        }
+      ]
+    };
+
+    store.executeCommand(
+      createCommitTransformSessionCommand(
+        store.getState().document,
+        translateSession
+      )
+    );
+
+    expect(
+      store.getState().document.paths[path.id]?.points.map((point) => ({
+        id: point.id,
+        position: point.position
+      }))
+    ).toEqual([
+      {
+        id: path.points[0].id,
+        position: {
+          x: 0,
+          y: 2,
+          z: -1
+        }
+      },
+      {
+        id: path.points[1].id,
+        position: path.points[1].position
+      },
+      {
+        id: path.points[2].id,
+        position: {
+          x: 4,
+          y: 4,
+          z: -1
+        }
+      }
+    ]);
+    expect(store.getState().selection).toEqual({
+      kind: "pathPoints",
+      pathId: path.id,
+      pointIds: [path.points[0].id, path.points[2].id]
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.paths[path.id]?.points).toEqual(
+      path.points
+    );
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().selection).toEqual({
+      kind: "pathPoints",
+      pathId: path.id,
+      pointIds: [path.points[0].id, path.points[2].id]
     });
   });
 
