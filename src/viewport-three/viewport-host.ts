@@ -7368,6 +7368,37 @@ export class ViewportHost {
     this.applyShadowState();
   }
 
+  private updateRoadSurfaceRenderObjectState(path: ScenePath) {
+    const existingRenderObjects = this.roadSurfaceRenderObjects.get(path.id);
+
+    if (existingRenderObjects !== undefined) {
+      this.roadSurfaceGroup.remove(existingRenderObjects.mesh);
+      existingRenderObjects.mesh.geometry.dispose();
+      existingRenderObjects.mesh.material.dispose();
+      this.roadSurfaceRenderObjects.delete(path.id);
+    }
+
+    if (this.currentDocument === null) {
+      return;
+    }
+
+    const terrains = getTerrains(this.currentDocument.terrains).filter(
+      (terrain) => terrain.enabled
+    );
+    const nextRenderObjects = this.createRoadSurfaceRenderObjects(
+      path,
+      terrains
+    );
+
+    if (nextRenderObjects === null) {
+      return;
+    }
+
+    this.roadSurfaceGroup.add(nextRenderObjects.mesh);
+    this.roadSurfaceRenderObjects.set(path.id, nextRenderObjects);
+    this.applyShadowState();
+  }
+
   private rebuildTerrains(
     document: SceneDocument,
     _selection: EditorSelection,
