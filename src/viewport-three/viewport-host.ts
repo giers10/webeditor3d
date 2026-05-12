@@ -7437,35 +7437,25 @@ export class ViewportHost {
   }
 
   private createPathLineGeometry(path: ScenePath): BufferGeometry {
-    const points = path.points.map(
-      (point) =>
-        new Vector3(point.position.x, point.position.y, point.position.z)
-    );
-
-    if (path.loop && points.length > 1) {
-      points.push(
-        new Vector3(
-          path.points[0].position.x,
-          path.points[0].position.y,
-          path.points[0].position.z
-        )
-      );
-    }
+    const resolvedPath = resolveScenePath(path);
+    const points =
+      resolvedPath.segments.length === 0
+        ? path.points.map(
+            (point) =>
+              new Vector3(point.position.x, point.position.y, point.position.z)
+          )
+        : [
+            new Vector3(
+              resolvedPath.segments[0]!.start.x,
+              resolvedPath.segments[0]!.start.y,
+              resolvedPath.segments[0]!.start.z
+            ),
+            ...resolvedPath.segments.map(
+              (segment) => new Vector3(segment.end.x, segment.end.y, segment.end.z)
+            )
+          ];
 
     return new BufferGeometry().setFromPoints(points);
-  }
-
-  private createPathPointVectors(path: ScenePath): Vector3[] {
-    const points = path.points.map(
-      (point) =>
-        new Vector3(point.position.x, point.position.y, point.position.z)
-    );
-
-    if (path.loop && points.length > 1) {
-      points.push(points[0].clone());
-    }
-
-    return points;
   }
 
   private createPathSegmentMesh(
@@ -7497,13 +7487,23 @@ export class ViewportHost {
   }
 
   private createPathSegmentMeshes(path: ScenePath): PathRenderObjects["segments"] {
-    const points = this.createPathPointVectors(path);
+    const resolvedPath = resolveScenePath(path);
     const segments: PathRenderObjects["segments"] = [];
 
-    for (let index = 0; index < points.length - 1; index += 1) {
+    for (const resolvedSegment of resolvedPath.segments) {
+      const start = new Vector3(
+        resolvedSegment.start.x,
+        resolvedSegment.start.y,
+        resolvedSegment.start.z
+      );
+      const end = new Vector3(
+        resolvedSegment.end.x,
+        resolvedSegment.end.y,
+        resolvedSegment.end.z
+      );
       const outlineMesh = this.createPathSegmentMesh(
-        points[index],
-        points[index + 1],
+        start,
+        end,
         PATH_SEGMENT_OUTLINE_RADIUS,
         new MeshBasicMaterial({
           color: PATH_OUTLINE_COLOR,
@@ -7513,8 +7513,8 @@ export class ViewportHost {
         path.id
       );
       const mesh = this.createPathSegmentMesh(
-        points[index],
-        points[index + 1],
+        start,
+        end,
         PATH_SEGMENT_RADIUS,
         new MeshBasicMaterial({
           color: PATH_COLOR,
