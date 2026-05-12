@@ -226,6 +226,8 @@ diffuseColor.rgb = mix(
 export function createTerrainLayerColorBlendMaterial(
   options: TerrainLayerColorBlendMaterialOptions
 ): Material {
+  const layerColors = createPaddedTerrainLayerColors(options.layerColors);
+
   if (options.wireframe === true) {
     return new MeshBasicMaterial({
       color: 0xf2ece2,
@@ -240,18 +242,16 @@ export function createTerrainLayerColorBlendMaterial(
     roughness: 1,
     metalness: 0
   });
-  const layerColors = options.layerColors.map((color) => new Color(color)) as [
-    Color,
-    Color,
-    Color,
-    Color
-  ];
 
   material.onBeforeCompile = (shader) => {
     shader.uniforms.terrainLayerColor0 = { value: layerColors[0] };
     shader.uniforms.terrainLayerColor1 = { value: layerColors[1] };
     shader.uniforms.terrainLayerColor2 = { value: layerColors[2] };
     shader.uniforms.terrainLayerColor3 = { value: layerColors[3] };
+    shader.uniforms.terrainLayerColor4 = { value: layerColors[4] };
+    shader.uniforms.terrainLayerColor5 = { value: layerColors[5] };
+    shader.uniforms.terrainLayerColor6 = { value: layerColors[6] };
+    shader.uniforms.terrainLayerColor7 = { value: layerColors[7] };
     shader.uniforms.terrainFoliageMaskPreviewColor = {
       value: new Color(options.foliageMaskPreviewColorHex ?? 0x65d36e)
     };
@@ -264,14 +264,18 @@ export function createTerrainLayerColorBlendMaterial(
         "#include <common>",
         `#include <common>
 attribute vec4 terrainLayerWeights;
+attribute vec4 terrainLayerWeights0;
+attribute vec4 terrainLayerWeights1;
 attribute float terrainFoliageMask;
-varying vec4 vTerrainLayerWeights;
+varying vec4 vTerrainLayerWeights0;
+varying vec4 vTerrainLayerWeights1;
 varying float vTerrainFoliageMask;`
       )
       .replace(
         "#include <uv_vertex>",
         `#include <uv_vertex>
-vTerrainLayerWeights = terrainLayerWeights;
+vTerrainLayerWeights0 = terrainLayerWeights0;
+vTerrainLayerWeights1 = terrainLayerWeights1;
 vTerrainFoliageMask = terrainFoliageMask;`
       );
 
@@ -279,35 +283,51 @@ vTerrainFoliageMask = terrainFoliageMask;`
       .replace(
         "#include <common>",
         `#include <common>
-varying vec4 vTerrainLayerWeights;
+varying vec4 vTerrainLayerWeights0;
+varying vec4 vTerrainLayerWeights1;
 varying float vTerrainFoliageMask;
 uniform vec3 terrainLayerColor0;
 uniform vec3 terrainLayerColor1;
 uniform vec3 terrainLayerColor2;
 uniform vec3 terrainLayerColor3;
+uniform vec3 terrainLayerColor4;
+uniform vec3 terrainLayerColor5;
+uniform vec3 terrainLayerColor6;
+uniform vec3 terrainLayerColor7;
 uniform vec3 terrainFoliageMaskPreviewColor;
 uniform float terrainFoliageMaskPreviewOpacity;`
       )
       .replace(
         "#include <map_fragment>",
-        `vec4 terrainWeights = max(vTerrainLayerWeights, 0.0);
+        `vec4 terrainWeights0 = max(vTerrainLayerWeights0, 0.0);
+vec4 terrainWeights1 = max(vTerrainLayerWeights1, 0.0);
 float terrainWeightSum =
-  terrainWeights.x +
-  terrainWeights.y +
-  terrainWeights.z +
-  terrainWeights.w;
+  terrainWeights0.x +
+  terrainWeights0.y +
+  terrainWeights0.z +
+  terrainWeights0.w +
+  terrainWeights1.x +
+  terrainWeights1.y +
+  terrainWeights1.z +
+  terrainWeights1.w;
 
 if (terrainWeightSum <= 0.0) {
-  terrainWeights = vec4(1.0, 0.0, 0.0, 0.0);
+  terrainWeights0 = vec4(1.0, 0.0, 0.0, 0.0);
+  terrainWeights1 = vec4(0.0);
 } else {
-  terrainWeights /= terrainWeightSum;
+  terrainWeights0 /= terrainWeightSum;
+  terrainWeights1 /= terrainWeightSum;
 }
 
 vec3 terrainLayerColor =
-  terrainLayerColor0 * terrainWeights.x +
-  terrainLayerColor1 * terrainWeights.y +
-  terrainLayerColor2 * terrainWeights.z +
-  terrainLayerColor3 * terrainWeights.w;
+  terrainLayerColor0 * terrainWeights0.x +
+  terrainLayerColor1 * terrainWeights0.y +
+  terrainLayerColor2 * terrainWeights0.z +
+  terrainLayerColor3 * terrainWeights0.w +
+  terrainLayerColor4 * terrainWeights1.x +
+  terrainLayerColor5 * terrainWeights1.y +
+  terrainLayerColor6 * terrainWeights1.z +
+  terrainLayerColor7 * terrainWeights1.w;
 diffuseColor.rgb *= terrainLayerColor;
 float foliageMaskPreviewBlend = clamp(
   vTerrainFoliageMask * terrainFoliageMaskPreviewOpacity,
@@ -322,7 +342,7 @@ diffuseColor.rgb = mix(
       );
   };
 
-  material.customProgramCacheKey = () => "terrain-layer-color-blend-v2";
+  material.customProgramCacheKey = () => "terrain-layer-color-blend-v3";
   material.needsUpdate = true;
   return material;
 }
