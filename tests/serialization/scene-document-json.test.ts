@@ -151,6 +151,57 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("round-trips dynamic terrain material layers in the current schema", () => {
+    const terrain = createTerrain({
+      id: "terrain-dynamic-layers-roundtrip",
+      sampleCountX: 2,
+      sampleCountZ: 2,
+      layers: [
+        {
+          materialId: "patchy_grass_ground_250x250"
+        },
+        {
+          materialId: "patchy_weedy_dirt_ground_300x300"
+        },
+        {
+          materialId: "ground_sand_300x300"
+        },
+        {
+          materialId: "concrete_wall_cladding_250x250"
+        },
+        {
+          materialId: null
+        }
+      ],
+      paintWeights: [
+        0.2,
+        0.3,
+        0.1,
+        0,
+        0.4,
+        0.1,
+        0,
+        0,
+        0,
+        0.5,
+        0,
+        0,
+        0.25,
+        0.25,
+        0.25,
+        0
+      ]
+    });
+    const document = createEmptySceneDocument({
+      name: "Dynamic Terrain Layer Scene"
+    });
+    document.terrains[terrain.id] = terrain;
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("round-trips authored foliage layer references in the current schema", () => {
     const bundledPrototype = BUNDLED_FOLIAGE_PROTOTYPES[0];
     const layer = createFoliageLayer({
