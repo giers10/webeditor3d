@@ -1928,6 +1928,31 @@ describe("buildRuntimeSceneFromDocument", () => {
     });
   });
 
+  it("resolves runtime path road materials for generated road strips", () => {
+    const path = createScenePath({
+      id: "path-runtime-road-material",
+      road: {
+        enabled: true,
+        width: 2,
+        shoulderWidth: 1,
+        falloff: 0.5,
+        heightOffset: 0.03,
+        terrainConform: true,
+        materialId: "ground_sand_300x300"
+      }
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Runtime Road Material Scene" }),
+      paths: {
+        [path.id]: path
+      }
+    });
+
+    expect(runtimeScene.paths[0]?.road.material?.id).toBe(
+      "ground_sand_300x300"
+    );
+  });
+
   it("includes authored foliage layers, prototypes, and terrain masks for derived rendering", () => {
     const bundledPrototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
     const layer = createFoliageLayer({
