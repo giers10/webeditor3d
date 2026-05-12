@@ -3059,7 +3059,10 @@ function validateTerrain(
   const expectedPaintWeightCount =
     terrain.sampleCountX *
     terrain.sampleCountZ *
-    getTerrainStoredPaintWeightCount(terrain.layers.length);
+    (terrain.layers.length >= MIN_TERRAIN_LAYER_COUNT &&
+    terrain.layers.length <= MAX_TERRAIN_LAYER_COUNT
+      ? getTerrainStoredPaintWeightCount(terrain.layers.length)
+      : 0);
 
   if (terrain.paintWeights.length !== expectedPaintWeightCount) {
     diagnostics.push(
