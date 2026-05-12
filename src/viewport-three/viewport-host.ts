@@ -4806,7 +4806,9 @@ export class ViewportHost {
       case "brushFace":
       case "brushEdge":
       case "brushVertex":
+        break;
       case "pathPoint":
+      case "pathPoints":
         break;
     }
 
@@ -5011,8 +5013,13 @@ export class ViewportHost {
       case "brushFace":
       case "brushEdge":
       case "brushVertex":
-      case "pathPoint":
         return [];
+      case "pathPoint":
+        return preview.kind === "pathPoint" ? [preview.position] : [];
+      case "pathPoints":
+        return preview.kind === "pathPoints"
+          ? preview.items.map((item) => item.position)
+          : [];
     }
   }
 
