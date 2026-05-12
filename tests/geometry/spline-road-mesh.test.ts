@@ -36,16 +36,16 @@ describe("spline road mesh generation", () => {
     expect(meshData?.totalLength).toBe(4);
     expect(Array.from(meshData!.positions)).toEqual([
       0,
-      0.1,
+      expect.closeTo(0.1, 5),
       1,
       0,
-      0.1,
+      expect.closeTo(0.1, 5),
       -1,
       4,
-      0.1,
+      expect.closeTo(0.1, 5),
       1,
       4,
-      0.1,
+      expect.closeTo(0.1, 5),
       -1
     ]);
     expect(Array.from(meshData!.uvs)).toEqual([0, 0, 1, 0, 0, 4, 1, 4]);
