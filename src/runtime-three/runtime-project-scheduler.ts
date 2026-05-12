@@ -1,7 +1,8 @@
 import type { Vec3 } from "../core/vector";
 import {
   sampleResolvedScenePathPosition,
-  sampleResolvedScenePathTangent
+  sampleResolvedScenePathTangent,
+  type ScenePathCurveMode
 } from "../document/paths";
 import {
   applyControlEffectToResolvedState,
@@ -69,6 +70,8 @@ export interface RuntimeProjectSchedulePathSegment {
 export interface RuntimeProjectSchedulePathDefinition {
   id: string;
   loop: boolean;
+  curveMode?: ScenePathCurveMode;
+  sampledResolution?: number;
   points: RuntimeProjectSchedulePathPoint[];
   segments: RuntimeProjectSchedulePathSegment[];
   totalLength: number;

@@ -61,6 +61,7 @@ import {
   getScenePaths,
   resolveScenePath,
   type ScenePath,
+  type ScenePathCurveMode,
   type ScenePathPoint
 } from "../document/paths";
 import {
@@ -508,6 +509,8 @@ export interface RuntimePath {
   visible: boolean;
   enabled: boolean;
   loop: boolean;
+  curveMode: ScenePathCurveMode;
+  sampledResolution: number;
   points: RuntimePathPoint[];
   segments: RuntimePathSegment[];
   totalLength: number;
@@ -1001,6 +1004,8 @@ function buildRuntimePath(path: ScenePath): RuntimePath {
     visible: path.visible,
     enabled: path.enabled,
     loop: path.loop,
+    curveMode: resolvedPath.curveMode,
+    sampledResolution: resolvedPath.sampledResolution,
     points: resolvedPath.points.map(buildRuntimePathPoint),
     segments: resolvedPath.segments.map((segment) => ({
       index: segment.index,
