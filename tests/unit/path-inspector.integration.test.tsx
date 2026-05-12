@@ -143,6 +143,7 @@ describe("Path inspector", () => {
     expect(screen.getByTestId("path-road-height-offset")).toHaveValue(0.03);
     expect(screen.getByTestId("path-road-terrain-conform")).toBeChecked();
     expect(screen.getByTestId("path-road-material")).toHaveValue("");
+    expect(screen.getByTestId("apply-path-road-to-terrain")).toBeDisabled();
     expect(screen.getByTestId("path-point-0-x")).toHaveValue(-1);
     expect(screen.getByTestId("path-point-1-x")).toHaveValue(1);
 
@@ -170,6 +171,7 @@ describe("Path inspector", () => {
       }
     });
     fireEvent.click(screen.getByTestId("path-road-enabled"));
+    expect(screen.getByTestId("apply-path-road-to-terrain")).not.toBeDisabled();
     fireEvent.change(screen.getByTestId("path-road-width"), {
       target: {
         value: "3.5"
