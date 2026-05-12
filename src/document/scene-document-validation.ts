@@ -75,7 +75,13 @@ import {
   HOURS_PER_DAY,
   type ProjectTimeSettings
 } from "./project-time-settings";
-import { MIN_SCENE_PATH_POINT_COUNT, type ScenePath } from "./paths";
+import {
+  MAX_SCENE_PATH_SAMPLED_RESOLUTION,
+  MIN_SCENE_PATH_POINT_COUNT,
+  MIN_SCENE_PATH_SAMPLED_RESOLUTION,
+  isScenePathCurveMode,
+  type ScenePath
+} from "./paths";
 import {
   MIN_TERRAIN_SAMPLE_COUNT,
   TERRAIN_LAYER_COUNT,
@@ -2675,6 +2681,35 @@ function validateScenePath(
         "invalid-path-loop",
         "Path loop must remain a boolean.",
         `${path}.loop`
+      )
+    );
+  }
+
+  if (!isScenePathCurveMode(pathValue.curveMode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-curve-mode",
+        "Path curve mode must be linear or catmullRom.",
+        `${path}.curveMode`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      pathValue.sampledResolution,
+      MIN_SCENE_PATH_SAMPLED_RESOLUTION,
+      MAX_SCENE_PATH_SAMPLED_RESOLUTION
+    ) ||
+    !Number.isInteger(pathValue.sampledResolution)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-sampled-resolution",
+        `Path sampled resolution must be an integer from ${MIN_SCENE_PATH_SAMPLED_RESOLUTION} to ${MAX_SCENE_PATH_SAMPLED_RESOLUTION}.`,
+        `${path}.sampledResolution`
       )
     );
   }
