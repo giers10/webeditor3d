@@ -163,7 +163,10 @@ function resolveStationTangent(
   return normalizeHorizontalVector(currentStation.tangent);
 }
 
-function buildRoadStations(path: SplineRoadPathLike): RoadStation[] {
+function buildRoadStations(
+  path: SplineRoadPathLike,
+  terrains: readonly Terrain[]
+): RoadStation[] {
   const resolvedPath = resolveScenePath(
     {
       loop: path.loop,
@@ -174,7 +177,7 @@ function buildRoadStations(path: SplineRoadPathLike): RoadStation[] {
       points: path.points.map(normalizePathPoint)
     },
     {
-      terrains: []
+      terrains
     }
   );
   const stations: RoadStation[] = [];
@@ -208,7 +211,7 @@ export function buildSplineRoadMeshData(options: {
 }): SplineRoadMeshData | null {
   const { path } = options;
   const terrains = options.terrains ?? [];
-  const stations = buildRoadStations(path);
+  const stations = buildRoadStations(path, terrains);
 
   if (!path.road.enabled || path.road.width <= 0 || stations.length < 2) {
     return null;
