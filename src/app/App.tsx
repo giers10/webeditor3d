@@ -3379,7 +3379,8 @@ export function App({
             terrainId: selectedTerrain.id,
             tool: "paint",
             layerIndex: clampTerrainPaintLayerIndex(
-              activeTerrainPaintLayerIndex
+              activeTerrainPaintLayerIndex,
+              selectedTerrain.layers.length
             ),
             radius: terrainBrushSettings.radius,
             strength: terrainBrushSettings.strength,
@@ -3405,7 +3406,8 @@ export function App({
               falloff: terrainBrushSettings.falloff
             };
   const resolvedTerrainPaintLayerIndex = clampTerrainPaintLayerIndex(
-    activeTerrainPaintLayerIndex
+    activeTerrainPaintLayerIndex,
+    selectedTerrain?.layers.length
   );
   const selectedTerrainActivePaintLayer =
     selectedTerrain?.layers[resolvedTerrainPaintLayerIndex] ?? null;
