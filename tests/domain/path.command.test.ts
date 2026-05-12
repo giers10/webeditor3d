@@ -446,4 +446,88 @@ describe("path commands", () => {
     expect(store.redo()).toBe(true);
     expect(store.getState().document.terrains[terrain.id]?.heights[12]).toBe(1);
   });
+
+  it("auto-adds a missing road material terrain layer while applying a spline road", () => {
+    const terrain = createTerrain({
+      id: "terrain-road-auto-layer",
+      position: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      sampleCountX: 3,
+      sampleCountZ: 3,
+      cellSize: 1,
+      layers: [
+        {
+          materialId: "patchy_grass_ground_250x250"
+        }
+      ],
+      paintWeights: []
+    });
+    const path = createScenePath({
+      id: "path-road-auto-layer",
+      road: {
+        enabled: true,
+        width: 2,
+        shoulderWidth: 0,
+        falloff: 0,
+        heightOffset: 0,
+        terrainConform: false,
+        materialId: "ground_sand_300x300"
+      },
+      points: [
+        {
+          id: "path-point-road-auto-a",
+          position: {
+            x: 0,
+            y: 0.5,
+            z: 1
+          }
+        },
+        {
+          id: "path-point-road-auto-b",
+          position: {
+            x: 2,
+            y: 0.5,
+            z: 1
+          }
+        }
+      ]
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({
+          name: "Path Road Auto Layer Scene"
+        }),
+        paths: {
+          [path.id]: path
+        },
+        terrains: {
+          [terrain.id]: terrain
+        }
+      }
+    });
+
+    store.executeCommand(
+      createApplySplineRoadToTerrainCommand({
+        pathId: path.id
+      })
+    );
+
+    const appliedTerrain = store.getState().document.terrains[terrain.id]!;
+
+    expect(appliedTerrain.layers).toEqual([
+      {
+        materialId: "patchy_grass_ground_250x250"
+      },
+      {
+        materialId: "ground_sand_300x300"
+      }
+    ]);
+    expect(appliedTerrain.paintWeights[4]).toBe(1);
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.terrains[terrain.id]).toEqual(terrain);
+  });
 });
