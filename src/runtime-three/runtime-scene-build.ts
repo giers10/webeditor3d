@@ -1998,7 +1998,7 @@ export function buildRuntimeSceneFromDocument(
   const modelInstances = enabledModelInstances.map(buildRuntimeModelInstance);
   const paths = getScenePaths(document.paths)
     .filter((path) => path.enabled)
-    .map(buildRuntimePath);
+    .map((path) => buildRuntimePath(path, enabledTerrains));
   const collections = buildRuntimeSceneCollections(
     document,
     options.runtimeClock ?? null,

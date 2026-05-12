@@ -134,6 +134,8 @@ describe("Path inspector", () => {
     expect(screen.getByTestId("path-loop")).not.toBeChecked();
     expect(screen.getByTestId("path-curve-mode")).toHaveValue("linear");
     expect(screen.getByTestId("path-sampled-resolution")).toHaveValue(12);
+    expect(screen.getByTestId("path-glue-to-terrain")).not.toBeChecked();
+    expect(screen.getByTestId("path-terrain-offset")).toHaveValue(0);
     expect(screen.getByTestId("path-point-0-x")).toHaveValue(-1);
     expect(screen.getByTestId("path-point-1-x")).toHaveValue(1);
 
@@ -154,6 +156,12 @@ describe("Path inspector", () => {
         value: "16"
       }
     });
+    fireEvent.click(screen.getByTestId("path-glue-to-terrain"));
+    fireEvent.change(screen.getByTestId("path-terrain-offset"), {
+      target: {
+        value: "0.25"
+      }
+    });
     fireEvent.change(screen.getByTestId("path-point-1-z"), {
       target: {
         value: "2"
@@ -169,7 +177,9 @@ describe("Path inspector", () => {
         name: "Patrol Route",
         loop: true,
         curveMode: "catmullRom",
-        sampledResolution: 16
+        sampledResolution: 16,
+        glueToTerrain: true,
+        terrainOffset: 0.25
       });
       expect(updatedPath?.points).toHaveLength(3);
       expect(updatedPath?.points[1]?.position).toEqual({

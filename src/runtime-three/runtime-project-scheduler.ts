@@ -72,6 +72,8 @@ export interface RuntimeProjectSchedulePathDefinition {
   loop: boolean;
   curveMode?: ScenePathCurveMode;
   sampledResolution?: number;
+  glueToTerrain?: boolean;
+  terrainOffset?: number;
   points: RuntimeProjectSchedulePathPoint[];
   segments: RuntimeProjectSchedulePathSegment[];
   totalLength: number;
