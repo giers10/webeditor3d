@@ -7553,6 +7553,16 @@ export class ViewportHost {
     return segments;
   }
 
+  private createResolvedPathPointPositionMap(
+    path: ScenePath
+  ): Map<string, Vec3> {
+    return new Map(
+      resolveScenePath(path, {
+        terrains: this.getPathTerrainGlueTerrains()
+      }).points.map((point) => [point.id, point.position])
+    );
+  }
+
   private addPathSegmentMeshes(segments: PathRenderObjects["segments"]) {
     for (const segment of segments) {
       this.pathGroup.add(segment.outlineMesh);
@@ -7615,7 +7625,10 @@ export class ViewportHost {
     line.userData.pathId = path.id;
 
     const segments = this.createPathSegmentMeshes(path);
+    const resolvedPointPositions =
+      this.createResolvedPathPointPositionMap(path);
     const pointMeshes = path.points.map((point) => {
+      const pointPosition = resolvedPointPositions.get(point.id) ?? point.position;
       const outlineMesh = new Mesh(
         new SphereGeometry(PATH_POINT_OUTLINE_RADIUS, 16, 12),
         new MeshBasicMaterial({
@@ -7636,11 +7649,11 @@ export class ViewportHost {
       );
 
       outlineMesh.position.set(
-        point.position.x,
-        point.position.y,
-        point.position.z
+        pointPosition.x,
+        pointPosition.y,
+        pointPosition.z
       );
-      mesh.position.set(point.position.x, point.position.y, point.position.z);
+      mesh.position.set(pointPosition.x, pointPosition.y, pointPosition.z);
       outlineMesh.renderOrder = PATH_RENDER_ORDER + 2;
       mesh.renderOrder = PATH_RENDER_ORDER + 3;
       outlineMesh.userData.pathId = path.id;
@@ -7731,6 +7744,8 @@ export class ViewportHost {
     this.disposePathSegmentMeshes(renderObjects.segments);
     renderObjects.segments = this.createPathSegmentMeshes(path);
     this.addPathSegmentMeshes(renderObjects.segments);
+    const resolvedPointPositions =
+      this.createResolvedPathPointPositionMap(path);
 
     for (const pointMesh of renderObjects.pointMeshes) {
       const point = path.points.find(
@@ -7741,15 +7756,17 @@ export class ViewportHost {
         continue;
       }
 
+      const pointPosition = resolvedPointPositions.get(point.id) ?? point.position;
+
       pointMesh.outlineMesh.position.set(
-        point.position.x,
-        point.position.y,
-        point.position.z
+        pointPosition.x,
+        pointPosition.y,
+        pointPosition.z
       );
       pointMesh.mesh.position.set(
-        point.position.x,
-        point.position.y,
-        point.position.z
+        pointPosition.x,
+        pointPosition.y,
+        pointPosition.z
       );
     }
   }
