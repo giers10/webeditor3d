@@ -21162,10 +21162,7 @@ export function App({
                           )
                         }
                       >
-                        {Array.from(
-                          { length: TERRAIN_LAYER_COUNT },
-                          (_, layerIndex) => layerIndex
-                        ).map((layerIndex) => (
+                        {selectedTerrain.layers.map((_, layerIndex) => (
                           <option key={layerIndex} value={layerIndex}>
                             {getTerrainLayerLabel(layerIndex)}
                           </option>
@@ -21180,30 +21177,60 @@ export function App({
                         "no assigned material"}
                       .
                     </div>
+                    <div className="inline-actions">
+                      <button
+                        className="toolbar__button"
+                        type="button"
+                        data-testid="terrain-layer-add"
+                        disabled={
+                          selectedTerrain.layers.length >=
+                          MAX_TERRAIN_LAYER_COUNT
+                        }
+                        onClick={handleAddTerrainLayer}
+                      >
+                        Add Material Layer
+                      </button>
+                    </div>
+                    <div className="material-summary">
+                      Terrain supports up to {MAX_TERRAIN_LAYER_COUNT} material
+                      layers. The base layer cannot be removed.
+                    </div>
                     <div className="terrain-layer-list">
                       {selectedTerrain.layers.map((layer, layerIndex) => (
-                        <label key={layerIndex} className="form-field">
-                          <span className="label">
+                        <div key={layerIndex} className="form-field">
+                          <label className="label" htmlFor={`terrain-layer-material-${layerIndex}`}>
                             {getTerrainLayerLabel(layerIndex)}
-                          </span>
-                          <select
-                            data-testid={`terrain-layer-material-${layerIndex}`}
-                            value={layer.materialId ?? ""}
-                            onChange={(event) =>
-                              handleTerrainLayerMaterialChange(
-                                layerIndex,
-                                event.currentTarget.value
-                              )
-                            }
-                          >
-                            <option value="">Unassigned</option>
-                            {materialList.map((material) => (
-                              <option key={material.id} value={material.id}>
-                                {material.name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                          </label>
+                          <div className="inline-actions">
+                            <select
+                              id={`terrain-layer-material-${layerIndex}`}
+                              data-testid={`terrain-layer-material-${layerIndex}`}
+                              value={layer.materialId ?? ""}
+                              onChange={(event) =>
+                                handleTerrainLayerMaterialChange(
+                                  layerIndex,
+                                  event.currentTarget.value
+                                )
+                              }
+                            >
+                              <option value="">Unassigned</option>
+                              {materialList.map((material) => (
+                                <option key={material.id} value={material.id}>
+                                  {material.name}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              className="toolbar__button"
+                              type="button"
+                              data-testid={`terrain-layer-remove-${layerIndex}`}
+                              disabled={layerIndex === 0}
+                              onClick={() => handleDeleteTerrainLayer(layerIndex)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
