@@ -21777,6 +21777,24 @@ export function App({
                         Selected in viewport: {selectedPathPointCount} points
                       </div>
                     ) : null}
+                    <div className="inline-actions">
+                      <button
+                        className="toolbar__button"
+                        type="button"
+                        data-testid="add-path-point"
+                        onClick={handleAddPathPoint}
+                      >
+                        Add Point
+                      </button>
+                      <button
+                        className="toolbar__button"
+                        type="button"
+                        data-testid="apply-path-points"
+                        onClick={applyPathChange}
+                      >
+                        Apply Points
+                      </button>
+                    </div>
                     {selectedPath.points.map((point, pointIndex) => (
                       <div key={point.id} className="stat-card">
                         <div className="label">Point {pointIndex + 1}</div>
@@ -21898,24 +21916,6 @@ export function App({
                         </div>
                       </div>
                     ))}
-                    <div className="inline-actions">
-                      <button
-                        className="toolbar__button"
-                        type="button"
-                        data-testid="add-path-point"
-                        onClick={handleAddPathPoint}
-                      >
-                        Add Point
-                      </button>
-                      <button
-                        className="toolbar__button"
-                        type="button"
-                        data-testid="apply-path-points"
-                        onClick={applyPathChange}
-                      >
-                        Apply Points
-                      </button>
-                    </div>
                   </div>
                 </>
               ) : selectedEntity !== null ? (
