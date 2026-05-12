@@ -21847,6 +21847,48 @@ export function App({
                   </div>
 
                   <div className="form-section">
+                    <div className="label">Curve</div>
+                    <label className="form-field">
+                      <span className="label">Mode</span>
+                      <select
+                        className="select-input"
+                        data-testid="path-curve-mode"
+                        value={selectedPath.curveMode}
+                        onChange={(event) =>
+                          handlePathCurveModeChange(
+                            event.currentTarget.value as ScenePathCurveMode
+                          )
+                        }
+                      >
+                        <option value="linear">Linear</option>
+                        <option value="catmullRom">Spline</option>
+                      </select>
+                    </label>
+                    <label className="form-field">
+                      <span className="label">Sample Resolution</span>
+                      <input
+                        className="text-input"
+                        data-testid="path-sampled-resolution"
+                        type="number"
+                        min={MIN_SCENE_PATH_SAMPLED_RESOLUTION}
+                        max={MAX_SCENE_PATH_SAMPLED_RESOLUTION}
+                        step={1}
+                        value={selectedPath.sampledResolution}
+                        onChange={(event) =>
+                          handlePathSampledResolutionChange(
+                            Number(event.currentTarget.value)
+                          )
+                        }
+                      />
+                    </label>
+                    <div className="material-summary">
+                      Spline mode keeps the same control points but samples a
+                      smoother resolved curve for NPC movement, rail cameras,
+                      and viewport drawing.
+                    </div>
+                  </div>
+
+                  <div className="form-section">
                     <div className="label">Points</div>
                     <div className="material-summary">
                       Edit authored point positions directly. Keep at least{" "}

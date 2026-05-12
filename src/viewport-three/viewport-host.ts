@@ -104,6 +104,7 @@ import {
 import type { SceneDocument } from "../document/scene-document";
 import {
   getScenePaths,
+  resolveScenePath,
   sampleScenePathPosition,
   type ScenePath
 } from "../document/paths";
