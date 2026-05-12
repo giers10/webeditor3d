@@ -514,7 +514,9 @@ export interface RuntimePath {
   sampledResolution: number;
   glueToTerrain: boolean;
   terrainOffset: number;
-  road: ScenePathRoadSettings;
+  road: ScenePathRoadSettings & {
+    material: MaterialDef | null;
+  };
   points: RuntimePathPoint[];
   segments: RuntimePathSegment[];
   totalLength: number;
@@ -1001,7 +1003,8 @@ function buildRuntimePathPoint(point: ScenePathPoint): RuntimePathPoint {
 
 function buildRuntimePath(
   path: ScenePath,
-  terrains: readonly Terrain[]
+  terrains: readonly Terrain[],
+  document: SceneDocument
 ): RuntimePath {
   const resolvedPath = resolveScenePath(path, { terrains });
 
@@ -1015,7 +1018,10 @@ function buildRuntimePath(
     sampledResolution: resolvedPath.sampledResolution,
     glueToTerrain: resolvedPath.glueToTerrain,
     terrainOffset: resolvedPath.terrainOffset,
-    road: { ...path.road },
+    road: {
+      ...path.road,
+      material: resolveRuntimeMaterial(document, path.road.materialId)
+    },
     points: resolvedPath.points.map(buildRuntimePathPoint),
     segments: resolvedPath.segments.map((segment) => ({
       index: segment.index,
@@ -2001,7 +2007,7 @@ export function buildRuntimeSceneFromDocument(
   const modelInstances = enabledModelInstances.map(buildRuntimeModelInstance);
   const paths = getScenePaths(document.paths)
     .filter((path) => path.enabled)
-    .map((path) => buildRuntimePath(path, enabledTerrains));
+    .map((path) => buildRuntimePath(path, enabledTerrains, document));
   const collections = buildRuntimeSceneCollections(
     document,
     options.runtimeClock ?? null,
