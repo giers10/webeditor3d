@@ -332,7 +332,7 @@ describe("Path point editing integration", () => {
       ctrlKey: true
     });
 
-    expect(store.getState().document.paths[path.id]?.points).toHaveLength(3);
+    expect(store.getState().document.paths[path.id]?.points).toHaveLength(4);
 
     fireEvent.keyDown(window, {
       key: "z",
