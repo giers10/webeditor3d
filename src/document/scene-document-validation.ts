@@ -2715,6 +2715,28 @@ function validateScenePath(
     );
   }
 
+  if (!isBoolean(pathValue.glueToTerrain)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-glue-to-terrain",
+        "Path glue to terrain must remain a boolean.",
+        `${path}.glueToTerrain`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(pathValue.terrainOffset)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-terrain-offset",
+        "Path terrain offset must be a finite number.",
+        `${path}.terrainOffset`
+      )
+    );
+  }
+
   if (pathValue.points.length < MIN_SCENE_PATH_POINT_COUNT) {
     diagnostics.push(
       createDiagnostic(
