@@ -593,6 +593,8 @@ export function createScenePath(
       | "loop"
       | "curveMode"
       | "sampledResolution"
+      | "glueToTerrain"
+      | "terrainOffset"
       | "points"
     >
   > = {}
@@ -607,6 +609,11 @@ export function createScenePath(
   const curveMode = overrides.curveMode ?? DEFAULT_SCENE_PATH_CURVE_MODE;
   const sampledResolution = normalizeScenePathSampledResolution(
     overrides.sampledResolution ?? DEFAULT_SCENE_PATH_SAMPLED_RESOLUTION
+  );
+  const glueToTerrain =
+    overrides.glueToTerrain ?? DEFAULT_SCENE_PATH_GLUE_TO_TERRAIN;
+  const terrainOffset = normalizeScenePathTerrainOffset(
+    overrides.terrainOffset ?? DEFAULT_SCENE_PATH_TERRAIN_OFFSET
   );
 
   if (points.length < MIN_SCENE_PATH_POINT_COUNT) {
@@ -629,6 +636,10 @@ export function createScenePath(
 
   if (!isScenePathCurveMode(curveMode)) {
     throw new Error("Path curve mode must be linear or catmullRom.");
+  }
+
+  if (typeof glueToTerrain !== "boolean") {
+    throw new Error("Path glue to terrain must be a boolean.");
   }
 
   const seenPointIds = new Set<string>();
@@ -654,6 +665,8 @@ export function createScenePath(
     loop,
     curveMode,
     sampledResolution,
+    glueToTerrain,
+    terrainOffset,
     points
   };
 }
@@ -672,6 +685,8 @@ export function areScenePathsEqual(left: ScenePath, right: ScenePath): boolean {
     left.loop === right.loop &&
     left.curveMode === right.curveMode &&
     left.sampledResolution === right.sampledResolution &&
+    left.glueToTerrain === right.glueToTerrain &&
+    left.terrainOffset === right.terrainOffset &&
     left.points.length === right.points.length &&
     left.points.every(
       (point, index) =>
