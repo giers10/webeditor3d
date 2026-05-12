@@ -3754,7 +3754,8 @@ export class ViewportHost {
     if (
       session.target.kind === "brushes" ||
       session.target.kind === "entities" ||
-      session.target.kind === "modelInstances"
+      session.target.kind === "modelInstances" ||
+      session.target.kind === "pathPoints"
     ) {
       const preview = this.buildBatchTranslatedPreview(
         session,
@@ -4502,7 +4503,8 @@ export class ViewportHost {
     if (
       session.target.kind !== "brushes" &&
       session.target.kind !== "modelInstances" &&
-      session.target.kind !== "entities"
+      session.target.kind !== "entities" &&
+      session.target.kind !== "pathPoints"
     ) {
       throw new Error("Batch translate preview requires a batch target.");
     }
@@ -4640,6 +4642,21 @@ export class ViewportHost {
           },
           scale: {
             ...item.initialScale
+          }
+        }))
+      };
+    }
+
+    if (target.kind === "pathPoints") {
+      return {
+        kind: "pathPoints" as const,
+        pivot: nextPivot,
+        items: target.items.map((item) => ({
+          pointId: item.pointId,
+          position: {
+            x: item.initialPosition.x + worldDelta.x,
+            y: item.initialPosition.y + worldDelta.y,
+            z: item.initialPosition.z + worldDelta.z
           }
         }))
       };
