@@ -511,6 +511,8 @@ export interface RuntimePath {
   loop: boolean;
   curveMode: ScenePathCurveMode;
   sampledResolution: number;
+  glueToTerrain: boolean;
+  terrainOffset: number;
   points: RuntimePathPoint[];
   segments: RuntimePathSegment[];
   totalLength: number;
@@ -995,8 +997,11 @@ function buildRuntimePathPoint(point: ScenePathPoint): RuntimePathPoint {
   };
 }
 
-function buildRuntimePath(path: ScenePath): RuntimePath {
-  const resolvedPath = resolveScenePath(path);
+function buildRuntimePath(
+  path: ScenePath,
+  terrains: readonly Terrain[]
+): RuntimePath {
+  const resolvedPath = resolveScenePath(path, { terrains });
 
   return {
     id: path.id,
@@ -1006,6 +1011,8 @@ function buildRuntimePath(path: ScenePath): RuntimePath {
     loop: path.loop,
     curveMode: resolvedPath.curveMode,
     sampledResolution: resolvedPath.sampledResolution,
+    glueToTerrain: resolvedPath.glueToTerrain,
+    terrainOffset: resolvedPath.terrainOffset,
     points: resolvedPath.points.map(buildRuntimePathPoint),
     segments: resolvedPath.segments.map((segment) => ({
       index: segment.index,
