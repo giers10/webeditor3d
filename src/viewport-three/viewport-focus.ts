@@ -632,7 +632,7 @@ export function resolveViewportFocusTarget(document: SceneDocument, selection: E
     const path = document.paths[selectedPathId];
 
     if (path !== undefined) {
-      return createPathFocusTarget(path);
+      return createPathFocusTarget(path, getTerrains(document.terrains));
     }
   }
 
