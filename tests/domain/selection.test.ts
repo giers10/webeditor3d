@@ -86,6 +86,68 @@ describe("selection click helpers", () => {
     expect(getSelectionDefaultActiveId(nextSelection)).toBe("entity-main");
   });
 
+  it("multi-selects path points on the same path with shift-click", () => {
+    const firstSelection = applyEditorSelectionClick(
+      {
+        kind: "none"
+      },
+      {
+        kind: "pathPoint",
+        pathId: "path-main",
+        pointId: "point-a"
+      },
+      false
+    );
+    const secondSelection = applyEditorSelectionClick(
+      firstSelection,
+      {
+        kind: "pathPoint",
+        pathId: "path-main",
+        pointId: "point-b"
+      },
+      true
+    );
+
+    expect(secondSelection).toEqual({
+      kind: "pathPoints",
+      pathId: "path-main",
+      pointIds: ["point-a", "point-b"]
+    });
+    expect(getSelectionDefaultActiveId(secondSelection)).toBe("point-b");
+
+    const toggledSelection = applyEditorSelectionClick(
+      secondSelection,
+      {
+        kind: "pathPoint",
+        pathId: "path-main",
+        pointId: "point-b"
+      },
+      true
+    );
+
+    expect(toggledSelection).toEqual({
+      kind: "pathPoint",
+      pathId: "path-main",
+      pointId: "point-a"
+    });
+
+    expect(
+      applyEditorSelectionClick(
+        toggledSelection,
+        {
+          kind: "pathPoint",
+          pathId: "path-other",
+          pointId: "point-x"
+        },
+        true
+      )
+    ).toEqual({
+      kind: "pathPoint",
+      pathId: "path-other",
+      pointId: "point-x"
+    });
+  });
+
   it("clears on empty click without shift and preserves on empty shift-click", () => {
     const currentSelection = {
       kind: "modelInstances" as const,
