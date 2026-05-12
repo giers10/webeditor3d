@@ -166,6 +166,14 @@ export interface PathPointTransformTarget {
   initialPosition: Vec3;
 }
 
+export interface PathPointsTransformTarget {
+  kind: "pathPoints";
+  pathId: string;
+  activePointId: string;
+  initialPivot: Vec3;
+  items: PathPointTransformTarget[];
+}
+
 export interface EntityTransformTarget {
   kind: "entity";
   entityId: string;
@@ -205,6 +213,7 @@ export type TransformTarget =
   | ModelInstanceTransformTarget
   | ModelInstancesTransformTarget
   | PathPointTransformTarget
+  | PathPointsTransformTarget
   | EntityTransformTarget
   | EntitiesTransformTarget;
 
@@ -244,6 +253,17 @@ export interface ModelInstanceTransformPreview {
 export interface PathPointTransformPreview {
   kind: "pathPoint";
   position: Vec3;
+}
+
+export interface PathPointTransformPreviewItem {
+  pointId: string;
+  position: Vec3;
+}
+
+export interface PathPointsTransformPreview {
+  kind: "pathPoints";
+  pivot: Vec3;
+  items: PathPointTransformPreviewItem[];
 }
 
 export interface EntityTransformPreview {
@@ -299,6 +319,7 @@ export type TransformPreview =
   | ModelInstanceTransformPreview
   | ModelInstancesTransformPreview
   | PathPointTransformPreview
+  | PathPointsTransformPreview
   | EntityTransformPreview
   | EntitiesTransformPreview;
 
@@ -433,6 +454,15 @@ function cloneModelInstanceTransformPreviewItem(
   };
 }
 
+function clonePathPointTransformPreviewItem(
+  preview: PathPointTransformPreviewItem
+): PathPointTransformPreviewItem {
+  return {
+    pointId: preview.pointId,
+    position: cloneVec3(preview.position)
+  };
+}
+
 function cloneEntityTransformPreviewItem(
   preview: EntityTransformPreviewItem
 ): EntityTransformPreviewItem {
@@ -466,6 +496,15 @@ function areModelInstanceTransformPreviewItemsEqual(
     areVec3Equal(left.position, right.position) &&
     areVec3Equal(left.rotationDegrees, right.rotationDegrees) &&
     areVec3Equal(left.scale, right.scale)
+  );
+}
+
+function arePathPointTransformPreviewItemsEqual(
+  left: PathPointTransformPreviewItem,
+  right: PathPointTransformPreviewItem
+): boolean {
+  return (
+    left.pointId === right.pointId && areVec3Equal(left.position, right.position)
   );
 }
 
@@ -677,6 +716,16 @@ export function cloneTransformTarget(target: TransformTarget): TransformTarget {
         pointId: target.pointId,
         initialPosition: cloneVec3(target.initialPosition)
       };
+    case "pathPoints":
+      return {
+        kind: "pathPoints",
+        pathId: target.pathId,
+        activePointId: target.activePointId,
+        initialPivot: cloneVec3(target.initialPivot),
+        items: target.items.map(
+          (item) => cloneTransformTarget(item) as PathPointTransformTarget
+        )
+      };
     case "entity":
       return {
         kind: "entity",
@@ -735,6 +784,12 @@ export function cloneTransformPreview(
       return {
         kind: "pathPoint",
         position: cloneVec3(preview.position)
+      };
+    case "pathPoints":
+      return {
+        kind: "pathPoints",
+        pivot: cloneVec3(preview.pivot),
+        items: preview.items.map(clonePathPointTransformPreviewItem)
       };
     case "entity":
       return {
@@ -913,6 +968,17 @@ function areTransformTargetsEqual(
         left.pointId === right.pointId &&
         areVec3Equal(left.initialPosition, right.initialPosition)
       );
+    case "pathPoints":
+      return (
+        right.kind === "pathPoints" &&
+        left.pathId === right.pathId &&
+        left.activePointId === right.activePointId &&
+        areVec3Equal(left.initialPivot, right.initialPivot) &&
+        left.items.length === right.items.length &&
+        left.items.every((item, index) =>
+          areTransformTargetsEqual(item, right.items[index])
+        )
+      );
     case "entity":
       return (
         right.kind === "entity" &&
@@ -984,6 +1050,15 @@ function areTransformPreviewsEqual(
       return (
         right.kind === "pathPoint" &&
         areVec3Equal(left.position, right.position)
+      );
+    case "pathPoints":
+      return (
+        right.kind === "pathPoints" &&
+        areVec3Equal(left.pivot, right.pivot) &&
+        left.items.length === right.items.length &&
+        left.items.every((item, index) =>
+          arePathPointTransformPreviewItemsEqual(item, right.items[index])
+        )
       );
     case "entity":
       return (
@@ -1076,6 +1151,15 @@ export function createTransformPreviewFromTarget(
       return {
         kind: "pathPoint",
         position: cloneVec3(target.initialPosition)
+      };
+    case "pathPoints":
+      return {
+        kind: "pathPoints",
+        pivot: cloneVec3(target.initialPivot),
+        items: target.items.map((item) => ({
+          pointId: item.pointId,
+          position: cloneVec3(item.initialPosition)
+        }))
       };
     case "entity":
       return {
@@ -1186,6 +1270,22 @@ export function doesTransformSessionChangeTarget(
         session.preview.kind === "pathPoint" &&
         !areVec3Equal(session.preview.position, session.target.initialPosition)
       );
+    case "pathPoints": {
+      const pathPointsTarget = session.target;
+      return (
+        session.preview.kind === "pathPoints" &&
+        (!areVec3Equal(session.preview.pivot, pathPointsTarget.initialPivot) ||
+          session.preview.items.length !== pathPointsTarget.items.length ||
+          session.preview.items.some((item, index) => {
+            const targetItem = pathPointsTarget.items[index];
+
+            return (
+              item.pointId !== targetItem.pointId ||
+              !areVec3Equal(item.position, targetItem.initialPosition)
+            );
+          }))
+      );
+    }
     case "entity":
       return (
         session.preview.kind === "entity" &&
