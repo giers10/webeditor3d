@@ -38,7 +38,7 @@ export const ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_QUALITIES = [
 ] as const;
 export const FOLIAGE_QUALITY_SHADOW_MODES = ["off", "near", "full"] as const;
 export const MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER = 0 as const;
-export const MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER = 2 as const;
+export const MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER = 8 as const;
 export const MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER = 0.1 as const;
 export const MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER = 2 as const;
 
