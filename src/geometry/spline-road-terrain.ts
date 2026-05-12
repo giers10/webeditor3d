@@ -12,7 +12,7 @@ import {
   getTerrainPaintWeightSampleOffset,
   getTerrainSampleIndex,
   getTerrainSampleLayerWeights,
-  TERRAIN_LAYER_COUNT,
+  getTerrainStoredPaintWeightCount,
   type Terrain
 } from "../document/terrains";
 import { createTerrainBrushPatchFromTerrains } from "./terrain-brush";
@@ -185,14 +185,12 @@ function getRoadPaintLayerIndex(path: ScenePath, terrain: Terrain): number | nul
 }
 
 function createRoadTargetWeights(
+  terrain: Terrain,
   layerIndex: number
-): [number, number, number, number] {
-  return [
-    layerIndex === 0 ? 1 : 0,
-    layerIndex === 1 ? 1 : 0,
-    layerIndex === 2 ? 1 : 0,
-    layerIndex === 3 ? 1 : 0
-  ];
+): number[] {
+  return terrain.layers.map((_, currentLayerIndex) =>
+    currentLayerIndex === layerIndex ? 1 : 0
+  );
 }
 
 function applyRoadPaintWeights(
@@ -204,14 +202,13 @@ function applyRoadPaintWeights(
   changedPaintWeightIndices: Set<number>
 ) {
   const currentWeights = getTerrainSampleLayerWeights(terrain, sampleX, sampleZ);
-  const targetWeights = createRoadTargetWeights(layerIndex);
+  const targetWeights = createRoadTargetWeights(terrain, layerIndex);
   const offset = getTerrainPaintWeightSampleOffset(terrain, sampleX, sampleZ);
+  const storedWeightCount = getTerrainStoredPaintWeightCount(
+    terrain.layers.length
+  );
 
-  for (
-    let layerOffset = 0;
-    layerOffset < TERRAIN_LAYER_COUNT - 1;
-    layerOffset += 1
-  ) {
+  for (let layerOffset = 0; layerOffset < storedWeightCount; layerOffset += 1) {
     const paintWeightIndex = offset + layerOffset;
     const currentWeight = currentWeights[layerOffset + 1] ?? 0;
     const nextWeight = lerp(

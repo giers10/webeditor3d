@@ -6,9 +6,9 @@ import type {
 } from "../core/terrain-brush";
 import {
   getOrCreateTerrainFoliageMask,
+  getTerrainStoredPaintWeightCount,
   isTerrainFoliageMaskEmpty,
   markTerrainRenderSamplesDirty,
-  TERRAIN_LAYER_COUNT,
   updateTerrainBoundsCacheAfterHeightPatch,
   type Terrain,
   type TerrainSampleBounds
@@ -124,7 +124,9 @@ export function applyTerrainBrushPatchToDocument(
     renderDirtyBounds = mergeTerrainSampleIndexIntoBounds(
       renderDirtyBounds,
       terrain,
-      Math.floor(entry.index / (TERRAIN_LAYER_COUNT - 1))
+      Math.floor(
+        entry.index / getTerrainStoredPaintWeightCount(terrain.layers.length)
+      )
     );
   }
 
