@@ -118,6 +118,11 @@ describe("Path inspector", () => {
       });
       expect(Object.keys(store.getState().document.paths)).toHaveLength(1);
     });
+    expect(
+      viewportHostInstances.every(
+        (viewportHost) => viewportHost.focusSelection.mock.calls.length === 0
+      )
+    ).toBe(true);
 
     const createdPath = Object.values(store.getState().document.paths)[0];
 
@@ -159,5 +164,10 @@ describe("Path inspector", () => {
         z: 2
       });
     });
+    expect(
+      viewportHostInstances.every(
+        (viewportHost) => viewportHost.focusSelection.mock.calls.length === 0
+      )
+    ).toBe(true);
   });
 });
