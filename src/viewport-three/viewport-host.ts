@@ -6038,10 +6038,14 @@ export class ViewportHost {
     const trackStartPoint = toLocalPoint(entity.trackStartPoint);
     const trackEndPoint = toLocalPoint(entity.trackEndPoint);
     const railStartPoint = toLocalPoint(
-      sampleScenePathPosition(authoredPath, entity.railStartProgress)
+      sampleScenePathPosition(authoredPath, entity.railStartProgress, {
+        terrains: this.getPathTerrainGlueTerrains()
+      })
     );
     const railEndPoint = toLocalPoint(
-      sampleScenePathPosition(authoredPath, entity.railEndProgress)
+      sampleScenePathPosition(authoredPath, entity.railEndProgress, {
+        terrains: this.getPathTerrainGlueTerrains()
+      })
     );
 
     preview.previewGroup.visible = true;
