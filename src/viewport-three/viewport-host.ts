@@ -8137,6 +8137,7 @@ export class ViewportHost {
 
     renderObjects.line.geometry.dispose();
     renderObjects.line.geometry = this.createPathLineGeometry(path);
+    this.updateRoadSurfaceRenderObjectState(path);
     this.disposePathRoadMeshes(renderObjects.roadMeshes);
     renderObjects.roadMeshes = this.createPathRoadPreviewMeshes(path);
     this.addPathRoadMeshes(renderObjects.roadMeshes);
