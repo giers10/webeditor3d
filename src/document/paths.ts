@@ -1247,11 +1247,20 @@ export function resolveNearestPointOnResolvedScenePath(
 
 export function sampleScenePathPosition(
   path: Pick<ScenePath, "loop" | "points"> &
-    Partial<Pick<ScenePath, "curveMode" | "sampledResolution">>,
+    Partial<
+      Pick<
+        ScenePath,
+        "curveMode" | "sampledResolution" | "glueToTerrain" | "terrainOffset"
+      >
+    >,
   progress: number,
-  options: { smooth?: boolean } = {}
+  options: { smooth?: boolean; terrains?: readonly Terrain[] } = {}
 ): Vec3 {
-  return sampleResolvedScenePathPosition(resolveScenePath(path), progress, options);
+  return sampleResolvedScenePathPosition(
+    resolveScenePath(path, { terrains: options.terrains }),
+    progress,
+    options
+  );
 }
 
 export function sampleResolvedScenePathTangent(
@@ -1278,9 +1287,18 @@ export function sampleResolvedScenePathTangent(
 
 export function sampleScenePathTangent(
   path: Pick<ScenePath, "loop" | "points"> &
-    Partial<Pick<ScenePath, "curveMode" | "sampledResolution">>,
+    Partial<
+      Pick<
+        ScenePath,
+        "curveMode" | "sampledResolution" | "glueToTerrain" | "terrainOffset"
+      >
+    >,
   progress: number,
-  options: { smooth?: boolean } = {}
+  options: { smooth?: boolean; terrains?: readonly Terrain[] } = {}
 ): Vec3 {
-  return sampleResolvedScenePathTangent(resolveScenePath(path), progress, options);
+  return sampleResolvedScenePathTangent(
+    resolveScenePath(path, { terrains: options.terrains }),
+    progress,
+    options
+  );
 }
