@@ -5646,6 +5646,25 @@ export function App({
         return;
       }
 
+      const isPathPointSelection =
+        editorState.selection.kind === "pathPoint" ||
+        editorState.selection.kind === "pathPoints";
+      const isAppendPathPointShortcut =
+        event.shiftKey &&
+        !event.altKey &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        (event.code === "KeyW" ||
+          (event.code === "KeyD" && isPathPointSelection));
+
+      if (isAppendPathPointShortcut) {
+        if (editorState.toolMode === "select" && selectedPath !== null) {
+          event.preventDefault();
+          handleAddPathPoint();
+        }
+        return;
+      }
+
       if (isDuplicateShortcut) {
         const duplicated = handleDuplicateSelection();
 
@@ -5653,21 +5672,6 @@ export function App({
           event.preventDefault();
         }
 
-        return;
-      }
-
-      const isAppendPathPointShortcut =
-        event.shiftKey &&
-        !event.altKey &&
-        !event.ctrlKey &&
-        !event.metaKey &&
-        event.code === "KeyW";
-
-      if (isAppendPathPointShortcut) {
-        if (editorState.toolMode === "select" && selectedPath !== null) {
-          event.preventDefault();
-          handleAddPathPoint();
-        }
         return;
       }
 
