@@ -89,8 +89,10 @@ import {
   type ScenePath
 } from "./paths";
 import {
+  MAX_TERRAIN_LAYER_COUNT,
+  MIN_TERRAIN_LAYER_COUNT,
   MIN_TERRAIN_SAMPLE_COUNT,
-  TERRAIN_LAYER_COUNT,
+  getTerrainStoredPaintWeightCount,
   type Terrain
 } from "./terrains";
 import {
