@@ -273,6 +273,105 @@ export function normalizeScenePathTerrainOffset(value: number): number {
   return value;
 }
 
+function normalizeFiniteRange(
+  value: number,
+  min: number,
+  max: number,
+  label: string
+): number {
+  if (!Number.isFinite(value)) {
+    throw new Error(`${label} must be a finite number.`);
+  }
+
+  if (value < min || value > max) {
+    throw new Error(`${label} must be between ${min} and ${max}.`);
+  }
+
+  return value;
+}
+
+export function normalizeScenePathRoadWidth(value: number): number {
+  return normalizeFiniteRange(
+    value,
+    MIN_SCENE_PATH_ROAD_WIDTH,
+    MAX_SCENE_PATH_ROAD_WIDTH,
+    "Path road width"
+  );
+}
+
+export function normalizeScenePathRoadShoulderWidth(value: number): number {
+  return normalizeFiniteRange(
+    value,
+    MIN_SCENE_PATH_ROAD_SHOULDER_WIDTH,
+    MAX_SCENE_PATH_ROAD_SHOULDER_WIDTH,
+    "Path road shoulder width"
+  );
+}
+
+export function normalizeScenePathRoadFalloff(value: number): number {
+  return normalizeFiniteRange(
+    value,
+    MIN_SCENE_PATH_ROAD_FALLOFF,
+    MAX_SCENE_PATH_ROAD_FALLOFF,
+    "Path road falloff"
+  );
+}
+
+export function normalizeScenePathRoadHeightOffset(value: number): number {
+  if (!Number.isFinite(value)) {
+    throw new Error("Path road height offset must be a finite number.");
+  }
+
+  return value;
+}
+
+export function normalizeScenePathRoadMaterialId(
+  value: string | null | undefined
+): string | null {
+  if (value === null || value === undefined) {
+    return DEFAULT_SCENE_PATH_ROAD_MATERIAL_ID;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length === 0
+    ? DEFAULT_SCENE_PATH_ROAD_MATERIAL_ID
+    : trimmedValue;
+}
+
+export function createScenePathRoadSettings(
+  overrides: Partial<ScenePathRoadSettings> = {}
+): ScenePathRoadSettings {
+  const enabled = overrides.enabled ?? DEFAULT_SCENE_PATH_ROAD_ENABLED;
+  const terrainConform =
+    overrides.terrainConform ?? DEFAULT_SCENE_PATH_ROAD_TERRAIN_CONFORM;
+
+  if (typeof enabled !== "boolean") {
+    throw new Error("Path road enabled must be a boolean.");
+  }
+
+  if (typeof terrainConform !== "boolean") {
+    throw new Error("Path road terrain conform must be a boolean.");
+  }
+
+  return {
+    enabled,
+    width: normalizeScenePathRoadWidth(
+      overrides.width ?? DEFAULT_SCENE_PATH_ROAD_WIDTH
+    ),
+    shoulderWidth: normalizeScenePathRoadShoulderWidth(
+      overrides.shoulderWidth ?? DEFAULT_SCENE_PATH_ROAD_SHOULDER_WIDTH
+    ),
+    falloff: normalizeScenePathRoadFalloff(
+      overrides.falloff ?? DEFAULT_SCENE_PATH_ROAD_FALLOFF
+    ),
+    heightOffset: normalizeScenePathRoadHeightOffset(
+      overrides.heightOffset ?? DEFAULT_SCENE_PATH_ROAD_HEIGHT_OFFSET
+    ),
+    terrainConform,
+    materialId: normalizeScenePathRoadMaterialId(overrides.materialId)
+  };
+}
+
 function resolvePathSegmentSample(
   path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>,
   progress: number
