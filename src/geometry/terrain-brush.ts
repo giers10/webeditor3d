@@ -15,7 +15,7 @@ import {
   getTerrainPaintWeightSampleOffset,
   getTerrainSampleIndex,
   getTerrainSampleLayerWeights,
-  TERRAIN_LAYER_COUNT,
+  getTerrainStoredPaintWeightCount,
   type Terrain
 } from "../document/terrains";
 
@@ -232,22 +232,20 @@ function getTerrainSmoothTargetHeight(
 }
 
 function createTerrainPaintTargetWeights(
+  terrain: Terrain,
   layerIndex: number
-): [number, number, number, number] {
+): number[] {
   if (
     !Number.isInteger(layerIndex) ||
     layerIndex < 0 ||
-    layerIndex >= TERRAIN_LAYER_COUNT
+    layerIndex >= terrain.layers.length
   ) {
     throw new Error(`Terrain paint layer index ${layerIndex} is out of range.`);
   }
 
-  return [
-    layerIndex === 0 ? 1 : 0,
-    layerIndex === 1 ? 1 : 0,
-    layerIndex === 2 ? 1 : 0,
-    layerIndex === 3 ? 1 : 0
-  ];
+  return terrain.layers.map((_, currentLayerIndex) =>
+    currentLayerIndex === layerIndex ? 1 : 0
+  );
 }
 
 function setTerrainSamplePaintWeights(
@@ -255,16 +253,15 @@ function setTerrainSamplePaintWeights(
   terrain: Terrain,
   sampleX: number,
   sampleZ: number,
-  weights: readonly [number, number, number, number]
+  weights: readonly number[]
 ): number[] {
   const offset = getTerrainPaintWeightSampleOffset(terrain, sampleX, sampleZ);
+  const storedWeightCount = getTerrainStoredPaintWeightCount(
+    terrain.layers.length
+  );
   const changedIndices: number[] = [];
 
-  for (
-    let layerOffset = 0;
-    layerOffset < TERRAIN_LAYER_COUNT - 1;
-    layerOffset += 1
-  ) {
+  for (let layerOffset = 0; layerOffset < storedWeightCount; layerOffset += 1) {
     const paintWeightIndex = offset + layerOffset;
     const nextWeight = weights[layerOffset + 1] ?? 0;
 
@@ -437,20 +434,31 @@ export function applyTerrainBrushStampInPlace(options: {
             sampleX,
             sampleZ
           );
-          const targetWeights = createTerrainPaintTargetWeights(layerIndex);
+          const targetWeights = createTerrainPaintTargetWeights(
+            terrain,
+            layerIndex
+          );
           const blend = clamp01(smoothingStrength * weight);
-          const nextWeights: [number, number, number, number] = [
-            lerp(currentWeights[0], targetWeights[0], blend),
-            lerp(currentWeights[1], targetWeights[1], blend),
-            lerp(currentWeights[2], targetWeights[2], blend),
-            lerp(currentWeights[3], targetWeights[3], blend)
-          ];
+          const nextWeights = currentWeights.map((currentWeight, weightIndex) =>
+            lerp(currentWeight, targetWeights[weightIndex] ?? 0, blend)
+          );
+          const storedWeightCount = getTerrainStoredPaintWeightCount(
+            terrain.layers.length
+          );
+          let storedWeightsChanged = false;
 
-          if (
-            nextWeights[1] !== currentWeights[1] ||
-            nextWeights[2] !== currentWeights[2] ||
-            nextWeights[3] !== currentWeights[3]
+          for (
+            let layerOffset = 0;
+            layerOffset < storedWeightCount;
+            layerOffset += 1
           ) {
+            if (nextWeights[layerOffset + 1] !== currentWeights[layerOffset + 1]) {
+              storedWeightsChanged = true;
+              break;
+            }
+          }
+
+          if (storedWeightsChanged) {
             const changedPaintWeightIndices = setTerrainSamplePaintWeights(
               terrain.paintWeights,
               terrain,
