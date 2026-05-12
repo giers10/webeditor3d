@@ -4247,6 +4247,77 @@ export class RuntimeHost {
     });
   }
 
+  private configureRoadSurfaceMaterial(material: Material): Material {
+    material.polygonOffset = true;
+    material.polygonOffsetFactor = -1;
+    material.polygonOffsetUnits = -2;
+    return material;
+  }
+
+  private createRuntimeRoadSurfaceMaterial(path: RuntimePath): Material {
+    const material = path.road.material;
+
+    if (material === null) {
+      return this.configureRoadSurfaceMaterial(
+        new MeshStandardMaterial({
+          color: 0x5f5747,
+          roughness: 1,
+          metalness: 0,
+          side: DoubleSide
+        })
+      );
+    }
+
+    const textureSet = this.getOrCreateTextureSet(material);
+
+    return this.configureRoadSurfaceMaterial(
+      new MeshPhysicalMaterial({
+        color: 0xffffff,
+        map: textureSet.baseColor,
+        normalMap: textureSet.normal,
+        roughnessMap: textureSet.roughness,
+        roughness: 1,
+        metalnessMap: textureSet.metallic,
+        metalness: textureSet.metallic === null ? 0.03 : 1,
+        specularColorMap: textureSet.specular,
+        specularColor: new Color(0xffffff),
+        specularIntensity: textureSet.specular === null ? 0.2 : 1,
+        side: DoubleSide
+      })
+    );
+  }
+
+  private rebuildRoadSurfaces(runtimeScene: RuntimeSceneDefinition) {
+    this.clearRoadSurfaces();
+
+    for (const path of runtimeScene.paths) {
+      if (!path.enabled || !path.visible || !path.road.enabled) {
+        continue;
+      }
+
+      const geometry = buildSplineRoadMeshGeometry({
+        path,
+        terrains: runtimeScene.foliage.terrains
+      });
+
+      if (geometry === null) {
+        continue;
+      }
+
+      const mesh = new Mesh(geometry, this.createRuntimeRoadSurfaceMaterial(path));
+      mesh.castShadow = false;
+      mesh.receiveShadow = true;
+      mesh.userData.pathId = path.id;
+      applyRendererRenderCategoryFromMaterial(mesh);
+      this.roadSurfaceGroup.add(mesh);
+      this.roadSurfaceMeshes.set(path.id, {
+        mesh
+      });
+    }
+
+    this.applyShadowState();
+  }
+
   private createFogMaterialSet(
     brush: RuntimeBoxBrushInstance,
     volumeRenderPaths: {
