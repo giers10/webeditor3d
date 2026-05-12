@@ -5660,7 +5660,9 @@ export function App({
       if (isAppendPathPointShortcut) {
         if (editorState.toolMode === "select" && selectedPath !== null) {
           event.preventDefault();
-          handleAddPathPoint();
+          handleAddPathPoint({
+            startGrab: event.code === "KeyD"
+          });
         }
         return;
       }
@@ -9172,11 +9174,7 @@ export function App({
           label: "Create path"
         })
       );
-      requestViewportFocus({
-        kind: "paths",
-        ids: [nextPath.id]
-      });
-      setStatusMessage("Created Path and framed it in the viewport.");
+      setStatusMessage("Created Path.");
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
