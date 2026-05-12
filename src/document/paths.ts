@@ -6,6 +6,8 @@ export interface ScenePathPoint {
   position: Vec3;
 }
 
+export type ScenePathCurveMode = "linear" | "catmullRom";
+
 export interface ScenePath {
   id: string;
   kind: "path";
@@ -13,6 +15,8 @@ export interface ScenePath {
   visible: boolean;
   enabled: boolean;
   loop: boolean;
+  curveMode: ScenePathCurveMode;
+  sampledResolution: number;
   points: ScenePathPoint[];
 }
 
@@ -30,6 +34,8 @@ export interface ResolvedScenePathSegment {
 
 export interface ResolvedScenePath {
   loop: boolean;
+  curveMode: ScenePathCurveMode;
+  sampledResolution: number;
   points: ScenePathPoint[];
   segments: ResolvedScenePathSegment[];
   totalLength: number;
@@ -37,6 +43,8 @@ export interface ResolvedScenePath {
 
 export interface ResolvedScenePathProjectionSource {
   loop: boolean;
+  curveMode?: ScenePathCurveMode;
+  sampledResolution?: number;
   points: Array<{
     position: Vec3;
   }>;
@@ -94,6 +102,8 @@ interface ResolvedPathLike<
   TSegment extends ResolvedPathSegmentLike = ResolvedScenePathSegment
 > {
   loop: boolean;
+  curveMode?: ScenePathCurveMode;
+  sampledResolution?: number;
   points: TPoint[];
   segments: TSegment[];
   totalLength: number;
@@ -108,6 +118,10 @@ interface SmoothedPathSample {
 export const DEFAULT_SCENE_PATH_VISIBLE = true;
 export const DEFAULT_SCENE_PATH_ENABLED = true;
 export const DEFAULT_SCENE_PATH_LOOP = false;
+export const DEFAULT_SCENE_PATH_CURVE_MODE: ScenePathCurveMode = "linear";
+export const DEFAULT_SCENE_PATH_SAMPLED_RESOLUTION = 12;
+export const MIN_SCENE_PATH_SAMPLED_RESOLUTION = 1;
+export const MAX_SCENE_PATH_SAMPLED_RESOLUTION = 64;
 export const MIN_SCENE_PATH_POINT_COUNT = 2;
 
 const DEFAULT_SCENE_PATH_POINT_POSITIONS: ReadonlyArray<Vec3> = [
