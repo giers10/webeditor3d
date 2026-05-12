@@ -3198,6 +3198,13 @@ export class RuntimeHost {
       );
     }
 
+    for (const renderObjects of this.roadSurfaceMeshes.values()) {
+      applyAdvancedRenderingRenderableShadowFlags(
+        renderObjects.mesh,
+        shadowsEnabled
+      );
+    }
+
     applyAdvancedRenderingRenderableShadowFlags(
       this.foliageRenderer.group,
       shadowsEnabled
@@ -5125,6 +5132,16 @@ export class RuntimeHost {
     }
 
     this.terrainMeshes.clear();
+  }
+
+  private clearRoadSurfaces() {
+    for (const renderObjects of this.roadSurfaceMeshes.values()) {
+      this.roadSurfaceGroup.remove(renderObjects.mesh);
+      renderObjects.mesh.geometry.dispose();
+      renderObjects.mesh.material.dispose();
+    }
+
+    this.roadSurfaceMeshes.clear();
   }
 
   private rebuildFoliage(runtimeScene: RuntimeSceneDefinition) {
