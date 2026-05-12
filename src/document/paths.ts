@@ -241,6 +241,14 @@ export function normalizeScenePathSampledResolution(value: number): number {
   return value;
 }
 
+export function normalizeScenePathTerrainOffset(value: number): number {
+  if (!Number.isFinite(value)) {
+    throw new Error("Path terrain offset must be a finite number.");
+  }
+
+  return value;
+}
+
 function resolvePathSegmentSample(
   path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>,
   progress: number
