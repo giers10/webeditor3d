@@ -349,8 +349,13 @@ interface BrushRenderObjects {
 
 interface PathRenderObjects {
   line: Line<BufferGeometry, LineBasicMaterial>;
+  segments: Array<{
+    outlineMesh: Mesh<CylinderGeometry, MeshBasicMaterial>;
+    mesh: Mesh<CylinderGeometry, MeshBasicMaterial>;
+  }>;
   pointMeshes: Array<{
     pointId: string;
+    outlineMesh: Mesh<SphereGeometry, MeshBasicMaterial>;
     mesh: Mesh<SphereGeometry, MeshBasicMaterial>;
   }>;
 }
@@ -505,12 +510,18 @@ const INTERACTABLE_SELECTED_COLOR = 0xf1cf7e;
 const PATH_COLOR = 0x4b82d6;
 const PATH_HOVERED_COLOR = 0x86b6ff;
 const PATH_SELECTED_COLOR = 0xf3be8f;
+const PATH_OUTLINE_COLOR = 0x05070c;
+const PATH_RENDER_ORDER = 3_250;
+const PATH_LINE_WIDTH = 2;
+const PATH_SEGMENT_RADIUS = 0.026;
+const PATH_SEGMENT_OUTLINE_RADIUS = 0.05;
 const PATH_POINT_COLOR = 0xb7cbec;
 const PATH_POINT_HOVERED_COLOR = 0xf3be8f;
 const PATH_POINT_SELECTED_COLOR = 0xcf7b42;
-const PATH_POINT_RADIUS = 0.12;
-const PATH_POINT_HOVERED_SCALE = 1.18;
-const PATH_POINT_SELECTED_SCALE = 1.35;
+const PATH_POINT_RADIUS = 0.15;
+const PATH_POINT_OUTLINE_RADIUS = 0.22;
+const PATH_POINT_HOVERED_SCALE = 1.22;
+const PATH_POINT_SELECTED_SCALE = 1.45;
 const TERRAIN_BASE_COLOR = 0x708b57;
 const TERRAIN_HOVERED_COLOR = 0x89a765;
 const TERRAIN_SELECTED_COLOR = 0xe0c17f;
