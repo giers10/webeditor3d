@@ -11,6 +11,7 @@ import {
   sampleScenePathPosition,
   sampleScenePathTangent
 } from "../../src/document/paths";
+import { createTerrain } from "../../src/document/terrains";
 
 describe("scene paths", () => {
   it("resolves linear segments and samples position and tangent by progress", () => {
@@ -232,6 +233,66 @@ describe("scene paths", () => {
     expect(nearest.progress).toBeGreaterThan(0);
     expect(nearest.progress).toBeLessThan(1);
     expect(nearest.distanceAlongPath).toBeGreaterThan(0);
+  });
+
+  it("can resolve spline samples glued to terrain without rewriting authored points", () => {
+    const terrain = createTerrain({
+      id: "terrain-path-glue",
+      position: {
+        x: 0,
+        y: 10,
+        z: 0
+      },
+      sampleCountX: 3,
+      sampleCountZ: 3,
+      cellSize: 1,
+      heights: [0, 1, 2, 0, 1, 2, 0, 1, 2]
+    });
+    const path = createScenePath({
+      id: "path-glued",
+      curveMode: "catmullRom",
+      sampledResolution: 4,
+      glueToTerrain: true,
+      terrainOffset: 0.25,
+      points: [
+        {
+          id: "point-a",
+          position: {
+            x: 0,
+            y: 100,
+            z: 0
+          }
+        },
+        {
+          id: "point-b",
+          position: {
+            x: 1,
+            y: 100,
+            z: 1
+          }
+        },
+        {
+          id: "point-c",
+          position: {
+            x: 2,
+            y: 100,
+            z: 2
+          }
+        }
+      ]
+    });
+    const resolvedPath = resolveScenePath(path, { terrains: [terrain] });
+
+    expect(path.points[0]?.position.y).toBe(100);
+    expect(resolvedPath.points[0]?.position.y).toBe(10.25);
+    expect(resolvedPath.points[1]?.position.y).toBe(11.25);
+    expect(resolvedPath.points[2]?.position.y).toBe(12.25);
+    expect(resolvedPath.segments.every((segment) => segment.start.y < 20)).toBe(
+      true
+    );
+    expect(
+      sampleScenePathPosition(path, 0.5, { terrains: [terrain] }).y
+    ).toBeCloseTo(11.25);
   });
 
   it("projects world points onto the nearest resolved path segment and returns progress", () => {
