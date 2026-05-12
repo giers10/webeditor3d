@@ -720,7 +720,8 @@ describe("buildRuntimeSceneFromDocument", () => {
           falloff: 0.5,
           heightOffset: 0.03,
           terrainConform: true,
-          materialId: null
+          materialId: null,
+          material: null
         },
         points: [
           {
