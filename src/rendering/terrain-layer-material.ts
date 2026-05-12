@@ -13,9 +13,10 @@ import {
 } from "three";
 
 import type { MaterialDef } from "../materials/starter-material-library";
+import { TERRAIN_SHADER_LAYER_COUNT } from "../document/terrains";
 
 interface TerrainLayerBlendMaterialOptions {
-  layerTextures: readonly [Texture, Texture, Texture, Texture];
+  layerTextures: readonly Texture[];
   emissiveHex?: number;
   emissiveIntensity?: number;
   foliageMaskPreviewColorHex?: number;
@@ -24,7 +25,7 @@ interface TerrainLayerBlendMaterialOptions {
 }
 
 interface TerrainLayerColorBlendMaterialOptions {
-  layerColors: readonly [number, number, number, number];
+  layerColors: readonly number[];
   emissiveHex?: number;
   emissiveIntensity?: number;
   foliageMaskPreviewColorHex?: number;
@@ -72,6 +73,26 @@ export function getTerrainLayerPreviewColor(material: MaterialDef | null): numbe
   return material === null
     ? new Color("#aea79a").getHex()
     : new Color(material.swatchColorHex).getHex();
+}
+
+function createPaddedTerrainLayerTextures(
+  textures: readonly Texture[]
+): Texture[] {
+  const fallbackTexture = getFallbackTerrainLayerTexture();
+
+  return Array.from(
+    { length: TERRAIN_SHADER_LAYER_COUNT },
+    (_, index) => textures[index] ?? fallbackTexture
+  );
+}
+
+function createPaddedTerrainLayerColors(layerColors: readonly number[]): Color[] {
+  const fallbackColor = getTerrainLayerPreviewColor(null);
+
+  return Array.from(
+    { length: TERRAIN_SHADER_LAYER_COUNT },
+    (_, index) => new Color(layerColors[index] ?? fallbackColor)
+  );
 }
 
 export function createTerrainLayerBlendMaterial(
