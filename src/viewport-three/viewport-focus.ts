@@ -11,8 +11,8 @@ import {
 import type { Vec3 } from "../core/vector";
 import type { Brush } from "../document/brushes";
 import type { SceneDocument } from "../document/scene-document";
-import type { ScenePath } from "../document/paths";
-import { getTerrainBounds, type Terrain } from "../document/terrains";
+import { resolveScenePath, type ScenePath } from "../document/paths";
+import { getTerrainBounds, getTerrains, type Terrain } from "../document/terrains";
 import {
   resolveCameraRigDocumentPosition,
   type EntityInstance
@@ -270,15 +270,33 @@ function createModelInstanceFocusTarget(modelInstance: ModelInstance, asset: Pro
   );
 }
 
-function includePath(bounds: FocusBoundsAccumulator, path: ScenePath) {
-  for (const point of path.points) {
-    includeBounds(bounds, point.position, point.position);
+function includePath(
+  bounds: FocusBoundsAccumulator,
+  path: ScenePath,
+  terrains: readonly Terrain[]
+) {
+  const resolvedPath = resolveScenePath(path, {
+    terrains: terrains.filter((terrain) => terrain.enabled)
+  });
+
+  for (const segment of resolvedPath.segments) {
+    includeBounds(bounds, segment.start, segment.start);
+    includeBounds(bounds, segment.end, segment.end);
+  }
+
+  if (resolvedPath.segments.length === 0) {
+    for (const point of resolvedPath.points) {
+      includeBounds(bounds, point.position, point.position);
+    }
   }
 }
 
-function createPathFocusTarget(path: ScenePath): ViewportFocusTarget | null {
+function createPathFocusTarget(
+  path: ScenePath,
+  terrains: readonly Terrain[]
+): ViewportFocusTarget | null {
   const bounds = createEmptyBoundsAccumulator();
-  includePath(bounds, path);
+  includePath(bounds, path, terrains);
   return finishBounds(bounds);
 }
 
