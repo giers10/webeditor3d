@@ -28,6 +28,7 @@ import { createImportAudioAssetCommand } from "../commands/import-audio-asset-co
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
 import { createImportModelAssetCommand } from "../commands/import-model-asset-command";
 import { createAddPathPointCommand } from "../commands/add-path-point-command";
+import { createApplySplineRoadToTerrainCommand } from "../commands/apply-spline-road-to-terrain-command";
 import { createDeletePathCommand } from "../commands/delete-path-command";
 import { createDeletePathPointCommand } from "../commands/delete-path-point-command";
 import { createDeletePathPointsCommand } from "../commands/delete-path-points-command";
@@ -9735,6 +9736,24 @@ export function App({
       });
 
       commitPathChange(selectedPath, nextPath, successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleApplyPathRoadToTerrain = () => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before applying its road to terrain.");
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createApplySplineRoadToTerrainCommand({
+          pathId: selectedPath.id
+        })
+      );
+      setStatusMessage("Applied Path road to terrain.");
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -22147,10 +22166,23 @@ export function App({
                         ))}
                       </select>
                     </label>
+                    <div className="inline-actions">
+                      <button
+                        className="toolbar__button"
+                        data-testid="apply-path-road-to-terrain"
+                        type="button"
+                        disabled={!selectedPath.road.enabled}
+                        onClick={handleApplyPathRoadToTerrain}
+                      >
+                        Apply Road to Terrain
+                      </button>
+                    </div>
                     <div className="material-summary">
                       Road preview draws a temporary corridor along the resolved
-                      spline. Width affects the visible strip; shoulder and
-                      falloff are stored for the terrain-apply command next.
+                      spline. Applying it patches terrain heights, terrain paint
+                      weights when the material already exists on a terrain
+                      layer, and foliage blocker masks. It does not generate a
+                      road mesh yet.
                     </div>
                   </div>
 
