@@ -894,7 +894,7 @@ export function sampleResolvedScenePathPosition(
   progress: number,
   options: { smooth?: boolean } = {}
 ): Vec3 {
-  if (options.smooth) {
+  if (options.smooth && path.curveMode !== "catmullRom") {
     return sampleSmoothedPath(path, progress).position;
   }
 
@@ -1084,7 +1084,8 @@ export function resolveNearestPointOnResolvedScenePath(
 }
 
 export function sampleScenePathPosition(
-  path: Pick<ScenePath, "loop" | "points">,
+  path: Pick<ScenePath, "loop" | "points"> &
+    Partial<Pick<ScenePath, "curveMode" | "sampledResolution">>,
   progress: number,
   options: { smooth?: boolean } = {}
 ): Vec3 {
@@ -1096,7 +1097,7 @@ export function sampleResolvedScenePathTangent(
   progress: number,
   options: { smooth?: boolean } = {}
 ): Vec3 {
-  if (options.smooth) {
+  if (options.smooth && path.curveMode !== "catmullRom") {
     return sampleSmoothedPath(path, progress).tangent;
   }
 
@@ -1114,7 +1115,8 @@ export function sampleResolvedScenePathTangent(
 }
 
 export function sampleScenePathTangent(
-  path: Pick<ScenePath, "loop" | "points">,
+  path: Pick<ScenePath, "loop" | "points"> &
+    Partial<Pick<ScenePath, "curveMode" | "sampledResolution">>,
   progress: number,
   options: { smooth?: boolean } = {}
 ): Vec3 {
