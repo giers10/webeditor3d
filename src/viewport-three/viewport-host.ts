@@ -7436,8 +7436,20 @@ export class ViewportHost {
     }
   }
 
+  private getPathTerrainGlueTerrains(): readonly Terrain[] {
+    if (this.currentDocument === null) {
+      return [];
+    }
+
+    return getTerrains(this.currentDocument.terrains).filter(
+      (terrain) => terrain.enabled
+    );
+  }
+
   private createPathLineGeometry(path: ScenePath): BufferGeometry {
-    const resolvedPath = resolveScenePath(path);
+    const resolvedPath = resolveScenePath(path, {
+      terrains: this.getPathTerrainGlueTerrains()
+    });
     const points =
       resolvedPath.segments.length === 0
         ? path.points.map(
@@ -7487,7 +7499,9 @@ export class ViewportHost {
   }
 
   private createPathSegmentMeshes(path: ScenePath): PathRenderObjects["segments"] {
-    const resolvedPath = resolveScenePath(path);
+    const resolvedPath = resolveScenePath(path, {
+      terrains: this.getPathTerrainGlueTerrains()
+    });
     const segments: PathRenderObjects["segments"] = [];
 
     for (const resolvedSegment of resolvedPath.segments) {
