@@ -2690,6 +2690,12 @@ export function App({
     selectedPath
   );
   const selectedPathPointIndex = selectedPathPointState?.index ?? null;
+  const selectedPathPointCount =
+    editorState.selection.kind === "pathPoints"
+      ? editorState.selection.pointIds.length
+      : editorState.selection.kind === "pathPoint"
+        ? 1
+        : 0;
   const selectedEntity = getSelectedEntity(editorState.selection, entityList);
   const selectedModelInstance = getSelectedModelInstance(
     editorState.selection,
@@ -11142,6 +11148,25 @@ export function App({
   };
 
   const handleDeleteSelectedSceneItem = () => {
+    if (editorState.selection.kind === "pathPoints") {
+      try {
+        store.executeCommand(
+          createDeletePathPointsCommand({
+            pathId: editorState.selection.pathId,
+            pointIds: editorState.selection.pointIds,
+            label: "Delete path points"
+          })
+        );
+        setStatusMessage(
+          `Removed ${editorState.selection.pointIds.length} selected path points.`
+        );
+        return true;
+      } catch (error) {
+        setStatusMessage(getErrorMessage(error));
+        return false;
+      }
+    }
+
     const selectedPathPoint = getSingleSelectedPathPoint(editorState.selection);
 
     if (selectedPathPoint !== null) {
