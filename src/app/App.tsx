@@ -239,6 +239,7 @@ import {
   getScenePathPointIndex,
   getScenePaths,
   normalizeScenePathSampledResolution,
+  normalizeScenePathTerrainOffset,
   normalizeScenePathName,
   type ScenePath,
   type ScenePathCurveMode,
@@ -9605,6 +9606,8 @@ export function App({
         loop: selectedPath.loop,
         curveMode: selectedPath.curveMode,
         sampledResolution: selectedPath.sampledResolution,
+        glueToTerrain: selectedPath.glueToTerrain,
+        terrainOffset: selectedPath.terrainOffset,
         points: selectedPath.points.map((point, index) => ({
           id: point.id,
           position: readVec3Draft(
@@ -9674,6 +9677,40 @@ export function App({
     });
 
     commitPathChange(selectedPath, nextPath, "Updated Path spline resolution.");
+  };
+
+  const handlePathGlueToTerrainChange = (glueToTerrain: boolean) => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before changing terrain glue.");
+      return;
+    }
+
+    const nextPath = createScenePath({
+      ...selectedPath,
+      glueToTerrain
+    });
+
+    commitPathChange(
+      selectedPath,
+      nextPath,
+      glueToTerrain
+        ? "Enabled Path terrain glue."
+        : "Disabled Path terrain glue."
+    );
+  };
+
+  const handlePathTerrainOffsetChange = (terrainOffset: number) => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before changing terrain offset.");
+      return;
+    }
+
+    const nextPath = createScenePath({
+      ...selectedPath,
+      terrainOffset: normalizeScenePathTerrainOffset(terrainOffset)
+    });
+
+    commitPathChange(selectedPath, nextPath, "Updated Path terrain offset.");
   };
 
   const handlePathPointDraftChange = (
