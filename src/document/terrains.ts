@@ -1618,6 +1618,152 @@ export function cloneTerrain(terrain: Terrain): Terrain {
   return createTerrain(terrain);
 }
 
+export function findTerrainLayerIndexByMaterialId(
+  terrain: Pick<Terrain, "layers">,
+  materialId: string | null
+): number {
+  return terrain.layers.findIndex((layer) => layer.materialId === materialId);
+}
+
+export function createTerrainWithAddedLayer(
+  terrain: Terrain,
+  materialId: string | null = null
+): Terrain {
+  if (terrain.layers.length >= MAX_TERRAIN_LAYER_COUNT) {
+    throw new Error(
+      `Terrain already has the maximum of ${MAX_TERRAIN_LAYER_COUNT} material layers.`
+    );
+  }
+
+  const oldStoredWeightCount = getTerrainStoredPaintWeightCount(
+    terrain.layers.length
+  );
+  const nextLayers = [
+    ...cloneTerrainLayers(terrain.layers),
+    {
+      materialId: normalizeTerrainLayerMaterialId(
+        materialId,
+        `Terrain layer ${terrain.layers.length}.materialId`
+      )
+    }
+  ];
+  const nextStoredWeightCount = getTerrainStoredPaintWeightCount(
+    nextLayers.length
+  );
+  const sampleCount = terrain.sampleCountX * terrain.sampleCountZ;
+  const nextPaintWeights = new Array<number>(
+    sampleCount * nextStoredWeightCount
+  ).fill(0);
+
+  for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
+    const oldOffset = sampleIndex * oldStoredWeightCount;
+    const nextOffset = sampleIndex * nextStoredWeightCount;
+
+    for (
+      let layerOffset = 0;
+      layerOffset < oldStoredWeightCount;
+      layerOffset += 1
+    ) {
+      nextPaintWeights[nextOffset + layerOffset] =
+        terrain.paintWeights[oldOffset + layerOffset] ?? 0;
+    }
+  }
+
+  return createTerrain({
+    ...terrain,
+    layers: nextLayers,
+    paintWeights: nextPaintWeights
+  });
+}
+
+export function createTerrainWithRemovedLayer(
+  terrain: Terrain,
+  layerIndex: number
+): Terrain {
+  if (
+    !Number.isInteger(layerIndex) ||
+    layerIndex < 0 ||
+    layerIndex >= terrain.layers.length
+  ) {
+    throw new Error(`Terrain layer index ${layerIndex} is out of range.`);
+  }
+
+  if (layerIndex === 0) {
+    throw new Error("Terrain base layer cannot be removed.");
+  }
+
+  if (terrain.layers.length <= MIN_TERRAIN_LAYER_COUNT) {
+    throw new Error("Terrain must keep at least one material layer.");
+  }
+
+  const oldStoredWeightCount = getTerrainStoredPaintWeightCount(
+    terrain.layers.length
+  );
+  const nextLayers = cloneTerrainLayers(terrain.layers).filter(
+    (_, currentLayerIndex) => currentLayerIndex !== layerIndex
+  );
+  const nextStoredWeightCount = getTerrainStoredPaintWeightCount(
+    nextLayers.length
+  );
+  const sampleCount = terrain.sampleCountX * terrain.sampleCountZ;
+  const nextPaintWeights = new Array<number>(
+    sampleCount * nextStoredWeightCount
+  ).fill(0);
+  const removedLayerOffset = layerIndex - 1;
+
+  for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
+    const oldOffset = sampleIndex * oldStoredWeightCount;
+    const nextOffset = sampleIndex * nextStoredWeightCount;
+    let nextLayerOffset = 0;
+
+    for (
+      let oldLayerOffset = 0;
+      oldLayerOffset < oldStoredWeightCount;
+      oldLayerOffset += 1
+    ) {
+      if (oldLayerOffset === removedLayerOffset) {
+        continue;
+      }
+
+      nextPaintWeights[nextOffset + nextLayerOffset] =
+        terrain.paintWeights[oldOffset + oldLayerOffset] ?? 0;
+      nextLayerOffset += 1;
+    }
+  }
+
+  return createTerrain({
+    ...terrain,
+    layers: nextLayers,
+    paintWeights: nextPaintWeights
+  });
+}
+
+export function ensureTerrainMaterialLayer(
+  terrain: Terrain,
+  materialId: string
+): { terrain: Terrain; layerIndex: number; added: boolean } {
+  const existingLayerIndex = findTerrainLayerIndexByMaterialId(
+    terrain,
+    materialId
+  );
+
+  if (existingLayerIndex !== -1) {
+    return {
+      terrain,
+      layerIndex: existingLayerIndex,
+      added: false
+    };
+  }
+
+  const nextTerrain = createTerrainWithAddedLayer(terrain, materialId);
+
+  return {
+    terrain: nextTerrain,
+    layerIndex: nextTerrain.layers.length - 1,
+    added: true
+  };
+}
+
 export function areTerrainsEqual(left: Terrain, right: Terrain): boolean {
   return (
     left.id === right.id &&
