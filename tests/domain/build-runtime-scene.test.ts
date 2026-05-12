@@ -1846,6 +1846,78 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.sceneBounds?.max.y).toBe(2);
   });
 
+  it("builds terrain-glued runtime paths from enabled terrain heights", () => {
+    const terrain = createTerrain({
+      id: "terrain-runtime-path-glue",
+      position: {
+        x: 0,
+        y: 4,
+        z: 0
+      },
+      sampleCountX: 3,
+      sampleCountZ: 2,
+      cellSize: 1,
+      heights: [0, 1, 2, 0, 1, 2]
+    });
+    const path = createScenePath({
+      id: "path-runtime-glued",
+      glueToTerrain: true,
+      terrainOffset: 0.5,
+      points: [
+        {
+          id: "path-point-a",
+          position: {
+            x: 0,
+            y: 20,
+            z: 0
+          }
+        },
+        {
+          id: "path-point-b",
+          position: {
+            x: 2,
+            y: 20,
+            z: 0
+          }
+        }
+      ]
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Runtime Terrain Glue Path Scene" }),
+      terrains: {
+        [terrain.id]: terrain
+      },
+      paths: {
+        [path.id]: path
+      }
+    });
+
+    expect(runtimeScene.paths[0]).toMatchObject({
+      id: path.id,
+      glueToTerrain: true,
+      terrainOffset: 0.5,
+      points: [
+        {
+          pointId: "path-point-a",
+          position: {
+            x: 0,
+            y: 4.5,
+            z: 0
+          }
+        },
+        {
+          pointId: "path-point-b",
+          position: {
+            x: 2,
+            y: 6.5,
+            z: 0
+          }
+        }
+      ]
+    });
+  });
+
   it("includes authored foliage layers, prototypes, and terrain masks for derived rendering", () => {
     const bundledPrototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
     const layer = createFoliageLayer({
