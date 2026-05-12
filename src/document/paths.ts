@@ -619,6 +619,7 @@ export function createScenePath(
       | "sampledResolution"
       | "glueToTerrain"
       | "terrainOffset"
+      | "road"
       | "points"
     >
   > = {}
@@ -639,6 +640,7 @@ export function createScenePath(
   const terrainOffset = normalizeScenePathTerrainOffset(
     overrides.terrainOffset ?? DEFAULT_SCENE_PATH_TERRAIN_OFFSET
   );
+  const road = createScenePathRoadSettings(overrides.road);
 
   if (points.length < MIN_SCENE_PATH_POINT_COUNT) {
     throw new Error(
@@ -691,6 +693,7 @@ export function createScenePath(
     sampledResolution,
     glueToTerrain,
     terrainOffset,
+    road,
     points
   };
 }
@@ -711,6 +714,13 @@ export function areScenePathsEqual(left: ScenePath, right: ScenePath): boolean {
     left.sampledResolution === right.sampledResolution &&
     left.glueToTerrain === right.glueToTerrain &&
     left.terrainOffset === right.terrainOffset &&
+    left.road.enabled === right.road.enabled &&
+    left.road.width === right.road.width &&
+    left.road.shoulderWidth === right.road.shoulderWidth &&
+    left.road.falloff === right.road.falloff &&
+    left.road.heightOffset === right.road.heightOffset &&
+    left.road.terrainConform === right.road.terrainConform &&
+    left.road.materialId === right.road.materialId &&
     left.points.length === right.points.length &&
     left.points.every(
       (point, index) =>
