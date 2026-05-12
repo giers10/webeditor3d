@@ -9511,7 +9511,12 @@ export function App({
   };
 
   const handleTerrainPaintLayerChange = (value: string) => {
-    setActiveTerrainPaintLayerIndex(clampTerrainPaintLayerIndex(Number(value)));
+    setActiveTerrainPaintLayerIndex(
+      clampTerrainPaintLayerIndex(
+        Number(value),
+        selectedTerrain?.layers.length
+      )
+    );
   };
 
   const handleTerrainLayerMaterialChange = (
@@ -9553,6 +9558,54 @@ export function App({
             : (editorState.document.materials[nextMaterialId]?.name ??
               nextMaterialId)
         }.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleAddTerrainLayer = () => {
+    if (selectedTerrain === null) {
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createAddTerrainLayerCommand({
+          terrainId: selectedTerrain.id
+        })
+      );
+      setActiveTerrainPaintLayerIndex(selectedTerrain.layers.length);
+      setStatusMessage(
+        `Added ${getTerrainLayerLabel(selectedTerrain.layers.length).toLowerCase()}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleDeleteTerrainLayer = (layerIndex: number) => {
+    if (selectedTerrain === null) {
+      return;
+    }
+
+    try {
+      store.executeCommand(
+        createDeleteTerrainLayerCommand({
+          terrainId: selectedTerrain.id,
+          layerIndex
+        })
+      );
+      setActiveTerrainPaintLayerIndex((currentLayerIndex) =>
+        clampTerrainPaintLayerIndex(
+          currentLayerIndex >= layerIndex
+            ? currentLayerIndex - 1
+            : currentLayerIndex,
+          selectedTerrain.layers.length - 1
+        )
+      );
+      setStatusMessage(
+        `Removed ${getTerrainLayerLabel(layerIndex).toLowerCase()}.`
       );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
