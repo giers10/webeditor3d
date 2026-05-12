@@ -7,7 +7,7 @@ import {
   getTerrainFoliageMaskValueAtSample,
   getTerrainHeightAtSample,
   getTerrainSampleLayerWeights,
-  TERRAIN_LAYER_COUNT,
+  TERRAIN_SHADER_LAYER_COUNT,
   type Terrain
 } from "../document/terrains";
 
@@ -89,6 +89,55 @@ export interface DerivedTerrainLodMeshData {
     min: Vec3;
     max: Vec3;
   };
+}
+
+function setTerrainLayerWeightAttributes(
+  geometry: BufferGeometry,
+  layerWeights: Float32Array
+) {
+  const vertexCount = layerWeights.length / TERRAIN_SHADER_LAYER_COUNT;
+  const firstWeights = new Float32Array(vertexCount * 4);
+  const secondWeights = new Float32Array(vertexCount * 4);
+
+  for (let vertexIndex = 0; vertexIndex < vertexCount; vertexIndex += 1) {
+    const sourceOffset = vertexIndex * TERRAIN_SHADER_LAYER_COUNT;
+    const targetOffset = vertexIndex * 4;
+
+    firstWeights[targetOffset] = layerWeights[sourceOffset] ?? 0;
+    firstWeights[targetOffset + 1] = layerWeights[sourceOffset + 1] ?? 0;
+    firstWeights[targetOffset + 2] = layerWeights[sourceOffset + 2] ?? 0;
+    firstWeights[targetOffset + 3] = layerWeights[sourceOffset + 3] ?? 0;
+    secondWeights[targetOffset] = layerWeights[sourceOffset + 4] ?? 0;
+    secondWeights[targetOffset + 1] = layerWeights[sourceOffset + 5] ?? 0;
+    secondWeights[targetOffset + 2] = layerWeights[sourceOffset + 6] ?? 0;
+    secondWeights[targetOffset + 3] = layerWeights[sourceOffset + 7] ?? 0;
+  }
+
+  geometry.setAttribute(
+    "terrainLayerWeights0",
+    new BufferAttribute(firstWeights, 4)
+  );
+  geometry.setAttribute(
+    "terrainLayerWeights1",
+    new BufferAttribute(secondWeights, 4)
+  );
+  geometry.setAttribute(
+    "terrainLayerWeights",
+    new BufferAttribute(firstWeights, 4)
+  );
+}
+
+function pushPaddedTerrainLayerWeights(
+  target: number[],
+  sampleLayerWeights: readonly number[]
+) {
+  for (
+    let layerIndex = 0;
+    layerIndex < TERRAIN_SHADER_LAYER_COUNT;
+    layerIndex += 1
+  ) {
+    target.push(sampleLayerWeights[layerIndex] ?? 0);
+  }
 }
 
 function createEmptyLocalBounds(): { min: Vec3; max: Vec3 } {
