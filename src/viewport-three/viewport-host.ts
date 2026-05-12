@@ -611,6 +611,9 @@ function addSelectionAffectedIds(
     case "pathPoint":
       affectedIds.pathIds.add(selection.pathId);
       return;
+    case "pathPoints":
+      affectedIds.pathIds.add(selection.pathId);
+      return;
     case "entities":
       for (const entityId of selection.ids) {
         affectedIds.entityIds.add(entityId);
@@ -661,6 +664,9 @@ function collectTransformPreviewTargetIds(
       }
       break;
     case "pathPoint":
+      targetIds.pathIds.add(transformSession.target.pathId);
+      break;
+    case "pathPoints":
       targetIds.pathIds.add(transformSession.target.pathId);
       break;
     case "entity":
@@ -11020,6 +11026,10 @@ export class ViewportHost {
         return selection.ids.length === 1 ? `path:${selection.ids[0]}` : null;
       case "pathPoint":
         return `pathPoint:${selection.pathId}:${selection.pointId}`;
+      case "pathPoints":
+        return selection.pointIds.length === 1
+          ? `pathPoint:${selection.pathId}:${selection.pointIds[0]}`
+          : null;
       case "entities":
         return selection.ids.length === 1 ? `entity:${selection.ids[0]}` : null;
       case "modelInstances":
