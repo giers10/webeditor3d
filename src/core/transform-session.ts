@@ -1375,6 +1375,8 @@ export function getTransformTargetLabel(target: TransformTarget): string {
       return `${target.items.length} ${getModelInstanceKindLabel()}${target.items.length === 1 ? "" : "s"}`;
     case "pathPoint":
       return "Path Point";
+    case "pathPoints":
+      return `${target.items.length} Path Point${target.items.length === 1 ? "" : "s"}`;
     case "entity":
       return getEntityKindLabel(target.entityKind);
     case "entities":
@@ -1393,6 +1395,7 @@ export function getSupportedTransformOperations(
       return ["translate", "rotate", "scale"];
     case "brushVertex":
     case "pathPoint":
+    case "pathPoints":
       return ["translate"];
     case "modelInstance":
     case "modelInstances":
@@ -1449,6 +1452,8 @@ export function supportsTransformSurfaceSnapTarget(
     case "brushes":
     case "modelInstance":
     case "modelInstances":
+    case "pathPoint":
+    case "pathPoints":
       return true;
     case "entity":
       return target.entityKind === "triggerVolume";
@@ -1457,7 +1462,6 @@ export function supportsTransformSurfaceSnapTarget(
     case "brushFace":
     case "brushEdge":
     case "brushVertex":
-    case "pathPoint":
       return false;
   }
 }
@@ -1502,7 +1506,8 @@ export function supportsTransformAxisConstraint(
 
       if (
         session.target.kind === "brushVertex" ||
-        session.target.kind === "pathPoint"
+        session.target.kind === "pathPoint" ||
+        session.target.kind === "pathPoints"
       ) {
         return false;
       }
@@ -1565,6 +1570,13 @@ export function supportsTransformAxisConstraint(
         return false;
       }
 
+      if (
+        session.target.kind === "pathPoint" ||
+        session.target.kind === "pathPoints"
+      ) {
+        return false;
+      }
+
       return true;
   }
 }
@@ -1598,6 +1610,7 @@ export function supportsLocalTransformAxisConstraint(
     case "brushVertex":
       return session.operation === "translate";
     case "pathPoint":
+    case "pathPoints":
       return false;
   }
 }
