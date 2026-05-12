@@ -757,6 +757,11 @@ export class RuntimeHost {
     string,
     RuntimeTerrainRenderObjects
   >();
+  private readonly roadSurfaceGroup = new Group();
+  private readonly roadSurfaceMeshes = new Map<
+    string,
+    RuntimeRoadSurfaceRenderObjects
+  >();
   private volumeTime = 0;
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
   private readonly runtimeWaterContactUniforms: RuntimeWaterContactUniformBinding[] =
