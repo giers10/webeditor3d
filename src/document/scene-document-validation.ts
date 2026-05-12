@@ -1388,7 +1388,7 @@ function validateWorldSettings(
       createDiagnostic(
         "error",
         "invalid-foliage-quality-density-multiplier",
-        "Foliage density multiplier must be a finite number between 0 and 2.",
+        `Foliage density multiplier must be a finite number between ${MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER} and ${MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER}.`,
         "world.advancedRendering.foliage.densityMultiplier"
       )
     );
