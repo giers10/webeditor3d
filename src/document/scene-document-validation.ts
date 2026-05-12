@@ -79,6 +79,7 @@ import {
   MAX_SCENE_PATH_SAMPLED_RESOLUTION,
   MIN_SCENE_PATH_POINT_COUNT,
   MIN_SCENE_PATH_SAMPLED_RESOLUTION,
+  normalizeScenePathTerrainOffset,
   isScenePathCurveMode,
   type ScenePath
 } from "./paths";
