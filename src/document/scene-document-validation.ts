@@ -8181,7 +8181,7 @@ export function validateSceneDocument(
     }
 
     registerAuthoredId(pathValue.id, path, seenIds, diagnostics);
-    validateScenePath(pathValue, path, diagnostics);
+    validateScenePath(pathValue, path, document, diagnostics);
   }
 
   for (const [terrainKey, terrain] of Object.entries(document.terrains)) {
