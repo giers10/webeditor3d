@@ -632,27 +632,30 @@ export function cloneTerrainFoliageMasks(
 }
 
 export function getTerrainSampleLayerWeights(
-  terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "paintWeights">,
+  terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "layers" | "paintWeights">,
   sampleX: number,
   sampleZ: number
-): [number, number, number, number] {
+): number[] {
   const offset = getTerrainPaintWeightSampleOffset(terrain, sampleX, sampleZ);
-  const layer1 = terrain.paintWeights[offset] ?? 0;
-  const layer2 = terrain.paintWeights[offset + 1] ?? 0;
-  const layer3 = terrain.paintWeights[offset + 2] ?? 0;
-  const baseLayer = Math.max(0, 1 - (layer1 + layer2 + layer3));
-  const weightSum = baseLayer + layer1 + layer2 + layer3;
+  const layerCount = terrain.layers.length;
+  const weights = new Array<number>(layerCount).fill(0);
+  let explicitWeightSum = 0;
 
-  if (weightSum <= 0) {
-    return [1, 0, 0, 0];
+  for (let layerIndex = 1; layerIndex < layerCount; layerIndex += 1) {
+    const weight = terrain.paintWeights[offset + layerIndex - 1] ?? 0;
+    weights[layerIndex] = weight;
+    explicitWeightSum += weight;
   }
 
-  return [
-    baseLayer / weightSum,
-    layer1 / weightSum,
-    layer2 / weightSum,
-    layer3 / weightSum
-  ];
+  weights[0] = Math.max(0, 1 - explicitWeightSum);
+  const weightSum = weights.reduce((sum, weight) => sum + weight, 0);
+
+  if (weightSum <= 0) {
+    weights[0] = 1;
+    return weights;
+  }
+
+  return weights.map((weight) => weight / weightSum);
 }
 
 export function getTerrainWorldSamplePosition(
@@ -1337,8 +1340,11 @@ function createResampledTerrainPaintWeights(
   sampleCountX: number,
   sampleCountZ: number
 ): number[] {
+  const storedWeightCount = getTerrainStoredPaintWeightCount(
+    terrain.layers.length
+  );
   const paintWeights = new Array<number>(
-    sampleCountX * sampleCountZ * (TERRAIN_LAYER_COUNT - 1)
+    sampleCountX * sampleCountZ * storedWeightCount
   );
 
   for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
@@ -1351,13 +1357,9 @@ function createResampledTerrainPaintWeights(
         sampleCountX === 1 ? 0 : sampleX / (sampleCountX - 1);
       const sourceSampleX = normalizedSampleX * (terrain.sampleCountX - 1);
       const offset =
-        (sampleZ * sampleCountX + sampleX) * (TERRAIN_LAYER_COUNT - 1);
+        (sampleZ * sampleCountX + sampleX) * storedWeightCount;
 
-      for (
-        let layerOffset = 0;
-        layerOffset < TERRAIN_LAYER_COUNT - 1;
-        layerOffset += 1
-      ) {
+      for (let layerOffset = 0; layerOffset < storedWeightCount; layerOffset += 1) {
         paintWeights[offset + layerOffset] =
           sampleTerrainPaintWeightAtGridCoordinate(
             terrain,
@@ -1554,6 +1556,7 @@ export function createTerrain(
   const paintWeights = normalizeTerrainPaintWeights(
     sampleCountX,
     sampleCountZ,
+    layers.length,
     overrides.paintWeights
   );
   const foliageMasks = normalizeTerrainFoliageMasks(
