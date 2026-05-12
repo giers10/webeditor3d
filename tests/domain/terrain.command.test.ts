@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { createEditorStore } from "../../src/app/editor-store";
+import { createAddTerrainLayerCommand } from "../../src/commands/add-terrain-layer-command";
 import { createApplyTerrainBrushPatchCommand } from "../../src/commands/apply-terrain-brush-patch-command";
 import { createDeleteTerrainCommand } from "../../src/commands/delete-terrain-command";
+import { createDeleteTerrainLayerCommand } from "../../src/commands/delete-terrain-layer-command";
 import { createUpsertTerrainCommand } from "../../src/commands/upsert-terrain-command";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
 import {
@@ -354,5 +356,57 @@ describe("terrain commands", () => {
         1
       )
     ).toBe(0.85);
+  });
+
+  it("adds and removes terrain material layers with undo and redo", () => {
+    const terrain = createTerrain({
+      id: "terrain-layer-command",
+      sampleCountX: 2,
+      sampleCountZ: 2
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Terrain Layer Command Scene" }),
+        terrains: {
+          [terrain.id]: terrain
+        }
+      }
+    });
+
+    store.executeCommand(
+      createAddTerrainLayerCommand({
+        terrainId: terrain.id,
+        materialId: "ground_sand_300x300"
+      })
+    );
+
+    expect(store.getState().document.terrains[terrain.id]?.layers).toHaveLength(
+      5
+    );
+    expect(
+      store.getState().document.terrains[terrain.id]?.paintWeights
+    ).toHaveLength(2 * 2 * 4);
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.terrains[terrain.id]?.layers).toHaveLength(
+      4
+    );
+
+    expect(store.redo()).toBe(true);
+    store.executeCommand(
+      createDeleteTerrainLayerCommand({
+        terrainId: terrain.id,
+        layerIndex: 4
+      })
+    );
+
+    expect(store.getState().document.terrains[terrain.id]?.layers).toHaveLength(
+      4
+    );
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.terrains[terrain.id]?.layers).toHaveLength(
+      5
+    );
   });
 });
