@@ -2089,6 +2089,15 @@ describe("validateSceneDocument", () => {
     invalidPath.name = "   ";
     invalidPath.glueToTerrain = "yes" as never;
     invalidPath.terrainOffset = Number.NaN;
+    invalidPath.road = {
+      enabled: "yes",
+      width: 0,
+      shoulderWidth: -1,
+      falloff: 2,
+      heightOffset: Number.NaN,
+      terrainConform: "yes",
+      materialId: "missing-road-material"
+    } as never;
     invalidPath.points = [
       {
         id: "path-point-a",
@@ -2124,6 +2133,34 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-path-terrain-offset",
           path: "paths.path-invalid.terrainOffset"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-enabled",
+          path: "paths.path-invalid.road.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-width",
+          path: "paths.path-invalid.road.width"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-shoulder-width",
+          path: "paths.path-invalid.road.shoulderWidth"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-falloff",
+          path: "paths.path-invalid.road.falloff"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-height-offset",
+          path: "paths.path-invalid.road.heightOffset"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-terrain-conform",
+          path: "paths.path-invalid.road.terrainConform"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-material",
+          path: "paths.path-invalid.road.materialId"
         })
       ])
     );
