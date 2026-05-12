@@ -2875,6 +2875,7 @@ export class ViewportHost {
         );
       }
       case "pathPoint":
+      case "pathPoints":
         return null;
       case "entity": {
         if (preview.kind !== "entity") {
@@ -3149,6 +3150,8 @@ export class ViewportHost {
         return session.preview.pivot;
       case "pathPoint":
         return session.preview.position;
+      case "pathPoints":
+        return session.preview.pivot;
       case "entity":
         return session.preview.position;
       case "entities":
@@ -3415,6 +3418,8 @@ export class ViewportHost {
           this.isBrushDisplayedInViewport(item.brushId)
         );
       case "pathPoint":
+        return this.isPathDisplayedInViewport(session.target.pathId);
+      case "pathPoints":
         return this.isPathDisplayedInViewport(session.target.pathId);
       case "entity":
         return this.isEntityDisplayedInViewport(session.target.entityId);
