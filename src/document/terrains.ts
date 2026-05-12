@@ -84,6 +84,9 @@ export const DEFAULT_TERRAIN_SAMPLE_COUNT_Z = 9;
 export const DEFAULT_TERRAIN_CELL_SIZE = 1;
 export const DEFAULT_TERRAIN_HEIGHT = 0;
 export const TERRAIN_LAYER_COUNT = 4;
+export const MIN_TERRAIN_LAYER_COUNT = 1;
+export const MAX_TERRAIN_LAYER_COUNT = 8;
+export const TERRAIN_SHADER_LAYER_COUNT = 8;
 export const DEFAULT_TERRAIN_LAYER_MATERIAL_IDS = [
   "patchy_grass_ground_250x250",
   "patchy_weedy_dirt_ground_300x300",
@@ -190,7 +193,7 @@ function normalizeTerrainFoliageLayerId(value: string, label: string): string {
 }
 
 export function getTerrainLayerLabel(layerIndex: number): string {
-  if (!Number.isInteger(layerIndex) || layerIndex < 0 || layerIndex >= TERRAIN_LAYER_COUNT) {
+  if (!Number.isInteger(layerIndex) || layerIndex < 0) {
     throw new Error(`Terrain layer index ${layerIndex} is out of range.`);
   }
 
@@ -221,9 +224,13 @@ function normalizeTerrainLayers(
     return createDefaultTerrainLayers();
   }
 
-  if (layers.length !== TERRAIN_LAYER_COUNT) {
+  if (
+    !Number.isInteger(layers.length) ||
+    layers.length < MIN_TERRAIN_LAYER_COUNT ||
+    layers.length > MAX_TERRAIN_LAYER_COUNT
+  ) {
     throw new Error(
-      `Terrain layers must contain exactly ${TERRAIN_LAYER_COUNT} layer slots.`
+      `Terrain layers must contain between ${MIN_TERRAIN_LAYER_COUNT} and ${MAX_TERRAIN_LAYER_COUNT} layer slots.`
     );
   }
 
