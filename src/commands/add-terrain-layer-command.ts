@@ -4,7 +4,6 @@ import type { ToolMode } from "../core/tool-mode";
 import {
   cloneTerrain,
   createTerrainWithAddedLayer,
-  getTerrainLayerLabel,
   type Terrain
 } from "../document/terrains";
 
@@ -95,8 +94,4 @@ export function createAddTerrainLayerCommand(
       }
     }
   };
-}
-
-export function getAddedTerrainLayerStatusLabel(terrain: Terrain): string {
-  return getTerrainLayerLabel(terrain.layers.length - 1);
 }
