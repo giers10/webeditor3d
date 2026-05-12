@@ -8,8 +8,10 @@ import {
   ConeGeometry,
   CylinderGeometry,
   DirectionalLight,
+  DoubleSide,
   EdgesGeometry,
   Euler,
+  Float32BufferAttribute,
   GridHelper,
   Group,
   Line,
@@ -113,6 +115,7 @@ import {
   getTerrainRenderDirtyBoundsSince,
   getTerrainRenderDirtyRevision,
   getTerrains,
+  sampleTerrainHeightAtWorldPosition,
   type Terrain
 } from "../document/terrains";
 import {
