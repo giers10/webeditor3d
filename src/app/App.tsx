@@ -30,6 +30,7 @@ import { createImportModelAssetCommand } from "../commands/import-model-asset-co
 import { createAddPathPointCommand } from "../commands/add-path-point-command";
 import { createDeletePathCommand } from "../commands/delete-path-command";
 import { createDeletePathPointCommand } from "../commands/delete-path-point-command";
+import { createDeletePathPointsCommand } from "../commands/delete-path-points-command";
 import { createDeleteModelInstanceCommand } from "../commands/delete-model-instance-command";
 import { createCommitTransformSessionCommand } from "../commands/commit-transform-session-command";
 import {
