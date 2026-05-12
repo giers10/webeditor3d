@@ -7256,6 +7256,111 @@ export class ViewportHost {
     });
   }
 
+  private configureRoadSurfaceMaterial(material: Material): Material {
+    material.polygonOffset = true;
+    material.polygonOffsetFactor = -1;
+    material.polygonOffsetUnits = -2;
+    return material;
+  }
+
+  private createRoadSurfaceMaterial(path: ScenePath): Material {
+    const materialDef =
+      path.road.materialId === null || this.currentDocument === null
+        ? null
+        : (this.currentDocument.materials[path.road.materialId] ?? null);
+
+    if (this.displayMode === "wireframe") {
+      return this.configureRoadSurfaceMaterial(
+        new MeshBasicMaterial({
+          color:
+            materialDef === null
+              ? PATH_ROAD_PREVIEW_COLOR
+              : Number.parseInt(materialDef.swatchColorHex.replace("#", ""), 16),
+          wireframe: true,
+          side: DoubleSide
+        })
+      );
+    }
+
+    if (materialDef === null) {
+      return this.configureRoadSurfaceMaterial(
+        new MeshStandardMaterial({
+          color: PATH_ROAD_PREVIEW_COLOR,
+          roughness: 1,
+          metalness: 0,
+          side: DoubleSide
+        })
+      );
+    }
+
+    const textureSet = this.getOrCreateTextureSet(materialDef);
+
+    return this.configureRoadSurfaceMaterial(
+      new MeshPhysicalMaterial({
+        color: 0xffffff,
+        map: textureSet.baseColor,
+        normalMap: textureSet.normal,
+        roughnessMap: textureSet.roughness,
+        roughness: 1,
+        metalnessMap: textureSet.metallic,
+        metalness: textureSet.metallic === null ? 0.03 : 1,
+        specularColorMap: textureSet.specular,
+        specularColor: new Color(0xffffff),
+        specularIntensity: textureSet.specular === null ? 0.2 : 1,
+        side: DoubleSide
+      })
+    );
+  }
+
+  private createRoadSurfaceRenderObjects(
+    path: ScenePath,
+    terrains: readonly Terrain[]
+  ): RoadSurfaceRenderObjects | null {
+    if (!path.enabled || !path.visible || !path.road.enabled) {
+      return null;
+    }
+
+    const geometry = buildSplineRoadMeshGeometry({
+      path,
+      terrains
+    });
+
+    if (geometry === null) {
+      return null;
+    }
+
+    const mesh = new Mesh(geometry, this.createRoadSurfaceMaterial(path));
+    mesh.castShadow = false;
+    mesh.receiveShadow = true;
+    mesh.userData.pathId = path.id;
+    mesh.userData.nonPickable = true;
+    applyRendererRenderCategoryFromMaterial(mesh);
+
+    return {
+      mesh
+    };
+  }
+
+  private rebuildRoadSurfaces(document: SceneDocument) {
+    this.clearRoadSurfaces();
+    const terrains = getTerrains(document.terrains).filter(
+      (terrain) => terrain.enabled
+    );
+
+    for (const path of getScenePaths(document.paths)) {
+      const renderObjects = this.createRoadSurfaceRenderObjects(path, terrains);
+
+      if (renderObjects === null) {
+        continue;
+      }
+
+      this.roadSurfaceGroup.add(renderObjects.mesh);
+      this.roadSurfaceRenderObjects.set(path.id, renderObjects);
+    }
+
+    this.applyShadowState();
+  }
+
   private rebuildTerrains(
     document: SceneDocument,
     _selection: EditorSelection,
