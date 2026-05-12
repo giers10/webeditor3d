@@ -11458,6 +11458,16 @@ export class ViewportHost {
     this.terrainRenderRevisions.clear();
   }
 
+  private clearRoadSurfaces() {
+    for (const renderObjects of this.roadSurfaceRenderObjects.values()) {
+      this.roadSurfaceGroup.remove(renderObjects.mesh);
+      renderObjects.mesh.geometry.dispose();
+      renderObjects.mesh.material.dispose();
+    }
+
+    this.roadSurfaceRenderObjects.clear();
+  }
+
   private clearEntityMarkers() {
     for (const renderObjects of this.entityRenderObjects.values()) {
       this.entityGroup.remove(renderObjects.group);
