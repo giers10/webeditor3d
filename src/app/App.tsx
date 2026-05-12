@@ -229,15 +229,19 @@ import {
   type SceneLoadingScreenSettings
 } from "../document/scene-document";
 import {
+  MAX_SCENE_PATH_SAMPLED_RESOLUTION,
   MIN_SCENE_PATH_POINT_COUNT,
+  MIN_SCENE_PATH_SAMPLED_RESOLUTION,
   areScenePathsEqual,
   createAppendedScenePathPoint,
   createScenePath,
   getScenePathLabel,
   getScenePathPointIndex,
   getScenePaths,
+  normalizeScenePathSampledResolution,
   normalizeScenePathName,
   type ScenePath,
+  type ScenePathCurveMode,
   type ScenePathPoint
 } from "../document/paths";
 import {
@@ -9599,6 +9603,8 @@ export function App({
         visible: selectedPath.visible,
         enabled: selectedPath.enabled,
         loop: selectedPath.loop,
+        curveMode: selectedPath.curveMode,
+        sampledResolution: selectedPath.sampledResolution,
         points: selectedPath.points.map((point, index) => ({
           id: point.id,
           position: readVec3Draft(
@@ -9634,6 +9640,40 @@ export function App({
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
+  };
+
+  const handlePathCurveModeChange = (curveMode: ScenePathCurveMode) => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before changing its curve mode.");
+      return;
+    }
+
+    const nextPath = createScenePath({
+      ...selectedPath,
+      curveMode
+    });
+
+    commitPathChange(
+      selectedPath,
+      nextPath,
+      curveMode === "catmullRom"
+        ? "Set Path curve mode to Spline."
+        : "Set Path curve mode to Linear."
+    );
+  };
+
+  const handlePathSampledResolutionChange = (sampledResolution: number) => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before changing its spline resolution.");
+      return;
+    }
+
+    const nextPath = createScenePath({
+      ...selectedPath,
+      sampledResolution: normalizeScenePathSampledResolution(sampledResolution)
+    });
+
+    commitPathChange(selectedPath, nextPath, "Updated Path spline resolution.");
   };
 
   const handlePathPointDraftChange = (
