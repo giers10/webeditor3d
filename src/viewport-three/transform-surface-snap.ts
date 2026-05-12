@@ -334,6 +334,15 @@ export function applyRigidDeltaToTransformPreview(
         ...preview,
         position: addVec3(preview.position, delta)
       };
+    case "pathPoints":
+      return {
+        ...preview,
+        pivot: addVec3(preview.pivot, delta),
+        items: preview.items.map((item) => ({
+          ...item,
+          position: addVec3(item.position, delta)
+        }))
+      };
   }
 }
 
