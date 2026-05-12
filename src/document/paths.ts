@@ -731,53 +731,161 @@ export function createAppendedScenePathPoint(path: ScenePath): ScenePathPoint {
   });
 }
 
-export function resolveScenePath(path: Pick<ScenePath, "loop" | "points">): ResolvedScenePath {
-  const points = path.points.map(cloneScenePathPoint);
+function createResolvedPathSegment(
+  options: {
+    index: number;
+    startPointId: string;
+    endPointId: string;
+    start: Vec3;
+    end: Vec3;
+  },
+  distanceStart: number
+): ResolvedScenePathSegment {
+  const delta = subtractVec3(options.end, options.start);
+  const length = Math.hypot(delta.x, delta.y, delta.z);
+
+  return {
+    index: options.index,
+    startPointId: options.startPointId,
+    endPointId: options.endPointId,
+    start: cloneVec3(options.start),
+    end: cloneVec3(options.end),
+    length,
+    distanceStart,
+    distanceEnd: distanceStart + length,
+    tangent: normalizeDelta(delta)
+  };
+}
+
+function buildLinearResolvedPathSegments(
+  points: ScenePathPoint[],
+  loop: boolean
+): ResolvedScenePathSegment[] {
   const segmentPairs = points.slice(1).map((point, index) => ({
-    start: points[index],
+    start: points[index]!,
     end: point
   }));
 
-  if (path.loop && points.length > 1) {
+  if (loop && points.length > 1) {
     segmentPairs.push({
-      start: points[points.length - 1],
-      end: points[0]
+      start: points[points.length - 1]!,
+      end: points[0]!
     });
   }
 
   let totalLength = 0;
-  const segments = segmentPairs.map(({ start, end }, index) => {
-    const delta = {
-      x: end.position.x - start.position.x,
-      y: end.position.y - start.position.y,
-      z: end.position.z - start.position.z
-    };
-    const length = Math.hypot(delta.x, delta.y, delta.z);
-    const segment: ResolvedScenePathSegment = {
-      index,
-      startPointId: start.id,
-      endPointId: end.id,
-      start: cloneVec3(start.position),
-      end: cloneVec3(end.position),
-      length,
-      distanceStart: totalLength,
-      distanceEnd: totalLength + length,
-      tangent: normalizeDelta(delta)
-    };
 
-    totalLength += length;
+  return segmentPairs.map(({ start, end }, index) => {
+    const segment = createResolvedPathSegment(
+      {
+        index,
+        startPointId: start.id,
+        endPointId: end.id,
+        start: start.position,
+        end: end.position
+      },
+      totalLength
+    );
+
+    totalLength = segment.distanceEnd;
     return segment;
   });
+}
+
+function buildCatmullRomResolvedPathSegments(
+  points: ScenePathPoint[],
+  loop: boolean,
+  sampledResolution: number
+): ResolvedScenePathSegment[] {
+  if (points.length < 3) {
+    return buildLinearResolvedPathSegments(points, loop);
+  }
+
+  const sourceSegmentCount = loop ? points.length : points.length - 1;
+  const segments: ResolvedScenePathSegment[] = [];
+  let totalLength = 0;
+
+  for (
+    let sourceSegmentIndex = 0;
+    sourceSegmentIndex < sourceSegmentCount;
+    sourceSegmentIndex += 1
+  ) {
+    const startIndex = sourceSegmentIndex;
+    const endIndex = (sourceSegmentIndex + 1) % points.length;
+    const previousIndex = loop
+      ? (sourceSegmentIndex - 1 + points.length) % points.length
+      : Math.max(0, sourceSegmentIndex - 1);
+    const nextIndex = loop
+      ? (sourceSegmentIndex + 2) % points.length
+      : Math.min(points.length - 1, sourceSegmentIndex + 2);
+    const previous = points[previousIndex]!;
+    const start = points[startIndex]!;
+    const end = points[endIndex]!;
+    const next = points[nextIndex]!;
+
+    for (let sampleIndex = 0; sampleIndex < sampledResolution; sampleIndex += 1) {
+      const sampleStart = catmullRomVec3(
+        previous.position,
+        start.position,
+        end.position,
+        next.position,
+        sampleIndex / sampledResolution
+      );
+      const sampleEnd = catmullRomVec3(
+        previous.position,
+        start.position,
+        end.position,
+        next.position,
+        (sampleIndex + 1) / sampledResolution
+      );
+      const segment = createResolvedPathSegment(
+        {
+          index: segments.length,
+          startPointId: start.id,
+          endPointId: end.id,
+          start: sampleStart,
+          end: sampleEnd
+        },
+        totalLength
+      );
+
+      totalLength = segment.distanceEnd;
+      segments.push(segment);
+    }
+  }
+
+  return segments;
+}
+
+export function resolveScenePath(
+  path: Pick<ScenePath, "loop" | "points"> &
+    Partial<Pick<ScenePath, "curveMode" | "sampledResolution">>
+): ResolvedScenePath {
+  const points = path.points.map(cloneScenePathPoint);
+  const curveMode = path.curveMode ?? DEFAULT_SCENE_PATH_CURVE_MODE;
+  const sampledResolution = normalizeScenePathSampledResolution(
+    path.sampledResolution ?? DEFAULT_SCENE_PATH_SAMPLED_RESOLUTION
+  );
+  const segments =
+    curveMode === "catmullRom"
+      ? buildCatmullRomResolvedPathSegments(points, path.loop, sampledResolution)
+      : buildLinearResolvedPathSegments(points, path.loop);
+  const totalLength = segments.at(-1)?.distanceEnd ?? 0;
 
   return {
     loop: path.loop,
+    curveMode,
+    sampledResolution,
     points,
     segments,
     totalLength
   };
 }
 
-export function getScenePathLength(path: Pick<ScenePath, "loop" | "points">): number {
+export function getScenePathLength(
+  path: Pick<ScenePath, "loop" | "points"> &
+    Partial<Pick<ScenePath, "curveMode" | "sampledResolution">>
+): number {
   return resolveScenePath(path).totalLength;
 }
 
