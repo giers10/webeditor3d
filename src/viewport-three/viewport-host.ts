@@ -366,6 +366,10 @@ interface PathRenderObjects {
   }>;
 }
 
+interface RoadSurfaceRenderObjects {
+  mesh: Mesh<BufferGeometry, Material>;
+}
+
 interface TerrainRenderObjects {
   group: Group;
   chunks: TerrainRenderChunkObjects[];
@@ -901,6 +905,7 @@ export class ViewportHost {
   private readonly lightVolumeGroup = new Group();
   private readonly brushGroup = new Group();
   private readonly terrainGroup = new Group();
+  private readonly roadSurfaceGroup = new Group();
   private readonly terrainBrushPreviewGroup = new Group();
   private readonly terrainBrushPreviewLine = new Line(
     new BufferGeometry(),
@@ -933,6 +938,10 @@ export class ViewportHost {
     TerrainRenderObjects
   >();
   private readonly terrainRenderRevisions = new Map<string, number>();
+  private readonly roadSurfaceRenderObjects = new Map<
+    string,
+    RoadSurfaceRenderObjects
+  >();
   private readonly pathRenderObjects = new Map<string, PathRenderObjects>();
   private readonly entityRenderObjects = new Map<string, EntityRenderObjects>();
   private readonly localLightRenderObjects = new Map<
@@ -1152,6 +1161,7 @@ export class ViewportHost {
     this.scene.add(this.lightVolumeGroup);
     this.scene.add(this.brushGroup);
     this.scene.add(this.terrainGroup);
+    this.scene.add(this.roadSurfaceGroup);
     this.scene.add(this.foliageRenderer.group);
     this.syncFoliageVisibility();
     this.terrainBrushPreviewGroup.visible = false;
@@ -1472,6 +1482,7 @@ export class ViewportHost {
         this.currentActiveSelectionId
       );
     }
+    this.rebuildRoadSurfaces(document);
     this.rebuildFoliage(document);
     this.rebuildPaths(document, this.currentSelection);
     this.rebuildEntityMarkers(document, this.currentSelection);
@@ -1935,6 +1946,7 @@ export class ViewportHost {
     this.clearLightVolumes();
     this.clearBrushMeshes();
     this.clearTerrains();
+    this.clearRoadSurfaces();
     this.foliageRenderer.dispose();
     this.clearPaths();
     this.clearEntityMarkers();
