@@ -2066,6 +2066,62 @@ function createPathPointTransformTarget(
   };
 }
 
+function createPathPointsTransformTarget(
+  document: SceneDocument,
+  pathId: string,
+  pointIds: string[],
+  activeSelectionId: string | null
+): TransformTargetResolution {
+  const items: PathPointTransformTarget[] = [];
+
+  if (pointIds.length === 0) {
+    return {
+      target: null,
+      message: "Select at least one path point before transforming it."
+    };
+  }
+
+  for (const pointId of pointIds) {
+    const itemResolution = createPathPointTransformTarget(
+      document,
+      pathId,
+      pointId
+    );
+
+    if (
+      itemResolution.target === null ||
+      itemResolution.target.kind !== "pathPoint"
+    ) {
+      return itemResolution;
+    }
+
+    items.push(itemResolution.target);
+  }
+
+  const activePointId = resolveActiveTransformTargetId(
+    pointIds,
+    activeSelectionId
+  );
+
+  if (activePointId === null) {
+    return {
+      target: null,
+      message: "Select at least one path point before transforming it."
+    };
+  }
+
+  return {
+    target: {
+      kind: "pathPoints",
+      pathId,
+      activePointId,
+      initialPivot: averageVec3(items.map((item) => item.initialPosition)),
+      items
+    },
+    message: null
+  };
+}
+
 export function resolveTransformTarget(
   document: SceneDocument,
   selection: EditorSelection,
@@ -2174,6 +2230,19 @@ export function resolveTransformTarget(
         selection.pathId,
         selection.pointId
       );
+    case "pathPoints":
+      return selection.pointIds.length === 1
+        ? createPathPointTransformTarget(
+            document,
+            selection.pathId,
+            selection.pointIds[0]!
+          )
+        : createPathPointsTransformTarget(
+            document,
+            selection.pathId,
+            selection.pointIds,
+            activeSelectionId
+          );
     case "modelInstances":
       if (selection.ids.length === 0) {
         return {
