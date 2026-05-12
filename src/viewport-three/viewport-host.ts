@@ -7454,6 +7454,104 @@ export class ViewportHost {
     return new BufferGeometry().setFromPoints(points);
   }
 
+  private createPathPointVectors(path: ScenePath): Vector3[] {
+    const points = path.points.map(
+      (point) =>
+        new Vector3(point.position.x, point.position.y, point.position.z)
+    );
+
+    if (path.loop && points.length > 1) {
+      points.push(points[0].clone());
+    }
+
+    return points;
+  }
+
+  private createPathSegmentMesh(
+    start: Vector3,
+    end: Vector3,
+    radius: number,
+    material: MeshBasicMaterial,
+    pathId: string
+  ): Mesh<CylinderGeometry, MeshBasicMaterial> | null {
+    const delta = end.clone().sub(start);
+    const length = delta.length();
+
+    if (length < 0.0001) {
+      return null;
+    }
+
+    const mesh = new Mesh(
+      new CylinderGeometry(radius, radius, length, 10, 1),
+      material
+    );
+    const direction = delta.normalize();
+
+    mesh.position.copy(start).add(end).multiplyScalar(0.5);
+    mesh.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), direction);
+    mesh.renderOrder = PATH_RENDER_ORDER;
+    mesh.userData.pathId = pathId;
+
+    return mesh;
+  }
+
+  private createPathSegmentMeshes(path: ScenePath): PathRenderObjects["segments"] {
+    const points = this.createPathPointVectors(path);
+    const segments: PathRenderObjects["segments"] = [];
+
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const outlineMesh = this.createPathSegmentMesh(
+        points[index],
+        points[index + 1],
+        PATH_SEGMENT_OUTLINE_RADIUS,
+        new MeshBasicMaterial({
+          color: PATH_OUTLINE_COLOR,
+          depthTest: false,
+          depthWrite: false
+        }),
+        path.id
+      );
+      const mesh = this.createPathSegmentMesh(
+        points[index],
+        points[index + 1],
+        PATH_SEGMENT_RADIUS,
+        new MeshBasicMaterial({
+          color: PATH_COLOR,
+          depthTest: false,
+          depthWrite: false
+        }),
+        path.id
+      );
+
+      if (outlineMesh !== null && mesh !== null) {
+        segments.push({
+          outlineMesh,
+          mesh
+        });
+      }
+    }
+
+    return segments;
+  }
+
+  private addPathSegmentMeshes(segments: PathRenderObjects["segments"]) {
+    for (const segment of segments) {
+      this.pathGroup.add(segment.outlineMesh);
+      this.pathGroup.add(segment.mesh);
+    }
+  }
+
+  private disposePathSegmentMeshes(segments: PathRenderObjects["segments"]) {
+    for (const segment of segments) {
+      this.pathGroup.remove(segment.outlineMesh);
+      this.pathGroup.remove(segment.mesh);
+      segment.outlineMesh.geometry.dispose();
+      segment.outlineMesh.material.dispose();
+      segment.mesh.geometry.dispose();
+      segment.mesh.material.dispose();
+    }
+  }
+
   private rebuildPaths(document: SceneDocument, selection: EditorSelection) {
     this.clearPaths();
 
@@ -7467,7 +7565,9 @@ export class ViewportHost {
 
       const renderObjects = this.createPathRenderObjects(path, selection);
       this.pathGroup.add(renderObjects.line);
+      this.addPathSegmentMeshes(renderObjects.segments);
       for (const pointMesh of renderObjects.pointMeshes) {
+        this.pathGroup.add(pointMesh.outlineMesh);
         this.pathGroup.add(pointMesh.mesh);
       }
       this.pathRenderObjects.set(path.id, renderObjects);
@@ -7486,33 +7586,59 @@ export class ViewportHost {
       new LineBasicMaterial({
         color: isPathSelected(selection, path.id)
           ? PATH_SELECTED_COLOR
-          : PATH_COLOR
+          : PATH_COLOR,
+        depthTest: false,
+        depthWrite: false,
+        linewidth: PATH_LINE_WIDTH
       })
     );
+    line.renderOrder = PATH_RENDER_ORDER + 1;
     line.userData.pathId = path.id;
 
+    const segments = this.createPathSegmentMeshes(path);
     const pointMeshes = path.points.map((point) => {
+      const outlineMesh = new Mesh(
+        new SphereGeometry(PATH_POINT_OUTLINE_RADIUS, 16, 12),
+        new MeshBasicMaterial({
+          color: PATH_OUTLINE_COLOR,
+          depthTest: false,
+          depthWrite: false
+        })
+      );
       const mesh = new Mesh(
-        new SphereGeometry(PATH_POINT_RADIUS, 12, 12),
+        new SphereGeometry(PATH_POINT_RADIUS, 16, 12),
         new MeshBasicMaterial({
           color: isPathSelected(selection, path.id)
             ? PATH_POINT_SELECTED_COLOR
-            : PATH_POINT_COLOR
+            : PATH_POINT_COLOR,
+          depthTest: false,
+          depthWrite: false
         })
       );
 
+      outlineMesh.position.set(
+        point.position.x,
+        point.position.y,
+        point.position.z
+      );
       mesh.position.set(point.position.x, point.position.y, point.position.z);
+      outlineMesh.renderOrder = PATH_RENDER_ORDER + 2;
+      mesh.renderOrder = PATH_RENDER_ORDER + 3;
+      outlineMesh.userData.pathId = path.id;
+      outlineMesh.userData.pathPointId = point.id;
       mesh.userData.pathId = path.id;
       mesh.userData.pathPointId = point.id;
 
       return {
         pointId: point.id,
+        outlineMesh,
         mesh
       };
     });
 
     return {
       line,
+      segments,
       pointMeshes
     };
   }
@@ -7521,9 +7647,13 @@ export class ViewportHost {
     this.pathGroup.remove(renderObjects.line);
     renderObjects.line.geometry.dispose();
     renderObjects.line.material.dispose();
+    this.disposePathSegmentMeshes(renderObjects.segments);
 
     for (const pointMesh of renderObjects.pointMeshes) {
+      this.pathGroup.remove(pointMesh.outlineMesh);
       this.pathGroup.remove(pointMesh.mesh);
+      pointMesh.outlineMesh.geometry.dispose();
+      pointMesh.outlineMesh.material.dispose();
       pointMesh.mesh.geometry.dispose();
       pointMesh.mesh.material.dispose();
     }
@@ -7555,7 +7685,9 @@ export class ViewportHost {
         this.currentSelection
       );
       this.pathGroup.add(renderObjects.line);
+      this.addPathSegmentMeshes(renderObjects.segments);
       for (const pointMesh of renderObjects.pointMeshes) {
+        this.pathGroup.add(pointMesh.outlineMesh);
         this.pathGroup.add(pointMesh.mesh);
       }
       this.pathRenderObjects.set(pathId, renderObjects);
@@ -7577,6 +7709,9 @@ export class ViewportHost {
 
     renderObjects.line.geometry.dispose();
     renderObjects.line.geometry = this.createPathLineGeometry(path);
+    this.disposePathSegmentMeshes(renderObjects.segments);
+    renderObjects.segments = this.createPathSegmentMeshes(path);
+    this.addPathSegmentMeshes(renderObjects.segments);
 
     for (const pointMesh of renderObjects.pointMeshes) {
       const point = path.points.find(
@@ -7587,6 +7722,11 @@ export class ViewportHost {
         continue;
       }
 
+      pointMesh.outlineMesh.position.set(
+        point.position.x,
+        point.position.y,
+        point.position.z
+      );
       pointMesh.mesh.position.set(
         point.position.x,
         point.position.y,
