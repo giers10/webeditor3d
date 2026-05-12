@@ -14,6 +14,7 @@ export type EditorSelection =
   | { kind: "terrains"; ids: string[] }
   | { kind: "paths"; ids: string[] }
   | { kind: "pathPoint"; pathId: string; pointId: string }
+  | { kind: "pathPoints"; pathId: string; pointIds: string[] }
   | { kind: "entities"; ids: string[] }
   | { kind: "modelInstances"; ids: string[] };
 
@@ -80,6 +81,14 @@ export function cloneEditorSelection(selection: EditorSelection): EditorSelectio
     };
   }
 
+  if (selection.kind === "pathPoints") {
+    return {
+      kind: "pathPoints",
+      pathId: selection.pathId,
+      pointIds: [...selection.pointIds]
+    };
+  }
+
   return {
     kind: selection.kind,
     ids: [...selection.ids]
@@ -102,6 +111,8 @@ export function areEditorSelectionsEqual(left: EditorSelection, right: EditorSel
       return right.kind === "brushVertex" && left.brushId === right.brushId && left.vertexId === right.vertexId;
     case "pathPoint":
       return right.kind === "pathPoint" && left.pathId === right.pathId && left.pointId === right.pointId;
+    case "pathPoints":
+      return right.kind === "pathPoints" && left.pathId === right.pathId && left.pointIds.length === right.pointIds.length && left.pointIds.every((pointId, index) => pointId === right.pointIds[index]);
     case "brushes":
     case "terrains":
     case "paths":
@@ -121,6 +132,8 @@ export function getSelectionDefaultActiveId(selection: EditorSelection): string 
       return selection.brushId;
     case "pathPoint":
       return selection.pointId;
+    case "pathPoints":
+      return selection.pointIds.at(-1) ?? null;
     case "brushes":
     case "terrains":
     case "paths":
@@ -151,6 +164,10 @@ export function resolveSelectionActiveId(
       return selection.pointId === activeSelectionId
         ? activeSelectionId
         : selection.pointId;
+    case "pathPoints":
+      return selection.pointIds.includes(activeSelectionId)
+        ? activeSelectionId
+        : getSelectionDefaultActiveId(selection);
     case "brushes":
     case "terrains":
     case "paths":
@@ -175,6 +192,46 @@ export function applySameKindSelectionClick(
   clickedSelection: EditorSelection,
   shiftKey: boolean
 ): EditorSelection {
+  if (shiftKey && clickedSelection.kind === "pathPoint") {
+    const currentPointIds =
+      currentSelection.kind === "pathPoint" &&
+      currentSelection.pathId === clickedSelection.pathId
+        ? [currentSelection.pointId]
+        : currentSelection.kind === "pathPoints" &&
+            currentSelection.pathId === clickedSelection.pathId
+          ? currentSelection.pointIds
+          : null;
+
+    if (currentPointIds === null) {
+      return cloneEditorSelection(clickedSelection);
+    }
+
+    const hasPointId = currentPointIds.includes(clickedSelection.pointId);
+    const nextPointIds = hasPointId
+      ? currentPointIds.filter((pointId) => pointId !== clickedSelection.pointId)
+      : [...currentPointIds, clickedSelection.pointId];
+
+    if (nextPointIds.length === 0) {
+      return {
+        kind: "none"
+      };
+    }
+
+    if (nextPointIds.length === 1) {
+      return {
+        kind: "pathPoint",
+        pathId: clickedSelection.pathId,
+        pointId: nextPointIds[0]
+      };
+    }
+
+    return {
+      kind: "pathPoints",
+      pathId: clickedSelection.pathId,
+      pointIds: nextPointIds
+    };
+  }
+
   if (!shiftKey || !isSameKindMultiSelectableSelection(clickedSelection)) {
     return cloneEditorSelection(clickedSelection);
   }
@@ -305,6 +362,10 @@ export function getSingleSelectedPathOwnerId(selection: EditorSelection): string
     return selection.pathId;
   }
 
+  if (selection.kind === "pathPoints") {
+    return selection.pathId;
+  }
+
   return getSingleSelectedPathId(selection);
 }
 
@@ -367,12 +428,20 @@ export function isTerrainSelected(selection: EditorSelection, terrainId: string)
 export function isPathSelected(selection: EditorSelection, pathId: string): boolean {
   return (
     (selection.kind === "paths" && selection.ids.includes(pathId)) ||
-    (selection.kind === "pathPoint" && selection.pathId === pathId)
+    (selection.kind === "pathPoint" && selection.pathId === pathId) ||
+    (selection.kind === "pathPoints" && selection.pathId === pathId)
   );
 }
 
 export function isPathPointSelected(selection: EditorSelection, pathId: string, pointId: string): boolean {
-  return selection.kind === "pathPoint" && selection.pathId === pathId && selection.pointId === pointId;
+  return (
+    (selection.kind === "pathPoint" &&
+      selection.pathId === pathId &&
+      selection.pointId === pointId) ||
+    (selection.kind === "pathPoints" &&
+      selection.pathId === pathId &&
+      selection.pointIds.includes(pointId))
+  );
 }
 
 export function normalizeSelectionForWhiteboxSelectionMode(selection: EditorSelection, mode: WhiteboxSelectionMode): EditorSelection {
