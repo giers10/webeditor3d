@@ -21811,7 +21811,9 @@ export function App({
                     <div className="material-summary">
                       Edit authored point positions directly. Keep at least{" "}
                       {MIN_SCENE_PATH_POINT_COUNT} points. <code>Shift+W</code>{" "}
-                      appends a new point to the end of the selected path.
+                      appends a new point to the end of the selected path. When
+                      a point is selected, <code>Shift+D</code> appends one and
+                      starts grab mode.
                     </div>
                     {selectedPathPointIndex === null ? null : (
                       <div className="material-summary">
@@ -21829,7 +21831,7 @@ export function App({
                         className="toolbar__button"
                         type="button"
                         data-testid="add-path-point"
-                        onClick={handleAddPathPoint}
+                        onClick={() => handleAddPathPoint()}
                       >
                         Add Point
                       </button>
