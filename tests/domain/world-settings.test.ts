@@ -200,13 +200,13 @@ describe("world settings helpers", () => {
     expect(
       resolveFoliageQualitySettings({
         enabled: true,
-        densityMultiplier: 5,
+        densityMultiplier: 9,
         maxDistanceMultiplier: 0.01,
         shadows: "full"
       })
     ).toEqual({
       enabled: true,
-      densityMultiplier: 2,
+      densityMultiplier: 8,
       maxDistanceMultiplier: 0.1,
       shadows: "full"
     });
