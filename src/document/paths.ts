@@ -798,6 +798,96 @@ function createResolvedPathSegment(
   };
 }
 
+function sampleHighestTerrainWorldY(
+  terrains: readonly Terrain[] | undefined,
+  position: Vec3,
+  terrainOffset: number
+): number | null {
+  if (terrains === undefined || terrains.length === 0) {
+    return null;
+  }
+
+  let highestWorldY: number | null = null;
+
+  for (const terrain of terrains) {
+    const terrainHeight = sampleTerrainHeightAtWorldPosition(
+      terrain,
+      position.x,
+      position.z,
+      false
+    );
+
+    if (terrainHeight === null) {
+      continue;
+    }
+
+    const worldY = terrain.position.y + terrainHeight + terrainOffset;
+
+    if (highestWorldY === null || worldY > highestWorldY) {
+      highestWorldY = worldY;
+    }
+  }
+
+  return highestWorldY;
+}
+
+function applyTerrainGlueToPosition(
+  position: Vec3,
+  options: ResolveScenePathOptions,
+  terrainOffset: number
+): Vec3 {
+  const terrainWorldY = sampleHighestTerrainWorldY(
+    options.terrains,
+    position,
+    terrainOffset
+  );
+
+  return {
+    x: position.x,
+    y: terrainWorldY ?? position.y,
+    z: position.z
+  };
+}
+
+function applyTerrainGlueToPoint(
+  point: ScenePathPoint,
+  options: ResolveScenePathOptions,
+  terrainOffset: number
+): ScenePathPoint {
+  return {
+    ...point,
+    position: applyTerrainGlueToPosition(point.position, options, terrainOffset)
+  };
+}
+
+function applyTerrainGlueToSegments(
+  segments: ResolvedScenePathSegment[],
+  options: ResolveScenePathOptions,
+  terrainOffset: number
+): ResolvedScenePathSegment[] {
+  let totalLength = 0;
+
+  return segments.map((segment, index) => {
+    const nextSegment = createResolvedPathSegment(
+      {
+        index,
+        startPointId: segment.startPointId,
+        endPointId: segment.endPointId,
+        start: applyTerrainGlueToPosition(
+          segment.start,
+          options,
+          terrainOffset
+        ),
+        end: applyTerrainGlueToPosition(segment.end, options, terrainOffset)
+      },
+      totalLength
+    );
+
+    totalLength = nextSegment.distanceEnd;
+    return nextSegment;
+  });
+}
+
 function buildLinearResolvedPathSegments(
   points: ScenePathPoint[],
   loop: boolean
