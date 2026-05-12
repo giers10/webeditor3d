@@ -713,6 +713,15 @@ describe("buildRuntimeSceneFromDocument", () => {
         sampledResolution: 12,
         glueToTerrain: false,
         terrainOffset: 0,
+        road: {
+          enabled: false,
+          width: 2,
+          shoulderWidth: 1,
+          falloff: 0.5,
+          heightOffset: 0.03,
+          terrainConform: true,
+          materialId: null
+        },
         points: [
           {
             pointId: "path-point-a",
