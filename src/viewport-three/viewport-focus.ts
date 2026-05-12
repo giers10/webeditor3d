@@ -539,8 +539,10 @@ export function resolveViewportDocumentBounds(
     includeModelInstance(bounds, modelInstance, document.assets[modelInstance.assetId]);
   }
 
+  const terrains = getTerrains(document.terrains);
+
   for (const path of Object.values(document.paths)) {
-    includePath(bounds, path);
+    includePath(bounds, path, terrains);
   }
 
   for (const entity of Object.values(document.entities)) {
