@@ -98,6 +98,8 @@ function createPaddedTerrainLayerColors(layerColors: readonly number[]): Color[]
 export function createTerrainLayerBlendMaterial(
   options: TerrainLayerBlendMaterialOptions
 ): Material {
+  const layerTextures = createPaddedTerrainLayerTextures(options.layerTextures);
+
   if (options.wireframe === true) {
     return new MeshBasicMaterial({
       color: 0xf2ece2,
@@ -107,7 +109,7 @@ export function createTerrainLayerBlendMaterial(
 
   const material = new MeshStandardMaterial({
     color: 0xffffff,
-    map: options.layerTextures[0],
+    map: layerTextures[0],
     emissive: options.emissiveHex ?? 0x000000,
     emissiveIntensity: options.emissiveIntensity ?? 0,
     roughness: 1,
@@ -115,10 +117,14 @@ export function createTerrainLayerBlendMaterial(
   });
 
   material.onBeforeCompile = (shader) => {
-    shader.uniforms.terrainLayerMap0 = { value: options.layerTextures[0] };
-    shader.uniforms.terrainLayerMap1 = { value: options.layerTextures[1] };
-    shader.uniforms.terrainLayerMap2 = { value: options.layerTextures[2] };
-    shader.uniforms.terrainLayerMap3 = { value: options.layerTextures[3] };
+    shader.uniforms.terrainLayerMap0 = { value: layerTextures[0] };
+    shader.uniforms.terrainLayerMap1 = { value: layerTextures[1] };
+    shader.uniforms.terrainLayerMap2 = { value: layerTextures[2] };
+    shader.uniforms.terrainLayerMap3 = { value: layerTextures[3] };
+    shader.uniforms.terrainLayerMap4 = { value: layerTextures[4] };
+    shader.uniforms.terrainLayerMap5 = { value: layerTextures[5] };
+    shader.uniforms.terrainLayerMap6 = { value: layerTextures[6] };
+    shader.uniforms.terrainLayerMap7 = { value: layerTextures[7] };
     shader.uniforms.terrainFoliageMaskPreviewColor = {
       value: new Color(options.foliageMaskPreviewColorHex ?? 0x65d36e)
     };
@@ -131,8 +137,11 @@ export function createTerrainLayerBlendMaterial(
         "#include <common>",
         `#include <common>
 attribute vec4 terrainLayerWeights;
+attribute vec4 terrainLayerWeights0;
+attribute vec4 terrainLayerWeights1;
 attribute float terrainFoliageMask;
-varying vec4 vTerrainLayerWeights;
+varying vec4 vTerrainLayerWeights0;
+varying vec4 vTerrainLayerWeights1;
 varying float vTerrainFoliageMask;
 varying vec2 vTerrainUv;`
       )
@@ -140,7 +149,8 @@ varying vec2 vTerrainUv;`
         "#include <uv_vertex>",
         `#include <uv_vertex>
 vTerrainUv = uv;
-vTerrainLayerWeights = terrainLayerWeights;
+vTerrainLayerWeights0 = terrainLayerWeights0;
+vTerrainLayerWeights1 = terrainLayerWeights1;
 vTerrainFoliageMask = terrainFoliageMask;`
       );
 
@@ -148,36 +158,52 @@ vTerrainFoliageMask = terrainFoliageMask;`
       .replace(
         "#include <common>",
         `#include <common>
-varying vec4 vTerrainLayerWeights;
+varying vec4 vTerrainLayerWeights0;
+varying vec4 vTerrainLayerWeights1;
 varying float vTerrainFoliageMask;
 varying vec2 vTerrainUv;
 uniform sampler2D terrainLayerMap0;
 uniform sampler2D terrainLayerMap1;
 uniform sampler2D terrainLayerMap2;
 uniform sampler2D terrainLayerMap3;
+uniform sampler2D terrainLayerMap4;
+uniform sampler2D terrainLayerMap5;
+uniform sampler2D terrainLayerMap6;
+uniform sampler2D terrainLayerMap7;
 uniform vec3 terrainFoliageMaskPreviewColor;
 uniform float terrainFoliageMaskPreviewOpacity;`
       )
       .replace(
         "#include <map_fragment>",
-        `vec4 terrainWeights = max(vTerrainLayerWeights, 0.0);
+        `vec4 terrainWeights0 = max(vTerrainLayerWeights0, 0.0);
+vec4 terrainWeights1 = max(vTerrainLayerWeights1, 0.0);
 float terrainWeightSum =
-  terrainWeights.x +
-  terrainWeights.y +
-  terrainWeights.z +
-  terrainWeights.w;
+  terrainWeights0.x +
+  terrainWeights0.y +
+  terrainWeights0.z +
+  terrainWeights0.w +
+  terrainWeights1.x +
+  terrainWeights1.y +
+  terrainWeights1.z +
+  terrainWeights1.w;
 
 if (terrainWeightSum <= 0.0) {
-  terrainWeights = vec4(1.0, 0.0, 0.0, 0.0);
+  terrainWeights0 = vec4(1.0, 0.0, 0.0, 0.0);
+  terrainWeights1 = vec4(0.0);
 } else {
-  terrainWeights /= terrainWeightSum;
+  terrainWeights0 /= terrainWeightSum;
+  terrainWeights1 /= terrainWeightSum;
 }
 
 vec4 terrainLayerColor =
-  texture2D(terrainLayerMap0, vTerrainUv) * terrainWeights.x +
-  texture2D(terrainLayerMap1, vTerrainUv) * terrainWeights.y +
-  texture2D(terrainLayerMap2, vTerrainUv) * terrainWeights.z +
-  texture2D(terrainLayerMap3, vTerrainUv) * terrainWeights.w;
+  texture2D(terrainLayerMap0, vTerrainUv) * terrainWeights0.x +
+  texture2D(terrainLayerMap1, vTerrainUv) * terrainWeights0.y +
+  texture2D(terrainLayerMap2, vTerrainUv) * terrainWeights0.z +
+  texture2D(terrainLayerMap3, vTerrainUv) * terrainWeights0.w +
+  texture2D(terrainLayerMap4, vTerrainUv) * terrainWeights1.x +
+  texture2D(terrainLayerMap5, vTerrainUv) * terrainWeights1.y +
+  texture2D(terrainLayerMap6, vTerrainUv) * terrainWeights1.z +
+  texture2D(terrainLayerMap7, vTerrainUv) * terrainWeights1.w;
 diffuseColor *= terrainLayerColor;
 float foliageMaskPreviewBlend = clamp(
   vTerrainFoliageMask * terrainFoliageMaskPreviewOpacity,
@@ -192,7 +218,7 @@ diffuseColor.rgb = mix(
       );
   };
 
-  material.customProgramCacheKey = () => "terrain-layer-blend-v2";
+  material.customProgramCacheKey = () => "terrain-layer-blend-v3";
   material.needsUpdate = true;
   return material;
 }
