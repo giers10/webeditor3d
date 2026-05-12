@@ -149,8 +149,21 @@ describe("terrain material layers", () => {
       createTerrain({
         id: "terrain-remove-layer",
         sampleCountX: 2,
-        sampleCountZ: 1,
-        paintWeights: [0.2, 0.3, 0.1, 0.4, 0.1, 0]
+        sampleCountZ: 2,
+        paintWeights: [
+          0.2,
+          0.3,
+          0.1,
+          0.4,
+          0.1,
+          0,
+          0,
+          0.5,
+          0,
+          0.25,
+          0.25,
+          0.25
+        ]
       }),
       "fifth-material"
     );
@@ -158,7 +171,20 @@ describe("terrain material layers", () => {
     const nextTerrain = createTerrainWithRemovedLayer(terrain, 2);
 
     expect(nextTerrain.layers).toHaveLength(4);
-    expect(nextTerrain.paintWeights).toEqual([0.2, 0.1, 0, 0.4, 0, 0]);
+    expect(nextTerrain.paintWeights).toEqual([
+      0.2,
+      0.1,
+      0,
+      0.4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.25,
+      0.25,
+      0
+    ]);
   });
 });
 
