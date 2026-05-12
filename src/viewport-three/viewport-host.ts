@@ -11028,7 +11028,7 @@ export class ViewportHost {
         return `pathPoint:${selection.pathId}:${selection.pointId}`;
       case "pathPoints":
         return selection.pointIds.length === 1
-          ? `pathPoint:${selection.pathId}:${selection.pointIds[0]}`
+          ? `pathPoint:${selection.pathId}:${selection.pointIds[0]!}`
           : null;
       case "entities":
         return selection.ids.length === 1 ? `entity:${selection.ids[0]}` : null;
