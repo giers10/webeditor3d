@@ -19,9 +19,10 @@ import { getFirstPersonPlayerShapeSignature } from "./player-collision";
 import type {
   RuntimeBrushTriMeshCollider,
   RuntimeNpcCollider,
+  RuntimeSceneCollider,
   RuntimeTerrainHeightfieldCollider,
-  RuntimeSceneCollider
 } from "./runtime-scene-build";
+import type { SplineCorridorBoxCollider } from "../spline-corridor/spline-corridor-colliders";
 
 const CHARACTER_CONTROLLER_OFFSET = 0.01;
 const CHARACTER_CONTROLLER_SNAP_TO_GROUND_DISTANCE = 0.2;
@@ -142,6 +143,30 @@ function attachSimpleModelCollider(world: RAPIER.World, collider: GeneratedModel
       scaledCenter.y,
       scaledCenter.z
     ),
+    body
+  );
+}
+
+function attachSplineCorridorBoxCollider(
+  world: RAPIER.World,
+  collider: SplineCorridorBoxCollider
+) {
+  const body = world.createRigidBody(
+    RAPIER.RigidBodyDesc.fixed()
+      .setTranslation(
+        collider.position.x,
+        collider.position.y,
+        collider.position.z
+      )
+      .setRotation(createRapierQuaternion(collider.rotationDegrees))
+  );
+
+  world.createCollider(
+    RAPIER.ColliderDesc.cuboid(
+      collider.size.x * 0.5,
+      collider.size.y * 0.5,
+      collider.size.z * 0.5
+    ).setTranslation(collider.center.x, collider.center.y, collider.center.z),
     body
   );
 }
@@ -441,6 +466,11 @@ export class RapierCollisionWorld {
 
       if (collider.source === "npc") {
         attachNpcCollider(world, rapier, collider);
+        continue;
+      }
+
+      if (collider.source === "splineCorridor") {
+        attachSplineCorridorBoxCollider(world, collider);
         continue;
       }
 
