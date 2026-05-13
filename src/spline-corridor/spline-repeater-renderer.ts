@@ -1,13 +1,22 @@
-import { Group, MathUtils } from "three";
+import {
+  BufferGeometry,
+  Group,
+  InstancedMesh,
+  Matrix4,
+  MathUtils,
+  Mesh,
+  Quaternion,
+  Vector3,
+  type Material
+} from "three";
 
-import { instantiateModelTemplate } from "../assets/gltf-model-import";
-import { disposeModelInstance } from "../assets/model-instance-rendering";
 import type { Terrain } from "../document/terrains";
 import { applyRendererRenderCategoryFromMaterial } from "../rendering/render-layers";
 
 import { loadBundledSplineCorridorModelTemplate } from "./bundled-spline-corridor-model-loader";
 import {
   deriveSplineRepeaterInstances,
+  type SplineRepeaterInstance,
   type SplineRepeaterPathLike
 } from "./spline-repeaters";
 
@@ -19,6 +28,13 @@ interface SplineRepeaterRendererInput {
 interface SplineRepeaterRendererOptions {
   onRebuilt?: () => void;
   onDiagnostic?: (message: string) => void;
+}
+
+interface TemplateMeshSource {
+  name: string;
+  geometry: BufferGeometry;
+  material: Material | Material[];
+  matrixWorld: Matrix4;
 }
 
 export class SplineRepeaterRenderer {
@@ -57,8 +73,31 @@ export class SplineRepeaterRenderer {
     }
 
     this.group.remove(this.activeGroup);
-    disposeModelInstance(this.activeGroup);
+    this.disposeInstancedGroup(this.activeGroup);
     this.activeGroup = null;
+  }
+
+  private disposeInstancedGroup(group: Group) {
+    group.traverse((object) => {
+      const maybeInstancedMesh = object as InstancedMesh & {
+        isInstancedMesh?: boolean;
+      };
+
+      if (maybeInstancedMesh.isInstancedMesh !== true) {
+        return;
+      }
+
+      maybeInstancedMesh.geometry.dispose();
+
+      if (Array.isArray(maybeInstancedMesh.material)) {
+        for (const material of maybeInstancedMesh.material) {
+          material.dispose();
+        }
+        return;
+      }
+
+      maybeInstancedMesh.material.dispose();
+    });
   }
 
   private emitDiagnostic(message: string) {
@@ -68,6 +107,87 @@ export class SplineRepeaterRenderer {
     }
 
     console.warn(message);
+  }
+
+  private cloneMaterial(material: Material | Material[]): Material | Material[] {
+    return Array.isArray(material)
+      ? material.map((entry) => entry.clone())
+      : material.clone();
+  }
+
+  private collectTemplateMeshes(template: Group): TemplateMeshSource[] {
+    const meshSources: TemplateMeshSource[] = [];
+
+    template.updateMatrixWorld(true);
+    template.traverse((object) => {
+      const maybeMesh = object as Mesh & { isMesh?: boolean };
+
+      if (maybeMesh.isMesh !== true) {
+        return;
+      }
+
+      meshSources.push({
+        name: maybeMesh.name,
+        geometry: maybeMesh.geometry.clone(),
+        material: this.cloneMaterial(maybeMesh.material),
+        matrixWorld: maybeMesh.matrixWorld.clone()
+      });
+    });
+
+    return meshSources;
+  }
+
+  private createInstancedMeshesForAsset(options: {
+    assetId: string;
+    instances: readonly SplineRepeaterInstance[];
+    meshSources: readonly TemplateMeshSource[];
+  }): InstancedMesh[] {
+    const instancePosition = new Vector3();
+    const instanceScale = new Vector3();
+    const instanceQuaternion = new Quaternion();
+    const instanceMatrix = new Matrix4();
+    const finalMatrix = new Matrix4();
+
+    return options.meshSources.map((meshSource, meshIndex) => {
+      const instancedMesh = new InstancedMesh(
+        meshSource.geometry,
+        meshSource.material,
+        options.instances.length
+      );
+      instancedMesh.name =
+        meshSource.name.trim().length > 0
+          ? `SplineRepeater:${options.assetId}:${meshSource.name}`
+          : `SplineRepeater:${options.assetId}:mesh-${meshIndex}`;
+      instancedMesh.userData.nonPickable = true;
+      instancedMesh.userData.splineCorridorAssetId = options.assetId;
+      instancedMesh.frustumCulled = true;
+
+      options.instances.forEach((instance, instanceIndex) => {
+        instancePosition.set(
+          instance.position.x,
+          instance.position.y,
+          instance.position.z
+        );
+        instanceQuaternion.setFromAxisAngle(
+          new Vector3(0, 1, 0),
+          MathUtils.degToRad(instance.yawDegrees)
+        );
+        instanceScale.set(instance.scale, instance.scale, instance.scale);
+        instanceMatrix.compose(
+          instancePosition,
+          instanceQuaternion,
+          instanceScale
+        );
+        finalMatrix.multiplyMatrices(instanceMatrix, meshSource.matrixWorld);
+        instancedMesh.setMatrixAt(instanceIndex, finalMatrix);
+      });
+
+      instancedMesh.instanceMatrix.needsUpdate = true;
+      instancedMesh.computeBoundingBox();
+      instancedMesh.computeBoundingSphere();
+      applyRendererRenderCategoryFromMaterial(instancedMesh);
+      return instancedMesh;
+    });
   }
 
   private async rebuildAsync(
@@ -83,54 +203,61 @@ export class SplineRepeaterRenderer {
     const nextGroup = new Group();
     nextGroup.name = "splineRepeaterInstances";
     nextGroup.userData.nonPickable = true;
+    const instancesByAssetId = new Map<string, SplineRepeaterInstance[]>();
 
     for (const instance of instances) {
+      const assetInstances = instancesByAssetId.get(instance.asset.id) ?? [];
+      assetInstances.push(instance);
+      instancesByAssetId.set(instance.asset.id, assetInstances);
+    }
+
+    for (const [assetId, assetInstances] of instancesByAssetId) {
+      const asset = assetInstances[0]?.asset;
+
+      if (asset === undefined) {
+        continue;
+      }
+
       let template: Group;
 
       try {
         template = await loadBundledSplineCorridorModelTemplate(
-          instance.asset.bundledPath
+          asset.bundledPath
         );
       } catch (error) {
         this.emitDiagnostic(
           error instanceof Error
             ? error.message
-            : `Bundled spline corridor model failed to load from ${instance.asset.bundledPath}.`
+            : `Bundled spline corridor model failed to load from ${asset.bundledPath}.`
         );
         continue;
       }
 
       if (requestId !== this.requestId) {
-        disposeModelInstance(nextGroup);
+        this.disposeInstancedGroup(nextGroup);
         return;
       }
 
-      const model = instantiateModelTemplate(template);
-      model.name = `SplineRepeater:${instance.asset.id}`;
-      model.position.set(
-        instance.position.x,
-        instance.position.y,
-        instance.position.z
-      );
-      model.rotation.set(0, MathUtils.degToRad(instance.yawDegrees), 0);
-      model.scale.setScalar(instance.scale);
-      model.userData.nonPickable = true;
-      model.userData.pathId = instance.pathId;
-      model.userData.pathRepeaterId = instance.repeaterId;
-      model.userData.splineCorridorAssetId = instance.asset.id;
-      applyRendererRenderCategoryFromMaterial(model);
-      nextGroup.add(model);
+      const instancedMeshes = this.createInstancedMeshesForAsset({
+        assetId,
+        instances: assetInstances,
+        meshSources: this.collectTemplateMeshes(template)
+      });
+
+      for (const instancedMesh of instancedMeshes) {
+        nextGroup.add(instancedMesh);
+      }
     }
 
     if (requestId !== this.requestId) {
-      disposeModelInstance(nextGroup);
+      this.disposeInstancedGroup(nextGroup);
       return;
     }
 
     this.clearActiveGroup();
 
     if (nextGroup.children.length === 0) {
-      disposeModelInstance(nextGroup);
+      this.disposeInstancedGroup(nextGroup);
       this.onRebuilt?.();
       return;
     }
