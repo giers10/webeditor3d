@@ -10298,12 +10298,18 @@ export function App({
       });
       const terrainLabel = getTerrainLabelById(selectedTerrain.id, terrainList);
 
-      commitTerrainChange(
+      const committed = commitTerrainChange(
         selectedTerrain,
         nextTerrain,
         "Resize terrain grid",
-        `Resampled ${terrainLabel} to ${nextTerrain.sampleCountX} x ${nextTerrain.sampleCountZ} samples with ${nextTerrain.cellSize}m square cells.`
+        `Updated ${terrainLabel} to ${nextTerrain.sampleCountX} x ${nextTerrain.sampleCountZ} samples with ${nextTerrain.cellSize}m square cells.`
       );
+
+      if (committed) {
+        setTerrainSampleCountXDraft(String(nextTerrain.sampleCountX));
+        setTerrainSampleCountZDraft(String(nextTerrain.sampleCountZ));
+        setTerrainCellSizeDraft(String(nextTerrain.cellSize));
+      }
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
     }
@@ -21242,8 +21248,8 @@ export function App({
                   <div className="form-section">
                     <div className="label">Grid Settings</div>
                     <div className="material-summary">
-                      Resizing keeps the terrain centered and resamples heights
-                      and paint across the new grid.
+                      Cell Size changes resolution while preserving footprint.
+                      Samples X/Z extend or crop terrain size.
                     </div>
                     <div className="vector-inputs">
                       <label className="form-field">
