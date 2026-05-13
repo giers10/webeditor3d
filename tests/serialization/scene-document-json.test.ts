@@ -1045,7 +1045,55 @@ describe("scene document JSON", () => {
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.splineCorridorJunctions).toEqual({});
-    expect(SPLINE_CORRIDOR_JUNCTIONS_SCENE_DOCUMENT_VERSION).toBe(
+    expect(SPLINE_CORRIDOR_JUNCTIONS_SCENE_DOCUMENT_VERSION).toBe(107);
+  });
+
+  it("migrates junctions without authored edge settings to default junction edge settings", () => {
+    const pathA = createScenePath({ id: "path-junction-edge-json-a" });
+    const pathB = createScenePath({ id: "path-junction-edge-json-b" });
+    const junction = createSplineCorridorJunction({
+      id: "junction-edge-json",
+      center: { x: 1, y: 0, z: 2 },
+      connections: [
+        { pathId: pathA.id, progress: 0.25, clipDistance: 2.5 },
+        { pathId: pathB.id, progress: 0.75, clipDistance: 2.5 }
+      ]
+    });
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument({
+        ...createEmptySceneDocument({
+          name: "Legacy Junction Edge Scene"
+        }),
+        paths: {
+          [pathA.id]: pathA,
+          [pathB.id]: pathB
+        },
+        splineCorridorJunctions: {
+          [junction.id]: junction
+        }
+      })
+    ) as {
+      version: number;
+      splineCorridorJunctions: Record<string, { edge?: unknown }>;
+    };
+
+    legacyDocument.version = SPLINE_CORRIDOR_JUNCTIONS_SCENE_DOCUMENT_VERSION;
+    delete legacyDocument.splineCorridorJunctions[junction.id]?.edge;
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(
+      migratedDocument.splineCorridorJunctions[junction.id]?.edge
+    ).toMatchObject({
+      enabled: false,
+      collisionEnabled: false,
+      kind: "softShoulder",
+      width: 0.35,
+      height: 0.12,
+      materialId: null
+    });
+    expect(SPLINE_CORRIDOR_JUNCTION_EDGE_SCENE_DOCUMENT_VERSION).toBe(
       SCENE_DOCUMENT_VERSION
     );
   });
@@ -1059,6 +1107,14 @@ describe("scene document JSON", () => {
       radius: 2.5,
       materialId: "starter-concrete-checker",
       terrainMode: "paintOnly",
+      edge: {
+        enabled: true,
+        collisionEnabled: true,
+        kind: "ditch",
+        width: 0.75,
+        height: 0.2,
+        materialId: "starter-hazard-stripe"
+      },
       connections: [
         { pathId: pathA.id, progress: 0.25, clipDistance: 2.5 },
         { pathId: pathB.id, progress: 0.75, clipDistance: 2.5 }
