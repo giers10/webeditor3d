@@ -92,7 +92,7 @@ interface ViewportPanelProps {
   ): void;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onTerrainBrushCommit(commit: TerrainBrushStrokeCommit): boolean;
-  onTerrainGridResizeCommit(terrain: Terrain): boolean;
+  onTerrainGridResizeCommit?(terrain: Terrain): boolean;
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
   onBeginTransformOperation(operation: TransformOperation): void;
