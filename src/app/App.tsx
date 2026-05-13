@@ -235,6 +235,7 @@ import {
   MAX_SCENE_PATH_SAMPLED_RESOLUTION,
   MIN_SCENE_PATH_POINT_COUNT,
   MIN_SCENE_PATH_SAMPLED_RESOLUTION,
+  DEFAULT_SCENE_PATH_REPEATER_ASSET_ID,
   areScenePathsEqual,
   createAppendedScenePathPoint,
   createScenePath,
@@ -9890,7 +9891,7 @@ export function App({
 
     const defaultAsset =
       BUNDLED_SPLINE_CORRIDOR_ASSETS.find(
-        (asset) => asset.category === "fence_repeater"
+        (asset) => asset.id === DEFAULT_SCENE_PATH_REPEATER_ASSET_ID
       ) ?? BUNDLED_SPLINE_CORRIDOR_ASSETS[0];
 
     if (defaultAsset === undefined) {
