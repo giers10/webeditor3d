@@ -75,7 +75,7 @@ interface ViewportCanvasProps {
   focusSelection: EditorSelection;
   onSelectionChange(selection: EditorSelection): void;
   onTerrainBrushCommit(commit: TerrainBrushStrokeCommit): boolean;
-  onTerrainGridResizeCommit(terrain: Terrain): boolean;
+  onTerrainGridResizeCommit?(terrain: Terrain): boolean;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
@@ -295,7 +295,7 @@ export function ViewportCanvas({
   focusSelection,
   onSelectionChange,
   onTerrainBrushCommit,
-  onTerrainGridResizeCommit,
+  onTerrainGridResizeCommit = () => false,
   onCommitCreation,
   onCameraStateChange,
   onToolPreviewChange,

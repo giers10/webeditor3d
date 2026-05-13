@@ -16505,6 +16505,7 @@ export function App({
                   onSetPanelViewMode={handleSetViewportPanelViewMode}
                   onSetPanelDisplayMode={handleSetViewportPanelDisplayMode}
                   onTerrainBrushCommit={handleCommitTerrainBrushStroke}
+                  onTerrainGridResizeCommit={handleTerrainGridResizeCommit}
                   onCommitCreation={handleCommitCreation}
                   onCameraStateChange={(cameraState) => {
                     const previousCameraState =
