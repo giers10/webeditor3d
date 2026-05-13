@@ -641,6 +641,9 @@ interface Vec3Draft {
   z: string;
 }
 
+type TerrainGridSampleSide = "east" | "west" | "north" | "south";
+type TerrainGridSideSampleDrafts = Record<TerrainGridSampleSide, string>;
+
 const DEFAULT_SCHEDULE_PANE_HEIGHT = 320;
 const MIN_SCHEDULE_PANE_HEIGHT = 180;
 const MIN_VIEWPORT_REGION_HEIGHT = 180;
