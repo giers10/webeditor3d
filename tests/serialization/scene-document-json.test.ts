@@ -841,6 +841,7 @@ describe("scene document JSON", () => {
       edges: {
         left: {
           enabled: false,
+          collisionEnabled: false,
           kind: "softShoulder",
           width: 0.35,
           height: 0.12,
@@ -848,6 +849,7 @@ describe("scene document JSON", () => {
         },
         right: {
           enabled: false,
+          collisionEnabled: false,
           kind: "softShoulder",
           width: 0.35,
           height: 0.12,
@@ -897,6 +899,7 @@ describe("scene document JSON", () => {
     expect(migratedDocument.paths[path.id]?.road.edges).toEqual({
       left: {
         enabled: false,
+        collisionEnabled: false,
         kind: "softShoulder",
         width: 0.35,
         height: 0.12,
@@ -904,6 +907,7 @@ describe("scene document JSON", () => {
       },
       right: {
         enabled: false,
+        collisionEnabled: false,
         kind: "softShoulder",
         width: 0.35,
         height: 0.12,
