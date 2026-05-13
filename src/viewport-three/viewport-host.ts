@@ -108,7 +108,8 @@ import {
   getScenePaths,
   resolveScenePath,
   sampleScenePathPosition,
-  type ScenePath
+  type ScenePath,
+  type ScenePathRoadEdgeSettings
 } from "../document/paths";
 import {
   cloneTerrain,
@@ -198,7 +199,10 @@ import {
   resolveTerrainLodLevelIndexWithHysteresis,
   TERRAIN_LOD_DEBUG_COLORS
 } from "../geometry/terrain-mesh";
-import { buildSplineRoadMeshGeometry } from "../geometry/spline-road-mesh";
+import {
+  buildSplineRoadEdgeMeshGeometry,
+  buildSplineRoadMeshGeometry
+} from "../geometry/spline-road-mesh";
 import {
   applyTerrainBrushStampInPlace,
   createTerrainBrushPatchFromTerrains,
@@ -367,7 +371,7 @@ interface PathRenderObjects {
 }
 
 interface RoadSurfaceRenderObjects {
-  mesh: Mesh<BufferGeometry, Material>;
+  meshes: Array<Mesh<BufferGeometry, Material>>;
 }
 
 interface TerrainRenderObjects {
