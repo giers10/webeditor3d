@@ -741,6 +741,7 @@ describe("buildRuntimeSceneFromDocument", () => {
             }
           }
         },
+        repeaters: [],
         points: [
           {
             pointId: "path-point-a",
