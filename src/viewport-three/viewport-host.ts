@@ -427,6 +427,18 @@ interface TerrainGridResizeHit {
   point: Vec3;
 }
 
+interface TerrainGridResizeArrowVisual {
+  side: TerrainGridResizeSide;
+  group: Group;
+  shaftOutline: Mesh;
+  shaft: Mesh;
+  line: Line<BufferGeometry, LineBasicMaterial>;
+  headOutline: Mesh;
+  head: Mesh;
+  pickShaft: Mesh;
+  pickHead: Mesh;
+}
+
 interface LightVolumeRenderObjects {
   group: Group;
   lights: PointLight[];
