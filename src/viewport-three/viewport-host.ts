@@ -210,8 +210,7 @@ import {
 } from "../geometry/spline-road-mesh";
 import {
   buildSplineCorridorJunctionEdgeMeshGeometry,
-  buildSplineCorridorJunctionMeshGeometry,
-  resolveSplineCorridorJunctionEdgeSettings
+  buildSplineCorridorJunctionMeshGeometry
 } from "../geometry/spline-corridor-junction-mesh";
 import {
   detectSplineCorridorJunctionCandidates,
@@ -7778,12 +7777,9 @@ export class ViewportHost {
       meshes.push(mesh);
     }
 
-    const edge = resolveSplineCorridorJunctionEdgeSettings({
-      junction,
-      paths
-    });
+    const edge = junction.edge;
     const edgeGeometry =
-      edge === null
+      !edge.enabled || edge.width <= 0
         ? null
         : buildSplineCorridorJunctionEdgeMeshGeometry({
             junction,
@@ -7792,7 +7788,7 @@ export class ViewportHost {
             edge
           });
 
-    if (edge !== null && edgeGeometry !== null) {
+    if (edgeGeometry !== null) {
       const edgeMesh = new Mesh(edgeGeometry, this.createRoadEdgeMaterial(edge));
       edgeMesh.castShadow = false;
       edgeMesh.receiveShadow = true;
