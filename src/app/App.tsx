@@ -280,6 +280,7 @@ import {
   createSplineCorridorJunction,
   normalizeSplineCorridorJunctionMaterialId,
   normalizeSplineCorridorJunctionRadius,
+  normalizeSplineCorridorJunctionShapeMode,
   normalizeSplineCorridorJunctionTerrainMode,
   type SplineCorridorJunction
 } from "../document/spline-corridor-junctions";
