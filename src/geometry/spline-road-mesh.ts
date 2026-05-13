@@ -251,13 +251,18 @@ function buildEdgeProfile(options: {
     case "bank":
       return [
         { offset: innerOffset, heightOffset: 0 },
-        { offset: outerOffset, heightOffset: edgeHeight }
+        { offset: outerOffset, heightOffset: edgeHeight },
+        { offset: outerOffset, heightOffset: 0 }
       ];
-    case "ditch":
+    case "ditch": {
+      const middleOffset = (innerOffset + outerOffset) * 0.5;
+
       return [
         { offset: innerOffset, heightOffset: 0 },
-        { offset: outerOffset, heightOffset: -edgeHeight }
+        { offset: middleOffset, heightOffset: -edgeHeight },
+        { offset: outerOffset, heightOffset: 0 }
       ];
+    }
     case "softShoulder":
       return [
         { offset: innerOffset, heightOffset: 0 },
@@ -449,7 +454,7 @@ export function buildSplineRoadEdgeMeshData(options: {
     }
   }
 
-  if (edge.kind === "curb") {
+  if (edge.kind !== "softShoulder") {
     addEdgeProfileCaps({
       indices,
       profileVertexCount: profile.length,
