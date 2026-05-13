@@ -22858,7 +22858,7 @@ export function App({
                                         terrainMode:
                                           normalizeSplineCorridorJunctionTerrainMode(
                                             event.currentTarget.value
-                                          ) as SplineCorridorJunctionTerrainMode
+                                          )
                                       }),
                                       "Updated spline corridor junction terrain mode."
                                     )
