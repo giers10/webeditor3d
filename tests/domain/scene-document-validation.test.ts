@@ -2100,6 +2100,7 @@ describe("validateSceneDocument", () => {
       edges: {
         left: {
           enabled: "yes",
+          collisionEnabled: "yes",
           kind: "wall",
           width: 0,
           height: -1,
@@ -2113,6 +2114,7 @@ describe("validateSceneDocument", () => {
         id: "",
         name: "   ",
         enabled: "yes",
+        collisionEnabled: "yes",
         assetId: "missing-corridor-asset",
         placement: "above",
         offset: -1,
@@ -2202,6 +2204,10 @@ describe("validateSceneDocument", () => {
           path: "paths.path-invalid.road.edges.left.enabled"
         }),
         expect.objectContaining({
+          code: "invalid-path-road-edge-collision-enabled",
+          path: "paths.path-invalid.road.edges.left.collisionEnabled"
+        }),
+        expect.objectContaining({
           code: "invalid-path-road-edge-kind",
           path: "paths.path-invalid.road.edges.left.kind"
         }),
@@ -2232,6 +2238,10 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-path-repeater-enabled",
           path: "paths.path-invalid.repeaters.0.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-collision-enabled",
+          path: "paths.path-invalid.repeaters.0.collisionEnabled"
         }),
         expect.objectContaining({
           code: "invalid-path-repeater-asset",
