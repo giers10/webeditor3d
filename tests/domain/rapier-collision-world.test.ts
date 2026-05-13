@@ -4,7 +4,7 @@ import { BoxGeometry, PlaneGeometry } from "three";
 import { createModelInstance } from "../../src/assets/model-instances";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
-import { createTerrain } from "../../src/document/terrains";
+import { createTerrain, resizeTerrainGrid } from "../../src/document/terrains";
 import {
   createNpcEntity,
   createPlayerStartEntity
