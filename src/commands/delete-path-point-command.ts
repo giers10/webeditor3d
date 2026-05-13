@@ -8,8 +8,13 @@ import {
   MIN_SCENE_PATH_POINT_COUNT,
   type ScenePathPoint
 } from "../document/paths";
+import type { SplineCorridorJunctionRegistry } from "../document/spline-corridor-junctions";
 
 import type { EditorCommand } from "./command";
+import {
+  cloneSplineCorridorJunctionRegistry,
+  setScenePathAndReattachJunctions
+} from "./path-junction-maintenance";
 
 interface DeletePathPointCommandOptions {
   pathId: string;
@@ -40,6 +45,7 @@ export function createDeletePathPointCommand(
 ): EditorCommand {
   let deletedPoint: ScenePathPoint | null = null;
   let deletedPointIndex: number | null = null;
+  let previousJunctions: SplineCorridorJunctionRegistry | null = null;
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
 
@@ -82,20 +88,25 @@ export function createDeletePathPointCommand(
         previousToolMode = context.getToolMode();
       }
 
+      if (previousJunctions === null) {
+        previousJunctions = cloneSplineCorridorJunctionRegistry(
+          currentDocument.splineCorridorJunctions
+        );
+      }
+
       const nextPoints = path.points.filter((point) => point.id !== options.pointId);
       const fallbackPoint =
         nextPoints[Math.min(pointIndex, nextPoints.length - 1)] ?? null;
 
-      context.setDocument({
-        ...currentDocument,
-        paths: {
-          ...currentDocument.paths,
-          [path.id]: cloneScenePath({
+      context.setDocument(
+        setScenePathAndReattachJunctions(
+          currentDocument,
+          cloneScenePath({
             ...path,
             points: nextPoints
           })
-        }
-      });
+        )
+      );
       context.setSelection(
         fallbackPoint === null
           ? setSinglePathSelection(options.pathId)
@@ -126,7 +137,11 @@ export function createDeletePathPointCommand(
             ...path,
             points: nextPoints
           })
-        }
+        },
+        splineCorridorJunctions:
+          previousJunctions === null
+            ? currentDocument.splineCorridorJunctions
+            : cloneSplineCorridorJunctionRegistry(previousJunctions)
       });
 
       if (previousSelection !== null) {
