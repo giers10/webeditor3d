@@ -3422,6 +3422,17 @@ function validateSplineCorridorJunction(
     );
   }
 
+  if (!isSplineCorridorJunctionShapeMode(junction.shapeMode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spline-corridor-junction-shape-mode",
+        "Spline corridor junction shape mode must be straight, curve, or corner.",
+        `${path}.shapeMode`
+      )
+    );
+  }
+
   if (
     typeof junction.edge !== "object" ||
     junction.edge === null ||
