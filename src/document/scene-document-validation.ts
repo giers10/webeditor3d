@@ -2742,6 +2742,229 @@ function validateScenePathRoadEdge(
   }
 }
 
+function validateScenePathRepeater(
+  repeater: ScenePathRepeater,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (repeater.id.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-id",
+        "Path repeater ids must be non-empty strings.",
+        `${path}.id`
+      )
+    );
+  }
+
+  if (repeater.name !== undefined && repeater.name.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-name",
+        "Path repeater names must be non-empty when authored.",
+        `${path}.name`
+      )
+    );
+  }
+
+  if (!isBoolean(repeater.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-enabled",
+        "Path repeater enabled must remain a boolean.",
+        `${path}.enabled`
+      )
+    );
+  }
+
+  if (
+    typeof repeater.assetId !== "string" ||
+    !isBundledSplineCorridorAssetId(repeater.assetId)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-asset",
+        `Path repeater asset ${String(repeater.assetId)} must reference a bundled spline corridor asset.`,
+        `${path}.assetId`
+      )
+    );
+  }
+
+  if (!isScenePathRepeaterPlacement(repeater.placement)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-placement",
+        "Path repeater placement must be center, left, or right.",
+        `${path}.placement`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      repeater.offset,
+      MIN_SCENE_PATH_REPEATER_OFFSET,
+      MAX_SCENE_PATH_REPEATER_OFFSET
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-offset",
+        `Path repeater offset must be from ${MIN_SCENE_PATH_REPEATER_OFFSET} to ${MAX_SCENE_PATH_REPEATER_OFFSET}.`,
+        `${path}.offset`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      repeater.spacing,
+      MIN_SCENE_PATH_REPEATER_SPACING,
+      MAX_SCENE_PATH_REPEATER_SPACING
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-spacing",
+        `Path repeater spacing must be from ${MIN_SCENE_PATH_REPEATER_SPACING} to ${MAX_SCENE_PATH_REPEATER_SPACING}.`,
+        `${path}.spacing`
+      )
+    );
+  }
+
+  for (const field of ["startInset", "endInset"] as const) {
+    if (
+      !isFiniteNumberInRange(
+        repeater[field],
+        MIN_SCENE_PATH_REPEATER_INSET,
+        MAX_SCENE_PATH_REPEATER_INSET
+      )
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-path-repeater-inset",
+          `Path repeater ${field} must be from ${MIN_SCENE_PATH_REPEATER_INSET} to ${MAX_SCENE_PATH_REPEATER_INSET}.`,
+          `${path}.${field}`
+        )
+      );
+    }
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      repeater.scale,
+      MIN_SCENE_PATH_REPEATER_SCALE,
+      MAX_SCENE_PATH_REPEATER_SCALE
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-scale",
+        `Path repeater scale must be from ${MIN_SCENE_PATH_REPEATER_SCALE} to ${MAX_SCENE_PATH_REPEATER_SCALE}.`,
+        `${path}.scale`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      repeater.randomScale,
+      MIN_SCENE_PATH_REPEATER_RANDOM_SCALE,
+      MAX_SCENE_PATH_REPEATER_RANDOM_SCALE
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-random-scale",
+        `Path repeater random scale must be from ${MIN_SCENE_PATH_REPEATER_RANDOM_SCALE} to ${MAX_SCENE_PATH_REPEATER_RANDOM_SCALE}.`,
+        `${path}.randomScale`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      repeater.randomYawDegrees,
+      MIN_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES,
+      MAX_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-random-yaw",
+        `Path repeater random yaw must be from ${MIN_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES} to ${MAX_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES}.`,
+        `${path}.randomYawDegrees`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(repeater.yawOffsetDegrees)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-yaw-offset",
+        "Path repeater yaw offset must be finite.",
+        `${path}.yawOffsetDegrees`
+      )
+    );
+  }
+
+  if (!isBoolean(repeater.terrainConform)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-terrain-conform",
+        "Path repeater terrain conform must remain a boolean.",
+        `${path}.terrainConform`
+      )
+    );
+  }
+
+  if (!isFiniteNumber(repeater.heightOffset)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-height-offset",
+        "Path repeater height offset must be finite.",
+        `${path}.heightOffset`
+      )
+    );
+  }
+
+  if (!isBoolean(repeater.alignToSpline)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-align-to-spline",
+        "Path repeater align to spline must remain a boolean.",
+        `${path}.alignToSpline`
+      )
+    );
+  }
+
+  if (!Number.isFinite(repeater.seed) || !Number.isInteger(repeater.seed)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-seed",
+        "Path repeater seed must be a finite integer.",
+        `${path}.seed`
+      )
+    );
+  }
+}
+
 function validateScenePath(
   pathValue: ScenePath,
   path: string,
