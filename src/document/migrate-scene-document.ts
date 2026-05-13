@@ -6723,6 +6723,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== SPLINE_REPEATERS_SCENE_DOCUMENT_VERSION &&
     source.version !== SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION &&
     source.version !== SPLINE_CORRIDOR_JUNCTIONS_SCENE_DOCUMENT_VERSION &&
+    source.version !== SPLINE_CORRIDOR_JUNCTION_EDGE_SCENE_DOCUMENT_VERSION &&
     source.version !== NPC_TARGETING_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
