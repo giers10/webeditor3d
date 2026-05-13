@@ -1382,7 +1382,10 @@ function getTerrainSourceSampleX(
   sampleX: number,
   cellSize: number
 ): number {
-  return (nextPosition.x + sampleX * cellSize - terrain.position.x) / terrain.cellSize;
+  return (
+    (nextPosition.x + sampleX * cellSize - terrain.position.x) /
+    terrain.cellSize
+  );
 }
 
 function getTerrainSourceSampleZ(
@@ -1391,7 +1394,10 @@ function getTerrainSourceSampleZ(
   sampleZ: number,
   cellSize: number
 ): number {
-  return (nextPosition.z + sampleZ * cellSize - terrain.position.z) / terrain.cellSize;
+  return (
+    (nextPosition.z + sampleZ * cellSize - terrain.position.z) /
+    terrain.cellSize
+  );
 }
 
 function createLocalPositionResampledTerrainHeights(
@@ -1574,8 +1580,10 @@ function createLocalPositionResampledTerrainFoliageBlockerMask(
 export function changeTerrainCellSizePreservingFootprint(
   terrain: Terrain,
   requestedCellSize: number,
-  resizeDirectionX: TerrainGridResizeDirectionX = DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X,
-  resizeDirectionZ: TerrainGridResizeDirectionZ = DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z
+  resizeDirectionX: TerrainGridResizeDirectionX =
+    DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X,
+  resizeDirectionZ: TerrainGridResizeDirectionZ =
+    DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z
 ): Terrain {
   const cellSize = normalizeTerrainCellSize(requestedCellSize);
   const normalizedResizeDirectionX =
@@ -1640,8 +1648,10 @@ export function changeTerrainSampleCountsByExtendingOrCropping(
   terrain: Terrain,
   requestedSampleCountX: number,
   requestedSampleCountZ: number,
-  resizeDirectionX: TerrainGridResizeDirectionX = DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X,
-  resizeDirectionZ: TerrainGridResizeDirectionZ = DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z
+  resizeDirectionX: TerrainGridResizeDirectionX =
+    DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X,
+  resizeDirectionZ: TerrainGridResizeDirectionZ =
+    DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z
 ): Terrain {
   const sampleCountX = normalizeTerrainSampleCount(
     requestedSampleCountX,
