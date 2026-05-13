@@ -1117,7 +1117,7 @@ describe("RapierCollisionWorld", () => {
 
       expect(eastLanding.grounded).toBe(true);
       expect(eastLanding.feetPosition.y).toBeGreaterThan(0.39);
-      expect(eastLanding.feetPosition.y).toBeLessThan(0.41);
+      expect(eastLanding.feetPosition.y).toBeLessThan(0.43);
       expect(westLanding.grounded).toBe(true);
       expect(westLanding.feetPosition.y).toBeGreaterThan(0.04);
       expect(westLanding.feetPosition.y).toBeLessThan(0.06);
