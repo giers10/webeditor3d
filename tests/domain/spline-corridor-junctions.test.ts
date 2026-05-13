@@ -53,6 +53,58 @@ describe("spline corridor junctions", () => {
     ]);
   });
 
+  it("inherits a candidate junction edge profile from connected road edges", () => {
+    const pathA = createScenePath({
+      id: "path-edge-candidate-a",
+      road: {
+        enabled: true,
+        edges: {
+          left: {
+            enabled: true,
+            collisionEnabled: true,
+            kind: "bank",
+            width: 0.8,
+            height: 0.3,
+            materialId: "edge-material"
+          }
+        }
+      },
+      points: [
+        {
+          id: "path-edge-candidate-a-start",
+          position: { x: 0, y: 0, z: 0 }
+        },
+        {
+          id: "path-edge-candidate-a-end",
+          position: { x: 10, y: 0, z: 0 }
+        }
+      ]
+    });
+    const pathB = createRoadPath("path-edge-candidate-b", [
+      { x: 5, z: -5 },
+      { x: 5, z: 5 }
+    ]);
+    const [candidate] = detectSplineCorridorJunctionCandidates({
+      paths: [pathA, pathB]
+    });
+
+    if (candidate === undefined) {
+      throw new Error("Expected a candidate.");
+    }
+
+    const junction = createSplineCorridorJunctionFromCandidate(candidate);
+
+    expect(candidate.edge).toMatchObject({
+      enabled: true,
+      collisionEnabled: true,
+      kind: "bank",
+      width: 0.8,
+      height: 0.3,
+      materialId: "edge-material"
+    });
+    expect(junction.edge).toEqual(candidate.edge);
+  });
+
   it("detects self-intersections on non-adjacent spline segments", () => {
     const path = createRoadPath("path-self", [
       { x: 0, z: 0 },
@@ -173,4 +225,3 @@ describe("spline corridor junctions", () => {
     ]);
   });
 });
-
