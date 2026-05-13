@@ -255,6 +255,7 @@ import {
   NPC_TARGETING_SCENE_DOCUMENT_VERSION,
   PATH_TERRAIN_GLUE_SCENE_DOCUMENT_VERSION,
   SPLINE_CORRIDOR_JUNCTION_EDGE_SCENE_DOCUMENT_VERSION,
+  SPLINE_CORRIDOR_JUNCTION_SHAPE_SCENE_DOCUMENT_VERSION,
   SPLINE_CORRIDOR_JUNCTIONS_SCENE_DOCUMENT_VERSION,
   SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION,
   SPLINE_ROAD_EDGES_SCENE_DOCUMENT_VERSION,
@@ -335,10 +336,12 @@ import {
 } from "./paths";
 import {
   createSplineCorridorJunction,
+  isSplineCorridorJunctionShapeMode,
   isSplineCorridorJunctionTerrainMode,
   normalizeSplineCorridorJunctionClipDistance,
   normalizeSplineCorridorJunctionMaterialId,
   normalizeSplineCorridorJunctionRadius,
+  normalizeSplineCorridorJunctionShapeMode,
   type SplineCorridorJunction,
   type SplineCorridorJunctionConnection
 } from "./spline-corridor-junctions";
