@@ -961,6 +961,7 @@ describe("scene document JSON", () => {
         edges: {
           left: {
             enabled: true,
+            collisionEnabled: false,
             kind: "curb",
             width: 0.4,
             height: 0.2,
