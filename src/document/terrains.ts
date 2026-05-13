@@ -1350,19 +1350,74 @@ function getTerrainSampleCountForFootprint(
   );
 }
 
+function getTerrainPositionForResize(
+  terrain: Terrain,
+  sampleCountX: number,
+  sampleCountZ: number,
+  cellSize: number,
+  resizeDirectionX: TerrainGridResizeDirectionX,
+  resizeDirectionZ: TerrainGridResizeDirectionZ
+): Vec3 {
+  const oldMaxX = terrain.position.x + getTerrainFootprintWidth(terrain);
+  const oldMaxZ = terrain.position.z + getTerrainFootprintDepth(terrain);
+  const nextWidth = (sampleCountX - 1) * cellSize;
+  const nextDepth = (sampleCountZ - 1) * cellSize;
+
+  return {
+    x:
+      resizeDirectionX === "west"
+        ? oldMaxX - nextWidth
+        : terrain.position.x,
+    y: terrain.position.y,
+    z:
+      resizeDirectionZ === "south"
+        ? oldMaxZ - nextDepth
+        : terrain.position.z
+  };
+}
+
+function getTerrainSourceSampleX(
+  terrain: Terrain,
+  nextPosition: Vec3,
+  sampleX: number,
+  cellSize: number
+): number {
+  return (nextPosition.x + sampleX * cellSize - terrain.position.x) / terrain.cellSize;
+}
+
+function getTerrainSourceSampleZ(
+  terrain: Terrain,
+  nextPosition: Vec3,
+  sampleZ: number,
+  cellSize: number
+): number {
+  return (nextPosition.z + sampleZ * cellSize - terrain.position.z) / terrain.cellSize;
+}
+
 function createLocalPositionResampledTerrainHeights(
   terrain: Terrain,
   sampleCountX: number,
   sampleCountZ: number,
-  cellSize: number
+  cellSize: number,
+  nextPosition: Vec3
 ): number[] {
   const heights = new Array<number>(sampleCountX * sampleCountZ);
 
   for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
-    const sourceSampleZ = (sampleZ * cellSize) / terrain.cellSize;
+    const sourceSampleZ = getTerrainSourceSampleZ(
+      terrain,
+      nextPosition,
+      sampleZ,
+      cellSize
+    );
 
     for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
-      const sourceSampleX = (sampleX * cellSize) / terrain.cellSize;
+      const sourceSampleX = getTerrainSourceSampleX(
+        terrain,
+        nextPosition,
+        sampleX,
+        cellSize
+      );
 
       heights[sampleZ * sampleCountX + sampleX] =
         sampleTerrainHeightAtGridCoordinate(
@@ -1380,7 +1435,8 @@ function createLocalPositionResampledTerrainPaintWeights(
   terrain: Terrain,
   sampleCountX: number,
   sampleCountZ: number,
-  cellSize: number
+  cellSize: number,
+  nextPosition: Vec3
 ): number[] {
   const storedWeightCount = getTerrainStoredPaintWeightCount(
     terrain.layers.length
@@ -1390,10 +1446,20 @@ function createLocalPositionResampledTerrainPaintWeights(
   );
 
   for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
-    const sourceSampleZ = (sampleZ * cellSize) / terrain.cellSize;
+    const sourceSampleZ = getTerrainSourceSampleZ(
+      terrain,
+      nextPosition,
+      sampleZ,
+      cellSize
+    );
 
     for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
-      const sourceSampleX = (sampleX * cellSize) / terrain.cellSize;
+      const sourceSampleX = getTerrainSourceSampleX(
+        terrain,
+        nextPosition,
+        sampleX,
+        cellSize
+      );
       const offset = (sampleZ * sampleCountX + sampleX) * storedWeightCount;
 
       for (
@@ -1419,17 +1485,28 @@ function createLocalPositionResampledTerrainFoliageMasks(
   terrain: Terrain,
   sampleCountX: number,
   sampleCountZ: number,
-  cellSize: number
+  cellSize: number,
+  nextPosition: Vec3
 ): TerrainFoliageMaskRegistry {
   return Object.fromEntries(
     Object.entries(terrain.foliageMasks).map(([layerId, mask]) => {
       const values = new Array<number>(sampleCountX * sampleCountZ);
 
       for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
-        const sourceSampleZ = (sampleZ * cellSize) / terrain.cellSize;
+        const sourceSampleZ = getTerrainSourceSampleZ(
+          terrain,
+          nextPosition,
+          sampleZ,
+          cellSize
+        );
 
         for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
-          const sourceSampleX = (sampleX * cellSize) / terrain.cellSize;
+          const sourceSampleX = getTerrainSourceSampleX(
+            terrain,
+            nextPosition,
+            sampleX,
+            cellSize
+          );
 
           values[sampleZ * sampleCountX + sampleX] =
             sampleTerrainFoliageMaskAtGridCoordinate(
@@ -1457,15 +1534,26 @@ function createLocalPositionResampledTerrainFoliageBlockerMask(
   terrain: Terrain,
   sampleCountX: number,
   sampleCountZ: number,
-  cellSize: number
+  cellSize: number,
+  nextPosition: Vec3
 ): TerrainFoliageBlockerMask {
   const values = new Array<number>(sampleCountX * sampleCountZ);
 
   for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
-    const sourceSampleZ = (sampleZ * cellSize) / terrain.cellSize;
+    const sourceSampleZ = getTerrainSourceSampleZ(
+      terrain,
+      nextPosition,
+      sampleZ,
+      cellSize
+    );
 
     for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
-      const sourceSampleX = (sampleX * cellSize) / terrain.cellSize;
+      const sourceSampleX = getTerrainSourceSampleX(
+        terrain,
+        nextPosition,
+        sampleX,
+        cellSize
+      );
 
       values[sampleZ * sampleCountX + sampleX] =
         sampleTerrainFoliageBlockerMaskAtGridCoordinate(
