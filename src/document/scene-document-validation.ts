@@ -3204,6 +3204,39 @@ function validateScenePath(
     }
   }
 
+  if (!Array.isArray(pathValue.repeaters)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeaters",
+        "Path repeaters must be an array.",
+        `${path}.repeaters`
+      )
+    );
+  } else {
+    const seenRepeaterIds = new Set<string>();
+
+    pathValue.repeaters.forEach((repeater, index) => {
+      if (seenRepeaterIds.has(repeater.id)) {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "duplicate-path-repeater-id",
+            `Duplicate path repeater id ${repeater.id}.`,
+            `${path}.repeaters.${index}.id`
+          )
+        );
+      }
+
+      seenRepeaterIds.add(repeater.id);
+      validateScenePathRepeater(
+        repeater,
+        `${path}.repeaters.${index}`,
+        diagnostics
+      );
+    });
+  }
+
   if (pathValue.points.length < MIN_SCENE_PATH_POINT_COUNT) {
     diagnostics.push(
       createDiagnostic(
