@@ -1489,6 +1489,17 @@ export class ViewportHost {
     this.addCameraRigRailPreviewPathIds(affectedIds, previousSelection);
     this.addCameraRigRailPreviewPathIds(affectedIds, selection);
     this.refreshSelectionPresentation(affectedIds);
+
+    if (
+      this.currentDocument !== null &&
+      (affectedIds.pathIds.size > 0 ||
+        previousSelection.kind === "pathPoint" ||
+        previousSelection.kind === "pathPoints" ||
+        selection.kind === "pathPoint" ||
+        selection.kind === "pathPoints")
+    ) {
+      this.rebuildPathJunctionMarkers(this.currentDocument, selection);
+    }
   }
 
   updateDocument(document: SceneDocument) {
