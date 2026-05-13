@@ -1963,7 +1963,7 @@ describe("buildRuntimeSceneFromDocument", () => {
             kind: "curb",
             width: 0.3,
             height: 0.2,
-            materialId: "stone_flooring_200x200"
+            materialId: "quartzite_stone_250x250"
           }
         }
       }
@@ -1979,7 +1979,7 @@ describe("buildRuntimeSceneFromDocument", () => {
       "ground_sand_300x300"
     );
     expect(runtimeScene.paths[0]?.road.edges.left.material?.id).toBe(
-      "stone_flooring_200x200"
+      "quartzite_stone_250x250"
     );
   });
 
