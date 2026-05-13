@@ -6721,6 +6721,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== SPLINE_ROAD_EDGES_SCENE_DOCUMENT_VERSION &&
     source.version !== SPLINE_REPEATERS_SCENE_DOCUMENT_VERSION &&
     source.version !== SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION &&
+    source.version !== SPLINE_CORRIDOR_JUNCTIONS_SCENE_DOCUMENT_VERSION &&
     source.version !== NPC_TARGETING_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
@@ -6767,6 +6768,9 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     foliagePrototypes: readFoliagePrototypes(source.foliagePrototypes, assets),
     foliageLayers: readFoliageLayers(source.foliageLayers),
     paths: readScenePaths(source.paths),
+    splineCorridorJunctions: readSplineCorridorJunctions(
+      source.splineCorridorJunctions
+    ),
     modelInstances: readModelInstances(source.modelInstances, assets),
     entities: readEntities(source.entities, {
       legacySoundEmitter: false,
@@ -6824,6 +6828,9 @@ function readProjectScene(
     terrains: readTerrains(value.terrains),
     foliageLayers: readFoliageLayers(value.foliageLayers),
     paths: readScenePaths(value.paths),
+    splineCorridorJunctions: readSplineCorridorJunctions(
+      value.splineCorridorJunctions
+    ),
     modelInstances: readModelInstances(value.modelInstances, assets),
     entities: readEntities(value.entities, {
       legacySoundEmitter: false,
