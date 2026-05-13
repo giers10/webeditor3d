@@ -1653,6 +1653,12 @@ export class ViewportHost {
     this.terrainBrushCommitHandler = handler;
   }
 
+  setTerrainGridResizeCommitHandler(
+    handler: ((terrain: Terrain) => boolean) | null
+  ) {
+    this.terrainGridResizeCommitHandler = handler;
+  }
+
   setCameraState(cameraState: ViewportPanelCameraState) {
     if (
       areViewportPanelCameraStatesEqual(
