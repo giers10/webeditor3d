@@ -1,10 +1,12 @@
 import type { TerrainBrushPatch } from "../core/terrain-brush";
 import {
   resolveScenePath,
+  sampleResolvedScenePathPosition,
   type ResolvedScenePath,
   type ResolvedScenePathSegment,
   type ScenePath
 } from "../document/paths";
+import type { SplineCorridorJunction } from "../document/spline-corridor-junctions";
 import {
   createTerrain,
   getTerrainFoliageMaskSampleIndex,
@@ -184,6 +186,21 @@ function getRoadPaintLayerIndex(path: ScenePath, terrain: Terrain): number | nul
   return layerIndex === -1 ? null : layerIndex;
 }
 
+function getMaterialPaintLayerIndex(
+  materialId: string | null,
+  terrain: Terrain
+): number | null {
+  if (materialId === null) {
+    return null;
+  }
+
+  const layerIndex = terrain.layers.findIndex(
+    (layer) => layer.materialId === materialId
+  );
+
+  return layerIndex === -1 ? null : layerIndex;
+}
+
 function createRoadTargetWeights(
   terrain: Terrain,
   layerIndex: number
@@ -307,6 +324,187 @@ export function createSplineRoadTerrainPatch(options: {
           sampleX,
           sampleZ,
           roadPaintLayerIndex,
+          influence,
+          changedPaintWeightIndices
+        );
+      }
+
+      const blockerIndex = getTerrainFoliageMaskSampleIndex(
+        nextTerrain.foliageBlockerMask,
+        sampleX,
+        sampleZ
+      );
+      const currentBlocker =
+        nextTerrain.foliageBlockerMask.values[blockerIndex] ?? 0;
+      const nextBlocker = Math.max(currentBlocker, influence);
+
+      if (nextBlocker !== currentBlocker) {
+        nextTerrain.foliageBlockerMask.values[blockerIndex] = nextBlocker;
+        changedFoliageBlockerIndices.add(blockerIndex);
+      }
+    }
+  }
+
+  const patch = createTerrainBrushPatchFromTerrains({
+    before: terrain,
+    after: nextTerrain,
+    heightSampleIndices: changedHeightIndices,
+    paintWeightIndices: changedPaintWeightIndices,
+    foliageBlockerMaskValueIndices: changedFoliageBlockerIndices
+  });
+
+  return patch.heightSamples.length === 0 &&
+    patch.paintWeights.length === 0 &&
+    patch.foliageBlockerMaskValues.length === 0
+    ? null
+    : patch;
+}
+
+function getJunctionInfluence(
+  distance: number,
+  junction: SplineCorridorJunction,
+  paths: readonly ScenePath[]
+): number {
+  if (distance > junction.radius) {
+    return 0;
+  }
+
+  const coreRadius = Math.min(
+    junction.radius,
+    Math.max(
+      0.1,
+      ...junction.connections.map((connection) => {
+        const path = paths.find((candidate) => candidate.id === connection.pathId);
+        return path === undefined ? 0 : path.road.width * 0.5;
+      })
+    )
+  );
+
+  if (distance <= coreRadius) {
+    return 1;
+  }
+
+  const falloffDistance = Math.max(0.001, junction.radius - coreRadius);
+  const progress = clamp((distance - coreRadius) / falloffDistance, 0, 1);
+
+  return Math.pow(1 - progress, 2);
+}
+
+function getAverageJunctionTargetHeight(options: {
+  junction: SplineCorridorJunction;
+  paths: readonly ScenePath[];
+  terrain: Terrain;
+}): number {
+  const heights = options.junction.connections
+    .map((connection) => {
+      const path =
+        options.paths.find((candidate) => candidate.id === connection.pathId) ??
+        null;
+
+      if (path === null) {
+        return null;
+      }
+
+      const resolvedPath = resolveScenePath(createTerrainConformPath(path), {
+        terrains: [options.terrain]
+      });
+      const position = sampleResolvedScenePathPosition(
+        resolvedPath,
+        connection.progress
+      );
+
+      return position.y + path.road.heightOffset - options.terrain.position.y;
+    })
+    .filter((height): height is number => height !== null);
+
+  if (heights.length === 0) {
+    return options.junction.center.y - options.terrain.position.y;
+  }
+
+  return heights.reduce((sum, height) => sum + height, 0) / heights.length;
+}
+
+export function createSplineCorridorJunctionTerrainPatch(options: {
+  junction: SplineCorridorJunction;
+  paths: readonly ScenePath[];
+  terrain: Terrain;
+}): TerrainBrushPatch | null {
+  const { junction, paths, terrain } = options;
+
+  if (!junction.enabled || junction.terrainMode === "none") {
+    return null;
+  }
+
+  const bounds = {
+    minX: junction.center.x - junction.radius,
+    maxX: junction.center.x + junction.radius,
+    minZ: junction.center.z - junction.radius,
+    maxZ: junction.center.z + junction.radius
+  };
+  const sampleBounds = getTerrainSampleBoundsForRoad(terrain, bounds);
+
+  if (sampleBounds === null) {
+    return null;
+  }
+
+  const nextTerrain = createTerrain(terrain);
+  const changedHeightIndices = new Set<number>();
+  const changedPaintWeightIndices = new Set<number>();
+  const changedFoliageBlockerIndices = new Set<number>();
+  const paintLayerIndex = getMaterialPaintLayerIndex(
+    junction.materialId,
+    nextTerrain
+  );
+  const targetHeight = getAverageJunctionTargetHeight({
+    junction,
+    paths,
+    terrain: nextTerrain
+  });
+
+  for (
+    let sampleZ = sampleBounds.minSampleZ;
+    sampleZ <= sampleBounds.maxSampleZ;
+    sampleZ += 1
+  ) {
+    for (
+      let sampleX = sampleBounds.minSampleX;
+      sampleX <= sampleBounds.maxSampleX;
+      sampleX += 1
+    ) {
+      const worldX = terrain.position.x + sampleX * terrain.cellSize;
+      const worldZ = terrain.position.z + sampleZ * terrain.cellSize;
+      const influence = getJunctionInfluence(
+        Math.hypot(worldX - junction.center.x, worldZ - junction.center.z),
+        junction,
+        paths
+      );
+
+      if (influence <= 0) {
+        continue;
+      }
+
+      const sampleIndex = getTerrainSampleIndex(terrain, sampleX, sampleZ);
+      const currentHeight = getTerrainHeightAtSample(
+        nextTerrain,
+        sampleX,
+        sampleZ
+      );
+
+      if (junction.terrainMode === "flattenAndPaint") {
+        const nextHeight = lerp(currentHeight, targetHeight, influence);
+
+        if (nextHeight !== currentHeight) {
+          nextTerrain.heights[sampleIndex] = nextHeight;
+          changedHeightIndices.add(sampleIndex);
+        }
+      }
+
+      if (paintLayerIndex !== null) {
+        applyRoadPaintWeights(
+          nextTerrain,
+          sampleX,
+          sampleZ,
+          paintLayerIndex,
           influence,
           changedPaintWeightIndices
         );
