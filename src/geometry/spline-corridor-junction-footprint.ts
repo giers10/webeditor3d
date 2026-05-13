@@ -168,10 +168,6 @@ function addConnectionBoundaryPoints(options: {
 
   const heightOffset = getConnectionHeightOffset(options.path);
   const halfWidth = Math.max(0.05, options.path.road.width * 0.5);
-  const leftAxis = {
-    x: -forwardAxis.z,
-    z: forwardAxis.x
-  };
   const boundaryDistances = distances.length === 0 ? [centerDistance] : distances;
 
   for (const distance of boundaryDistances) {
