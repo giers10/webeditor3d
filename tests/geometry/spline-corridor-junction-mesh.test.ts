@@ -375,7 +375,7 @@ describe("spline corridor junction mesh generation", () => {
       edge: {
         enabled: true,
         collisionEnabled: false,
-        kind: "curb",
+        kind: "curb" as const,
         width: 0.4,
         height: 0.2,
         materialId: null
