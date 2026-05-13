@@ -2028,6 +2028,14 @@ describe("buildRuntimeSceneFromDocument", () => {
       id: "junction-runtime",
       center: { x: 0, y: 0, z: 0 },
       materialId: "ground_sand_300x300",
+      edge: {
+        enabled: true,
+        collisionEnabled: true,
+        kind: "curb",
+        width: 0.35,
+        height: 0.12,
+        materialId: "stone_block_large"
+      },
       connections: [
         { pathId: pathA.id, progress: 0.5, clipDistance: 1.25 },
         { pathId: pathB.id, progress: 0.5, clipDistance: 1.25 }
@@ -2050,7 +2058,11 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.splineCorridorJunctions).toEqual([
       expect.objectContaining({
         id: junction.id,
-        material: expect.objectContaining({ id: "ground_sand_300x300" })
+        material: expect.objectContaining({ id: "ground_sand_300x300" }),
+        edge: expect.objectContaining({
+          kind: "curb",
+          material: expect.objectContaining({ id: "stone_block_large" })
+        })
       })
     ]);
     expect(runtimeScene.splineCorridorClipIntervalsByPath.get(pathA.id)).toEqual(
