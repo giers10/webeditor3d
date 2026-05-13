@@ -12263,6 +12263,18 @@ export class ViewportHost {
       return;
     }
 
+    const terrainGridResizeHit = this.getTerrainGridResizeHitAtClientPosition(
+      event.clientX,
+      event.clientY
+    );
+
+    if (
+      terrainGridResizeHit !== null &&
+      this.beginTerrainGridResizeDrag(event, terrainGridResizeHit)
+    ) {
+      return;
+    }
+
     if (this.beginTerrainBrushStroke(event)) {
       return;
     }
@@ -12362,6 +12374,10 @@ export class ViewportHost {
       return;
     }
 
+    if (this.continueTerrainGridResizeDrag(event)) {
+      return;
+    }
+
     if (this.continueTerrainBrushStroke(event)) {
       return;
     }
@@ -12377,6 +12393,21 @@ export class ViewportHost {
     }
 
     if (this.toolMode === "select") {
+      const terrainGridResizeHit = this.getTerrainGridResizeHitAtClientPosition(
+        event.clientX,
+        event.clientY
+      );
+
+      if (terrainGridResizeHit !== null) {
+        this.setHoveredSelection({
+          kind: "terrains",
+          ids: [terrainGridResizeHit.terrainId]
+        });
+        this.setTerrainGridResizeHover(terrainGridResizeHit);
+        return;
+      }
+
+      this.setTerrainGridResizeHover(null);
       const hoveredCandidate = this.getSelectionCandidates(event)[0]
         ?.selection ?? { kind: "none" };
       this.setHoveredSelection(hoveredCandidate);
@@ -12434,6 +12465,10 @@ export class ViewportHost {
       return;
     }
 
+    if (this.finishTerrainGridResizeDrag(event)) {
+      return;
+    }
+
     if (this.activeCameraDragPointerId !== event.pointerId) {
       return;
     }
@@ -12448,7 +12483,10 @@ export class ViewportHost {
   };
 
   private handlePointerLeave = () => {
-    if (this.activeCameraDragPointerId !== null) {
+    if (
+      this.activeCameraDragPointerId !== null ||
+      this.activeTerrainGridResizeDrag !== null
+    ) {
       return;
     }
 
@@ -12456,6 +12494,7 @@ export class ViewportHost {
       kind: "none"
     });
     this.setTerrainBrushHover(null);
+    this.setTerrainGridResizeHover(null);
 
     // Keep the shared creation preview alive across panel boundaries; the next
     // viewport panel will update it as the pointer continues moving.
