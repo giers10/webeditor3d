@@ -701,6 +701,7 @@ export function buildSplineRoadEdgeMeshGeometry(options: {
   side: ScenePathRoadEdgeSide;
   terrains?: readonly Terrain[];
   clipIntervals?: readonly SplineCorridorPathClipInterval[];
+  junctionEdgeSeams?: readonly SplineCorridorRoadEdgeSeam[];
 }): BufferGeometry | null {
   const meshData = buildSplineRoadEdgeMeshData(options);
 
