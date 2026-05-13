@@ -713,6 +713,30 @@ function getModelInstanceCollisionModeDescription(
   }
 }
 
+function createTerrainGridSideSampleDrafts(
+  sampleCountX: number,
+  sampleCountZ: number
+): TerrainGridSideSampleDrafts {
+  return {
+    east: String(sampleCountX),
+    west: String(sampleCountX),
+    north: String(sampleCountZ),
+    south: String(sampleCountZ)
+  };
+}
+
+function isTerrainGridSampleXSide(
+  side: TerrainGridSampleSide | null | undefined
+): side is "east" | "west" {
+  return side === "east" || side === "west";
+}
+
+function isTerrainGridSampleZSide(
+  side: TerrainGridSampleSide | null | undefined
+): side is "north" | "south" {
+  return side === "north" || side === "south";
+}
+
 function getCharacterColliderModeDescription(
   mode: PlayerStartColliderMode,
   subject: "Player Start" | "NPC"
