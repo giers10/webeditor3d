@@ -104,7 +104,7 @@ describe("spline corridor junction mesh generation", () => {
           clipDistance: 2
         }
       ]
-    } as const;
+    };
     const straight = buildSplineCorridorJunctionFootprint({
       junction: createSplineCorridorJunction({
         ...baseJunction,
@@ -392,22 +392,24 @@ describe("spline corridor junction mesh generation", () => {
           clipDistance: 2
         }
       ]
-    } as const;
+    };
+    const cornerJunction = createSplineCorridorJunction({
+      ...baseJunction,
+      shapeMode: "corner"
+    });
+    const curveJunction = createSplineCorridorJunction({
+      ...baseJunction,
+      shapeMode: "curve"
+    });
     const cornerMeshData = buildSplineCorridorJunctionEdgeMeshData({
-      junction: createSplineCorridorJunction({
-        ...baseJunction,
-        shapeMode: "corner"
-      }),
+      junction: cornerJunction,
       paths: [pathA, pathB],
-      edge: baseJunction.edge
+      edge: cornerJunction.edge
     });
     const curveMeshData = buildSplineCorridorJunctionEdgeMeshData({
-      junction: createSplineCorridorJunction({
-        ...baseJunction,
-        shapeMode: "curve"
-      }),
+      junction: curveJunction,
       paths: [pathA, pathB],
-      edge: baseJunction.edge
+      edge: curveJunction.edge
     });
 
     expect(cornerMeshData?.footprintPointCount).toBe(12);
