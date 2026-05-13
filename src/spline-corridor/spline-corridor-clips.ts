@@ -4,9 +4,22 @@ export interface SplineCorridorPathClipInterval {
   endDistance: number;
 }
 
+export interface SplineCorridorRoadEdgeSeam {
+  junctionId: string;
+  pathId: string;
+  side: "left" | "right";
+  distance: number;
+  outerOffset: { x: number; z: number };
+}
+
 export type SplineCorridorPathClipIntervalMap = Map<
   string,
   SplineCorridorPathClipInterval[]
+>;
+
+export type SplineCorridorRoadEdgeSeamMap = Map<
+  string,
+  SplineCorridorRoadEdgeSeam[]
 >;
 
 export function isDistanceInSplineCorridorClipIntervals(
@@ -48,4 +61,3 @@ export function mergeSplineCorridorPathClipIntervals(
 
   return merged;
 }
-
