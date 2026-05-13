@@ -35,7 +35,8 @@ import {
   type FoliagePrototypeRegistry
 } from "../foliage/foliage";
 
-export const SCENE_DOCUMENT_VERSION = 103 as const;
+export const SCENE_DOCUMENT_VERSION = 104 as const;
+export const SPLINE_ROAD_EDGES_SCENE_DOCUMENT_VERSION = 104 as const;
 export const DYNAMIC_TERRAIN_LAYERS_SCENE_DOCUMENT_VERSION = 103 as const;
 export const PATH_ROAD_PREVIEW_SCENE_DOCUMENT_VERSION = 102 as const;
 export const PATH_TERRAIN_GLUE_SCENE_DOCUMENT_VERSION = 101 as const;
