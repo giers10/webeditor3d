@@ -4419,23 +4419,54 @@ export class RuntimeHost {
         paths: runtimeScene.paths,
         terrains: runtimeScene.foliage.terrains
       });
+      const meshes: Array<Mesh<BufferGeometry, Material>> = [];
 
-      if (geometry === null) {
-        continue;
+      if (geometry !== null) {
+        const mesh = new Mesh(
+          geometry,
+          this.createRuntimeJunctionMaterial(junction.material)
+        );
+        mesh.castShadow = false;
+        mesh.receiveShadow = true;
+        mesh.userData.splineCorridorJunctionId = junction.id;
+        applyRendererRenderCategoryFromMaterial(mesh);
+        this.roadSurfaceGroup.add(mesh);
+        meshes.push(mesh);
       }
 
-      const mesh = new Mesh(
-        geometry,
-        this.createRuntimeJunctionMaterial(junction.material)
-      );
-      mesh.castShadow = false;
-      mesh.receiveShadow = true;
-      mesh.userData.splineCorridorJunctionId = junction.id;
-      applyRendererRenderCategoryFromMaterial(mesh);
-      this.roadSurfaceGroup.add(mesh);
-      this.roadSurfaceMeshes.set(`junction:${junction.id}`, {
-        meshes: [mesh]
+      const edge = resolveSplineCorridorJunctionEdgeSettings({
+        junction,
+        paths: runtimeScene.paths
       });
+      const edgeGeometry =
+        edge === null
+          ? null
+          : buildSplineCorridorJunctionEdgeMeshGeometry({
+              junction,
+              paths: runtimeScene.paths,
+              terrains: runtimeScene.foliage.terrains,
+              edge
+            });
+
+      if (edge !== null && edgeGeometry !== null) {
+        const edgeMesh = new Mesh(
+          edgeGeometry,
+          this.createRuntimeRoadEdgeMaterial(edge)
+        );
+        edgeMesh.castShadow = false;
+        edgeMesh.receiveShadow = true;
+        edgeMesh.userData.splineCorridorJunctionId = junction.id;
+        edgeMesh.userData.roadEdgeSide = "junction";
+        applyRendererRenderCategoryFromMaterial(edgeMesh);
+        this.roadSurfaceGroup.add(edgeMesh);
+        meshes.push(edgeMesh);
+      }
+
+      if (meshes.length > 0) {
+        this.roadSurfaceMeshes.set(`junction:${junction.id}`, {
+          meshes
+        });
+      }
     }
 
     this.applyShadowState();

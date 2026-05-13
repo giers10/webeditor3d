@@ -6,7 +6,11 @@ import {
   buildSplineCorridorJunctionFootprint,
   sampleSplineCorridorJunctionFootprintInfluence
 } from "../../src/geometry/spline-corridor-junction-footprint";
-import { buildSplineCorridorJunctionMeshGeometry } from "../../src/geometry/spline-corridor-junction-mesh";
+import {
+  buildSplineCorridorJunctionEdgeMeshData,
+  buildSplineCorridorJunctionMeshGeometry,
+  resolveSplineCorridorJunctionEdgeSettings
+} from "../../src/geometry/spline-corridor-junction-mesh";
 
 function createRoadPath(
   id: string,
