@@ -1504,6 +1504,8 @@ export class ViewportHost {
     }
 
     this.activeTerrainBrushStroke = null;
+    this.cancelActiveTerrainGridResizeDrag(false);
+    this.setTerrainGridResizeHover(null);
     this.setHoveredSelection({
       kind: "none"
     });
@@ -1531,6 +1533,8 @@ export class ViewportHost {
       );
 
     this.activeTerrainBrushStroke = null;
+    this.cancelActiveTerrainGridResizeDrag(false);
+    this.setTerrainGridResizeHover(null);
     this.currentDocument = document;
     this.viewportSceneBounds = resolveViewportDocumentBounds(document);
     this.setHoveredSelection({
@@ -1559,6 +1563,7 @@ export class ViewportHost {
     this.applyTransformPreview();
     this.syncTransformGizmo();
     this.syncTerrainBrushPreview();
+    this.syncTerrainGridResizeOverlay();
   }
 
   updateAssets(
