@@ -238,6 +238,7 @@ import {
   areScenePathsEqual,
   createAppendedScenePathPoint,
   createScenePath,
+  createScenePathRepeater,
   getScenePathLabel,
   getScenePathPointIndex,
   getScenePaths,
@@ -253,12 +254,24 @@ import {
   normalizeScenePathTerrainOffset,
   normalizeScenePathName,
   normalizeScenePathRoadMaterialId,
+  normalizeScenePathRepeaterAssetId,
+  normalizeScenePathRepeaterHeightOffset,
+  normalizeScenePathRepeaterInset,
+  normalizeScenePathRepeaterOffset,
+  normalizeScenePathRepeaterPlacement,
+  normalizeScenePathRepeaterRandomScale,
+  normalizeScenePathRepeaterRandomYawDegrees,
+  normalizeScenePathRepeaterScale,
+  normalizeScenePathRepeaterSpacing,
+  normalizeScenePathRepeaterYawOffsetDegrees,
   type ScenePath,
   type ScenePathCurveMode,
+  type ScenePathRepeaterPlacement,
   type ScenePathRoadEdgeKind,
   type ScenePathRoadEdgeSide,
   type ScenePathPoint
 } from "../document/paths";
+import { BUNDLED_SPLINE_CORRIDOR_ASSETS } from "../spline-corridor/bundled-spline-corridor-assets";
 import {
   areTerrainsEqual,
   createTerrain,
