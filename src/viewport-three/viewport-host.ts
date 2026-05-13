@@ -1439,7 +1439,7 @@ export class ViewportHost {
     this.terrainGridResizeEdgeLine.frustumCulled = false;
     this.terrainGridResizeEdgeOutline.renderOrder = GIZMO_RENDER_ORDER + 5;
     this.terrainGridResizeEdgeTube.renderOrder = GIZMO_RENDER_ORDER + 6;
-    this.terrainGridResizeEdgeLine.renderOrder = GIZMO_RENDER_ORDER + 5;
+    this.terrainGridResizeEdgeLine.renderOrder = GIZMO_RENDER_ORDER + 7;
     this.terrainGridResizeEdgeOutline.visible = false;
     this.terrainGridResizeEdgeTube.visible = false;
     this.terrainGridResizeEdgeLine.visible = false;
