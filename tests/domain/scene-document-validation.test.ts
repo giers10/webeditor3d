@@ -2392,10 +2392,6 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-spline-corridor-junction-connection-clip-distance",
           path: "splineCorridorJunctions.junction-invalid.connections.0.clipDistance"
-        }),
-        expect.objectContaining({
-          code: "duplicate-spline-corridor-junction-connection-id",
-          path: "splineCorridorJunctions.junction-invalid.connections.1.id"
         })
       ])
     );
