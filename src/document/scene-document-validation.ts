@@ -82,15 +82,29 @@ import {
   MAX_SCENE_PATH_ROAD_EDGE_WIDTH,
   MAX_SCENE_PATH_ROAD_SHOULDER_WIDTH,
   MAX_SCENE_PATH_ROAD_WIDTH,
+  MAX_SCENE_PATH_REPEATER_INSET,
+  MAX_SCENE_PATH_REPEATER_OFFSET,
+  MAX_SCENE_PATH_REPEATER_RANDOM_SCALE,
+  MAX_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES,
+  MAX_SCENE_PATH_REPEATER_SCALE,
+  MAX_SCENE_PATH_REPEATER_SPACING,
   MIN_SCENE_PATH_POINT_COUNT,
   MIN_SCENE_PATH_ROAD_FALLOFF,
   MIN_SCENE_PATH_ROAD_EDGE_HEIGHT,
   MIN_SCENE_PATH_ROAD_EDGE_WIDTH,
   MIN_SCENE_PATH_ROAD_SHOULDER_WIDTH,
   MIN_SCENE_PATH_ROAD_WIDTH,
+  MIN_SCENE_PATH_REPEATER_INSET,
+  MIN_SCENE_PATH_REPEATER_OFFSET,
+  MIN_SCENE_PATH_REPEATER_RANDOM_SCALE,
+  MIN_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES,
+  MIN_SCENE_PATH_REPEATER_SCALE,
+  MIN_SCENE_PATH_REPEATER_SPACING,
   MIN_SCENE_PATH_SAMPLED_RESOLUTION,
   isScenePathCurveMode,
   isScenePathRoadEdgeKind,
+  isScenePathRepeaterPlacement,
+  type ScenePathRepeater,
   type ScenePathRoadEdgeSettings,
   type ScenePath
 } from "./paths";
@@ -137,6 +151,7 @@ import {
   getProjectSequenceImpulseSteps
 } from "../sequencer/project-sequence-steps";
 import { isBundledFoliagePrototypeId } from "../foliage/bundled-foliage-manifest";
+import { isBundledSplineCorridorAssetId } from "../spline-corridor/bundled-spline-corridor-assets";
 import {
   FOLIAGE_PROTOTYPE_LOD_LEVELS,
   isFoliagePrototypeCategory,
