@@ -269,21 +269,19 @@ describe("Path inspector", () => {
           falloff: 0.75,
           heightOffset: 0.08,
           terrainConform: false,
-          materialId: null
-        },
-        repeaters: [
-          expect.objectContaining({
-            collisionEnabled: true
-          })
-        ],
-        road: {
+          materialId: null,
           edges: {
             left: expect.objectContaining({
               enabled: true,
               collisionEnabled: true
             })
           }
-        }
+        },
+        repeaters: [
+          expect.objectContaining({
+            collisionEnabled: true
+          })
+        ]
       });
       expect(updatedPath?.repeaters[0]).toMatchObject({
         assetId: "fence_post_wood",
