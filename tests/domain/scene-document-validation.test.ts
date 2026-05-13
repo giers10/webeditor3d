@@ -2108,6 +2108,31 @@ describe("validateSceneDocument", () => {
         right: null
       }
     } as never;
+    invalidPath.repeaters = [
+      {
+        id: "",
+        name: "   ",
+        enabled: "yes",
+        assetId: "missing-corridor-asset",
+        placement: "above",
+        offset: -1,
+        spacing: 0,
+        startInset: -1,
+        endInset: -1,
+        scale: 0,
+        randomScale: 2,
+        randomYawDegrees: 181,
+        yawOffsetDegrees: Number.NaN,
+        terrainConform: "yes",
+        heightOffset: Number.NaN,
+        alignToSpline: "yes",
+        seed: 0.5
+      },
+      {
+        id: "",
+        assetId: "fence_segment_wood_2m"
+      }
+    ] as never;
     invalidPath.points = [
       {
         id: "path-point-a",
@@ -2195,6 +2220,74 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-path-road-edge",
           path: "paths.path-invalid.road.edges.right"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-id",
+          path: "paths.path-invalid.repeaters.0.id"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-name",
+          path: "paths.path-invalid.repeaters.0.name"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-enabled",
+          path: "paths.path-invalid.repeaters.0.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-asset",
+          path: "paths.path-invalid.repeaters.0.assetId"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-placement",
+          path: "paths.path-invalid.repeaters.0.placement"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-offset",
+          path: "paths.path-invalid.repeaters.0.offset"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-spacing",
+          path: "paths.path-invalid.repeaters.0.spacing"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-inset",
+          path: "paths.path-invalid.repeaters.0.startInset"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-scale",
+          path: "paths.path-invalid.repeaters.0.scale"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-random-scale",
+          path: "paths.path-invalid.repeaters.0.randomScale"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-random-yaw",
+          path: "paths.path-invalid.repeaters.0.randomYawDegrees"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-yaw-offset",
+          path: "paths.path-invalid.repeaters.0.yawOffsetDegrees"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-terrain-conform",
+          path: "paths.path-invalid.repeaters.0.terrainConform"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-height-offset",
+          path: "paths.path-invalid.repeaters.0.heightOffset"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-align-to-spline",
+          path: "paths.path-invalid.repeaters.0.alignToSpline"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-repeater-seed",
+          path: "paths.path-invalid.repeaters.0.seed"
+        }),
+        expect.objectContaining({
+          code: "duplicate-path-repeater-id",
+          path: "paths.path-invalid.repeaters.1.id"
         })
       ])
     );
