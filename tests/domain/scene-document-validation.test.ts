@@ -2322,6 +2322,7 @@ describe("validateSceneDocument", () => {
     invalidJunction.radius = 0;
     invalidJunction.materialId = "missing-junction-material";
     invalidJunction.terrainMode = "dig" as never;
+    invalidJunction.shapeMode = "roundabout" as never;
     invalidJunction.edge = {
       enabled: "yes",
       collisionEnabled: "yes",
@@ -2384,6 +2385,10 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-spline-corridor-junction-terrain-mode",
           path: "splineCorridorJunctions.junction-invalid.terrainMode"
+        }),
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-shape-mode",
+          path: "splineCorridorJunctions.junction-invalid.shapeMode"
         }),
         expect.objectContaining({
           code: "invalid-path-road-edge-enabled",
