@@ -109,6 +109,14 @@ import {
   type ScenePath
 } from "./paths";
 import {
+  MAX_SPLINE_CORRIDOR_JUNCTION_CLIP_DISTANCE,
+  MAX_SPLINE_CORRIDOR_JUNCTION_RADIUS,
+  MIN_SPLINE_CORRIDOR_JUNCTION_CLIP_DISTANCE,
+  MIN_SPLINE_CORRIDOR_JUNCTION_RADIUS,
+  isSplineCorridorJunctionTerrainMode,
+  type SplineCorridorJunction
+} from "./spline-corridor-junctions";
+import {
   MAX_TERRAIN_LAYER_COUNT,
   MIN_TERRAIN_LAYER_COUNT,
   MIN_TERRAIN_SAMPLE_COUNT,
