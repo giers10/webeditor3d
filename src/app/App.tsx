@@ -242,6 +242,7 @@ import {
   createAppendedScenePathPoint,
   createScenePath,
   createScenePathPointAfter,
+  createScenePathRoadEdgeSettings,
   createScenePathRepeater,
   getScenePathLabel,
   getScenePathPointIndex,
