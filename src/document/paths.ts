@@ -27,6 +27,12 @@ export interface ScenePathRoadEdgesSettings {
   right: ScenePathRoadEdgeSettings;
 }
 
+export type ScenePathRoadSettingsOverrides = Partial<
+  Omit<ScenePathRoadSettings, "edges">
+> & {
+  edges?: Partial<ScenePathRoadEdgesSettings>;
+};
+
 export interface ScenePathRoadSettings {
   enabled: boolean;
   width: number;
@@ -466,7 +472,7 @@ export function createScenePathRoadEdgesSettings(
 }
 
 export function createScenePathRoadSettings(
-  overrides: Partial<ScenePathRoadSettings> = {}
+  overrides: ScenePathRoadSettingsOverrides = {}
 ): ScenePathRoadSettings {
   const enabled = overrides.enabled ?? DEFAULT_SCENE_PATH_ROAD_ENABLED;
   const terrainConform =
@@ -853,7 +859,7 @@ export function createScenePath(
       "road"
     >
   > & {
-    road?: Partial<ScenePathRoadSettings>;
+    road?: ScenePathRoadSettingsOverrides;
   } = {}
 ): ScenePath {
   const points =
