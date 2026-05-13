@@ -3590,7 +3590,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 4 },
             collider: {
               mode: "capsule",
@@ -4099,7 +4099,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 5 },
             collider: {
               mode: "capsule",
@@ -4116,7 +4116,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 2, y: 0, z: 5 },
             collider: {
               mode: "capsule",
@@ -4133,7 +4133,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 2, z: 5 },
             collider: {
               mode: "capsule",
@@ -4295,7 +4295,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 5 },
             collider: {
               mode: "capsule",
@@ -4395,7 +4395,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 5 },
             collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
             name: "Active",
@@ -4407,7 +4407,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 2, y: 0, z: 5 },
             collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
             name: "Right",
@@ -4507,7 +4507,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 16 },
             collider: {
               mode: "capsule",
@@ -4524,7 +4524,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 6 },
             collider: {
               mode: "capsule",
@@ -4637,7 +4637,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 15.5 },
             collider: {
               mode: "capsule",
@@ -4654,7 +4654,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0.3, y: 0, z: 15.2 },
             collider: {
               mode: "capsule",
@@ -4801,7 +4801,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 16 },
             collider: {
               mode: "capsule",
@@ -4873,7 +4873,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 3, y: 0, z: 4 },
             collider: {
               mode: "capsule",
@@ -4890,7 +4890,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 10 },
             collider: {
               mode: "capsule",
@@ -5048,7 +5048,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 6 },
             collider: {
               mode: "capsule",
@@ -5065,7 +5065,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 8 },
             collider: {
               mode: "capsule",
@@ -5161,7 +5161,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 7 },
             collider: {
               mode: "capsule",
@@ -5178,7 +5178,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0.8, y: 0, z: 8 },
             collider: {
               mode: "capsule",
@@ -5275,7 +5275,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 1 },
             collider: {
               mode: "capsule",
@@ -5361,7 +5361,7 @@ describe("RuntimeHost", () => {
             visible: true,
             targetable: true,
             targetAnchor: createNpcTargetAnchor(),
-            position:scale: { x: 1, y: 1, z: 1 },
+            scale: { x: 1, y: 1, z: 1 },
             position: { x: 0, y: 0, z: 6 },
             collider: {
               mode: "capsule",
