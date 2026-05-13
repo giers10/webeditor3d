@@ -610,4 +610,105 @@ describe("path commands", () => {
     expect(store.undo()).toBe(true);
     expect(store.getState().document.terrains[terrain.id]).toEqual(terrain);
   });
+
+  it("applies connected spline corridor junction terrain footprints with the road", () => {
+    const terrain = createTerrain({
+      id: "terrain-road-junction-apply",
+      position: { x: 0, y: 0, z: 0 },
+      sampleCountX: 7,
+      sampleCountZ: 7,
+      cellSize: 1,
+      heights: new Array(49).fill(0),
+      layers: [{ materialId: "base-material" }],
+      paintWeights: []
+    });
+    const pathA = createScenePath({
+      id: "path-road-junction-a",
+      road: {
+        enabled: true,
+        width: 1,
+        shoulderWidth: 0,
+        heightOffset: 0,
+        terrainConform: false,
+        materialId: "road-material"
+      },
+      points: [
+        {
+          id: "path-road-junction-a-start",
+          position: { x: 1, y: 2, z: 3 }
+        },
+        {
+          id: "path-road-junction-a-end",
+          position: { x: 5, y: 2, z: 3 }
+        }
+      ]
+    });
+    const pathB = createScenePath({
+      id: "path-road-junction-b",
+      road: {
+        enabled: true,
+        width: 1,
+        shoulderWidth: 0,
+        heightOffset: 0,
+        terrainConform: false,
+        materialId: "road-material"
+      },
+      points: [
+        {
+          id: "path-road-junction-b-start",
+          position: { x: 3, y: 2, z: 1 }
+        },
+        {
+          id: "path-road-junction-b-end",
+          position: { x: 3, y: 2, z: 5 }
+        }
+      ]
+    });
+    const junction = createSplineCorridorJunction({
+      id: "junction-road-apply",
+      center: { x: 3, y: 2, z: 3 },
+      radius: 1.5,
+      materialId: "junction-material",
+      terrainMode: "flattenAndPaint",
+      connections: [
+        { pathId: pathA.id, progress: 0.5, clipDistance: 1.5 },
+        { pathId: pathB.id, progress: 0.5, clipDistance: 1.5 }
+      ]
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({
+          name: "Path Road Junction Apply Scene"
+        }),
+        paths: {
+          [pathA.id]: pathA,
+          [pathB.id]: pathB
+        },
+        splineCorridorJunctions: {
+          [junction.id]: junction
+        },
+        terrains: {
+          [terrain.id]: terrain
+        }
+      }
+    });
+
+    store.executeCommand(
+      createApplySplineRoadToTerrainCommand({
+        pathId: pathA.id
+      })
+    );
+
+    const appliedTerrain = store.getState().document.terrains[terrain.id]!;
+    const centerIndex = 3 + 3 * 7;
+
+    expect(appliedTerrain.layers.map((layer) => layer.materialId)).toContain(
+      "junction-material"
+    );
+    expect(appliedTerrain.heights[centerIndex]).toBe(2);
+    expect(appliedTerrain.foliageBlockerMask.values[centerIndex]).toBe(1);
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.terrains[terrain.id]).toEqual(terrain);
+  });
 });
