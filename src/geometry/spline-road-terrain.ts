@@ -427,11 +427,23 @@ export function createSplineCorridorJunctionTerrainPatch(options: {
     return null;
   }
 
+  const footprint = buildSplineCorridorJunctionFootprint({
+    junction,
+    paths,
+    terrains: [terrain],
+    includeHidden: true
+  });
+
+  if (footprint === null) {
+    return null;
+  }
+
+  const falloffDistance = getJunctionTerrainFalloffDistance(junction, paths);
   const bounds = {
-    minX: junction.center.x - junction.radius,
-    maxX: junction.center.x + junction.radius,
-    minZ: junction.center.z - junction.radius,
-    maxZ: junction.center.z + junction.radius
+    minX: footprint.bounds.minX - falloffDistance,
+    maxX: footprint.bounds.maxX + falloffDistance,
+    minZ: footprint.bounds.minZ - falloffDistance,
+    maxZ: footprint.bounds.maxZ + falloffDistance
   };
   const sampleBounds = getTerrainSampleBoundsForRoad(terrain, bounds);
 
@@ -465,11 +477,12 @@ export function createSplineCorridorJunctionTerrainPatch(options: {
     ) {
       const worldX = terrain.position.x + sampleX * terrain.cellSize;
       const worldZ = terrain.position.z + sampleZ * terrain.cellSize;
-      const influence = getJunctionInfluence(
-        Math.hypot(worldX - junction.center.x, worldZ - junction.center.z),
-        junction,
-        paths
-      );
+      const influence = sampleSplineCorridorJunctionFootprintInfluence({
+        footprint,
+        x: worldX,
+        z: worldZ,
+        falloffDistance
+      });
 
       if (influence <= 0) {
         continue;
