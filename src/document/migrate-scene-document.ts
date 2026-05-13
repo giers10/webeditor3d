@@ -254,6 +254,7 @@ import {
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
   NPC_TARGETING_SCENE_DOCUMENT_VERSION,
   PATH_TERRAIN_GLUE_SCENE_DOCUMENT_VERSION,
+  SPLINE_CORRIDOR_JUNCTIONS_SCENE_DOCUMENT_VERSION,
   SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION,
   SPLINE_ROAD_EDGES_SCENE_DOCUMENT_VERSION,
   SPLINE_REPEATERS_SCENE_DOCUMENT_VERSION,
@@ -331,6 +332,15 @@ import {
   type ScenePathRoadSettings,
   type ScenePathPoint
 } from "./paths";
+import {
+  createSplineCorridorJunction,
+  isSplineCorridorJunctionTerrainMode,
+  normalizeSplineCorridorJunctionClipDistance,
+  normalizeSplineCorridorJunctionMaterialId,
+  normalizeSplineCorridorJunctionRadius,
+  type SplineCorridorJunction,
+  type SplineCorridorJunctionConnection
+} from "./spline-corridor-junctions";
 import {
   createTerrain,
   normalizeTerrainCellSize,
@@ -5974,6 +5984,107 @@ function readScenePaths(value: unknown): SceneDocument["paths"] {
   }
 
   return paths;
+}
+
+function readSplineCorridorJunctionConnectionValue(
+  value: unknown,
+  label: string
+): SplineCorridorJunctionConnection {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return {
+    id: expectString(value.id, `${label}.id`),
+    pathId: expectString(value.pathId, `${label}.pathId`),
+    progress: readOptionalFiniteNumber(value.progress, `${label}.progress`, 0),
+    clipDistance: normalizeSplineCorridorJunctionClipDistance(
+      readOptionalFiniteNumber(
+        value.clipDistance,
+        `${label}.clipDistance`,
+        1.5
+      )
+    )
+  };
+}
+
+function readSplineCorridorJunctionValue(
+  value: unknown,
+  label: string
+): SplineCorridorJunction {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  if (!Array.isArray(value.connections)) {
+    throw new Error(`${label}.connections must be an array.`);
+  }
+
+  return createSplineCorridorJunction({
+    id: expectString(value.id, `${label}.id`),
+    name:
+      value.name === undefined
+        ? undefined
+        : expectString(value.name, `${label}.name`),
+    visible: readOptionalBoolean(value.visible, `${label}.visible`, true),
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, true),
+    center: readVec3(value.center, `${label}.center`),
+    radius: normalizeSplineCorridorJunctionRadius(
+      readOptionalFiniteNumber(value.radius, `${label}.radius`, 1.5)
+    ),
+    materialId: normalizeSplineCorridorJunctionMaterialId(
+      value.materialId === undefined || value.materialId === null
+        ? null
+        : expectString(value.materialId, `${label}.materialId`)
+    ),
+    terrainMode:
+      value.terrainMode === undefined
+        ? undefined
+        : isSplineCorridorJunctionTerrainMode(value.terrainMode)
+          ? value.terrainMode
+          : expectLiteralString(
+              value.terrainMode,
+              "flattenAndPaint",
+              `${label}.terrainMode`
+            ),
+    connections: value.connections.map((connectionValue, index) =>
+      readSplineCorridorJunctionConnectionValue(
+        connectionValue,
+        `${label}.connections.${index}`
+      )
+    )
+  });
+}
+
+function readSplineCorridorJunctions(
+  value: unknown
+): SceneDocument["splineCorridorJunctions"] {
+  if (value === undefined) {
+    return {};
+  }
+
+  if (!isRecord(value)) {
+    throw new Error("splineCorridorJunctions must be a record.");
+  }
+
+  const junctions: SceneDocument["splineCorridorJunctions"] = {};
+
+  for (const [junctionId, junctionValue] of Object.entries(value)) {
+    const junction = readSplineCorridorJunctionValue(
+      junctionValue,
+      `splineCorridorJunctions.${junctionId}`
+    );
+
+    if (junction.id !== junctionId) {
+      throw new Error(
+        `splineCorridorJunctions.${junctionId}.id must match the registry key.`
+      );
+    }
+
+    junctions[junctionId] = junction;
+  }
+
+  return junctions;
 }
 
 export function migrateSceneDocument(source: unknown): SceneDocument {
