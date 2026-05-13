@@ -117,7 +117,11 @@ function areVec3Equal(left: Vec3, right: Vec3): boolean {
 }
 
 function assertFiniteVec3(vector: Vec3, label: string) {
-  if (!Number.isFinite(vector.x) || !Number.isFinite(vector.y) || !Number.isFinite(vector.z)) {
+  if (
+    !Number.isFinite(vector.x) ||
+    !Number.isFinite(vector.y) ||
+    !Number.isFinite(vector.z)
+  ) {
     throw new Error(`${label} must be finite on every axis.`);
   }
 }
@@ -284,7 +288,9 @@ export function createFlatTerrainHeights(
     throw new Error("Terrain height samples must be finite.");
   }
 
-  return new Array(normalizedSampleCountX * normalizedSampleCountZ).fill(height);
+  return new Array(normalizedSampleCountX * normalizedSampleCountZ).fill(
+    height
+  );
 }
 
 export function createFlatTerrainPaintWeights(
@@ -410,7 +416,11 @@ function normalizeTerrainPaintWeights(
     const offset = sampleIndex * storedWeightCount;
     let weightSum = 0;
 
-    for (let layerOffset = 0; layerOffset < storedWeightCount; layerOffset += 1) {
+    for (
+      let layerOffset = 0;
+      layerOffset < storedWeightCount;
+      layerOffset += 1
+    ) {
       const value = normalizedPaintWeights[offset + layerOffset];
 
       if (!Number.isFinite(value)) {
@@ -428,7 +438,11 @@ function normalizeTerrainPaintWeights(
 
     const scale = 1 / weightSum;
 
-    for (let layerOffset = 0; layerOffset < storedWeightCount; layerOffset += 1) {
+    for (
+      let layerOffset = 0;
+      layerOffset < storedWeightCount;
+      layerOffset += 1
+    ) {
       normalizedPaintWeights[offset + layerOffset] *= scale;
     }
   }
@@ -632,7 +646,10 @@ export function cloneTerrainFoliageMasks(
 }
 
 export function getTerrainSampleLayerWeights(
-  terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "layers" | "paintWeights">,
+  terrain: Pick<
+    Terrain,
+    "sampleCountX" | "sampleCountZ" | "layers" | "paintWeights"
+  >,
   sampleX: number,
   sampleZ: number
 ): number[] {
@@ -793,7 +810,9 @@ export function updateTerrainBoundsCacheAfterHeightPatch(
   );
 }
 
-function cloneTerrainSampleBounds(bounds: TerrainSampleBounds): TerrainSampleBounds {
+function cloneTerrainSampleBounds(
+  bounds: TerrainSampleBounds
+): TerrainSampleBounds {
   return {
     minSampleX: bounds.minSampleX,
     maxSampleX: bounds.maxSampleX,
@@ -851,7 +870,10 @@ export function markTerrainRenderSamplesDirty(
   ];
 
   if (nextEntries.length > MAX_TERRAIN_RENDER_DIRTY_HISTORY) {
-    nextEntries.splice(0, nextEntries.length - MAX_TERRAIN_RENDER_DIRTY_HISTORY);
+    nextEntries.splice(
+      0,
+      nextEntries.length - MAX_TERRAIN_RENDER_DIRTY_HISTORY
+    );
   }
 
   terrainRenderDirtyState.set(terrain, {
@@ -1097,9 +1119,7 @@ export function getOrCreateTerrainFoliageMask(
   return nextMask;
 }
 
-export function isTerrainFoliageMaskEmpty(
-  mask: TerrainFoliageMask
-): boolean {
+export function isTerrainFoliageMaskEmpty(mask: TerrainFoliageMask): boolean {
   return mask.values.every((value) => value === 0);
 }
 
@@ -1339,10 +1359,13 @@ function createLocalPositionResampledTerrainPaintWeights(
 
     for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
       const sourceSampleX = (sampleX * cellSize) / terrain.cellSize;
-      const offset =
-        (sampleZ * sampleCountX + sampleX) * storedWeightCount;
+      const offset = (sampleZ * sampleCountX + sampleX) * storedWeightCount;
 
-      for (let layerOffset = 0; layerOffset < storedWeightCount; layerOffset += 1) {
+      for (
+        let layerOffset = 0;
+        layerOffset < storedWeightCount;
+        layerOffset += 1
+      ) {
         paintWeights[offset + layerOffset] =
           sampleTerrainPaintWeightAtGridCoordinate(
             terrain,
@@ -1834,7 +1857,9 @@ export function areTerrainsEqual(left: Terrain, right: Terrain): boolean {
         leftMask.resolutionX === rightMask.resolutionX &&
         leftMask.resolutionZ === rightMask.resolutionZ &&
         leftMask.values.length === rightMask.values.length &&
-        leftMask.values.every((value, index) => value === rightMask.values[index])
+        leftMask.values.every(
+          (value, index) => value === rightMask.values[index]
+        )
       );
     }) &&
     left.foliageBlockerMask.resolutionX ===
