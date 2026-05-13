@@ -1451,6 +1451,7 @@ export class RuntimeHost {
     this.clearBrushMeshes();
     this.clearTerrainMeshes();
     this.clearRoadSurfaces();
+    this.splineRepeaterRenderer.dispose();
     this.foliageRenderer.dispose();
     this.clearModelRenderObjects();
     this.collisionWorldRequestId += 1;
