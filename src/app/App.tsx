@@ -241,6 +241,10 @@ import {
   getScenePathLabel,
   getScenePathPointIndex,
   getScenePaths,
+  normalizeScenePathRoadEdgeHeight,
+  normalizeScenePathRoadEdgeKind,
+  normalizeScenePathRoadEdgeMaterialId,
+  normalizeScenePathRoadEdgeWidth,
   normalizeScenePathRoadFalloff,
   normalizeScenePathRoadHeightOffset,
   normalizeScenePathRoadShoulderWidth,
@@ -251,6 +255,8 @@ import {
   normalizeScenePathRoadMaterialId,
   type ScenePath,
   type ScenePathCurveMode,
+  type ScenePathRoadEdgeKind,
+  type ScenePathRoadEdgeSide,
   type ScenePathPoint
 } from "../document/paths";
 import {
@@ -1500,6 +1506,19 @@ function getPathLabelById(pathId: string, paths: ScenePath[]): string {
   return pathIndex === -1
     ? "Path"
     : getScenePathLabel(paths[pathIndex], pathIndex);
+}
+
+function getRoadEdgeKindLabel(kind: ScenePathRoadEdgeKind): string {
+  switch (kind) {
+    case "curb":
+      return "Curb";
+    case "softShoulder":
+      return "Soft shoulder";
+    case "bank":
+      return "Bank";
+    case "ditch":
+      return "Ditch";
+  }
 }
 
 function getTerrainLabel(terrain: Terrain, index: number): string {
