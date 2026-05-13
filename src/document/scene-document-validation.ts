@@ -2926,6 +2926,19 @@ function validateScenePath(
     );
   }
 
+  validateScenePathRoadEdge(
+    pathValue.road.edges.left,
+    `${path}.road.edges.left`,
+    document,
+    diagnostics
+  );
+  validateScenePathRoadEdge(
+    pathValue.road.edges.right,
+    `${path}.road.edges.right`,
+    document,
+    diagnostics
+  );
+
   if (pathValue.points.length < MIN_SCENE_PATH_POINT_COUNT) {
     diagnostics.push(
       createDiagnostic(
