@@ -77,7 +77,10 @@ import {
   buildTerrainLodMeshData,
   resolveTerrainLodLevelIndexWithHysteresis
 } from "../geometry/terrain-mesh";
-import { buildSplineRoadMeshGeometry } from "../geometry/spline-road-mesh";
+import {
+  buildSplineRoadEdgeMeshGeometry,
+  buildSplineRoadMeshGeometry
+} from "../geometry/spline-road-mesh";
 import {
   createStarterMaterialSignature,
   createStarterMaterialTextureSet,

@@ -7356,25 +7356,45 @@ export class ViewportHost {
       return null;
     }
 
-    const geometry = buildSplineRoadMeshGeometry({
+    const surfaceGeometry = buildSplineRoadMeshGeometry({
       path,
       terrains
     });
+    const meshes: Array<Mesh<BufferGeometry, Material>> = [];
 
-    if (geometry === null) {
-      return null;
+    if (surfaceGeometry !== null) {
+      const mesh = new Mesh(surfaceGeometry, this.createRoadSurfaceMaterial(path));
+      mesh.castShadow = false;
+      mesh.receiveShadow = true;
+      mesh.userData.pathId = path.id;
+      mesh.userData.nonPickable = true;
+      applyRendererRenderCategoryFromMaterial(mesh);
+      meshes.push(mesh);
     }
 
-    const mesh = new Mesh(geometry, this.createRoadSurfaceMaterial(path));
-    mesh.castShadow = false;
-    mesh.receiveShadow = true;
-    mesh.userData.pathId = path.id;
-    mesh.userData.nonPickable = true;
-    applyRendererRenderCategoryFromMaterial(mesh);
+    for (const side of ["left", "right"] as const) {
+      const edgeGeometry = buildSplineRoadEdgeMeshGeometry({
+        path,
+        side,
+        terrains
+      });
 
-    return {
-      mesh
-    };
+      if (edgeGeometry === null) {
+        continue;
+      }
+
+      const edge = path.road.edges[side];
+      const edgeMesh = new Mesh(edgeGeometry, this.createRoadEdgeMaterial(edge));
+      edgeMesh.castShadow = false;
+      edgeMesh.receiveShadow = true;
+      edgeMesh.userData.pathId = path.id;
+      edgeMesh.userData.roadEdgeSide = side;
+      edgeMesh.userData.nonPickable = true;
+      applyRendererRenderCategoryFromMaterial(edgeMesh);
+      meshes.push(edgeMesh);
+    }
+
+    return meshes.length === 0 ? null : { meshes };
   }
 
   private rebuildRoadSurfaces(document: SceneDocument) {
@@ -7390,7 +7410,9 @@ export class ViewportHost {
         continue;
       }
 
-      this.roadSurfaceGroup.add(renderObjects.mesh);
+      for (const mesh of renderObjects.meshes) {
+        this.roadSurfaceGroup.add(mesh);
+      }
       this.roadSurfaceRenderObjects.set(path.id, renderObjects);
     }
 
@@ -7401,9 +7423,11 @@ export class ViewportHost {
     const existingRenderObjects = this.roadSurfaceRenderObjects.get(path.id);
 
     if (existingRenderObjects !== undefined) {
-      this.roadSurfaceGroup.remove(existingRenderObjects.mesh);
-      existingRenderObjects.mesh.geometry.dispose();
-      existingRenderObjects.mesh.material.dispose();
+      for (const mesh of existingRenderObjects.meshes) {
+        this.roadSurfaceGroup.remove(mesh);
+        mesh.geometry.dispose();
+        mesh.material.dispose();
+      }
       this.roadSurfaceRenderObjects.delete(path.id);
     }
 
@@ -7423,7 +7447,9 @@ export class ViewportHost {
       return;
     }
 
-    this.roadSurfaceGroup.add(nextRenderObjects.mesh);
+    for (const mesh of nextRenderObjects.meshes) {
+      this.roadSurfaceGroup.add(mesh);
+    }
     this.roadSurfaceRenderObjects.set(path.id, nextRenderObjects);
     this.applyShadowState();
   }
