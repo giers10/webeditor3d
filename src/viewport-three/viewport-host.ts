@@ -7282,18 +7282,21 @@ export class ViewportHost {
     return material;
   }
 
-  private createRoadSurfaceMaterial(path: ScenePath): Material {
+  private createRoadGeneratedMaterial(
+    materialId: string | null,
+    fallbackColor: number
+  ): Material {
     const materialDef =
-      path.road.materialId === null || this.currentDocument === null
+      materialId === null || this.currentDocument === null
         ? null
-        : (this.currentDocument.materials[path.road.materialId] ?? null);
+        : (this.currentDocument.materials[materialId] ?? null);
 
     if (this.displayMode === "wireframe") {
       return this.configureRoadSurfaceMaterial(
         new MeshBasicMaterial({
           color:
             materialDef === null
-              ? PATH_ROAD_PREVIEW_COLOR
+              ? fallbackColor
               : Number.parseInt(materialDef.swatchColorHex.replace("#", ""), 16),
           wireframe: true,
           side: DoubleSide
@@ -7304,7 +7307,7 @@ export class ViewportHost {
     if (materialDef === null) {
       return this.configureRoadSurfaceMaterial(
         new MeshStandardMaterial({
-          color: PATH_ROAD_PREVIEW_COLOR,
+          color: fallbackColor,
           roughness: 1,
           metalness: 0,
           side: DoubleSide
@@ -7328,6 +7331,20 @@ export class ViewportHost {
         specularIntensity: textureSet.specular === null ? 0.2 : 1,
         side: DoubleSide
       })
+    );
+  }
+
+  private createRoadSurfaceMaterial(path: ScenePath): Material {
+    return this.createRoadGeneratedMaterial(
+      path.road.materialId,
+      PATH_ROAD_PREVIEW_COLOR
+    );
+  }
+
+  private createRoadEdgeMaterial(edge: ScenePathRoadEdgeSettings): Material {
+    return this.createRoadGeneratedMaterial(
+      edge.materialId,
+      PATH_ROAD_EDGE_FALLBACK_COLORS[edge.kind]
     );
   }
 
@@ -11511,9 +11528,11 @@ export class ViewportHost {
 
   private clearRoadSurfaces() {
     for (const renderObjects of this.roadSurfaceRenderObjects.values()) {
-      this.roadSurfaceGroup.remove(renderObjects.mesh);
-      renderObjects.mesh.geometry.dispose();
-      renderObjects.mesh.material.dispose();
+      for (const mesh of renderObjects.meshes) {
+        this.roadSurfaceGroup.remove(mesh);
+        mesh.geometry.dispose();
+        mesh.material.dispose();
+      }
     }
 
     this.roadSurfaceRenderObjects.clear();
