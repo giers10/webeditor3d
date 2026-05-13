@@ -92,6 +92,7 @@ import {
   syncModelInstanceSelectionShell
 } from "../assets/model-instance-rendering";
 import { FoliageInstancedRenderer } from "../foliage/foliage-instanced-renderer";
+import { SplineRepeaterRenderer } from "../spline-corridor/spline-repeater-renderer";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { ProjectAssetRecord } from "../assets/project-assets";
@@ -919,6 +920,11 @@ export class ViewportHost {
   private readonly brushGroup = new Group();
   private readonly terrainGroup = new Group();
   private readonly roadSurfaceGroup = new Group();
+  private readonly splineRepeaterRenderer = new SplineRepeaterRenderer({
+    onRebuilt: () => {
+      this.applyShadowState();
+    }
+  });
   private readonly terrainBrushPreviewGroup = new Group();
   private readonly terrainBrushPreviewLine = new Line(
     new BufferGeometry(),
@@ -1175,6 +1181,7 @@ export class ViewportHost {
     this.scene.add(this.brushGroup);
     this.scene.add(this.terrainGroup);
     this.scene.add(this.roadSurfaceGroup);
+    this.scene.add(this.splineRepeaterRenderer.group);
     this.scene.add(this.foliageRenderer.group);
     this.syncFoliageVisibility();
     this.terrainBrushPreviewGroup.visible = false;
@@ -1496,6 +1503,7 @@ export class ViewportHost {
       );
     }
     this.rebuildRoadSurfaces(document);
+    this.rebuildSplineRepeaters(document);
     this.rebuildFoliage(document);
     this.rebuildPaths(document, this.currentSelection);
     this.rebuildEntityMarkers(document, this.currentSelection);
@@ -1960,6 +1968,7 @@ export class ViewportHost {
     this.clearBrushMeshes();
     this.clearTerrains();
     this.clearRoadSurfaces();
+    this.splineRepeaterRenderer.dispose();
     this.foliageRenderer.dispose();
     this.clearPaths();
     this.clearEntityMarkers();
