@@ -923,6 +923,7 @@ export class RuntimeHost {
     this.scene.add(this.brushGroup);
     this.scene.add(this.terrainGroup);
     this.scene.add(this.roadSurfaceGroup);
+    this.scene.add(this.splineRepeaterRenderer.group);
     this.scene.add(this.foliageRenderer.group);
     this.scene.add(this.modelGroup);
     this.targetingLuxMesh.renderOrder = 10000;
