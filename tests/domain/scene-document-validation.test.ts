@@ -2096,7 +2096,17 @@ describe("validateSceneDocument", () => {
       falloff: 2,
       heightOffset: Number.NaN,
       terrainConform: "yes",
-      materialId: "missing-road-material"
+      materialId: "missing-road-material",
+      edges: {
+        left: {
+          enabled: "yes",
+          kind: "wall",
+          width: 0,
+          height: -1,
+          materialId: "missing-edge-material"
+        },
+        right: null
+      }
     } as never;
     invalidPath.points = [
       {
@@ -2161,6 +2171,30 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-path-road-material",
           path: "paths.path-invalid.road.materialId"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge-enabled",
+          path: "paths.path-invalid.road.edges.left.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge-kind",
+          path: "paths.path-invalid.road.edges.left.kind"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge-width",
+          path: "paths.path-invalid.road.edges.left.width"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge-height",
+          path: "paths.path-invalid.road.edges.left.height"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge-material",
+          path: "paths.path-invalid.road.edges.left.materialId"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge",
+          path: "paths.path-invalid.road.edges.right"
         })
       ])
     );
