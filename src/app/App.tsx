@@ -34,6 +34,7 @@ import { createApplySplineRoadToTerrainCommand } from "../commands/apply-spline-
 import { createDeletePathCommand } from "../commands/delete-path-command";
 import { createDeletePathPointCommand } from "../commands/delete-path-point-command";
 import { createDeletePathPointsCommand } from "../commands/delete-path-points-command";
+import { createDeleteSplineCorridorJunctionCommand } from "../commands/delete-spline-corridor-junction-command";
 import { createDeleteModelInstanceCommand } from "../commands/delete-model-instance-command";
 import { createCommitTransformSessionCommand } from "../commands/commit-transform-session-command";
 import {
@@ -70,6 +71,7 @@ import { createSetWorldSettingsCommand } from "../commands/set-world-settings-co
 import { createUpsertEntityCommand } from "../commands/upsert-entity-command";
 import { createUpsertModelInstanceCommand } from "../commands/upsert-model-instance-command";
 import { createUpsertPathCommand } from "../commands/upsert-path-command";
+import { createUpsertSplineCorridorJunctionCommand } from "../commands/upsert-spline-corridor-junction-command";
 import { createUpsertTerrainCommand } from "../commands/upsert-terrain-command";
 import { createUpsertInteractionLinkCommand } from "../commands/upsert-interaction-link-command";
 import { createUpdateFoliageLayerCommand } from "../commands/update-foliage-layer-command";
@@ -273,7 +275,22 @@ import {
   type ScenePathRoadEdgeSide,
   type ScenePathPoint
 } from "../document/paths";
+import {
+  createSplineCorridorJunction,
+  getSplineCorridorJunctions,
+  normalizeSplineCorridorJunctionMaterialId,
+  normalizeSplineCorridorJunctionRadius,
+  normalizeSplineCorridorJunctionTerrainMode,
+  type SplineCorridorJunction,
+  type SplineCorridorJunctionTerrainMode
+} from "../document/spline-corridor-junctions";
 import { BUNDLED_SPLINE_CORRIDOR_ASSETS } from "../spline-corridor/bundled-spline-corridor-assets";
+import {
+  createSplineCorridorJunctionFromCandidate,
+  detectSplineCorridorJunctionCandidates,
+  getSplineCorridorJunctionsConnectedToPath,
+  type SplineCorridorJunctionCandidate
+} from "../spline-corridor/spline-corridor-junctions";
 import {
   areTerrainsEqual,
   createTerrain,
