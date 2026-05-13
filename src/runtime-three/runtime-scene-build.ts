@@ -1030,7 +1030,23 @@ function buildRuntimePath(
     terrainOffset: resolvedPath.terrainOffset,
     road: {
       ...path.road,
-      material: resolveRuntimeMaterial(document, path.road.materialId)
+      material: resolveRuntimeMaterial(document, path.road.materialId),
+      edges: {
+        left: {
+          ...path.road.edges.left,
+          material: resolveRuntimeMaterial(
+            document,
+            path.road.edges.left.materialId
+          )
+        },
+        right: {
+          ...path.road.edges.right,
+          material: resolveRuntimeMaterial(
+            document,
+            path.road.edges.right.materialId
+          )
+        }
+      }
     },
     points: resolvedPath.points.map(buildRuntimePathPoint),
     segments: resolvedPath.segments.map((segment) => ({
