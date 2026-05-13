@@ -308,6 +308,7 @@ import { type SequenceClip } from "../sequencer/project-sequence-steps";
 import {
   createScenePathRoadSettings,
   createScenePathRoadEdgeSettings,
+  createScenePathRepeater,
   createScenePath,
   createScenePathPoint,
   DEFAULT_SCENE_PATH_CURVE_MODE,
@@ -318,10 +319,13 @@ import {
   normalizeScenePathRoadEdgeKind,
   normalizeScenePathRoadEdgeMaterialId,
   normalizeScenePathRoadMaterialId,
+  normalizeScenePathRepeaterAssetId,
+  normalizeScenePathRepeaterPlacement,
   normalizeScenePathSampledResolution,
   normalizeScenePathTerrainOffset,
   type ScenePath,
   type ScenePathRoadEdgeSettings,
+  type ScenePathRepeater,
   type ScenePathRoadSettings,
   type ScenePathPoint
 } from "./paths";
