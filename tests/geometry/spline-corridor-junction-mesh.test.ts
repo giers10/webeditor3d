@@ -229,38 +229,34 @@ describe("spline corridor junction mesh generation", () => {
     );
 
     expect(firstProfileWidth).toBeGreaterThan(0.4);
-    expect(profileRows).toEqual(
-      expect.arrayContaining([
-        [
-          3,
-          expect.closeTo(0.1, 5),
-          -1,
-          3,
-          expect.closeTo(0.3, 5),
-          -1,
-          expect.closeTo(2.8343145, 5),
-          expect.closeTo(0.3, 5),
-          expect.closeTo(-1.4, 5),
-          expect.closeTo(2.8343145, 5),
-          expect.closeTo(0.1, 5),
-          expect.closeTo(-1.4, 5)
-        ],
-        [
-          4,
-          expect.closeTo(0.1, 5),
-          -2,
-          4,
-          expect.closeTo(0.3, 5),
-          -2,
-          expect.closeTo(3.6, 5),
-          expect.closeTo(0.3, 5),
-          -2,
-          expect.closeTo(3.6, 5),
-          expect.closeTo(0.1, 5),
-          -2
-        ]
-      ])
-    );
+    expect(profileRows[0]).toEqual([
+      3,
+      expect.closeTo(0.1, 5),
+      -1,
+      3,
+      expect.closeTo(0.3, 5),
+      -1,
+      expect.closeTo(2.8343145, 5),
+      expect.closeTo(0.3, 5),
+      expect.closeTo(-1.4, 5),
+      expect.closeTo(2.8343145, 5),
+      expect.closeTo(0.1, 5),
+      expect.closeTo(-1.4, 5)
+    ]);
+    expect(profileRows[1]).toEqual([
+      4,
+      expect.closeTo(0.1, 5),
+      -2,
+      4,
+      expect.closeTo(0.3, 5),
+      -2,
+      expect.closeTo(3.6, 5),
+      expect.closeTo(0.3, 5),
+      expect.closeTo(-2.1656854, 5),
+      expect.closeTo(3.6, 5),
+      expect.closeTo(0.1, 5),
+      expect.closeTo(-2.1656854, 5)
+    ]);
 
     const seamsByPath = resolveSplineCorridorJunctionRoadEdgeSeams({
       junctions: [junction],
