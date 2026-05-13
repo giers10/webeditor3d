@@ -431,6 +431,24 @@ function isClipBoundaryDistance(
   );
 }
 
+function expandClipIntervalsForRoadEdge(options: {
+  clipIntervals: readonly SplineCorridorPathClipInterval[];
+  edgeWidth: number;
+  totalLength: number;
+}): SplineCorridorPathClipInterval[] {
+  if (options.clipIntervals.length === 0 || options.edgeWidth <= 0) {
+    return [...options.clipIntervals];
+  }
+
+  const insetDistance = options.edgeWidth * 0.45;
+
+  return options.clipIntervals.map((clipInterval) => ({
+    junctionId: clipInterval.junctionId,
+    startDistance: Math.max(0, clipInterval.startDistance - insetDistance),
+    endDistance: Math.min(options.totalLength, clipInterval.endDistance + insetDistance)
+  }));
+}
+
 export function buildSplineRoadMeshData(options: {
   path: SplineRoadPathLike;
   terrains?: readonly Terrain[];
@@ -562,10 +580,12 @@ export function buildSplineRoadEdgeMeshData(options: {
   const uvs: number[] = [];
   const indices: number[] = [];
   const profileLastIndex = Math.max(1, profile.length - 1);
-  const stationRuns = buildVisibleRoadStationRuns(
-    stations,
-    options.clipIntervals ?? []
-  );
+  const edgeClipIntervals = expandClipIntervalsForRoadEdge({
+    clipIntervals: options.clipIntervals ?? [],
+    edgeWidth: edge.width,
+    totalLength: stations[stations.length - 1]?.distance ?? 0
+  });
+  const stationRuns = buildVisibleRoadStationRuns(stations, edgeClipIntervals);
   let stationCount = 0;
 
   for (const run of stationRuns) {
@@ -623,17 +643,15 @@ export function buildSplineRoadEdgeMeshData(options: {
     }
 
     if (edge.kind !== "softShoulder") {
-      const clipIntervals = options.clipIntervals ?? [];
-
       addEdgeProfileCaps({
         indices,
         profileVertexCount: profile.length,
         vertexOffset: runVertexOffset,
         stationCount: run.length,
-        capStart: !isClipBoundaryDistance(run[0]!.distance, clipIntervals),
+        capStart: !isClipBoundaryDistance(run[0]!.distance, edgeClipIntervals),
         capEnd: !isClipBoundaryDistance(
           run[run.length - 1]!.distance,
-          clipIntervals
+          edgeClipIntervals
         )
       });
     }
