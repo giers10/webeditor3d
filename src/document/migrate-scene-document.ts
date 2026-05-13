@@ -5674,6 +5674,41 @@ function readScenePathPointValue(
   });
 }
 
+function readScenePathRoadEdgeSettingsValue(
+  value: unknown,
+  label: string
+): ScenePathRoadEdgeSettings {
+  if (value === undefined) {
+    return createScenePathRoadEdgeSettings();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return createScenePathRoadEdgeSettings({
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, false),
+    kind:
+      value.kind === undefined
+        ? undefined
+        : normalizeScenePathRoadEdgeKind(value.kind),
+    width:
+      value.width === undefined
+        ? undefined
+        : expectFiniteNumber(value.width, `${label}.width`),
+    height:
+      value.height === undefined
+        ? undefined
+        : expectFiniteNumber(value.height, `${label}.height`),
+    materialId:
+      value.materialId === undefined || value.materialId === null
+        ? null
+        : normalizeScenePathRoadEdgeMaterialId(
+            expectString(value.materialId, `${label}.materialId`)
+          )
+  });
+}
+
 function readScenePathRoadSettingsValue(
   value: unknown,
   label: string
@@ -5714,7 +5749,17 @@ function readScenePathRoadSettingsValue(
         ? null
         : normalizeScenePathRoadMaterialId(
             expectString(value.materialId, `${label}.materialId`)
-          )
+          ),
+    edges: {
+      left: readScenePathRoadEdgeSettingsValue(
+        isRecord(value.edges) ? value.edges.left : undefined,
+        `${label}.edges.left`
+      ),
+      right: readScenePathRoadEdgeSettingsValue(
+        isRecord(value.edges) ? value.edges.right : undefined,
+        `${label}.edges.right`
+      )
+    }
   });
 }
 
