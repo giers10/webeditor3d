@@ -19,6 +19,7 @@ import {
   type ProjectTimeSettings
 } from "./project-time-settings";
 import { type ScenePath } from "./paths";
+import type { SplineCorridorJunctionRegistry } from "./spline-corridor-junctions";
 import {
   createEmptyProjectScheduler,
   type ProjectScheduler
@@ -35,7 +36,8 @@ import {
   type FoliagePrototypeRegistry
 } from "../foliage/foliage";
 
-export const SCENE_DOCUMENT_VERSION = 106 as const;
+export const SCENE_DOCUMENT_VERSION = 107 as const;
+export const SPLINE_CORRIDOR_JUNCTIONS_SCENE_DOCUMENT_VERSION = 107 as const;
 export const SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION = 106 as const;
 export const SPLINE_REPEATERS_SCENE_DOCUMENT_VERSION = 105 as const;
 export const SPLINE_ROAD_EDGES_SCENE_DOCUMENT_VERSION = 104 as const;
@@ -213,6 +215,7 @@ export interface ProjectScene {
   terrains: Record<string, Terrain>;
   foliageLayers: FoliageLayerRegistry;
   paths: Record<string, ScenePath>;
+  splineCorridorJunctions: SplineCorridorJunctionRegistry;
   modelInstances: Record<string, ModelInstance>;
   entities: Record<string, EntityInstance>;
   interactionLinks: Record<string, InteractionLink>;
@@ -247,6 +250,7 @@ export interface SceneDocument {
   foliagePrototypes: FoliagePrototypeRegistry;
   foliageLayers: FoliageLayerRegistry;
   paths: Record<string, ScenePath>;
+  splineCorridorJunctions: SplineCorridorJunctionRegistry;
   modelInstances: Record<string, ModelInstance>;
   entities: Record<string, EntityInstance>;
   interactionLinks: Record<string, InteractionLink>;
