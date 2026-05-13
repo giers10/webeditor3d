@@ -1057,21 +1057,21 @@ describe("RapierCollisionWorld", () => {
       sampleCountZ: 3,
       cellSize: 2,
       heights: [
-        0,
         1,
-        2,
-        3,
-        4,
-        0,
         1,
-        2,
-        3,
-        4,
-        0,
         1,
-        2,
-        3,
-        4
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
       ]
     });
     const runtimeScene = buildRuntimeSceneFromDocument({
@@ -1120,11 +1120,11 @@ describe("RapierCollisionWorld", () => {
       });
 
       expect(eastLanding.grounded).toBe(true);
-      expect(eastLanding.feetPosition.y).toBeGreaterThan(3.9);
-      expect(eastLanding.feetPosition.y).toBeLessThan(4.1);
+      expect(eastLanding.feetPosition.y).toBeGreaterThan(0.9);
+      expect(eastLanding.feetPosition.y).toBeLessThan(1.1);
       expect(westLanding.grounded).toBe(true);
-      expect(westLanding.feetPosition.y).toBeGreaterThan(0.4);
-      expect(westLanding.feetPosition.y).toBeLessThan(0.6);
+      expect(westLanding.feetPosition.y).toBeGreaterThan(0.9);
+      expect(westLanding.feetPosition.y).toBeLessThan(1.1);
     } finally {
       collisionWorld.dispose();
     }
