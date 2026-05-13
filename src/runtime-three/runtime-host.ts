@@ -82,6 +82,7 @@ import {
   buildSplineRoadEdgeMeshGeometry,
   buildSplineRoadMeshGeometry
 } from "../geometry/spline-road-mesh";
+import { buildSplineCorridorJunctionMeshGeometry } from "../geometry/spline-corridor-junction-mesh";
 import {
   createStarterMaterialSignature,
   createStarterMaterialTextureSet,
@@ -4334,6 +4335,18 @@ export class RuntimeHost {
     );
   }
 
+  private createRuntimeJunctionMaterial(
+    runtimeScene: RuntimeSceneDefinition,
+    materialId: string | null
+  ): Material {
+    const material =
+      materialId === null
+        ? null
+        : (runtimeScene.materials?.[materialId] ?? null);
+
+    return this.createRuntimeRoadGeneratedMaterial(material, 0x6f624d);
+  }
+
   private rebuildRoadSurfaces(runtimeScene: RuntimeSceneDefinition) {
     this.clearRoadSurfaces();
 
@@ -4344,7 +4357,10 @@ export class RuntimeHost {
 
       const surfaceGeometry = buildSplineRoadMeshGeometry({
         path,
-        terrains: runtimeScene.foliage.terrains
+        terrains: runtimeScene.foliage.terrains,
+        clipIntervals: runtimeScene.splineCorridorClipIntervalsByPath.get(
+          path.id
+        )
       });
       const meshes: Array<Mesh<BufferGeometry, Material>> = [];
 
@@ -4365,7 +4381,10 @@ export class RuntimeHost {
         const edgeGeometry = buildSplineRoadEdgeMeshGeometry({
           path,
           side,
-          terrains: runtimeScene.foliage.terrains
+          terrains: runtimeScene.foliage.terrains,
+          clipIntervals: runtimeScene.splineCorridorClipIntervalsByPath.get(
+            path.id
+          )
         });
 
         if (edgeGeometry === null) {
@@ -4395,13 +4414,39 @@ export class RuntimeHost {
       });
     }
 
+    for (const junction of runtimeScene.splineCorridorJunctions) {
+      const geometry = buildSplineCorridorJunctionMeshGeometry({
+        junction,
+        paths: runtimeScene.paths,
+        terrains: runtimeScene.foliage.terrains
+      });
+
+      if (geometry === null) {
+        continue;
+      }
+
+      const mesh = new Mesh(
+        geometry,
+        this.createRuntimeJunctionMaterial(runtimeScene, junction.materialId)
+      );
+      mesh.castShadow = false;
+      mesh.receiveShadow = true;
+      mesh.userData.splineCorridorJunctionId = junction.id;
+      applyRendererRenderCategoryFromMaterial(mesh);
+      this.roadSurfaceGroup.add(mesh);
+      this.roadSurfaceMeshes.set(`junction:${junction.id}`, {
+        meshes: [mesh]
+      });
+    }
+
     this.applyShadowState();
   }
 
   private rebuildSplineRepeaters(runtimeScene: RuntimeSceneDefinition) {
     this.splineRepeaterRenderer.sync({
       paths: runtimeScene.paths,
-      terrains: runtimeScene.foliage.terrains
+      terrains: runtimeScene.foliage.terrains,
+      clipIntervalsByPath: runtimeScene.splineCorridorClipIntervalsByPath
     });
   }
 

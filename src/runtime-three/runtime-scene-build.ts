@@ -546,7 +546,9 @@ export interface RuntimePath {
 }
 
 export interface RuntimeSplineCorridorJunction
-  extends SplineCorridorJunction {}
+  extends SplineCorridorJunction {
+  material: MaterialDef | null;
+}
 
 export interface RuntimeFoliageDefinition {
   terrains: Terrain[];
