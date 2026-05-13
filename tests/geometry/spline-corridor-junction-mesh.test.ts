@@ -130,6 +130,94 @@ describe("spline corridor junction mesh generation", () => {
     );
   });
 
+  it("builds a mitered junction perimeter edge from enabled connected road edges", () => {
+    const pathA = createScenePath({
+      id: "path-junction-edge-a",
+      road: {
+        enabled: true,
+        width: 2,
+        shoulderWidth: 1,
+        heightOffset: 0.1,
+        edges: {
+          left: {
+            enabled: true,
+            collisionEnabled: false,
+            kind: "curb",
+            width: 0.4,
+            height: 0.2,
+            materialId: "curb-material"
+          }
+        }
+      },
+      points: [
+        {
+          id: "path-junction-edge-a-start",
+          position: { x: 0, y: 0, z: 0 }
+        },
+        {
+          id: "path-junction-edge-a-end",
+          position: { x: 10, y: 0, z: 0 }
+        }
+      ]
+    });
+    const pathB = createRoadPath("path-junction-edge-b", [
+      { x: 5, z: -5 },
+      { x: 5, z: 5 }
+    ]);
+    const junction = createSplineCorridorJunction({
+      id: "junction-edge",
+      center: { x: 5, y: 0, z: 0 },
+      radius: 3,
+      connections: [
+        {
+          pathId: pathA.id,
+          progress: 0.5,
+          clipDistance: 2
+        },
+        {
+          pathId: pathB.id,
+          progress: 0.5,
+          clipDistance: 2
+        }
+      ]
+    });
+
+    const edge = resolveSplineCorridorJunctionEdgeSettings({
+      junction,
+      paths: [pathA, pathB]
+    });
+
+    if (edge === null) {
+      throw new Error("Expected a junction edge setting.");
+    }
+
+    const meshData = buildSplineCorridorJunctionEdgeMeshData({
+      junction,
+      paths: [pathA, pathB],
+      edge
+    });
+
+    expect(edge.materialId).toBe("curb-material");
+    expect(meshData?.footprintPointCount).toBe(8);
+    expect(meshData?.profileVertexCount).toBe(4);
+    expect(meshData?.positions).toHaveLength((8 + 1) * 4 * 3);
+    expect(meshData?.indices).toHaveLength(8 * 3 * 6);
+    expect(Array.from(meshData!.positions.slice(0, 12))).toEqual([
+      3,
+      expect.closeTo(0.1, 5),
+      -1,
+      3,
+      expect.closeTo(0.3, 5),
+      -1,
+      expect.not.closeTo(3, 5),
+      expect.closeTo(0.3, 5),
+      expect.not.closeTo(-1, 5),
+      expect.not.closeTo(3, 5),
+      expect.closeTo(0.1, 5),
+      expect.not.closeTo(-1, 5)
+    ]);
+  });
+
   it("samples full terrain influence inside the connection footprint and falloff outside it", () => {
     const pathA = createRoadPath("path-junction-influence-a", [
       { x: 0, z: 0 },
