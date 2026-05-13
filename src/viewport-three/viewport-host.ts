@@ -974,6 +974,31 @@ export class ViewportHost {
       depthTest: false
     })
   );
+  private readonly terrainGridResizeOverlayGroup = new Group();
+  private readonly terrainGridResizeEdgeLine = new Line(
+    new BufferGeometry(),
+    new LineBasicMaterial({
+      color: TERRAIN_GRID_RESIZE_EDGE_COLOR,
+      depthTest: false,
+      depthWrite: false
+    })
+  );
+  private readonly terrainGridResizeArrowLine = new Line(
+    new BufferGeometry(),
+    new LineBasicMaterial({
+      color: TERRAIN_GRID_RESIZE_ARROW_COLOR,
+      depthTest: false,
+      depthWrite: false
+    })
+  );
+  private readonly terrainGridResizeArrowHead = new Mesh(
+    new ConeGeometry(0.13, TERRAIN_GRID_RESIZE_ARROW_HEAD_LENGTH, 16),
+    new MeshBasicMaterial({
+      color: TERRAIN_GRID_RESIZE_ARROW_COLOR,
+      depthTest: false,
+      depthWrite: false
+    })
+  );
   private readonly pathGroup = new Group();
   private readonly entityGroup = new Group();
   private readonly modelGroup = new Group();
