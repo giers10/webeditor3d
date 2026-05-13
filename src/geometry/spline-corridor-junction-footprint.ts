@@ -378,11 +378,16 @@ export function buildSplineCorridorJunctionFootprint(options: {
   junction: SplineCorridorJunction;
   paths: readonly SplineCorridorJunctionFootprintPathLike[];
   terrains?: readonly Terrain[];
+  includeHidden?: boolean;
 }): SplineCorridorJunctionFootprint | null {
   const { junction, paths } = options;
   const terrains = options.terrains ?? [];
 
-  if (!junction.enabled || !junction.visible || junction.radius <= 0) {
+  if (
+    !junction.enabled ||
+    (!junction.visible && options.includeHidden !== true) ||
+    junction.radius <= 0
+  ) {
     return null;
   }
 
