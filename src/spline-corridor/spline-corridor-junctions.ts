@@ -11,6 +11,7 @@ import {
 import {
   createSplineCorridorJunction,
   getSplineCorridorJunctions,
+  type SplineCorridorJunctionConnection,
   type SplineCorridorJunction,
   type SplineCorridorJunctionRegistry
 } from "../document/spline-corridor-junctions";
@@ -34,6 +35,13 @@ export interface SplineCorridorJunctionCandidate {
   materialId: string | null;
   edge: ScenePathRoadEdgeSettings;
   connections: SplineCorridorJunctionCandidateConnection[];
+}
+
+export interface ReattachSplineCorridorJunctionsOptions {
+  paths: readonly ScenePath[];
+  junctions: SplineCorridorJunctionRegistry;
+  changedPathIds?: readonly string[];
+  terrains?: readonly Terrain[];
 }
 
 interface ResolvedRoadPath {
@@ -96,6 +104,28 @@ function createCandidateId(
 
 function distanceXZ(left: Vec3, right: Vec3): number {
   return Math.hypot(left.x - right.x, left.z - right.z);
+}
+
+function averageVec3(vectors: readonly Vec3[]): Vec3 {
+  if (vectors.length === 0) {
+    return {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+  }
+
+  return {
+    x:
+      vectors.reduce((total, vector) => total + vector.x, 0) /
+      vectors.length,
+    y:
+      vectors.reduce((total, vector) => total + vector.y, 0) /
+      vectors.length,
+    z:
+      vectors.reduce((total, vector) => total + vector.z, 0) /
+      vectors.length
+  };
 }
 
 function lerp(start: number, end: number, alpha: number): number {
@@ -555,4 +585,213 @@ export function getSplineCorridorJunctionsConnectedToPath(options: {
   return getSplineCorridorJunctions(options.junctions).filter((junction) =>
     junction.connections.some((connection) => connection.pathId === options.pathId)
   );
+}
+
+function countConnectionPathIds(
+  connections: readonly Pick<SplineCorridorJunctionConnection, "pathId">[]
+): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  for (const connection of connections) {
+    counts.set(connection.pathId, (counts.get(connection.pathId) ?? 0) + 1);
+  }
+
+  return counts;
+}
+
+function haveSameConnectionPathMultiset(options: {
+  junction: SplineCorridorJunction;
+  candidate: SplineCorridorJunctionCandidate;
+}): boolean {
+  const junctionCounts = countConnectionPathIds(options.junction.connections);
+  const candidateCounts = countConnectionPathIds(options.candidate.connections);
+
+  if (junctionCounts.size !== candidateCounts.size) {
+    return false;
+  }
+
+  for (const [pathId, count] of junctionCounts) {
+    if (candidateCounts.get(pathId) !== count) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function findBestReattachmentCandidate(options: {
+  junction: SplineCorridorJunction;
+  candidates: readonly SplineCorridorJunctionCandidate[];
+}): SplineCorridorJunctionCandidate | null {
+  let bestCandidate: SplineCorridorJunctionCandidate | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (const candidate of options.candidates) {
+    if (
+      !haveSameConnectionPathMultiset({
+        junction: options.junction,
+        candidate
+      })
+    ) {
+      continue;
+    }
+
+    const distance = distanceXZ(options.junction.center, candidate.center);
+
+    if (
+      distance < bestDistance - EPSILON ||
+      (Math.abs(distance - bestDistance) <= EPSILON &&
+        candidate.id.localeCompare(bestCandidate?.id ?? "") < 0)
+    ) {
+      bestCandidate = candidate;
+      bestDistance = distance;
+    }
+  }
+
+  return bestCandidate;
+}
+
+function mapCandidateConnectionsToExisting(options: {
+  existingConnections: readonly SplineCorridorJunctionConnection[];
+  candidateConnections: readonly SplineCorridorJunctionCandidateConnection[];
+}): SplineCorridorJunctionConnection[] {
+  const usedCandidateIndexes = new Set<number>();
+
+  return options.existingConnections.map((existingConnection) => {
+    let bestCandidateIndex: number | null = null;
+    let bestProgressDelta = Number.POSITIVE_INFINITY;
+
+    options.candidateConnections.forEach((candidateConnection, index) => {
+      if (
+        usedCandidateIndexes.has(index) ||
+        candidateConnection.pathId !== existingConnection.pathId
+      ) {
+        return;
+      }
+
+      const progressDelta = Math.abs(
+        candidateConnection.progress - existingConnection.progress
+      );
+
+      if (progressDelta < bestProgressDelta) {
+        bestCandidateIndex = index;
+        bestProgressDelta = progressDelta;
+      }
+    });
+
+    if (bestCandidateIndex === null) {
+      return existingConnection;
+    }
+
+    usedCandidateIndexes.add(bestCandidateIndex);
+    const candidateConnection =
+      options.candidateConnections[bestCandidateIndex]!;
+
+    return {
+      ...existingConnection,
+      progress: candidateConnection.progress
+    };
+  });
+}
+
+function reattachJunctionToCandidate(options: {
+  junction: SplineCorridorJunction;
+  candidate: SplineCorridorJunctionCandidate;
+}): SplineCorridorJunction {
+  return createSplineCorridorJunction({
+    ...options.junction,
+    center: options.candidate.center,
+    connections: mapCandidateConnectionsToExisting({
+      existingConnections: options.junction.connections,
+      candidateConnections: options.candidate.connections
+    })
+  });
+}
+
+function reprojectJunctionConnections(options: {
+  junction: SplineCorridorJunction;
+  resolvedPaths: ReadonlyMap<string, ResolvedRoadPath>;
+}): SplineCorridorJunction {
+  const sampledPositions: Vec3[] = [];
+  const connections = options.junction.connections.map((connection) => {
+    const resolvedPath = options.resolvedPaths.get(connection.pathId);
+
+    if (resolvedPath === undefined) {
+      return connection;
+    }
+
+    const nearest = resolveNearestPointOnResolvedScenePath(
+      resolvedPath.resolved,
+      options.junction.center
+    );
+
+    sampledPositions.push(nearest.position);
+
+    return {
+      ...connection,
+      progress: nearest.progress
+    };
+  });
+
+  if (sampledPositions.length === 0) {
+    return options.junction;
+  }
+
+  return createSplineCorridorJunction({
+    ...options.junction,
+    center: averageVec3(sampledPositions),
+    connections
+  });
+}
+
+export function reattachSplineCorridorJunctionsToPaths(
+  options: ReattachSplineCorridorJunctionsOptions
+): SplineCorridorJunctionRegistry {
+  const changedPathIdSet =
+    options.changedPathIds === undefined
+      ? null
+      : new Set(options.changedPathIds);
+  const resolvedPaths = resolveRoadPaths({
+    paths: options.paths,
+    terrains: options.terrains
+  });
+  const resolvedPathMap = new Map(
+    resolvedPaths.map((path) => [path.path.id, path])
+  );
+  const candidates = detectSplineCorridorJunctionCandidates({
+    paths: options.paths,
+    terrains: options.terrains
+  });
+  const nextJunctions: SplineCorridorJunctionRegistry = {};
+
+  for (const [junctionId, junction] of Object.entries(options.junctions)) {
+    const shouldReattach =
+      changedPathIdSet === null ||
+      junction.connections.some((connection) =>
+        changedPathIdSet.has(connection.pathId)
+      );
+
+    if (!shouldReattach) {
+      nextJunctions[junctionId] = createSplineCorridorJunction(junction);
+      continue;
+    }
+
+    const bestCandidate = findBestReattachmentCandidate({
+      junction,
+      candidates
+    });
+
+    nextJunctions[junctionId] =
+      bestCandidate === null
+        ? reprojectJunctionConnections({
+            junction,
+            resolvedPaths: resolvedPathMap
+          })
+        : reattachJunctionToCandidate({
+            junction,
+            candidate: bestCandidate
+          });
+  }
+
+  return nextJunctions;
 }
