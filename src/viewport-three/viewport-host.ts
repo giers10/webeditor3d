@@ -7389,6 +7389,13 @@ export class ViewportHost {
     );
   }
 
+  private createRoadJunctionMaterial(junction: SplineCorridorJunction): Material {
+    return this.createRoadGeneratedMaterial(
+      junction.materialId,
+      PATH_JUNCTION_PREVIEW_COLOR
+    );
+  }
+
   private createRoadSurfaceRenderObjects(
     path: ScenePath,
     terrains: readonly Terrain[]
@@ -7438,14 +7445,51 @@ export class ViewportHost {
     return meshes.length === 0 ? null : { meshes };
   }
 
+  private createRoadJunctionRenderObjects(
+    junction: SplineCorridorJunction,
+    paths: readonly ScenePath[],
+    terrains: readonly Terrain[]
+  ): RoadSurfaceRenderObjects | null {
+    const geometry = buildSplineCorridorJunctionMeshGeometry({
+      junction,
+      paths,
+      terrains
+    });
+
+    if (geometry === null) {
+      return null;
+    }
+
+    const mesh = new Mesh(geometry, this.createRoadJunctionMaterial(junction));
+    mesh.castShadow = false;
+    mesh.receiveShadow = true;
+    mesh.userData.splineCorridorJunctionId = junction.id;
+    mesh.userData.nonPickable = true;
+    applyRendererRenderCategoryFromMaterial(mesh);
+    return { meshes: [mesh] };
+  }
+
   private rebuildRoadSurfaces(document: SceneDocument) {
     this.clearRoadSurfaces();
     const terrains = getTerrains(document.terrains).filter(
       (terrain) => terrain.enabled
     );
+    const paths = getScenePaths(document.paths);
+    const junctions = getSplineCorridorJunctions(
+      document.splineCorridorJunctions
+    );
+    const clipIntervalsByPath = resolveSplineCorridorJunctionClipIntervals({
+      paths,
+      junctions,
+      terrains
+    });
 
-    for (const path of getScenePaths(document.paths)) {
-      const renderObjects = this.createRoadSurfaceRenderObjects(path, terrains);
+    for (const path of paths) {
+      const renderObjects = this.createRoadSurfaceRenderObjects(
+        path,
+        terrains,
+        clipIntervalsByPath
+      );
 
       if (renderObjects === null) {
         continue;
@@ -7455,6 +7499,23 @@ export class ViewportHost {
         this.roadSurfaceGroup.add(mesh);
       }
       this.roadSurfaceRenderObjects.set(path.id, renderObjects);
+    }
+
+    for (const junction of junctions) {
+      const renderObjects = this.createRoadJunctionRenderObjects(
+        junction,
+        paths,
+        terrains
+      );
+
+      if (renderObjects === null) {
+        continue;
+      }
+
+      for (const mesh of renderObjects.meshes) {
+        this.roadSurfaceGroup.add(mesh);
+      }
+      this.roadSurfaceRenderObjects.set(`junction:${junction.id}`, renderObjects);
     }
 
     this.applyShadowState();
