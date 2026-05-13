@@ -8801,6 +8801,26 @@ export function validateSceneDocument(
     validateScenePath(pathValue, path, document, diagnostics);
   }
 
+  for (const [junctionKey, junction] of Object.entries(
+    document.splineCorridorJunctions
+  )) {
+    const path = `splineCorridorJunctions.${junctionKey}`;
+
+    if (junction.id !== junctionKey) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "spline-corridor-junction-id-mismatch",
+          "Spline corridor junction ids must match their registry key.",
+          `${path}.id`
+        )
+      );
+    }
+
+    registerAuthoredId(junction.id, path, seenIds, diagnostics);
+    validateSplineCorridorJunction(junction, path, document, diagnostics);
+  }
+
   for (const [terrainKey, terrain] of Object.entries(document.terrains)) {
     const path = `terrains.${terrainKey}`;
 
