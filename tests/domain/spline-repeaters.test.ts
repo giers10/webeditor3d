@@ -57,6 +57,45 @@ describe("spline repeaters", () => {
     ]);
   });
 
+  it("skips repeater instances inside junction clip intervals", () => {
+    const path = createScenePath({
+      id: "path-repeater-clipped",
+      repeaters: [
+        {
+          id: "repeater-clipped",
+          assetId: "fence_segment_wood_2m",
+          spacing: 2,
+          placement: "center"
+        }
+      ],
+      points: [
+        {
+          id: "path-repeater-clipped-a",
+          position: { x: 0, y: 0, z: 0 }
+        },
+        {
+          id: "path-repeater-clipped-b",
+          position: { x: 0, y: 0, z: 10 }
+        }
+      ]
+    });
+
+    const instances = deriveSplineRepeaterInstances({
+      path,
+      clipIntervals: [
+        {
+          junctionId: "junction-repeater-clipped",
+          startDistance: 4,
+          endDistance: 6
+        }
+      ]
+    });
+
+    expect(instances.map((instance) => instance.distanceAlongPath)).toEqual([
+      0, 2, 8, 10
+    ]);
+  });
+
   it("deterministically applies terrain conforming and random variation", () => {
     const terrain = createTerrain({
       id: "terrain-repeater",
