@@ -65,19 +65,24 @@ export function createDeletePathCommand(pathId: string): EditorCommand {
         ...currentDocument.paths
       };
       delete nextPaths[pathId];
-      const nextJunctions = Object.fromEntries(
-        Object.entries(currentDocument.splineCorridorJunctions)
-          .map(([junctionId, junction]) => [
-            junctionId,
-            cloneSplineCorridorJunction({
-              ...junction,
-              connections: junction.connections.filter(
-                (connection) => connection.pathId !== pathId
-              )
-            })
-          ])
-          .filter(([, junction]) => junction.connections.length >= 2)
-      );
+      const nextJunctions: Record<string, SplineCorridorJunction> = {};
+
+      for (const [junctionId, junction] of Object.entries(
+        currentDocument.splineCorridorJunctions
+      )) {
+        const connections = junction.connections.filter(
+          (connection) => connection.pathId !== pathId
+        );
+
+        if (connections.length < 2) {
+          continue;
+        }
+
+        nextJunctions[junctionId] = cloneSplineCorridorJunction({
+          ...junction,
+          connections
+        });
+      }
 
       context.setDocument({
         ...currentDocument,
