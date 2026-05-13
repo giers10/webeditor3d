@@ -2698,6 +2698,11 @@ export class ViewportHost {
       }
     }
 
+    applyAdvancedRenderingRenderableShadowFlags(
+      this.splineRepeaterRenderer.group,
+      shadowsEnabled
+    );
+
     for (const renderObjects of this.entityRenderObjects.values()) {
       applyAdvancedRenderingRenderableShadowFlags(renderObjects.group, false);
     }
