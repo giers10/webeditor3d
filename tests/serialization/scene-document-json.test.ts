@@ -1025,8 +1025,59 @@ describe("scene document JSON", () => {
     expect(migratedDocument.paths[path.id]?.repeaters[0]?.collisionEnabled).toBe(
       false
     );
-    expect(SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION).toBe(
+    expect(SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION).toBe(106);
+  });
+
+  it("migrates pre-junction scenes to an empty spline corridor junction registry", () => {
+    const document = createEmptySceneDocument({
+      name: "Legacy Junction Scene"
+    });
+    const legacyDocument = JSON.parse(serializeSceneDocument(document)) as {
+      version: number;
+      splineCorridorJunctions?: unknown;
+    };
+
+    legacyDocument.version = SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION;
+    delete legacyDocument.splineCorridorJunctions;
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.splineCorridorJunctions).toEqual({});
+    expect(SPLINE_CORRIDOR_JUNCTIONS_SCENE_DOCUMENT_VERSION).toBe(
       SCENE_DOCUMENT_VERSION
+    );
+  });
+
+  it("round-trips spline corridor junctions", () => {
+    const pathA = createScenePath({ id: "path-junction-json-a" });
+    const pathB = createScenePath({ id: "path-junction-json-b" });
+    const junction = createSplineCorridorJunction({
+      id: "junction-json",
+      center: { x: 1, y: 0, z: 2 },
+      radius: 2.5,
+      materialId: "mat-wall",
+      terrainMode: "paintOnly",
+      connections: [
+        { pathId: pathA.id, progress: 0.25, clipDistance: 2.5 },
+        { pathId: pathB.id, progress: 0.75, clipDistance: 2.5 }
+      ]
+    });
+    const document = {
+      ...createEmptySceneDocument({
+        name: "Junction Round Trip Scene"
+      }),
+      paths: {
+        [pathA.id]: pathA,
+        [pathB.id]: pathB
+      },
+      splineCorridorJunctions: {
+        [junction.id]: junction
+      }
+    };
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
     );
   });
 
