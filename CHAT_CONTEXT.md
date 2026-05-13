@@ -41,6 +41,8 @@ Broadly implemented already:
 - Player Start interaction reach/angle and gameplay targeting-related input settings
 - advanced rendering layer/category separation for AO-world, post-AO transparent, and overlay visuals
 - viewport time transport controls for editor project-time playback
+- terrain foliage layers, paint masks, deterministic scatter, bundled foliage GLBs, and instanced LOD/culling render path
+- spline-based paths with editable control points, terrain glue, road preview/apply-to-terrain, procedural road edges, and bundled corridor GLB repeaters along splines
 
 Important consequence:
 
