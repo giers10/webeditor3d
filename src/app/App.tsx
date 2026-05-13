@@ -22998,6 +22998,170 @@ export function App({
                                   <option value="none">None</option>
                                 </select>
                               </label>
+                              <div className="form-section">
+                                <div className="label">Junction Edge</div>
+                                <label className="form-field form-field--toggle">
+                                  <span className="label">Enabled</span>
+                                  <input
+                                    data-testid={`spline-corridor-junction-${junction.id}-edge-enabled`}
+                                    type="checkbox"
+                                    checked={junction.edge.enabled}
+                                    onChange={(event) =>
+                                      handleSplineCorridorJunctionChange(
+                                        createSplineCorridorJunction({
+                                          ...junction,
+                                          edge: createScenePathRoadEdgeSettings({
+                                            ...junction.edge,
+                                            enabled:
+                                              event.currentTarget.checked
+                                          })
+                                        }),
+                                        event.currentTarget.checked
+                                          ? "Enabled spline corridor junction edge."
+                                          : "Disabled spline corridor junction edge."
+                                      )
+                                    }
+                                  />
+                                </label>
+                                <label className="form-field form-field--toggle">
+                                  <span className="label">Box Collision</span>
+                                  <input
+                                    data-testid={`spline-corridor-junction-${junction.id}-edge-collision`}
+                                    type="checkbox"
+                                    checked={junction.edge.collisionEnabled}
+                                    onChange={(event) =>
+                                      handleSplineCorridorJunctionChange(
+                                        createSplineCorridorJunction({
+                                          ...junction,
+                                          edge: createScenePathRoadEdgeSettings({
+                                            ...junction.edge,
+                                            collisionEnabled:
+                                              event.currentTarget.checked
+                                          })
+                                        }),
+                                        event.currentTarget.checked
+                                          ? "Enabled spline corridor junction edge collision."
+                                          : "Disabled spline corridor junction edge collision."
+                                      )
+                                    }
+                                  />
+                                </label>
+                                <label className="form-field">
+                                  <span className="label">Profile</span>
+                                  <select
+                                    className="select-input"
+                                    data-testid={`spline-corridor-junction-${junction.id}-edge-kind`}
+                                    value={junction.edge.kind}
+                                    onChange={(event) =>
+                                      handleSplineCorridorJunctionChange(
+                                        createSplineCorridorJunction({
+                                          ...junction,
+                                          edge: createScenePathRoadEdgeSettings({
+                                            ...junction.edge,
+                                            kind: normalizeScenePathRoadEdgeKind(
+                                              event.currentTarget.value
+                                            )
+                                          })
+                                        }),
+                                        "Updated spline corridor junction edge profile."
+                                      )
+                                    }
+                                  >
+                                    <option value="curb">Curb</option>
+                                    <option value="softShoulder">
+                                      Soft shoulder
+                                    </option>
+                                    <option value="bank">Bank</option>
+                                    <option value="ditch">Ditch</option>
+                                  </select>
+                                </label>
+                                <label className="form-field">
+                                  <span className="label">Width</span>
+                                  <input
+                                    className="text-input"
+                                    data-testid={`spline-corridor-junction-${junction.id}-edge-width`}
+                                    type="number"
+                                    min={0.01}
+                                    step={0.05}
+                                    value={junction.edge.width}
+                                    onChange={(event) =>
+                                      handleSplineCorridorJunctionChange(
+                                        createSplineCorridorJunction({
+                                          ...junction,
+                                          edge: createScenePathRoadEdgeSettings({
+                                            ...junction.edge,
+                                            width: normalizeScenePathRoadEdgeWidth(
+                                              Number(event.currentTarget.value)
+                                            )
+                                          })
+                                        }),
+                                        "Updated spline corridor junction edge width."
+                                      )
+                                    }
+                                  />
+                                </label>
+                                <label className="form-field">
+                                  <span className="label">Height</span>
+                                  <input
+                                    className="text-input"
+                                    data-testid={`spline-corridor-junction-${junction.id}-edge-height`}
+                                    type="number"
+                                    min={0}
+                                    step={0.05}
+                                    value={junction.edge.height}
+                                    onChange={(event) =>
+                                      handleSplineCorridorJunctionChange(
+                                        createSplineCorridorJunction({
+                                          ...junction,
+                                          edge: createScenePathRoadEdgeSettings({
+                                            ...junction.edge,
+                                            height:
+                                              normalizeScenePathRoadEdgeHeight(
+                                                Number(
+                                                  event.currentTarget.value
+                                                )
+                                              )
+                                          })
+                                        }),
+                                        "Updated spline corridor junction edge height."
+                                      )
+                                    }
+                                  />
+                                </label>
+                                <label className="form-field">
+                                  <span className="label">Edge Material</span>
+                                  <select
+                                    className="select-input"
+                                    data-testid={`spline-corridor-junction-${junction.id}-edge-material`}
+                                    value={junction.edge.materialId ?? ""}
+                                    onChange={(event) =>
+                                      handleSplineCorridorJunctionChange(
+                                        createSplineCorridorJunction({
+                                          ...junction,
+                                          edge: createScenePathRoadEdgeSettings({
+                                            ...junction.edge,
+                                            materialId:
+                                              normalizeScenePathRoadEdgeMaterialId(
+                                                event.currentTarget.value
+                                              )
+                                          })
+                                        }),
+                                        "Updated spline corridor junction edge material."
+                                      )
+                                    }
+                                  >
+                                    <option value="">Unassigned preview</option>
+                                    {materialList.map((material) => (
+                                      <option
+                                        key={material.id}
+                                        value={material.id}
+                                      >
+                                        {material.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                              </div>
                             </div>
                           ))}
                         </div>
