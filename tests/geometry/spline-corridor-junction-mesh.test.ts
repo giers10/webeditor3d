@@ -79,6 +79,77 @@ describe("spline corridor junction mesh generation", () => {
     });
   });
 
+  it("supports straight, curved, and hard-corner junction boundary shapes", () => {
+    const pathA = createRoadPath("path-junction-shape-a", [
+      { x: 0, z: 0 },
+      { x: 10, z: 0 }
+    ]);
+    const pathB = createRoadPath("path-junction-shape-b", [
+      { x: 5, z: -5 },
+      { x: 5, z: 5 }
+    ]);
+    const baseJunction = {
+      id: "junction-shape",
+      center: { x: 5, y: 0, z: 0 },
+      radius: 3,
+      connections: [
+        {
+          pathId: pathA.id,
+          progress: 0.5,
+          clipDistance: 2
+        },
+        {
+          pathId: pathB.id,
+          progress: 0.5,
+          clipDistance: 2
+        }
+      ]
+    } as const;
+    const straight = buildSplineCorridorJunctionFootprint({
+      junction: createSplineCorridorJunction({
+        ...baseJunction,
+        shapeMode: "straight"
+      }),
+      paths: [pathA, pathB]
+    });
+    const corner = buildSplineCorridorJunctionFootprint({
+      junction: createSplineCorridorJunction({
+        ...baseJunction,
+        shapeMode: "corner"
+      }),
+      paths: [pathA, pathB]
+    });
+    const curve = buildSplineCorridorJunctionFootprint({
+      junction: createSplineCorridorJunction({
+        ...baseJunction,
+        shapeMode: "curve"
+      }),
+      paths: [pathA, pathB]
+    });
+
+    expect(straight?.points).toHaveLength(8);
+    expect(corner?.points).toHaveLength(12);
+    expect(curve?.points).toHaveLength(28);
+    expect(corner?.points).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          x: expect.closeTo(4, 5),
+          z: expect.closeTo(-1, 5),
+          connectionBoundaryKey: null
+        })
+      ])
+    );
+    expect(curve?.points).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          x: expect.closeTo(3.75, 5),
+          z: expect.closeTo(-1.25, 5),
+          connectionBoundaryKey: null
+        })
+      ])
+    );
+  });
+
   it("builds junction fill geometry from the connection footprint instead of a circle", () => {
     const pathA = createRoadPath("path-junction-mesh-a", [
       { x: 0, z: 0 },
@@ -286,6 +357,65 @@ describe("spline corridor junction mesh generation", () => {
         })
       ])
     );
+  });
+
+  it("builds perimeter edge rows for curved and hard-corner junction shapes", () => {
+    const pathA = createRoadPath("path-junction-shaped-edge-a", [
+      { x: 0, z: 0 },
+      { x: 10, z: 0 }
+    ]);
+    const pathB = createRoadPath("path-junction-shaped-edge-b", [
+      { x: 5, z: -5 },
+      { x: 5, z: 5 }
+    ]);
+    const baseJunction = {
+      id: "junction-shaped-edge",
+      center: { x: 5, y: 0, z: 0 },
+      radius: 3,
+      edge: {
+        enabled: true,
+        collisionEnabled: false,
+        kind: "curb",
+        width: 0.4,
+        height: 0.2,
+        materialId: null
+      },
+      connections: [
+        {
+          pathId: pathA.id,
+          progress: 0.5,
+          clipDistance: 2
+        },
+        {
+          pathId: pathB.id,
+          progress: 0.5,
+          clipDistance: 2
+        }
+      ]
+    } as const;
+    const cornerMeshData = buildSplineCorridorJunctionEdgeMeshData({
+      junction: createSplineCorridorJunction({
+        ...baseJunction,
+        shapeMode: "corner"
+      }),
+      paths: [pathA, pathB],
+      edge: baseJunction.edge
+    });
+    const curveMeshData = buildSplineCorridorJunctionEdgeMeshData({
+      junction: createSplineCorridorJunction({
+        ...baseJunction,
+        shapeMode: "curve"
+      }),
+      paths: [pathA, pathB],
+      edge: baseJunction.edge
+    });
+
+    expect(cornerMeshData?.footprintPointCount).toBe(12);
+    expect(cornerMeshData?.positions).toHaveLength(12 * 4 * 3);
+    expect(cornerMeshData?.indices).toHaveLength(8 * 3 * 6 + 8 * 2 * 3);
+    expect(curveMeshData?.footprintPointCount).toBe(28);
+    expect(curveMeshData?.positions).toHaveLength(28 * 4 * 3);
+    expect(curveMeshData?.indices).toHaveLength(24 * 3 * 6 + 8 * 2 * 3);
   });
 
   it("samples full terrain influence inside the connection footprint and falloff outside it", () => {
