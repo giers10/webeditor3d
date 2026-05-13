@@ -5,6 +5,7 @@ import { createSplineCorridorJunction } from "../../src/document/spline-corridor
 import {
   createSplineCorridorJunctionFromCandidate,
   detectSplineCorridorJunctionCandidates,
+  reattachSplineCorridorJunctionsToPaths,
   resolveSplineCorridorJunctionClipIntervals
 } from "../../src/spline-corridor/spline-corridor-junctions";
 
@@ -223,5 +224,99 @@ describe("spline corridor junctions", () => {
         endDistance: 9
       })
     ]);
+  });
+
+  it("reattaches persisted junctions to moved crossing paths", () => {
+    const pathA = createRoadPath("path-reattach-a", [
+      { x: 0, z: 0 },
+      { x: 10, z: 0 }
+    ]);
+    const pathB = createRoadPath("path-reattach-b", [
+      { x: 5, z: -5 },
+      { x: 5, z: 5 }
+    ]);
+    const movedPathA = createRoadPath("path-reattach-a", [
+      { x: 0, z: 2 },
+      { x: 10, z: 2 }
+    ]);
+    const junction = createSplineCorridorJunction({
+      id: "junction-reattach",
+      center: { x: 5, y: 0, z: 0 },
+      connections: [
+        { id: "connection-a", pathId: pathA.id, progress: 0.5, clipDistance: 2 },
+        { id: "connection-b", pathId: pathB.id, progress: 0.5, clipDistance: 2 }
+      ]
+    });
+
+    const nextJunctions = reattachSplineCorridorJunctionsToPaths({
+      paths: [movedPathA, pathB],
+      junctions: {
+        [junction.id]: junction
+      },
+      changedPathIds: [pathA.id]
+    });
+    const nextJunction = nextJunctions[junction.id];
+    const movedPathConnection = nextJunction?.connections.find(
+      (connection) => connection.pathId === movedPathA.id
+    );
+    const stationaryPathConnection = nextJunction?.connections.find(
+      (connection) => connection.pathId === pathB.id
+    );
+
+    expect(nextJunction?.center).toMatchObject({
+      x: expect.closeTo(5, 5),
+      y: expect.closeTo(0, 5),
+      z: expect.closeTo(2, 5)
+    });
+    expect(movedPathConnection?.id).toBe("connection-a");
+    expect(movedPathConnection?.progress).toBeCloseTo(0.5);
+    expect(stationaryPathConnection?.id).toBe("connection-b");
+    expect(stationaryPathConnection?.progress).toBeCloseTo(0.7);
+    expect(stationaryPathConnection?.clipDistance).toBe(2);
+  });
+
+  it("reprojects persisted junction connections when no new crossing candidate exists", () => {
+    const pathA = createRoadPath("path-reattach-fallback-a", [
+      { x: 0, z: 0 },
+      { x: 10, z: 0 }
+    ]);
+    const pathB = createRoadPath("path-reattach-fallback-b", [
+      { x: 5, z: -5 },
+      { x: 5, z: 5 }
+    ]);
+    const movedPathA = createRoadPath("path-reattach-fallback-a", [
+      { x: 0, z: 8 },
+      { x: 10, z: 8 }
+    ]);
+    const junction = createSplineCorridorJunction({
+      id: "junction-reattach-fallback",
+      center: { x: 5, y: 0, z: 0 },
+      connections: [
+        { pathId: pathA.id, progress: 0.5, clipDistance: 2 },
+        { pathId: pathB.id, progress: 0.5, clipDistance: 2 }
+      ]
+    });
+
+    const nextJunction = reattachSplineCorridorJunctionsToPaths({
+      paths: [movedPathA, pathB],
+      junctions: {
+        [junction.id]: junction
+      },
+      changedPathIds: [pathA.id]
+    })[junction.id];
+
+    expect(nextJunction?.center).toMatchObject({
+      x: expect.closeTo(5, 5),
+      y: expect.closeTo(0, 5),
+      z: expect.closeTo(4, 5)
+    });
+    expect(
+      nextJunction?.connections.find((connection) => connection.pathId === pathA.id)
+        ?.progress
+    ).toBeCloseTo(0.5);
+    expect(
+      nextJunction?.connections.find((connection) => connection.pathId === pathB.id)
+        ?.progress
+    ).toBeCloseTo(0.5);
   });
 });
