@@ -419,6 +419,12 @@ interface TerrainBrushHit {
   point: Vec3;
 }
 
+interface TerrainGridResizeHit {
+  terrainId: string;
+  side: TerrainGridResizeSide;
+  point: Vec3;
+}
+
 interface LightVolumeRenderObjects {
   group: Group;
   lights: PointLight[];
@@ -440,6 +446,16 @@ interface ActiveTerrainBrushStroke {
     z: number;
   };
   toolState: ArmedTerrainBrushState;
+}
+
+interface ActiveTerrainGridResizeDrag {
+  pointerId: number;
+  side: TerrainGridResizeSide;
+  baseTerrain: Terrain;
+  previewTerrain: Terrain;
+  startPoint: Vec3;
+  outwardDragDistance: number;
+  changed: boolean;
 }
 
 function createTerrainFoliageMaskValueKey(layerId: string, index: number) {
