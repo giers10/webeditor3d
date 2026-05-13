@@ -3421,7 +3421,11 @@ function validateSplineCorridorJunction(
     );
   }
 
-  if (!isRecord(junction.edge)) {
+  if (
+    typeof junction.edge !== "object" ||
+    junction.edge === null ||
+    Array.isArray(junction.edge)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
