@@ -4273,13 +4273,14 @@ export class RuntimeHost {
     return material;
   }
 
-  private createRuntimeRoadSurfaceMaterial(path: RuntimePath): Material {
-    const material = path.road.material;
-
+  private createRuntimeRoadGeneratedMaterial(
+    material: RuntimePath["road"]["material"],
+    fallbackColor: number
+  ): Material {
     if (material === null) {
       return this.configureRoadSurfaceMaterial(
         new MeshStandardMaterial({
-          color: 0x5f5747,
+          color: fallbackColor,
           roughness: 1,
           metalness: 0,
           side: DoubleSide
@@ -4306,6 +4307,19 @@ export class RuntimeHost {
     );
   }
 
+  private createRuntimeRoadSurfaceMaterial(path: RuntimePath): Material {
+    return this.createRuntimeRoadGeneratedMaterial(path.road.material, 0x5f5747);
+  }
+
+  private createRuntimeRoadEdgeMaterial(
+    edge: RuntimePathRoadEdgeSettings
+  ): Material {
+    return this.createRuntimeRoadGeneratedMaterial(
+      edge.material,
+      RUNTIME_ROAD_EDGE_FALLBACK_COLORS[edge.kind]
+    );
+  }
+
   private rebuildRoadSurfaces(runtimeScene: RuntimeSceneDefinition) {
     this.clearRoadSurfaces();
 
@@ -4314,23 +4328,56 @@ export class RuntimeHost {
         continue;
       }
 
-      const geometry = buildSplineRoadMeshGeometry({
+      const surfaceGeometry = buildSplineRoadMeshGeometry({
         path,
         terrains: runtimeScene.foliage.terrains
       });
+      const meshes: Array<Mesh<BufferGeometry, Material>> = [];
 
-      if (geometry === null) {
+      if (surfaceGeometry !== null) {
+        const mesh = new Mesh(
+          surfaceGeometry,
+          this.createRuntimeRoadSurfaceMaterial(path)
+        );
+        mesh.castShadow = false;
+        mesh.receiveShadow = true;
+        mesh.userData.pathId = path.id;
+        applyRendererRenderCategoryFromMaterial(mesh);
+        this.roadSurfaceGroup.add(mesh);
+        meshes.push(mesh);
+      }
+
+      for (const side of ["left", "right"] as const) {
+        const edgeGeometry = buildSplineRoadEdgeMeshGeometry({
+          path,
+          side,
+          terrains: runtimeScene.foliage.terrains
+        });
+
+        if (edgeGeometry === null) {
+          continue;
+        }
+
+        const edge = path.road.edges[side];
+        const edgeMesh = new Mesh(
+          edgeGeometry,
+          this.createRuntimeRoadEdgeMaterial(edge)
+        );
+        edgeMesh.castShadow = false;
+        edgeMesh.receiveShadow = true;
+        edgeMesh.userData.pathId = path.id;
+        edgeMesh.userData.roadEdgeSide = side;
+        applyRendererRenderCategoryFromMaterial(edgeMesh);
+        this.roadSurfaceGroup.add(edgeMesh);
+        meshes.push(edgeMesh);
+      }
+
+      if (meshes.length === 0) {
         continue;
       }
 
-      const mesh = new Mesh(geometry, this.createRuntimeRoadSurfaceMaterial(path));
-      mesh.castShadow = false;
-      mesh.receiveShadow = true;
-      mesh.userData.pathId = path.id;
-      applyRendererRenderCategoryFromMaterial(mesh);
-      this.roadSurfaceGroup.add(mesh);
       this.roadSurfaceMeshes.set(path.id, {
-        mesh
+        meshes
       });
     }
 
@@ -5148,9 +5195,11 @@ export class RuntimeHost {
 
   private clearRoadSurfaces() {
     for (const renderObjects of this.roadSurfaceMeshes.values()) {
-      this.roadSurfaceGroup.remove(renderObjects.mesh);
-      renderObjects.mesh.geometry.dispose();
-      renderObjects.mesh.material.dispose();
+      for (const mesh of renderObjects.meshes) {
+        this.roadSurfaceGroup.remove(mesh);
+        mesh.geometry.dispose();
+        mesh.material.dispose();
+      }
     }
 
     this.roadSurfaceMeshes.clear();
