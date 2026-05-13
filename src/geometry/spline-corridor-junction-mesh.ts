@@ -9,6 +9,7 @@ import {
 } from "../document/terrains";
 import {
   buildSplineCorridorJunctionFootprint,
+  isSplineCorridorJunctionFootprintRoadMouthEdge,
   type SplineCorridorJunctionFootprint,
   type SplineCorridorJunctionFootprintPoint,
   type SplineCorridorJunctionFootprintPathLike
@@ -214,6 +215,44 @@ function getPerimeterDistances(
   return distances;
 }
 
+function addJunctionEdgeProfileCap(options: {
+  indices: number[];
+  rowOffset: number;
+  profileVertexCount: number;
+  reverse: boolean;
+}) {
+  if (options.profileVertexCount < 3) {
+    return;
+  }
+
+  for (let index = 1; index < options.profileVertexCount - 1; index += 1) {
+    if (options.reverse) {
+      options.indices.push(
+        options.rowOffset,
+        options.rowOffset + index + 1,
+        options.rowOffset + index
+      );
+      continue;
+    }
+
+    options.indices.push(
+      options.rowOffset,
+      options.rowOffset + index,
+      options.rowOffset + index + 1
+    );
+  }
+}
+
+function isRoadMouthSegment(
+  points: readonly SplineCorridorJunctionFootprintPoint[],
+  index: number
+): boolean {
+  return isSplineCorridorJunctionFootprintRoadMouthEdge(
+    points[index]!,
+    points[(index + 1) % points.length]!
+  );
+}
+
 export function buildSplineCorridorJunctionEdgeMeshData(options: {
   junction: SplineCorridorJunction;
   paths: readonly SplineCorridorJunctionMeshPathLike[];
@@ -290,6 +329,10 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
   }
 
   for (let pointIndex = 0; pointIndex < footprint.points.length; pointIndex += 1) {
+    if (isRoadMouthSegment(footprint.points, pointIndex)) {
+      continue;
+    }
+
     const currentRow = pointIndex * profile.length;
     const nextRow = currentRow + profile.length;
 
@@ -300,6 +343,28 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
       const nextNext = next + 1;
 
       indices.push(current, currentNext, next, next, currentNext, nextNext);
+    }
+
+    const previousSegmentIndex =
+      (pointIndex - 1 + footprint.points.length) % footprint.points.length;
+    const nextSegmentIndex = (pointIndex + 1) % footprint.points.length;
+
+    if (isRoadMouthSegment(footprint.points, previousSegmentIndex)) {
+      addJunctionEdgeProfileCap({
+        indices,
+        rowOffset: currentRow,
+        profileVertexCount: profile.length,
+        reverse: true
+      });
+    }
+
+    if (isRoadMouthSegment(footprint.points, nextSegmentIndex)) {
+      addJunctionEdgeProfileCap({
+        indices,
+        rowOffset: nextRow,
+        profileVertexCount: profile.length,
+        reverse: false
+      });
     }
   }
 
