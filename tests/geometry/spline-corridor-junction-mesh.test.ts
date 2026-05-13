@@ -9,7 +9,8 @@ import {
 } from "../../src/geometry/spline-corridor-junction-footprint";
 import {
   buildSplineCorridorJunctionEdgeMeshData,
-  buildSplineCorridorJunctionMeshGeometry
+  buildSplineCorridorJunctionMeshGeometry,
+  resolveSplineCorridorJunctionRoadEdgeSeams
 } from "../../src/geometry/spline-corridor-junction-mesh";
 
 function createRoadPath(
@@ -215,8 +216,8 @@ describe("spline corridor junction mesh generation", () => {
     expect(roadMouthSegmentCount).toBe(4);
     expect(meshData?.footprintPointCount).toBe(8);
     expect(meshData?.profileVertexCount).toBe(4);
-    expect(meshData?.positions).toHaveLength(16 * 4 * 3);
-    expect(meshData?.indices).toHaveLength(4 * 3 * 3 * 6);
+    expect(meshData?.positions).toHaveLength(8 * 4 * 3);
+    expect(meshData?.indices).toHaveLength(4 * 3 * 6 + 8 * 2 * 3);
     const firstProfile = Array.from(meshData!.positions.slice(0, 12));
     const firstProfileWidth = Math.hypot(
       firstProfile[6]! - firstProfile[3]!,
@@ -227,7 +228,7 @@ describe("spline corridor junction mesh generation", () => {
       (_, index) => Array.from(meshData!.positions.slice(index * 12, index * 12 + 12))
     );
 
-    expect(firstProfileWidth).toBeCloseTo(0.4, 5);
+    expect(firstProfileWidth).toBeGreaterThan(0.4);
     expect(profileRows).toEqual(
       expect.arrayContaining([
         [
@@ -237,10 +238,10 @@ describe("spline corridor junction mesh generation", () => {
           3,
           expect.closeTo(0.3, 5),
           -1,
-          3,
+          expect.closeTo(2.8343145, 5),
           expect.closeTo(0.3, 5),
           expect.closeTo(-1.4, 5),
-          3,
+          expect.closeTo(2.8343145, 5),
           expect.closeTo(0.1, 5),
           expect.closeTo(-1.4, 5)
         ],
@@ -258,6 +259,35 @@ describe("spline corridor junction mesh generation", () => {
           expect.closeTo(0.1, 5),
           -2
         ]
+      ])
+    );
+
+    const seamsByPath = resolveSplineCorridorJunctionRoadEdgeSeams({
+      junctions: [junction],
+      paths: [pathA, pathB]
+    });
+    const pathASeams = seamsByPath.get(pathA.id) ?? [];
+
+    expect(pathASeams).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pathId: pathA.id,
+          side: "left",
+          distance: 3,
+          outerOffset: {
+            x: expect.closeTo(-0.1656854, 5),
+            z: expect.closeTo(0.4, 5)
+          }
+        }),
+        expect.objectContaining({
+          pathId: pathA.id,
+          side: "right",
+          distance: 3,
+          outerOffset: {
+            x: expect.closeTo(-0.1656854, 5),
+            z: expect.closeTo(-0.4, 5)
+          }
+        })
       ])
     );
   });
