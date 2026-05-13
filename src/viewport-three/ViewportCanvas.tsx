@@ -28,6 +28,7 @@ import {
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 import type { EditorSimulationController } from "../runtime-three/editor-simulation-controller";
+import type { Terrain } from "../document/terrains";
 import { createWorldBackgroundStyle } from "../shared-ui/world-background-style";
 import { traceUpdateLoopEvent } from "../debug/update-loop-trace";
 import {
@@ -74,6 +75,7 @@ interface ViewportCanvasProps {
   focusSelection: EditorSelection;
   onSelectionChange(selection: EditorSelection): void;
   onTerrainBrushCommit(commit: TerrainBrushStrokeCommit): boolean;
+  onTerrainGridResizeCommit(terrain: Terrain): boolean;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
@@ -293,6 +295,7 @@ export function ViewportCanvas({
   focusSelection,
   onSelectionChange,
   onTerrainBrushCommit,
+  onTerrainGridResizeCommit,
   onCommitCreation,
   onCameraStateChange,
   onToolPreviewChange,
@@ -448,6 +451,12 @@ export function ViewportCanvas({
   useEffect(() => {
     hostRef.current?.setTerrainBrushCommitHandler?.(onTerrainBrushCommit);
   }, [onTerrainBrushCommit]);
+
+  useEffect(() => {
+    hostRef.current?.setTerrainGridResizeCommitHandler?.(
+      onTerrainGridResizeCommit
+    );
+  }, [onTerrainGridResizeCommit]);
 
   useEffect(() => {
     hostRef.current?.setWhiteboxHoverLabelChangeHandler((nextLabel) => {
