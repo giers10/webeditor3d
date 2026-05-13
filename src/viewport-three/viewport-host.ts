@@ -114,6 +114,8 @@ import {
 } from "../document/paths";
 import {
   cloneTerrain,
+  getTerrainFootprintDepth,
+  getTerrainFootprintWidth,
   getTerrainRenderDirtyBoundsSince,
   getTerrainRenderDirtyRevision,
   getTerrains,
@@ -345,6 +347,11 @@ import {
   type CreationViewportToolPreview,
   type ViewportToolPreview
 } from "./viewport-transient-state";
+import {
+  resizeTerrainGridFromBorderDrag,
+  resolveTerrainGridResizeSideFromLocalPosition,
+  type TerrainGridResizeSide
+} from "./terrain-grid-resize-controls";
 import {
   summarizeUpdateLoopCameraState,
   summarizeUpdateLoopCameraStateDeltas,
