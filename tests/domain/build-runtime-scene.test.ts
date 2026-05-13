@@ -1961,6 +1961,7 @@ describe("buildRuntimeSceneFromDocument", () => {
         edges: {
           left: {
             enabled: true,
+            collisionEnabled: false,
             kind: "curb",
             width: 0.3,
             height: 0.2,
