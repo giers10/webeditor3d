@@ -7396,7 +7396,10 @@ export class ViewportHost {
 
   private createRoadSurfaceRenderObjects(
     path: ScenePath,
-    terrains: readonly Terrain[]
+    terrains: readonly Terrain[],
+    clipIntervalsByPath: ReturnType<
+      typeof resolveSplineCorridorJunctionClipIntervals
+    >
   ): RoadSurfaceRenderObjects | null {
     if (!path.enabled || !path.visible || !path.road.enabled) {
       return null;
@@ -7404,7 +7407,8 @@ export class ViewportHost {
 
     const surfaceGeometry = buildSplineRoadMeshGeometry({
       path,
-      terrains
+      terrains,
+      clipIntervals: clipIntervalsByPath.get(path.id)
     });
     const meshes: Array<Mesh<BufferGeometry, Material>> = [];
 
@@ -7422,7 +7426,8 @@ export class ViewportHost {
       const edgeGeometry = buildSplineRoadEdgeMeshGeometry({
         path,
         side,
-        terrains
+        terrains,
+        clipIntervals: clipIntervalsByPath.get(path.id)
       });
 
       if (edgeGeometry === null) {
