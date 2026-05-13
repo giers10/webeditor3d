@@ -3227,6 +3227,11 @@ export class RuntimeHost {
     }
 
     applyAdvancedRenderingRenderableShadowFlags(
+      this.splineRepeaterRenderer.group,
+      shadowsEnabled
+    );
+
+    applyAdvancedRenderingRenderableShadowFlags(
       this.foliageRenderer.group,
       shadowsEnabled
     );
