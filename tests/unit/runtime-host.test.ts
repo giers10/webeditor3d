@@ -40,6 +40,7 @@ import {
   createCameraRigWorldPointTargetRef,
   createInteractableEntity,
   createNpcEntity,
+  createNpcTargetAnchor,
   createPointLightEntity,
   createPlayerStartEntity,
   createSoundEmitterEntity,
