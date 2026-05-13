@@ -2818,6 +2818,29 @@ export function App({
     terrainList
   );
   const selectedPath = getSelectedPath(editorState.selection, pathList);
+  const splineCorridorJunctionList = getSplineCorridorJunctions(
+    editorState.document.splineCorridorJunctions
+  );
+  const splineCorridorJunctionCandidates = detectSplineCorridorJunctionCandidates({
+    paths: pathList,
+    junctions: editorState.document.splineCorridorJunctions,
+    terrains: terrainList.filter((terrain) => terrain.enabled)
+  });
+  const selectedPathJunctionCandidates =
+    selectedPath === null
+      ? []
+      : splineCorridorJunctionCandidates.filter((candidate) =>
+          candidate.connections.some(
+            (connection) => connection.pathId === selectedPath.id
+          )
+        );
+  const selectedPathJunctions =
+    selectedPath === null
+      ? []
+      : getSplineCorridorJunctionsConnectedToPath({
+          junctions: editorState.document.splineCorridorJunctions,
+          pathId: selectedPath.id
+        });
   const selectedPathPointState = getSelectedPathPointState(
     editorState.selection,
     selectedPath
