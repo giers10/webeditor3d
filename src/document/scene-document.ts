@@ -400,6 +400,7 @@ export function createSceneDocumentFromProject(
     foliagePrototypes: projectDocument.foliagePrototypes,
     foliageLayers: scene.foliageLayers,
     paths: scene.paths,
+    splineCorridorJunctions: scene.splineCorridorJunctions,
     modelInstances: scene.modelInstances,
     entities: scene.entities,
     interactionLinks: scene.interactionLinks
@@ -429,6 +430,7 @@ export function createProjectDocumentFromSceneDocument(
         terrains: sceneDocument.terrains,
         foliageLayers: sceneDocument.foliageLayers,
         paths: sceneDocument.paths,
+        splineCorridorJunctions: sceneDocument.splineCorridorJunctions,
         modelInstances: sceneDocument.modelInstances,
         entities: sceneDocument.entities,
         interactionLinks: sceneDocument.interactionLinks
@@ -468,6 +470,7 @@ export function applySceneDocumentToProject(
         terrains: sceneDocument.terrains,
         foliageLayers: sceneDocument.foliageLayers,
         paths: sceneDocument.paths,
+        splineCorridorJunctions: sceneDocument.splineCorridorJunctions,
         modelInstances: sceneDocument.modelInstances,
         entities: sceneDocument.entities,
         interactionLinks: sceneDocument.interactionLinks
