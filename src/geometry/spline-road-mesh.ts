@@ -4,6 +4,8 @@ import type { Vec3 } from "../core/vector";
 import {
   resolveScenePath,
   type ScenePathCurveMode,
+  type ScenePathRoadEdgeSettings,
+  type ScenePathRoadEdgeSide,
   type ScenePathPoint,
   type ScenePathRoadSettings
 } from "../document/paths";
@@ -38,10 +40,19 @@ export interface SplineRoadMeshData {
   totalLength: number;
 }
 
+export interface SplineRoadEdgeMeshData extends SplineRoadMeshData {
+  side: ScenePathRoadEdgeSide;
+}
+
 interface RoadStation {
   center: Vec3;
   distance: number;
   tangent: Vec3;
+}
+
+interface EdgeProfilePoint {
+  offset: number;
+  heightOffset: number;
 }
 
 function cloneVec3(vector: Vec3): Vec3 {
@@ -205,6 +216,56 @@ function buildRoadStations(
   return stations;
 }
 
+function createGeometryFromMeshData(meshData: SplineRoadMeshData) {
+  const geometry = new BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new Float32BufferAttribute(meshData.positions, 3)
+  );
+  geometry.setAttribute("uv", new Float32BufferAttribute(meshData.uvs, 2));
+  geometry.setIndex([...meshData.indices]);
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+}
+
+function buildEdgeProfile(options: {
+  edge: ScenePathRoadEdgeSettings;
+  side: ScenePathRoadEdgeSide;
+  roadHalfWidth: number;
+}): EdgeProfilePoint[] {
+  const sideSign = options.side === "left" ? 1 : -1;
+  const innerOffset = sideSign * options.roadHalfWidth;
+  const outerOffset = sideSign * (options.roadHalfWidth + options.edge.width);
+  const edgeHeight = options.edge.height;
+
+  switch (options.edge.kind) {
+    case "curb":
+      return [
+        { offset: innerOffset, heightOffset: 0 },
+        { offset: innerOffset, heightOffset: edgeHeight },
+        { offset: outerOffset, heightOffset: edgeHeight },
+        { offset: outerOffset, heightOffset: 0 }
+      ];
+    case "bank":
+      return [
+        { offset: innerOffset, heightOffset: 0 },
+        { offset: outerOffset, heightOffset: edgeHeight }
+      ];
+    case "ditch":
+      return [
+        { offset: innerOffset, heightOffset: 0 },
+        { offset: outerOffset, heightOffset: -edgeHeight }
+      ];
+    case "softShoulder":
+      return [
+        { offset: innerOffset, heightOffset: 0 },
+        { offset: outerOffset, heightOffset: 0 }
+      ];
+  }
+}
+
 export function buildSplineRoadMeshData(options: {
   path: SplineRoadPathLike;
   terrains?: readonly Terrain[];
@@ -281,15 +342,116 @@ export function buildSplineRoadMeshGeometry(options: {
     return null;
   }
 
-  const geometry = new BufferGeometry();
-  geometry.setAttribute(
-    "position",
-    new Float32BufferAttribute(meshData.positions, 3)
-  );
-  geometry.setAttribute("uv", new Float32BufferAttribute(meshData.uvs, 2));
-  geometry.setIndex([...meshData.indices]);
-  geometry.computeVertexNormals();
-  geometry.computeBoundingBox();
-  geometry.computeBoundingSphere();
-  return geometry;
+  return createGeometryFromMeshData(meshData);
+}
+
+export function buildSplineRoadEdgeMeshData(options: {
+  path: SplineRoadPathLike;
+  side: ScenePathRoadEdgeSide;
+  terrains?: readonly Terrain[];
+}): SplineRoadEdgeMeshData | null {
+  const { path, side } = options;
+  const edge = path.road.edges[side];
+  const terrains = options.terrains ?? [];
+  const stations = buildRoadStations(path, terrains);
+
+  if (
+    !path.road.enabled ||
+    !edge.enabled ||
+    edge.width <= 0 ||
+    path.road.width <= 0 ||
+    stations.length < 2
+  ) {
+    return null;
+  }
+
+  const profile = buildEdgeProfile({
+    edge,
+    side,
+    roadHalfWidth: path.road.width * 0.5
+  });
+
+  if (profile.length < 2) {
+    return null;
+  }
+
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  const indices: number[] = [];
+  const profileLastIndex = Math.max(1, profile.length - 1);
+
+  for (let stationIndex = 0; stationIndex < stations.length; stationIndex += 1) {
+    const station = stations[stationIndex]!;
+    const tangent = resolveStationTangent(stations, stationIndex);
+
+    if (tangent === null) {
+      return null;
+    }
+
+    const leftDirection = {
+      x: -tangent.z,
+      y: 0,
+      z: tangent.x
+    };
+
+    for (let profileIndex = 0; profileIndex < profile.length; profileIndex += 1) {
+      const profilePoint = profile[profileIndex]!;
+      const edgePoint = addVec3(station.center, {
+        x: leftDirection.x * profilePoint.offset,
+        y: 0,
+        z: leftDirection.z * profilePoint.offset
+      });
+      const vertex = resolveRoadVertexPosition({
+        path,
+        terrains,
+        point: edgePoint,
+        fallbackY: station.center.y
+      });
+
+      positions.push(
+        vertex.x,
+        vertex.y + profilePoint.heightOffset,
+        vertex.z
+      );
+      uvs.push(profileIndex / profileLastIndex, station.distance);
+    }
+  }
+
+  for (let stationIndex = 0; stationIndex < stations.length - 1; stationIndex += 1) {
+    const currentRow = stationIndex * profile.length;
+    const nextRow = currentRow + profile.length;
+
+    for (let profileIndex = 0; profileIndex < profile.length - 1; profileIndex += 1) {
+      const current = currentRow + profileIndex;
+      const currentNext = current + 1;
+      const next = nextRow + profileIndex;
+      const nextNext = next + 1;
+
+      indices.push(current, currentNext, next, next, currentNext, nextNext);
+    }
+  }
+
+  return {
+    pathId: path.id,
+    side,
+    positions: new Float32Array(positions),
+    uvs: new Float32Array(uvs),
+    indices: new Uint32Array(indices),
+    stationCount: stations.length,
+    totalLength: stations[stations.length - 1]?.distance ?? 0
+  };
+}
+
+export function buildSplineRoadEdgeMeshGeometry(options: {
+  path: SplineRoadPathLike;
+  side: ScenePathRoadEdgeSide;
+  terrains?: readonly Terrain[];
+}): BufferGeometry | null {
+  const meshData = buildSplineRoadEdgeMeshData(options);
+
+  if (meshData === null) {
+    return null;
+  }
+
+  return createGeometryFromMeshData(meshData);
 }
