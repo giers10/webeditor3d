@@ -5,6 +5,8 @@ import {
   cloneScenePath,
   cloneScenePathPoint,
   createAppendedScenePathPoint,
+  createScenePathPointAfter,
+  getScenePathPointIndex,
   type ScenePathPoint
 } from "../document/paths";
 
@@ -13,6 +15,7 @@ import type { EditorCommand } from "./command";
 interface AddPathPointCommandOptions {
   pathId: string;
   point?: ScenePathPoint;
+  insertAfterPointId?: string;
   label?: string;
 }
 
@@ -30,7 +33,7 @@ function setSelectedPathPointSelection(
 export function createAddPathPointCommand(
   options: AddPathPointCommandOptions
 ): EditorCommand {
-  let appendedPoint: ScenePathPoint | null =
+  let addedPoint: ScenePathPoint | null =
     options.point === undefined ? null : cloneScenePathPoint(options.point);
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
@@ -46,8 +49,11 @@ export function createAddPathPointCommand(
         throw new Error(`Path ${options.pathId} does not exist.`);
       }
 
-      if (appendedPoint === null) {
-        appendedPoint = createAppendedScenePathPoint(path);
+      if (addedPoint === null) {
+        addedPoint =
+          options.insertAfterPointId === undefined
+            ? createAppendedScenePathPoint(path)
+            : createScenePathPointAfter(path, options.insertAfterPointId);
       }
 
       if (previousSelection === null) {
@@ -58,23 +64,38 @@ export function createAddPathPointCommand(
         previousToolMode = context.getToolMode();
       }
 
+      const insertionIndex =
+        options.insertAfterPointId === undefined
+          ? path.points.length
+          : getScenePathPointIndex(path, options.insertAfterPointId) + 1;
+
+      if (insertionIndex <= 0) {
+        throw new Error(
+          `Path point ${options.insertAfterPointId} does not exist.`
+        );
+      }
+
       context.setDocument({
         ...currentDocument,
         paths: {
           ...currentDocument.paths,
           [path.id]: cloneScenePath({
             ...path,
-            points: [...path.points, cloneScenePathPoint(appendedPoint)]
+            points: [
+              ...path.points.slice(0, insertionIndex),
+              cloneScenePathPoint(addedPoint),
+              ...path.points.slice(insertionIndex)
+            ]
           })
         }
       });
       context.setSelection(
-        setSelectedPathPointSelection(options.pathId, appendedPoint.id)
+        setSelectedPathPointSelection(options.pathId, addedPoint.id)
       );
       context.setToolMode("select");
     },
     undo(context) {
-      if (appendedPoint === null) {
+      if (addedPoint === null) {
         return;
       }
 
@@ -91,7 +112,7 @@ export function createAddPathPointCommand(
           ...currentDocument.paths,
           [path.id]: cloneScenePath({
             ...path,
-            points: path.points.filter((point) => point.id !== appendedPoint?.id)
+            points: path.points.filter((point) => point.id !== addedPoint?.id)
           })
         }
       });
