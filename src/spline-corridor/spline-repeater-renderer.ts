@@ -1,9 +1,7 @@
 import { Group, MathUtils } from "three";
 
-import {
-  disposeModelInstance,
-  instantiateModelTemplate
-} from "../assets/gltf-model-import";
+import { instantiateModelTemplate } from "../assets/gltf-model-import";
+import { disposeModelInstance } from "../assets/model-instance-rendering";
 import type { Terrain } from "../document/terrains";
 import { applyRendererRenderCategoryFromMaterial } from "../rendering/render-layers";
 
