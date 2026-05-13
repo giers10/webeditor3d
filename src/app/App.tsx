@@ -9882,6 +9882,77 @@ export function App({
     );
   };
 
+  const handleAddPathRepeater = () => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before adding a repeater.");
+      return;
+    }
+
+    const defaultAsset =
+      BUNDLED_SPLINE_CORRIDOR_ASSETS.find(
+        (asset) => asset.category === "fence_repeater"
+      ) ?? BUNDLED_SPLINE_CORRIDOR_ASSETS[0];
+
+    if (defaultAsset === undefined) {
+      setStatusMessage("No bundled spline corridor assets are available.");
+      return;
+    }
+
+    const nextPath = createScenePath({
+      ...selectedPath,
+      repeaters: [
+        ...selectedPath.repeaters,
+        createScenePathRepeater({
+          assetId: defaultAsset.id,
+          name: defaultAsset.label,
+          spacing: Math.max(0.05, defaultAsset.dimensions.lengthZ)
+        })
+      ]
+    });
+
+    commitPathChange(selectedPath, nextPath, "Added Path spline repeater.");
+  };
+
+  const handlePathRepeaterChange = (
+    repeaterIndex: number,
+    repeater: ScenePath["repeaters"][number],
+    successMessage: string
+  ) => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before changing repeater settings.");
+      return;
+    }
+
+    try {
+      const nextPath = createScenePath({
+        ...selectedPath,
+        repeaters: selectedPath.repeaters.map((currentRepeater, index) =>
+          index === repeaterIndex ? repeater : currentRepeater
+        )
+      });
+
+      commitPathChange(selectedPath, nextPath, successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleDeletePathRepeater = (repeaterIndex: number) => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before removing a repeater.");
+      return;
+    }
+
+    const nextPath = createScenePath({
+      ...selectedPath,
+      repeaters: selectedPath.repeaters.filter(
+        (_repeater, index) => index !== repeaterIndex
+      )
+    });
+
+    commitPathChange(selectedPath, nextPath, "Removed Path spline repeater.");
+  };
+
   const handleApplyPathRoadToTerrain = () => {
     if (selectedPath === null) {
       setStatusMessage("Select a path before applying its road to terrain.");
