@@ -2094,6 +2094,7 @@ export class ViewportHost {
 
     if (terrainBrushState === null || this.toolMode !== "select") {
       this.setTerrainBrushHover(null);
+      this.syncTerrainGridResizeOverlay();
       return;
     }
 
