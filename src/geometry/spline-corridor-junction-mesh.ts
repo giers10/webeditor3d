@@ -294,6 +294,19 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
     return rowOffset;
   }
 
+  function getTransitionUvDistance(
+    firstNormal: { x: number; z: number },
+    secondNormal: { x: number; z: number }
+  ): number {
+    return Math.max(
+      0.01,
+      Math.hypot(
+        (firstNormal.x - secondNormal.x) * options.edge.width,
+        (firstNormal.z - secondNormal.z) * options.edge.width
+      )
+    );
+  }
+
   for (let pointIndex = 0; pointIndex < footprint.points.length; pointIndex += 1) {
     if (isRoadMouthSegment(footprint.points, pointIndex)) {
       continue;
@@ -325,10 +338,17 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
 
     if (isRoadMouthSegment(footprint.points, previousSegmentIndex)) {
       if (currentPoint.connectionOutwardAxis !== undefined) {
+        const transitionUvDistance = getTransitionUvDistance(
+          currentPoint.connectionOutwardAxis,
+          segmentOutwardNormal
+        );
         const seamRow = pushProfileRow({
           point: currentPoint,
           outwardNormal: currentPoint.connectionOutwardAxis,
-          perimeterDistance: perimeterDistances[pointIndex]!
+          perimeterDistance: Math.max(
+            0,
+            perimeterDistances[pointIndex]! - transitionUvDistance
+          )
         });
 
         addProfileStrip({
@@ -349,10 +369,14 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
 
     if (isRoadMouthSegment(footprint.points, nextSegmentIndex)) {
       if (nextPoint.connectionOutwardAxis !== undefined) {
+        const transitionUvDistance = getTransitionUvDistance(
+          segmentOutwardNormal,
+          nextPoint.connectionOutwardAxis
+        );
         const seamRow = pushProfileRow({
           point: nextPoint,
           outwardNormal: nextPoint.connectionOutwardAxis,
-          perimeterDistance: perimeterDistances[pointIndex + 1]!
+          perimeterDistance: perimeterDistances[pointIndex + 1]! + transitionUvDistance
         });
 
         addProfileStrip({
