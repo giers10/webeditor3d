@@ -6048,6 +6048,7 @@ function readSplineCorridorJunctionValue(
               "flattenAndPaint",
               `${label}.terrainMode`
             ),
+    edge: readScenePathRoadEdgeSettingsValue(value.edge, `${label}.edge`),
     connections: value.connections.map((connectionValue, index) =>
       readSplineCorridorJunctionConnectionValue(
         connectionValue,
