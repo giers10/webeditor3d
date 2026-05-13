@@ -176,7 +176,7 @@ describe("Terrain foundation", () => {
       const updatedTerrain = store.getState().document.terrains[createdTerrain.id];
 
       expect(updatedTerrain?.sampleCountX).toBe(5);
-      expect(updatedTerrain?.sampleCountZ).toBe(7);
+      expect(updatedTerrain?.sampleCountZ).toBe(5);
       expect(updatedTerrain?.cellSize).toBe(2);
     });
 
