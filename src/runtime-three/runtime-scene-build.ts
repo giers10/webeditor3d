@@ -2057,7 +2057,14 @@ export function buildRuntimeSceneFromDocument(
     .map((path) => buildRuntimePath(path, enabledTerrains, document));
   const splineCorridorJunctions = getSplineCorridorJunctions(
     document.splineCorridorJunctions
-  ).filter((junction) => junction.enabled);
+  )
+    .filter((junction) => junction.enabled)
+    .map((junction): RuntimeSplineCorridorJunction => ({
+      ...junction,
+      connections: junction.connections.map((connection) => ({ ...connection })),
+      center: cloneVec3(junction.center),
+      material: resolveRuntimeMaterial(document, junction.materialId)
+    }));
   const splineCorridorClipIntervalsByPath =
     resolveSplineCorridorJunctionClipIntervals({
       paths: getScenePaths(document.paths),

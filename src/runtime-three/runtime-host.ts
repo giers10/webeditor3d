@@ -4336,14 +4336,8 @@ export class RuntimeHost {
   }
 
   private createRuntimeJunctionMaterial(
-    runtimeScene: RuntimeSceneDefinition,
-    materialId: string | null
+    material: MaterialDef | null
   ): Material {
-    const material =
-      materialId === null
-        ? null
-        : (runtimeScene.materials?.[materialId] ?? null);
-
     return this.createRuntimeRoadGeneratedMaterial(material, 0x6f624d);
   }
 
@@ -4427,7 +4421,7 @@ export class RuntimeHost {
 
       const mesh = new Mesh(
         geometry,
-        this.createRuntimeJunctionMaterial(runtimeScene, junction.materialId)
+        this.createRuntimeJunctionMaterial(junction.material)
       );
       mesh.castShadow = false;
       mesh.receiveShadow = true;
