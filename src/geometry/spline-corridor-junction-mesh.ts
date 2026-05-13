@@ -485,13 +485,6 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
     });
 
     if (isRoadMouthSegment(footprint.points, previousSegmentIndex)) {
-      pushRoadEdgeSeam({
-        seamsByPath: new Map(),
-        junctionId: options.junction.id,
-        point: currentPoint,
-        outerOffset: startOuterOffset
-      });
-
       addJunctionEdgeProfileCap({
         indices,
         rowOffset: currentRow,
@@ -501,13 +494,6 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
     }
 
     if (isRoadMouthSegment(footprint.points, nextSegmentIndex)) {
-      pushRoadEdgeSeam({
-        seamsByPath: new Map(),
-        junctionId: options.junction.id,
-        point: nextPoint,
-        outerOffset: endOuterOffset
-      });
-
       addJunctionEdgeProfileCap({
         indices,
         rowOffset: nextRow,
