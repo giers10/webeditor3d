@@ -415,6 +415,7 @@ function addEdgeProfileCaps(options: {
 export function buildSplineRoadMeshData(options: {
   path: SplineRoadPathLike;
   terrains?: readonly Terrain[];
+  clipIntervals?: readonly SplineCorridorPathClipInterval[];
 }): SplineRoadMeshData | null {
   const { path } = options;
   const terrains = options.terrains ?? [];
@@ -428,44 +429,59 @@ export function buildSplineRoadMeshData(options: {
   const uvs: number[] = [];
   const indices: number[] = [];
   const halfWidth = path.road.width * 0.5;
+  const stationRuns = buildVisibleRoadStationRuns(
+    stations,
+    options.clipIntervals ?? []
+  );
+  let stationCount = 0;
 
-  for (let index = 0; index < stations.length; index += 1) {
-    const station = stations[index]!;
-    const tangent = resolveStationTangent(stations, index);
+  for (const run of stationRuns) {
+    const runVertexOffset = positions.length / 3;
 
-    if (tangent === null) {
-      return null;
+    for (let index = 0; index < run.length; index += 1) {
+      const station = run[index]!;
+      const tangent = resolveStationTangent(run, index);
+
+      if (tangent === null) {
+        return null;
+      }
+
+      const perpendicular = {
+        x: -tangent.z * halfWidth,
+        y: 0,
+        z: tangent.x * halfWidth
+      };
+      const left = resolveRoadVertexPosition({
+        path,
+        terrains,
+        point: addVec3(station.center, perpendicular),
+        fallbackY: station.center.y
+      });
+      const right = resolveRoadVertexPosition({
+        path,
+        terrains,
+        point: subtractVec3(station.center, perpendicular),
+        fallbackY: station.center.y
+      });
+
+      positions.push(left.x, left.y, left.z, right.x, right.y, right.z);
+      uvs.push(0, station.distance, 1, station.distance);
     }
 
-    const perpendicular = {
-      x: -tangent.z * halfWidth,
-      y: 0,
-      z: tangent.x * halfWidth
-    };
-    const left = resolveRoadVertexPosition({
-      path,
-      terrains,
-      point: addVec3(station.center, perpendicular),
-      fallbackY: station.center.y
-    });
-    const right = resolveRoadVertexPosition({
-      path,
-      terrains,
-      point: subtractVec3(station.center, perpendicular),
-      fallbackY: station.center.y
-    });
+    for (let index = 0; index < run.length - 1; index += 1) {
+      const left = runVertexOffset + index * 2;
+      const right = left + 1;
+      const nextLeft = left + 2;
+      const nextRight = left + 3;
 
-    positions.push(left.x, left.y, left.z, right.x, right.y, right.z);
-    uvs.push(0, station.distance, 1, station.distance);
+      indices.push(left, right, nextLeft, nextLeft, right, nextRight);
+    }
+
+    stationCount += run.length;
   }
 
-  for (let index = 0; index < stations.length - 1; index += 1) {
-    const left = index * 2;
-    const right = left + 1;
-    const nextLeft = left + 2;
-    const nextRight = left + 3;
-
-    indices.push(left, right, nextLeft, nextLeft, right, nextRight);
+  if (positions.length === 0) {
+    return null;
   }
 
   return {
@@ -473,7 +489,7 @@ export function buildSplineRoadMeshData(options: {
     positions: new Float32Array(positions),
     uvs: new Float32Array(uvs),
     indices: new Uint32Array(indices),
-    stationCount: stations.length,
+    stationCount,
     totalLength: stations[stations.length - 1]?.distance ?? 0
   };
 }
@@ -481,6 +497,7 @@ export function buildSplineRoadMeshData(options: {
 export function buildSplineRoadMeshGeometry(options: {
   path: SplineRoadPathLike;
   terrains?: readonly Terrain[];
+  clipIntervals?: readonly SplineCorridorPathClipInterval[];
 }): BufferGeometry | null {
   const meshData = buildSplineRoadMeshData(options);
 
