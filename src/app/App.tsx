@@ -2818,9 +2818,6 @@ export function App({
     terrainList
   );
   const selectedPath = getSelectedPath(editorState.selection, pathList);
-  const splineCorridorJunctionList = getSplineCorridorJunctions(
-    editorState.document.splineCorridorJunctions
-  );
   const splineCorridorJunctionCandidates = detectSplineCorridorJunctionCandidates({
     paths: pathList,
     junctions: editorState.document.splineCorridorJunctions,
