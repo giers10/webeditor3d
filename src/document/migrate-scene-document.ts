@@ -6111,6 +6111,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -6142,6 +6143,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -6175,6 +6177,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -6208,6 +6211,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -6241,6 +6245,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -6274,6 +6279,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -6307,6 +6313,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -6342,6 +6349,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -6372,6 +6380,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: expectEmptyCollection(
         source.modelInstances,
         "modelInstances"
@@ -6403,6 +6412,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -6431,6 +6441,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: true }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -6462,6 +6473,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -6490,6 +6502,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -6519,6 +6532,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -6550,6 +6564,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -6579,6 +6594,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
@@ -6608,6 +6624,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
       foliagePrototypes: {},
       foliageLayers: {},
       paths: {},
+      splineCorridorJunctions: {},
       modelInstances: readModelInstances(source.modelInstances, assets),
       entities: readEntities(source.entities, { legacySoundEmitter: false }),
       interactionLinks: readInteractionLinks(source.interactionLinks)
