@@ -13,6 +13,7 @@ import {
   sampleTerrainHeightAtWorldPosition,
   type Terrain
 } from "../document/terrains";
+import type { SplineCorridorPathClipInterval } from "../spline-corridor/spline-corridor-clips";
 
 export interface SplineRoadPathPointLike {
   id?: string;
@@ -91,6 +92,10 @@ function addVec3(left: Vec3, right: Vec3): Vec3 {
     y: left.y + right.y,
     z: left.z + right.z
   };
+}
+
+function lerp(start: number, end: number, alpha: number): number {
+  return start + (end - start) * alpha;
 }
 
 function normalizePathPoint(
@@ -216,6 +221,118 @@ function buildRoadStations(
   return stations;
 }
 
+function interpolateStation(
+  start: RoadStation,
+  end: RoadStation,
+  distance: number
+): RoadStation {
+  const length = end.distance - start.distance;
+  const alpha = length <= 1e-8 ? 0 : (distance - start.distance) / length;
+
+  return {
+    center: {
+      x: lerp(start.center.x, end.center.x, alpha),
+      y: lerp(start.center.y, end.center.y, alpha),
+      z: lerp(start.center.z, end.center.z, alpha)
+    },
+    distance,
+    tangent: cloneVec3(start.tangent)
+  };
+}
+
+function subtractClipIntervalsFromRange(
+  startDistance: number,
+  endDistance: number,
+  clipIntervals: readonly SplineCorridorPathClipInterval[]
+): Array<{ startDistance: number; endDistance: number }> {
+  let ranges = [{ startDistance, endDistance }];
+
+  for (const clipInterval of clipIntervals) {
+    const nextRanges: typeof ranges = [];
+
+    for (const range of ranges) {
+      if (
+        clipInterval.endDistance <= range.startDistance ||
+        clipInterval.startDistance >= range.endDistance
+      ) {
+        nextRanges.push(range);
+        continue;
+      }
+
+      if (clipInterval.startDistance > range.startDistance) {
+        nextRanges.push({
+          startDistance: range.startDistance,
+          endDistance: Math.min(clipInterval.startDistance, range.endDistance)
+        });
+      }
+
+      if (clipInterval.endDistance < range.endDistance) {
+        nextRanges.push({
+          startDistance: Math.max(clipInterval.endDistance, range.startDistance),
+          endDistance: range.endDistance
+        });
+      }
+    }
+
+    ranges = nextRanges;
+  }
+
+  return ranges.filter(
+    (range) => range.endDistance - range.startDistance > 1e-8
+  );
+}
+
+function buildVisibleRoadStationRuns(
+  stations: readonly RoadStation[],
+  clipIntervals: readonly SplineCorridorPathClipInterval[]
+): RoadStation[][] {
+  if (clipIntervals.length === 0) {
+    return [[...stations]];
+  }
+
+  const runs: RoadStation[][] = [];
+  let currentRun: RoadStation[] = [];
+
+  for (let index = 0; index < stations.length - 1; index += 1) {
+    const start = stations[index]!;
+    const end = stations[index + 1]!;
+
+    if (end.distance - start.distance <= 1e-8) {
+      continue;
+    }
+
+    const visibleRanges = subtractClipIntervalsFromRange(
+      start.distance,
+      end.distance,
+      clipIntervals
+    );
+
+    for (const range of visibleRanges) {
+      const rangeStart = interpolateStation(start, end, range.startDistance);
+      const rangeEnd = interpolateStation(start, end, range.endDistance);
+      const previous = currentRun[currentRun.length - 1];
+
+      if (
+        previous === undefined ||
+        Math.abs(previous.distance - rangeStart.distance) > 1e-6
+      ) {
+        if (currentRun.length >= 2) {
+          runs.push(currentRun);
+        }
+        currentRun = [rangeStart];
+      }
+
+      currentRun.push(rangeEnd);
+    }
+  }
+
+  if (currentRun.length >= 2) {
+    runs.push(currentRun);
+  }
+
+  return runs;
+}
+
 function createGeometryFromMeshData(meshData: SplineRoadMeshData) {
   const geometry = new BufferGeometry();
   geometry.setAttribute(
@@ -274,17 +391,23 @@ function buildEdgeProfile(options: {
 function addEdgeProfileCaps(options: {
   indices: number[];
   profileVertexCount: number;
+  vertexOffset: number;
   stationCount: number;
 }) {
   if (options.profileVertexCount < 3 || options.stationCount < 2) {
     return;
   }
 
-  const lastRow = (options.stationCount - 1) * options.profileVertexCount;
+  const lastRow =
+    options.vertexOffset + (options.stationCount - 1) * options.profileVertexCount;
 
   for (let index = 1; index < options.profileVertexCount - 1; index += 1) {
     // Start cap faces backward along the spline; end cap faces forward.
-    options.indices.push(0, index + 1, index);
+    options.indices.push(
+      options.vertexOffset,
+      options.vertexOffset + index + 1,
+      options.vertexOffset + index
+    );
     options.indices.push(lastRow, lastRow + index, lastRow + index + 1);
   }
 }
