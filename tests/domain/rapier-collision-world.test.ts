@@ -1114,6 +1114,10 @@ describe("RapierCollisionWorld", () => {
         },
         runtimeScene.playerCollider
       );
+      console.log({
+        eastLanding,
+        westLanding
+      });
 
       expect(eastLanding.grounded).toBe(true);
       expect(eastLanding.feetPosition.y).toBeGreaterThan(3.9);
