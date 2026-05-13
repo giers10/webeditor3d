@@ -1044,4 +1044,85 @@ describe("RapierCollisionWorld", () => {
       collisionWorld.dispose();
     }
   });
+
+  it("resolves authored terrain collision on rectangular edited grids", async () => {
+    const terrain = createTerrain({
+      id: "terrain-authored-rectangular-collision",
+      position: {
+        x: 10,
+        y: 0,
+        z: 20
+      },
+      sampleCountX: 5,
+      sampleCountZ: 3,
+      cellSize: 2,
+      heights: [
+        0,
+        1,
+        2,
+        3,
+        4,
+        0,
+        1,
+        2,
+        3,
+        4,
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({
+        name: "Authored Rectangular Terrain Collision Scene"
+      }),
+      terrains: {
+        [terrain.id]: terrain
+      }
+    });
+    const collisionWorld = await RapierCollisionWorld.create(
+      runtimeScene.colliders,
+      runtimeScene.playerCollider
+    );
+
+    try {
+      const eastLanding = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 18,
+          y: 8,
+          z: 22
+        },
+        {
+          x: 0,
+          y: -10,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+      const westLanding = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 10,
+          y: 8,
+          z: 22
+        },
+        {
+          x: 0,
+          y: -10,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+
+      expect(eastLanding.grounded).toBe(true);
+      expect(eastLanding.feetPosition.y).toBeGreaterThan(3.9);
+      expect(eastLanding.feetPosition.y).toBeLessThan(4.1);
+      expect(westLanding.grounded).toBe(true);
+      expect(westLanding.feetPosition.y).toBeGreaterThan(-0.1);
+      expect(westLanding.feetPosition.y).toBeLessThan(0.1);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
 });
