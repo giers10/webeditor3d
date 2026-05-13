@@ -3421,6 +3421,19 @@ function validateSplineCorridorJunction(
     );
   }
 
+  if (!isRecord(junction.edge)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spline-corridor-junction-edge",
+        "Spline corridor junction edge settings must be an object.",
+        `${path}.edge`
+      )
+    );
+  } else {
+    validateScenePathRoadEdge(junction.edge, `${path}.edge`, document, diagnostics);
+  }
+
   if (!Array.isArray(junction.connections) || junction.connections.length < 2) {
     diagnostics.push(
       createDiagnostic(

@@ -546,8 +546,9 @@ export interface RuntimePath {
 }
 
 export interface RuntimeSplineCorridorJunction
-  extends SplineCorridorJunction {
+  extends Omit<SplineCorridorJunction, "edge"> {
   material: MaterialDef | null;
+  edge: RuntimePathRoadEdgeSettings;
 }
 
 export interface RuntimeFoliageDefinition {
@@ -2063,7 +2064,11 @@ export function buildRuntimeSceneFromDocument(
       ...junction,
       connections: junction.connections.map((connection) => ({ ...connection })),
       center: cloneVec3(junction.center),
-      material: resolveRuntimeMaterial(document, junction.materialId)
+      material: resolveRuntimeMaterial(document, junction.materialId),
+      edge: {
+        ...junction.edge,
+        material: resolveRuntimeMaterial(document, junction.edge.materialId)
+      }
     }));
   const splineCorridorClipIntervalsByPath =
     resolveSplineCorridorJunctionClipIntervals({
