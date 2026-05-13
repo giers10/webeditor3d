@@ -6592,6 +6592,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== DYNAMIC_TERRAIN_LAYERS_SCENE_DOCUMENT_VERSION &&
     source.version !== SPLINE_ROAD_EDGES_SCENE_DOCUMENT_VERSION &&
     source.version !== SPLINE_REPEATERS_SCENE_DOCUMENT_VERSION &&
+    source.version !== SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION &&
     source.version !== NPC_TARGETING_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(

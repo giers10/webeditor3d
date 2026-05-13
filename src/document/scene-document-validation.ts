@@ -2682,6 +2682,17 @@ function validateScenePathRoadEdge(
     );
   }
 
+  if (!isBoolean(edge.collisionEnabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-edge-collision-enabled",
+        "Path road edge collision enabled must remain a boolean.",
+        `${path}.collisionEnabled`
+      )
+    );
+  }
+
   if (!isScenePathRoadEdgeKind(edge.kind)) {
     diagnostics.push(
       createDiagnostic(
@@ -2776,6 +2787,17 @@ function validateScenePathRepeater(
         "invalid-path-repeater-enabled",
         "Path repeater enabled must remain a boolean.",
         `${path}.enabled`
+      )
+    );
+  }
+
+  if (!isBoolean(repeater.collisionEnabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-repeater-collision-enabled",
+        "Path repeater collision enabled must remain a boolean.",
+        `${path}.collisionEnabled`
       )
     );
   }
