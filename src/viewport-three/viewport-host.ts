@@ -1305,15 +1305,29 @@ export class ViewportHost {
     applyRendererRenderCategory(this.terrainBrushPreviewGroup, "overlay");
     this.scene.add(this.terrainBrushPreviewGroup);
     this.terrainGridResizeOverlayGroup.visible = false;
+    this.terrainGridResizeEdgeOutline.frustumCulled = false;
+    this.terrainGridResizeEdgeTube.frustumCulled = false;
     this.terrainGridResizeEdgeLine.frustumCulled = false;
-    this.terrainGridResizeArrowLine.frustumCulled = false;
-    this.terrainGridResizeArrowHead.frustumCulled = false;
+    this.terrainGridResizeEdgeOutline.renderOrder = GIZMO_RENDER_ORDER + 5;
+    this.terrainGridResizeEdgeTube.renderOrder = GIZMO_RENDER_ORDER + 6;
     this.terrainGridResizeEdgeLine.renderOrder = GIZMO_RENDER_ORDER + 5;
-    this.terrainGridResizeArrowLine.renderOrder = GIZMO_RENDER_ORDER + 6;
-    this.terrainGridResizeArrowHead.renderOrder = GIZMO_RENDER_ORDER + 7;
+    this.terrainGridResizeEdgeOutline.visible = false;
+    this.terrainGridResizeEdgeTube.visible = false;
+    this.terrainGridResizeEdgeLine.visible = false;
+    this.terrainGridResizeOverlayGroup.add(this.terrainGridResizeEdgeOutline);
+    this.terrainGridResizeOverlayGroup.add(this.terrainGridResizeEdgeTube);
     this.terrainGridResizeOverlayGroup.add(this.terrainGridResizeEdgeLine);
-    this.terrainGridResizeOverlayGroup.add(this.terrainGridResizeArrowLine);
-    this.terrainGridResizeOverlayGroup.add(this.terrainGridResizeArrowHead);
+
+    for (const side of TERRAIN_GRID_RESIZE_SIDES) {
+      const visual = this.createTerrainGridResizeArrowVisual(side);
+      this.terrainGridResizeArrowVisuals.push(visual);
+      this.terrainGridResizeArrowHitObjects.push(
+        visual.pickShaft,
+        visual.pickHead
+      );
+      this.terrainGridResizeOverlayGroup.add(visual.group);
+    }
+
     applyRendererRenderCategory(
       this.terrainGridResizeOverlayGroup,
       "overlay"
