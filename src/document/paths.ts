@@ -370,6 +370,101 @@ export function normalizeScenePathRoadMaterialId(
     : trimmedValue;
 }
 
+export function isScenePathRoadEdgeKind(
+  value: unknown
+): value is ScenePathRoadEdgeKind {
+  return (
+    typeof value === "string" &&
+    SCENE_PATH_ROAD_EDGE_KINDS.includes(value as ScenePathRoadEdgeKind)
+  );
+}
+
+export function normalizeScenePathRoadEdgeKind(
+  value: unknown
+): ScenePathRoadEdgeKind {
+  if (isScenePathRoadEdgeKind(value)) {
+    return value;
+  }
+
+  throw new Error("Path road edge kind must be supported.");
+}
+
+export function normalizeScenePathRoadEdgeWidth(value: number): number {
+  if (
+    !Number.isFinite(value) ||
+    value < MIN_SCENE_PATH_ROAD_EDGE_WIDTH ||
+    value > MAX_SCENE_PATH_ROAD_EDGE_WIDTH
+  ) {
+    throw new Error(
+      `Path road edge width must be from ${MIN_SCENE_PATH_ROAD_EDGE_WIDTH} to ${MAX_SCENE_PATH_ROAD_EDGE_WIDTH}.`
+    );
+  }
+
+  return value;
+}
+
+export function normalizeScenePathRoadEdgeHeight(value: number): number {
+  if (
+    !Number.isFinite(value) ||
+    value < MIN_SCENE_PATH_ROAD_EDGE_HEIGHT ||
+    value > MAX_SCENE_PATH_ROAD_EDGE_HEIGHT
+  ) {
+    throw new Error(
+      `Path road edge height must be from ${MIN_SCENE_PATH_ROAD_EDGE_HEIGHT} to ${MAX_SCENE_PATH_ROAD_EDGE_HEIGHT}.`
+    );
+  }
+
+  return value;
+}
+
+export function normalizeScenePathRoadEdgeMaterialId(
+  value: string | null | undefined
+): string | null {
+  if (value === null || value === undefined) {
+    return DEFAULT_SCENE_PATH_ROAD_EDGE_MATERIAL_ID;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length === 0
+    ? DEFAULT_SCENE_PATH_ROAD_EDGE_MATERIAL_ID
+    : trimmedValue;
+}
+
+export function createScenePathRoadEdgeSettings(
+  overrides: Partial<ScenePathRoadEdgeSettings> = {}
+): ScenePathRoadEdgeSettings {
+  const enabled =
+    overrides.enabled ?? DEFAULT_SCENE_PATH_ROAD_EDGE_ENABLED;
+
+  if (typeof enabled !== "boolean") {
+    throw new Error("Path road edge enabled must be a boolean.");
+  }
+
+  return {
+    enabled,
+    kind:
+      overrides.kind === undefined
+        ? DEFAULT_SCENE_PATH_ROAD_EDGE_KIND
+        : normalizeScenePathRoadEdgeKind(overrides.kind),
+    width: normalizeScenePathRoadEdgeWidth(
+      overrides.width ?? DEFAULT_SCENE_PATH_ROAD_EDGE_WIDTH
+    ),
+    height: normalizeScenePathRoadEdgeHeight(
+      overrides.height ?? DEFAULT_SCENE_PATH_ROAD_EDGE_HEIGHT
+    ),
+    materialId: normalizeScenePathRoadEdgeMaterialId(overrides.materialId)
+  };
+}
+
+export function createScenePathRoadEdgesSettings(
+  overrides: Partial<ScenePathRoadEdgesSettings> = {}
+): ScenePathRoadEdgesSettings {
+  return {
+    left: createScenePathRoadEdgeSettings(overrides.left),
+    right: createScenePathRoadEdgeSettings(overrides.right)
+  };
+}
+
 export function createScenePathRoadSettings(
   overrides: Partial<ScenePathRoadSettings> = {}
 ): ScenePathRoadSettings {
@@ -400,7 +495,8 @@ export function createScenePathRoadSettings(
       overrides.heightOffset ?? DEFAULT_SCENE_PATH_ROAD_HEIGHT_OFFSET
     ),
     terrainConform,
-    materialId: normalizeScenePathRoadMaterialId(overrides.materialId)
+    materialId: normalizeScenePathRoadMaterialId(overrides.materialId),
+    edges: createScenePathRoadEdgesSettings(overrides.edges)
   };
 }
 
@@ -852,6 +948,16 @@ export function areScenePathsEqual(left: ScenePath, right: ScenePath): boolean {
     left.road.heightOffset === right.road.heightOffset &&
     left.road.terrainConform === right.road.terrainConform &&
     left.road.materialId === right.road.materialId &&
+    left.road.edges.left.enabled === right.road.edges.left.enabled &&
+    left.road.edges.left.kind === right.road.edges.left.kind &&
+    left.road.edges.left.width === right.road.edges.left.width &&
+    left.road.edges.left.height === right.road.edges.left.height &&
+    left.road.edges.left.materialId === right.road.edges.left.materialId &&
+    left.road.edges.right.enabled === right.road.edges.right.enabled &&
+    left.road.edges.right.kind === right.road.edges.right.kind &&
+    left.road.edges.right.width === right.road.edges.right.width &&
+    left.road.edges.right.height === right.road.edges.right.height &&
+    left.road.edges.right.materialId === right.road.edges.right.materialId &&
     left.points.length === right.points.length &&
     left.points.every(
       (point, index) =>
