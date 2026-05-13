@@ -1093,12 +1093,14 @@ export function createScenePath(
         | "glueToTerrain"
         | "terrainOffset"
         | "road"
+        | "repeaters"
         | "points"
       >,
       "road"
     >
   > & {
     road?: ScenePathRoadSettingsOverrides;
+    repeaters?: readonly ScenePathRepeaterOverrides[];
   } = {}
 ): ScenePath {
   const points =
@@ -1118,6 +1120,10 @@ export function createScenePath(
     overrides.terrainOffset ?? DEFAULT_SCENE_PATH_TERRAIN_OFFSET
   );
   const road = createScenePathRoadSettings(overrides.road);
+  const repeaters =
+    overrides.repeaters === undefined
+      ? []
+      : overrides.repeaters.map(createScenePathRepeater);
 
   if (points.length < MIN_SCENE_PATH_POINT_COUNT) {
     throw new Error(
@@ -1171,6 +1177,7 @@ export function createScenePath(
     glueToTerrain,
     terrainOffset,
     road,
+    repeaters,
     points
   };
 }
