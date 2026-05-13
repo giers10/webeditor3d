@@ -11531,10 +11531,24 @@ export class ViewportHost {
     const side = activeDrag?.side ?? hover?.side ?? null;
     const terrain =
       activeDrag?.previewTerrain ??
-      (hover === null ? null : this.getDisplayedTerrainState(hover.terrainId));
+      (hover === null
+        ? this.getSelectedTerrainForGridResize()
+        : this.getDisplayedTerrainState(hover.terrainId));
 
-    if (side === null || terrain === null) {
+    if (terrain === null) {
       this.terrainGridResizeOverlayGroup.visible = false;
+      return;
+    }
+
+    for (const visual of this.terrainGridResizeArrowVisuals) {
+      this.syncTerrainGridResizeArrowVisual(visual, terrain);
+    }
+
+    if (side === null) {
+      this.terrainGridResizeEdgeOutline.visible = false;
+      this.terrainGridResizeEdgeTube.visible = false;
+      this.terrainGridResizeEdgeLine.visible = false;
+      this.terrainGridResizeOverlayGroup.visible = true;
       return;
     }
 
@@ -11565,9 +11579,23 @@ export class ViewportHost {
     this.terrainGridResizeEdgeLine.geometry =
       new BufferGeometry().setFromPoints(edgePoints);
     previousEdgeGeometry.dispose();
+    this.terrainGridResizeEdgeOutline.visible = true;
+    this.terrainGridResizeEdgeTube.visible = true;
+    this.terrainGridResizeEdgeLine.visible = true;
 
-    const midpoint = this.getTerrainGridResizeEdgePoint(terrain, side, 0.5);
-    const direction = this.getTerrainGridResizeSideDirection(side);
+    this.terrainGridResizeOverlayGroup.visible = true;
+  }
+
+  private syncTerrainGridResizeArrowVisual(
+    visual: TerrainGridResizeArrowVisual,
+    terrain: Terrain
+  ) {
+    const midpoint = this.getTerrainGridResizeEdgePoint(
+      terrain,
+      visual.side,
+      0.5
+    );
+    const direction = this.getTerrainGridResizeSideDirection(visual.side);
     const arrowLength = Math.min(
       TERRAIN_GRID_RESIZE_ARROW_MAX_LENGTH,
       Math.max(
@@ -11589,29 +11617,39 @@ export class ViewportHost {
     const shaftLength = Math.max(0.1, arrowStart.distanceTo(shaftEnd));
     const shaftCenter = arrowStart.clone().add(shaftEnd).multiplyScalar(0.5);
 
-    this.terrainGridResizeArrowShaftOutline.position.copy(shaftCenter);
-    this.terrainGridResizeArrowShaftOutline.quaternion.copy(arrowQuaternion);
-    this.terrainGridResizeArrowShaftOutline.scale.set(1, shaftLength, 1);
-    this.terrainGridResizeArrowShaft.position.copy(shaftCenter);
-    this.terrainGridResizeArrowShaft.quaternion.copy(arrowQuaternion);
-    this.terrainGridResizeArrowShaft.scale.set(1, shaftLength, 1);
+    visual.shaftOutline.position.copy(shaftCenter);
+    visual.shaftOutline.quaternion.copy(arrowQuaternion);
+    visual.shaftOutline.scale.set(1, shaftLength, 1);
+    visual.shaft.position.copy(shaftCenter);
+    visual.shaft.quaternion.copy(arrowQuaternion);
+    visual.shaft.scale.set(1, shaftLength, 1);
+    visual.pickShaft.position.copy(shaftCenter);
+    visual.pickShaft.quaternion.copy(arrowQuaternion);
+    visual.pickShaft.scale.set(1, shaftLength, 1);
 
-    const previousArrowGeometry = this.terrainGridResizeArrowLine.geometry;
-    this.terrainGridResizeArrowLine.geometry =
+    const previousArrowGeometry = visual.line.geometry;
+    visual.line.geometry =
       new BufferGeometry().setFromPoints([arrowStart, arrowEnd]);
     previousArrowGeometry.dispose();
-    this.terrainGridResizeArrowHeadOutline.position
+    visual.headOutline.position
       .copy(arrowEnd)
       .addScaledVector(
         direction,
         -TERRAIN_GRID_RESIZE_ARROW_HEAD_OUTLINE_LENGTH * 0.5
       );
-    this.terrainGridResizeArrowHeadOutline.quaternion.copy(arrowQuaternion);
-    this.terrainGridResizeArrowHead.position
+    visual.headOutline.quaternion.copy(arrowQuaternion);
+    visual.head.position
       .copy(arrowEnd)
       .addScaledVector(direction, -TERRAIN_GRID_RESIZE_ARROW_HEAD_LENGTH * 0.5);
-    this.terrainGridResizeArrowHead.quaternion.copy(arrowQuaternion);
-    this.terrainGridResizeOverlayGroup.visible = true;
+    visual.head.quaternion.copy(arrowQuaternion);
+    visual.pickHead.position
+      .copy(arrowEnd)
+      .addScaledVector(
+        direction,
+        -TERRAIN_GRID_RESIZE_ARROW_HEAD_OUTLINE_LENGTH * 0.5
+      );
+    visual.pickHead.quaternion.copy(arrowQuaternion);
+    visual.group.visible = true;
   }
 
   private getTerrainGridResizePointerPlanePoint(
