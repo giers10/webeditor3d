@@ -62,6 +62,7 @@ import {
   resolveScenePath,
   type ScenePath,
   type ScenePathCurveMode,
+  type ScenePathRepeater,
   type ScenePathRoadEdgeSettings,
   type ScenePathRoadSettings,
   type ScenePathPoint
@@ -527,6 +528,7 @@ export interface RuntimePath {
       right: RuntimePathRoadEdgeSettings;
     };
   };
+  repeaters: ScenePathRepeater[];
   points: RuntimePathPoint[];
   segments: RuntimePathSegment[];
   totalLength: number;
@@ -1048,6 +1050,7 @@ function buildRuntimePath(
         }
       }
     },
+    repeaters: path.repeaters.map((repeater) => ({ ...repeater })),
     points: resolvedPath.points.map(buildRuntimePathPoint),
     segments: resolvedPath.segments.map((segment) => ({
       index: segment.index,

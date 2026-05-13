@@ -4398,6 +4398,13 @@ export class RuntimeHost {
     this.applyShadowState();
   }
 
+  private rebuildSplineRepeaters(runtimeScene: RuntimeSceneDefinition) {
+    this.splineRepeaterRenderer.sync({
+      paths: runtimeScene.paths,
+      terrains: runtimeScene.foliage.terrains
+    });
+  }
+
   private createFogMaterialSet(
     brush: RuntimeBoxBrushInstance,
     volumeRenderPaths: {
