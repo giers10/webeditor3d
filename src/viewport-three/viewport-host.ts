@@ -1148,6 +1148,9 @@ export class ViewportHost {
   private terrainBrushCommitHandler:
     | ((commit: TerrainBrushStrokeCommit) => boolean)
     | null = null;
+  private terrainGridResizeCommitHandler:
+    | ((terrain: Terrain) => boolean)
+    | null = null;
   private toolMode: ToolMode = "select";
   private viewMode: ViewportViewMode = "perspective";
   private displayMode: ViewportDisplayMode = "normal";
@@ -1159,6 +1162,9 @@ export class ViewportHost {
   private currentTerrainBrushState: ArmedTerrainBrushState | null = null;
   private terrainBrushHover: TerrainBrushHit | null = null;
   private activeTerrainBrushStroke: ActiveTerrainBrushStroke | null = null;
+  private terrainGridResizeHover: TerrainGridResizeHit | null = null;
+  private activeTerrainGridResizeDrag: ActiveTerrainGridResizeDrag | null =
+    null;
   private terrainLodGridVisibleTerrainIds = new Set<string>();
   private currentTransformPreviewTargetIds: TransformPreviewTargetIds | null =
     null;
