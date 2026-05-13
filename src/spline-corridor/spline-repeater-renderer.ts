@@ -19,10 +19,12 @@ import {
   type SplineRepeaterInstance,
   type SplineRepeaterPathLike
 } from "./spline-repeaters";
+import type { SplineCorridorPathClipIntervalMap } from "./spline-corridor-clips";
 
 interface SplineRepeaterRendererInput {
   paths: readonly SplineRepeaterPathLike[];
   terrains: readonly Terrain[];
+  clipIntervalsByPath?: SplineCorridorPathClipIntervalMap;
 }
 
 interface SplineRepeaterRendererOptions {
@@ -198,7 +200,8 @@ export class SplineRepeaterRenderer {
     const instances = input.paths.flatMap((path) =>
       deriveSplineRepeaterInstances({
         path,
-        terrains: input.terrains
+        terrains: input.terrains,
+        clipIntervals: input.clipIntervalsByPath?.get(path.id)
       })
     );
     const nextGroup = new Group();
