@@ -278,6 +278,7 @@ export function createEmptySceneDocument(
     foliagePrototypes: createEmptyFoliagePrototypeRegistry(),
     foliageLayers: createEmptyFoliageLayerRegistry(),
     paths: {},
+    splineCorridorJunctions: {},
     modelInstances: {},
     entities: {},
     interactionLinks: {}
@@ -311,6 +312,7 @@ export function createEmptyProjectScene(
     terrains: {},
     foliageLayers: overrides.foliageLayers ?? createEmptyFoliageLayerRegistry(),
     paths: {},
+    splineCorridorJunctions: {},
     modelInstances: {},
     entities: {},
     interactionLinks: {}
