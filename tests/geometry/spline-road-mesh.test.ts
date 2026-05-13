@@ -136,18 +136,98 @@ describe("spline road mesh generation", () => {
     expect(mesh?.stationCount).toBe(4);
     expect(Array.from(mesh?.indices ?? [])).toHaveLength(48);
     expect(Array.from(mesh!.positions.slice(12, 24))).toEqual([
-      expect.closeTo(3.8425, 5),
+      4,
       expect.closeTo(0.03, 5),
       1,
-      expect.closeTo(3.8425, 5),
+      4,
       expect.closeTo(0.15, 5),
       1,
-      expect.closeTo(3.8425, 5),
+      4,
       expect.closeTo(0.15, 5),
       expect.closeTo(1.35, 5),
-      expect.closeTo(3.8425, 5),
+      4,
       expect.closeTo(0.03, 5),
       expect.closeTo(1.35, 5)
+    ]);
+  });
+
+  it("uses mitered junction seam rows at clipped road edge boundaries", () => {
+    const path = createScenePath({
+      id: "path-road-edge-seam",
+      road: {
+        enabled: true,
+        width: 2,
+        heightOffset: 0.1,
+        edges: {
+          right: {
+            enabled: true,
+            collisionEnabled: false,
+            kind: "curb",
+            width: 0.4,
+            height: 0.2,
+            materialId: null
+          }
+        }
+      },
+      points: [
+        {
+          id: "path-road-edge-seam-a",
+          position: { x: 0, y: 0, z: 0 }
+        },
+        {
+          id: "path-road-edge-seam-b",
+          position: { x: 10, y: 0, z: 0 }
+        }
+      ]
+    });
+
+    const mesh = buildSplineRoadEdgeMeshData({
+      path,
+      side: "right",
+      clipIntervals: [
+        {
+          junctionId: "junction-road-edge-seam",
+          startDistance: 3,
+          endDistance: 7
+        }
+      ],
+      junctionEdgeSeams: [
+        {
+          junctionId: "junction-road-edge-seam",
+          pathId: path.id,
+          side: "right",
+          distance: 3,
+          outerOffset: {
+            x: -0.16568542494923788,
+            z: -0.4
+          }
+        },
+        {
+          junctionId: "junction-road-edge-seam",
+          pathId: path.id,
+          side: "right",
+          distance: 7,
+          outerOffset: {
+            x: 0.16568542494923788,
+            z: -0.4
+          }
+        }
+      ]
+    });
+
+    expect(Array.from(mesh!.positions.slice(12, 24))).toEqual([
+      3,
+      expect.closeTo(0.1, 5),
+      -1,
+      3,
+      expect.closeTo(0.3, 5),
+      -1,
+      expect.closeTo(2.8343145, 5),
+      expect.closeTo(0.3, 5),
+      -1.4,
+      expect.closeTo(2.8343145, 5),
+      expect.closeTo(0.1, 5),
+      -1.4
     ]);
   });
 
