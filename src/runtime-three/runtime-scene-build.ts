@@ -2042,6 +2042,10 @@ export function buildRuntimeSceneFromDocument(
   const paths = getScenePaths(document.paths)
     .filter((path) => path.enabled)
     .map((path) => buildRuntimePath(path, enabledTerrains, document));
+  const splineCorridorColliders = deriveSplineCorridorBoxColliders({
+    paths,
+    terrains: enabledTerrains
+  });
   const collections = buildRuntimeSceneCollections(
     document,
     options.runtimeClock ?? null,
@@ -2103,6 +2107,11 @@ export function buildRuntimeSceneFromDocument(
     playerStartEntity?.inputBindings
   );
   const colliders = [...staticColliders];
+
+  for (const collider of splineCorridorColliders) {
+    staticColliders.push(collider);
+    colliders.push(collider);
+  }
 
   for (const npc of collections.entities.npcs) {
     const collider = buildRuntimeNpcCollider(npc);
