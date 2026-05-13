@@ -133,8 +133,22 @@ describe("spline road mesh generation", () => {
       ]
     });
 
-    expect(mesh?.stationCount).toBe(4);
+    expect(mesh?.stationCount).toBe(6);
     expect(Array.from(mesh?.indices ?? []).length).toBeGreaterThan(24);
+    expect(Array.from(mesh!.positions.slice(24, 36))).toEqual([
+      4,
+      expect.closeTo(0.03, 5),
+      1,
+      4,
+      expect.closeTo(0.03, 5),
+      1,
+      4,
+      expect.closeTo(0.03, 5),
+      expect.closeTo(1.35, 5),
+      4,
+      expect.closeTo(0.03, 5),
+      expect.closeTo(1.35, 5)
+    ]);
   });
 
   it("conforms road edge vertices to terrain when enabled", () => {
