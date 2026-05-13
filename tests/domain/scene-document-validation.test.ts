@@ -2303,4 +2303,101 @@ describe("validateSceneDocument", () => {
       ])
     );
   });
+
+  it("detects invalid spline corridor junctions", () => {
+    const path = createScenePath({ id: "path-junction-validation" });
+    const invalidJunction = createSplineCorridorJunction({
+      id: "junction-invalid",
+      center: { x: 0, y: 0, z: 0 },
+      connections: [
+        { id: "connection-a", pathId: path.id, progress: 0, clipDistance: 1.5 },
+        { id: "connection-b", pathId: path.id, progress: 1, clipDistance: 1.5 }
+      ]
+    });
+
+    invalidJunction.kind = "wrong" as never;
+    invalidJunction.visible = "yes" as never;
+    invalidJunction.enabled = "yes" as never;
+    invalidJunction.center = { x: Number.NaN, y: 0, z: 0 };
+    invalidJunction.radius = 0;
+    invalidJunction.materialId = "missing-junction-material";
+    invalidJunction.terrainMode = "dig" as never;
+    invalidJunction.connections = [
+      {
+        id: "",
+        pathId: "missing-path",
+        progress: 2,
+        clipDistance: 0
+      },
+      {
+        id: "",
+        pathId: path.id,
+        progress: 0.5,
+        clipDistance: 1
+      }
+    ];
+
+    const validation = validateSceneDocument({
+      ...createEmptySceneDocument(),
+      paths: {
+        [path.id]: path
+      },
+      splineCorridorJunctions: {
+        [invalidJunction.id]: invalidJunction
+      }
+    });
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-kind",
+          path: "splineCorridorJunctions.junction-invalid.kind"
+        }),
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-visible",
+          path: "splineCorridorJunctions.junction-invalid.visible"
+        }),
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-enabled",
+          path: "splineCorridorJunctions.junction-invalid.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-center",
+          path: "splineCorridorJunctions.junction-invalid.center"
+        }),
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-radius",
+          path: "splineCorridorJunctions.junction-invalid.radius"
+        }),
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-material",
+          path: "splineCorridorJunctions.junction-invalid.materialId"
+        }),
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-terrain-mode",
+          path: "splineCorridorJunctions.junction-invalid.terrainMode"
+        }),
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-connection-id",
+          path: "splineCorridorJunctions.junction-invalid.connections.0.id"
+        }),
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-connection-path",
+          path: "splineCorridorJunctions.junction-invalid.connections.0.pathId"
+        }),
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-connection-progress",
+          path: "splineCorridorJunctions.junction-invalid.connections.0.progress"
+        }),
+        expect.objectContaining({
+          code: "invalid-spline-corridor-junction-connection-clip-distance",
+          path: "splineCorridorJunctions.junction-invalid.connections.0.clipDistance"
+        }),
+        expect.objectContaining({
+          code: "duplicate-spline-corridor-junction-connection-id",
+          path: "splineCorridorJunctions.junction-invalid.connections.1.id"
+        })
+      ])
+    );
+  });
 });
