@@ -5,9 +5,14 @@ import {
   cloneScenePath,
   getScenePathPointIndex
 } from "../document/paths";
+import type { SplineCorridorJunctionRegistry } from "../document/spline-corridor-junctions";
 import type { Vec3 } from "../core/vector";
 
 import type { EditorCommand } from "./command";
+import {
+  cloneSplineCorridorJunctionRegistry,
+  setScenePathAndReattachJunctions
+} from "./path-junction-maintenance";
 
 interface SetPathPointPositionCommandOptions {
   pathId: string;
@@ -40,6 +45,7 @@ export function createSetPathPointPositionCommand(
 ): EditorCommand {
   const nextPosition = cloneVec3(options.position);
   let previousPosition: Vec3 | null = null;
+  let previousJunctions: SplineCorridorJunctionRegistry | null = null;
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
 
@@ -72,11 +78,16 @@ export function createSetPathPointPositionCommand(
         previousToolMode = context.getToolMode();
       }
 
-      context.setDocument({
-        ...currentDocument,
-        paths: {
-          ...currentDocument.paths,
-          [path.id]: cloneScenePath({
+      if (previousJunctions === null) {
+        previousJunctions = cloneSplineCorridorJunctionRegistry(
+          currentDocument.splineCorridorJunctions
+        );
+      }
+
+      context.setDocument(
+        setScenePathAndReattachJunctions(
+          currentDocument,
+          cloneScenePath({
             ...path,
             points: path.points.map((point, index) =>
               index === pointIndex
@@ -87,8 +98,8 @@ export function createSetPathPointPositionCommand(
                 : point
             )
           })
-        }
-      });
+        )
+      );
       context.setSelection(
         setSelectedPathPointSelection(options.pathId, options.pointId)
       );
@@ -126,10 +137,14 @@ export function createSetPathPointPositionCommand(
                     ...point,
                     position: cloneVec3(restoredPosition)
                   }
-                : point
+              : point
             )
           })
-        }
+        },
+        splineCorridorJunctions:
+          previousJunctions === null
+            ? currentDocument.splineCorridorJunctions
+            : cloneSplineCorridorJunctionRegistry(previousJunctions)
       });
 
       if (previousSelection !== null) {
