@@ -49,12 +49,18 @@ export function resolveTerrainGridResizeSideFromLocalPosition(
     return null;
   }
 
-  const candidates: Array<{ side: TerrainGridResizeSide; distance: number }> = [
+  const edgeDistances: Array<{
+    side: TerrainGridResizeSide;
+    distance: number;
+  }> = [
     { side: "west", distance: localX },
     { side: "east", distance: width - localX },
     { side: "south", distance: localZ },
     { side: "north", distance: depth - localZ }
-  ].filter((candidate) => candidate.distance <= threshold);
+  ];
+  const candidates = edgeDistances.filter(
+    (candidate) => candidate.distance <= threshold
+  );
 
   if (candidates.length === 0) {
     return null;
