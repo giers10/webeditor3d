@@ -7522,38 +7522,12 @@ export class ViewportHost {
   }
 
   private updateRoadSurfaceRenderObjectState(path: ScenePath) {
-    const existingRenderObjects = this.roadSurfaceRenderObjects.get(path.id);
-
-    if (existingRenderObjects !== undefined) {
-      for (const mesh of existingRenderObjects.meshes) {
-        this.roadSurfaceGroup.remove(mesh);
-        mesh.geometry.dispose();
-        mesh.material.dispose();
-      }
-      this.roadSurfaceRenderObjects.delete(path.id);
-    }
-
     if (this.currentDocument === null) {
       return;
     }
 
-    const terrains = getTerrains(this.currentDocument.terrains).filter(
-      (terrain) => terrain.enabled
-    );
-    const nextRenderObjects = this.createRoadSurfaceRenderObjects(
-      path,
-      terrains
-    );
-
-    if (nextRenderObjects === null) {
-      return;
-    }
-
-    for (const mesh of nextRenderObjects.meshes) {
-      this.roadSurfaceGroup.add(mesh);
-    }
-    this.roadSurfaceRenderObjects.set(path.id, nextRenderObjects);
-    this.applyShadowState();
+    void path;
+    this.rebuildRoadSurfaces(this.currentDocument);
   }
 
   private rebuildSplineRepeaters(document: SceneDocument) {
