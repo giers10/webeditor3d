@@ -161,10 +161,10 @@ describe("Terrain foundation", () => {
       throw new Error("Expected the created terrain to exist.");
     }
 
-    fireEvent.change(screen.getByTestId("terrain-grid-sample-count-x"), {
+    fireEvent.change(screen.getByTestId("terrain-grid-samples-east"), {
       target: { value: "5" }
     });
-    fireEvent.change(screen.getByTestId("terrain-grid-sample-count-z"), {
+    fireEvent.change(screen.getByTestId("terrain-grid-samples-north"), {
       target: { value: "7" }
     });
     fireEvent.change(screen.getByTestId("terrain-grid-cell-size"), {
@@ -180,16 +180,10 @@ describe("Terrain foundation", () => {
       expect(updatedTerrain?.cellSize).toBe(2);
     });
 
-    fireEvent.change(screen.getByTestId("terrain-grid-resize-direction-x"), {
-      target: { value: "west" }
-    });
-    fireEvent.change(screen.getByTestId("terrain-grid-resize-direction-z"), {
-      target: { value: "south" }
-    });
-    fireEvent.change(screen.getByTestId("terrain-grid-sample-count-x"), {
+    fireEvent.change(screen.getByTestId("terrain-grid-samples-west"), {
       target: { value: "7" }
     });
-    fireEvent.change(screen.getByTestId("terrain-grid-sample-count-z"), {
+    fireEvent.change(screen.getByTestId("terrain-grid-samples-south"), {
       target: { value: "6" }
     });
     fireEvent.click(screen.getByTestId("terrain-grid-apply"));
