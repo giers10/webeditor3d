@@ -38,6 +38,9 @@ export interface Terrain {
   foliageBlockerMask: TerrainFoliageBlockerMask;
 }
 
+export type TerrainGridResizeDirectionX = "east" | "west";
+export type TerrainGridResizeDirectionZ = "north" | "south";
+
 export interface TerrainHeightPatchEntry {
   index: number;
   before: number;
@@ -87,6 +90,10 @@ export const TERRAIN_LAYER_COUNT = 4;
 export const MIN_TERRAIN_LAYER_COUNT = 1;
 export const MAX_TERRAIN_LAYER_COUNT = 8;
 export const TERRAIN_SHADER_LAYER_COUNT = 8;
+export const DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X: TerrainGridResizeDirectionX =
+  "east";
+export const DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z: TerrainGridResizeDirectionZ =
+  "north";
 export const DEFAULT_TERRAIN_LAYER_MATERIAL_IDS = [
   "patchy_grass_ground_250x250",
   "patchy_weedy_dirt_ground_300x300",
@@ -153,6 +160,34 @@ export function normalizeTerrainSampleCount(
 export function normalizeTerrainCellSize(value: number): number {
   if (!Number.isFinite(value) || value <= 0) {
     throw new Error("Terrain cell size must be a positive finite number.");
+  }
+
+  return value;
+}
+
+export function normalizeTerrainGridResizeDirectionX(
+  value: TerrainGridResizeDirectionX | undefined
+): TerrainGridResizeDirectionX {
+  if (value === undefined) {
+    return DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X;
+  }
+
+  if (value !== "east" && value !== "west") {
+    throw new Error("Terrain X resize direction must be east or west.");
+  }
+
+  return value;
+}
+
+export function normalizeTerrainGridResizeDirectionZ(
+  value: TerrainGridResizeDirectionZ | undefined
+): TerrainGridResizeDirectionZ {
+  if (value === undefined) {
+    return DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z;
+  }
+
+  if (value !== "north" && value !== "south") {
+    throw new Error("Terrain Z resize direction must be north or south.");
   }
 
   return value;
