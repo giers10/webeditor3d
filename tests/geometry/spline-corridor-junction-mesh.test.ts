@@ -9,8 +9,7 @@ import {
 } from "../../src/geometry/spline-corridor-junction-footprint";
 import {
   buildSplineCorridorJunctionEdgeMeshData,
-  buildSplineCorridorJunctionMeshGeometry,
-  resolveSplineCorridorJunctionEdgeSettings
+  buildSplineCorridorJunctionMeshGeometry
 } from "../../src/geometry/spline-corridor-junction-mesh";
 
 function createRoadPath(
@@ -131,7 +130,7 @@ describe("spline corridor junction mesh generation", () => {
     );
   });
 
-  it("builds a mitered junction perimeter edge from enabled connected road edges", () => {
+  it("builds a mitered junction perimeter edge from authored junction edge settings", () => {
     const pathA = createScenePath({
       id: "path-junction-edge-a",
       road: {
@@ -169,6 +168,14 @@ describe("spline corridor junction mesh generation", () => {
       id: "junction-edge",
       center: { x: 5, y: 0, z: 0 },
       radius: 3,
+      edge: {
+        enabled: true,
+        collisionEnabled: false,
+        kind: "curb",
+        width: 0.4,
+        height: 0.2,
+        materialId: "curb-material"
+      },
       connections: [
         {
           pathId: pathA.id,
@@ -183,19 +190,10 @@ describe("spline corridor junction mesh generation", () => {
       ]
     });
 
-    const edge = resolveSplineCorridorJunctionEdgeSettings({
-      junction,
-      paths: [pathA, pathB]
-    });
-
-    if (edge === null) {
-      throw new Error("Expected a junction edge setting.");
-    }
-
     const meshData = buildSplineCorridorJunctionEdgeMeshData({
       junction,
       paths: [pathA, pathB],
-      edge
+      edge: junction.edge
     });
     const footprint = buildSplineCorridorJunctionFootprint({
       junction,
@@ -213,7 +211,7 @@ describe("spline corridor junction mesh generation", () => {
       )
     ).length;
 
-    expect(edge.materialId).toBe("curb-material");
+    expect(junction.edge.materialId).toBe("curb-material");
     expect(roadMouthSegmentCount).toBe(4);
     expect(meshData?.footprintPointCount).toBe(8);
     expect(meshData?.profileVertexCount).toBe(4);
