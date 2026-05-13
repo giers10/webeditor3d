@@ -6051,6 +6051,12 @@ function readSplineCorridorJunctionValue(
               "flattenAndPaint",
               `${label}.terrainMode`
             ),
+    shapeMode:
+      value.shapeMode === undefined
+        ? undefined
+        : isSplineCorridorJunctionShapeMode(value.shapeMode)
+          ? normalizeSplineCorridorJunctionShapeMode(value.shapeMode)
+          : expectLiteralString(value.shapeMode, "straight", `${label}.shapeMode`),
     edge: readScenePathRoadEdgeSettingsValue(value.edge, `${label}.edge`),
     connections: value.connections.map((connectionValue, index) =>
       readSplineCorridorJunctionConnectionValue(
