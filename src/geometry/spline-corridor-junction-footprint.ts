@@ -8,7 +8,10 @@ import {
   type ScenePathPoint,
   type ScenePathRoadSettings
 } from "../document/paths";
-import type { SplineCorridorJunction } from "../document/spline-corridor-junctions";
+import type {
+  SplineCorridorJunction,
+  SplineCorridorJunctionShapeMode
+} from "../document/spline-corridor-junctions";
 import type { Terrain } from "../document/terrains";
 
 export interface SplineCorridorJunctionFootprintPathLike {
@@ -52,6 +55,7 @@ export interface SplineCorridorJunctionFootprint {
 }
 
 const CIRCLE_FALLBACK_SEGMENTS = 32;
+const CURVE_CORNER_SEGMENTS = 6;
 const EPSILON = 1e-6;
 
 function cloneVec3(vector: Vec3): Vec3 {
@@ -351,6 +355,160 @@ function getBounds(points: readonly SplineCorridorJunctionFootprintPoint[]) {
   );
 }
 
+function getRoadBoundaryTangent(
+  point: SplineCorridorJunctionFootprintPoint
+): { x: number; z: number } | null {
+  if (point.connectionOutwardAxis === undefined) {
+    return null;
+  }
+
+  return {
+    x: -point.connectionOutwardAxis.z,
+    z: point.connectionOutwardAxis.x
+  };
+}
+
+function resolveRoadBoundaryCornerPoint(options: {
+  start: SplineCorridorJunctionFootprintPoint;
+  end: SplineCorridorJunctionFootprintPoint;
+}): { x: number; z: number } | null {
+  const startTangent = getRoadBoundaryTangent(options.start);
+  const endTangent = getRoadBoundaryTangent(options.end);
+
+  if (startTangent === null || endTangent === null) {
+    return null;
+  }
+
+  const denominator =
+    startTangent.x * endTangent.z - startTangent.z * endTangent.x;
+
+  if (Math.abs(denominator) <= EPSILON) {
+    return null;
+  }
+
+  const deltaX = options.end.x - options.start.x;
+  const deltaZ = options.end.z - options.start.z;
+  const startDistance =
+    (deltaX * endTangent.z - deltaZ * endTangent.x) / denominator;
+  const corner = {
+    x: options.start.x + startTangent.x * startDistance,
+    z: options.start.z + startTangent.z * startDistance
+  };
+
+  if (!Number.isFinite(corner.x) || !Number.isFinite(corner.z)) {
+    return null;
+  }
+
+  return corner;
+}
+
+function createShapedFootprintPoint(options: {
+  start: SplineCorridorJunctionFootprintPoint;
+  end: SplineCorridorJunctionFootprintPoint;
+  x: number;
+  z: number;
+  t: number;
+}): SplineCorridorJunctionFootprintPoint {
+  return {
+    x: options.x,
+    z: options.z,
+    fallbackY:
+      options.start.fallbackY +
+      (options.end.fallbackY - options.start.fallbackY) * options.t,
+    heightOffset:
+      options.start.heightOffset +
+      (options.end.heightOffset - options.start.heightOffset) * options.t,
+    connectionBoundaryKey: null
+  };
+}
+
+function quadraticBezier(
+  start: number,
+  control: number,
+  end: number,
+  t: number
+): number {
+  const inverse = 1 - t;
+
+  return inverse * inverse * start + 2 * inverse * t * control + t * t * end;
+}
+
+function appendShapedCornerPoints(options: {
+  points: SplineCorridorJunctionFootprintPoint[];
+  start: SplineCorridorJunctionFootprintPoint;
+  end: SplineCorridorJunctionFootprintPoint;
+  shapeMode: SplineCorridorJunctionShapeMode;
+}) {
+  if (
+    options.shapeMode === "straight" ||
+    isSplineCorridorJunctionFootprintRoadMouthEdge(options.start, options.end)
+  ) {
+    return;
+  }
+
+  const corner = resolveRoadBoundaryCornerPoint({
+    start: options.start,
+    end: options.end
+  });
+
+  if (corner === null) {
+    return;
+  }
+
+  if (options.shapeMode === "corner") {
+    options.points.push(
+      createShapedFootprintPoint({
+        start: options.start,
+        end: options.end,
+        x: corner.x,
+        z: corner.z,
+        t: 0.5
+      })
+    );
+    return;
+  }
+
+  for (let step = 1; step < CURVE_CORNER_SEGMENTS; step += 1) {
+    const t = step / CURVE_CORNER_SEGMENTS;
+
+    options.points.push(
+      createShapedFootprintPoint({
+        start: options.start,
+        end: options.end,
+        x: quadraticBezier(options.start.x, corner.x, options.end.x, t),
+        z: quadraticBezier(options.start.z, corner.z, options.end.z, t),
+        t
+      })
+    );
+  }
+}
+
+function buildShapedFootprintPoints(options: {
+  points: readonly SplineCorridorJunctionFootprintPoint[];
+  shapeMode: SplineCorridorJunctionShapeMode;
+}): SplineCorridorJunctionFootprintPoint[] {
+  if (options.shapeMode === "straight" || options.points.length < 3) {
+    return [...options.points];
+  }
+
+  const shaped: SplineCorridorJunctionFootprintPoint[] = [];
+
+  for (let index = 0; index < options.points.length; index += 1) {
+    const start = options.points[index]!;
+    const end = options.points[(index + 1) % options.points.length]!;
+
+    shaped.push(start);
+    appendShapedCornerPoints({
+      points: shaped,
+      start,
+      end,
+      shapeMode: options.shapeMode
+    });
+  }
+
+  return shaped;
+}
+
 function isPointInsidePolygonXZ(
   x: number,
   z: number,
@@ -482,6 +640,10 @@ export function buildSplineCorridorJunctionFootprint(options: {
         heightOffsets.length;
   const forwardAxis = forwardAxes[0] ?? { x: 1, z: 0 };
   const hull = computeConvexHull(points);
+  const shapedHull = buildShapedFootprintPoints({
+    points: hull,
+    shapeMode: junction.shapeMode
+  });
   const centerPoint = {
     x: junction.center.x,
     z: junction.center.z,
@@ -501,13 +663,13 @@ export function buildSplineCorridorJunctionFootprint(options: {
 
   return {
     center: centerPoint,
-    points: hull,
+    points: shapedHull,
     forwardAxis,
     rightAxis: {
       x: -forwardAxis.z,
       z: forwardAxis.x
     },
-    bounds: getBounds(hull)
+    bounds: getBounds(shapedHull)
   };
 }
 
