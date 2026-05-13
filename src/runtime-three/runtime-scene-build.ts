@@ -83,6 +83,10 @@ import {
   type FoliagePrototypeRegistry
 } from "../foliage/foliage";
 import {
+  deriveSplineCorridorBoxColliders,
+  type SplineCorridorBoxCollider
+} from "../spline-corridor/spline-corridor-colliders";
+import {
   cloneWorldSettings,
   type WorldSettings
 } from "../document/world-settings";
@@ -294,6 +298,7 @@ export type RuntimeSceneCollider =
   | RuntimeBrushTriMeshCollider
   | RuntimeTerrainHeightfieldCollider
   | GeneratedModelCollider
+  | SplineCorridorBoxCollider
   | RuntimeNpcCollider;
 
 export interface RuntimeSceneBounds {
