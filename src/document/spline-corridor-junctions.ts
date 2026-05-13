@@ -1,5 +1,9 @@
 import { createOpaqueId } from "../core/ids";
 import type { Vec3 } from "../core/vector";
+import {
+  createScenePathRoadEdgeSettings,
+  type ScenePathRoadEdgeSettings
+} from "./paths";
 
 export type SplineCorridorJunctionTerrainMode =
   | "none"
@@ -23,6 +27,7 @@ export interface SplineCorridorJunction {
   radius: number;
   materialId: string | null;
   terrainMode: SplineCorridorJunctionTerrainMode;
+  edge: ScenePathRoadEdgeSettings;
   connections: SplineCorridorJunctionConnection[];
 }
 
@@ -38,6 +43,7 @@ export const DEFAULT_SPLINE_CORRIDOR_JUNCTION_CLIP_DISTANCE = 1.5;
 export const DEFAULT_SPLINE_CORRIDOR_JUNCTION_MATERIAL_ID = null;
 export const DEFAULT_SPLINE_CORRIDOR_JUNCTION_TERRAIN_MODE: SplineCorridorJunctionTerrainMode =
   "flattenAndPaint";
+export const DEFAULT_SPLINE_CORRIDOR_JUNCTION_EDGE_ENABLED = false;
 export const MIN_SPLINE_CORRIDOR_JUNCTION_RADIUS = 0.05;
 export const MAX_SPLINE_CORRIDOR_JUNCTION_RADIUS = 500;
 export const MIN_SPLINE_CORRIDOR_JUNCTION_CLIP_DISTANCE = 0.05;
@@ -190,6 +196,15 @@ export function createSplineCorridorJunction(
       overrides.terrainMode === undefined
         ? DEFAULT_SPLINE_CORRIDOR_JUNCTION_TERRAIN_MODE
         : normalizeSplineCorridorJunctionTerrainMode(overrides.terrainMode),
+    edge: createScenePathRoadEdgeSettings({
+      enabled:
+        overrides.edge?.enabled ?? DEFAULT_SPLINE_CORRIDOR_JUNCTION_EDGE_ENABLED,
+      collisionEnabled: overrides.edge?.collisionEnabled,
+      kind: overrides.edge?.kind,
+      width: overrides.edge?.width,
+      height: overrides.edge?.height,
+      materialId: overrides.edge?.materialId
+    }),
     connections: overrides.connections.map(
       createSplineCorridorJunctionConnection
     )
@@ -209,4 +224,3 @@ export function getSplineCorridorJunctions(
     (left.name ?? left.id).localeCompare(right.name ?? right.id)
   );
 }
-
