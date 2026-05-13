@@ -1260,6 +1260,21 @@ export class ViewportHost {
     this.terrainBrushPreviewGroup.add(this.terrainBrushPreviewCenter);
     applyRendererRenderCategory(this.terrainBrushPreviewGroup, "overlay");
     this.scene.add(this.terrainBrushPreviewGroup);
+    this.terrainGridResizeOverlayGroup.visible = false;
+    this.terrainGridResizeEdgeLine.frustumCulled = false;
+    this.terrainGridResizeArrowLine.frustumCulled = false;
+    this.terrainGridResizeArrowHead.frustumCulled = false;
+    this.terrainGridResizeEdgeLine.renderOrder = GIZMO_RENDER_ORDER + 5;
+    this.terrainGridResizeArrowLine.renderOrder = GIZMO_RENDER_ORDER + 6;
+    this.terrainGridResizeArrowHead.renderOrder = GIZMO_RENDER_ORDER + 7;
+    this.terrainGridResizeOverlayGroup.add(this.terrainGridResizeEdgeLine);
+    this.terrainGridResizeOverlayGroup.add(this.terrainGridResizeArrowLine);
+    this.terrainGridResizeOverlayGroup.add(this.terrainGridResizeArrowHead);
+    applyRendererRenderCategory(
+      this.terrainGridResizeOverlayGroup,
+      "overlay"
+    );
+    this.scene.add(this.terrainGridResizeOverlayGroup);
     this.scene.add(this.pathGroup);
     this.scene.add(this.entityGroup);
     this.scene.add(this.modelGroup);
