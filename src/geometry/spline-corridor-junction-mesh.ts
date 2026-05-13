@@ -10,7 +10,6 @@ import {
 import {
   buildSplineCorridorJunctionFootprint,
   isSplineCorridorJunctionFootprintRoadMouthEdge,
-  type SplineCorridorJunctionFootprint,
   type SplineCorridorJunctionFootprintPoint,
   type SplineCorridorJunctionFootprintPathLike
 } from "./spline-corridor-junction-footprint";
