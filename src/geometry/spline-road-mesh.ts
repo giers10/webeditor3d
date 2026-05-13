@@ -13,7 +13,10 @@ import {
   sampleTerrainHeightAtWorldPosition,
   type Terrain
 } from "../document/terrains";
-import type { SplineCorridorPathClipInterval } from "../spline-corridor/spline-corridor-clips";
+import type {
+  SplineCorridorPathClipInterval,
+  SplineCorridorRoadEdgeSeam
+} from "../spline-corridor/spline-corridor-clips";
 
 export interface SplineRoadPathPointLike {
   id?: string;
@@ -431,22 +434,18 @@ function isClipBoundaryDistance(
   );
 }
 
-function expandClipIntervalsForRoadEdge(options: {
-  clipIntervals: readonly SplineCorridorPathClipInterval[];
-  edgeWidth: number;
-  totalLength: number;
-}): SplineCorridorPathClipInterval[] {
-  if (options.clipIntervals.length === 0 || options.edgeWidth <= 0) {
-    return [...options.clipIntervals];
-  }
-
-  const insetDistance = options.edgeWidth * 0.45;
-
-  return options.clipIntervals.map((clipInterval) => ({
-    junctionId: clipInterval.junctionId,
-    startDistance: Math.max(0, clipInterval.startDistance - insetDistance),
-    endDistance: Math.min(options.totalLength, clipInterval.endDistance + insetDistance)
-  }));
+function findRoadEdgeSeam(options: {
+  distance: number;
+  side: ScenePathRoadEdgeSide;
+  seams: readonly SplineCorridorRoadEdgeSeam[];
+}): SplineCorridorRoadEdgeSeam | null {
+  return (
+    options.seams.find(
+      (seam) =>
+        seam.side === options.side &&
+        Math.abs(seam.distance - options.distance) <= 1e-6
+    ) ?? null
+  );
 }
 
 export function buildSplineRoadMeshData(options: {
@@ -550,6 +549,7 @@ export function buildSplineRoadEdgeMeshData(options: {
   side: ScenePathRoadEdgeSide;
   terrains?: readonly Terrain[];
   clipIntervals?: readonly SplineCorridorPathClipInterval[];
+  junctionEdgeSeams?: readonly SplineCorridorRoadEdgeSeam[];
 }): SplineRoadEdgeMeshData | null {
   const { path, side } = options;
   const edge = path.road.edges[side];
@@ -580,11 +580,7 @@ export function buildSplineRoadEdgeMeshData(options: {
   const uvs: number[] = [];
   const indices: number[] = [];
   const profileLastIndex = Math.max(1, profile.length - 1);
-  const edgeClipIntervals = expandClipIntervalsForRoadEdge({
-    clipIntervals: options.clipIntervals ?? [],
-    edgeWidth: edge.width,
-    totalLength: stations[stations.length - 1]?.distance ?? 0
-  });
+  const edgeClipIntervals = options.clipIntervals ?? [];
   const stationRuns = buildVisibleRoadStationRuns(stations, edgeClipIntervals);
   let stationCount = 0;
 
@@ -604,14 +600,40 @@ export function buildSplineRoadEdgeMeshData(options: {
         y: 0,
         z: tangent.x
       };
+      const sideSign = side === "left" ? 1 : -1;
+      const innerOffset = sideSign * path.road.width * 0.5;
+      const seam = findRoadEdgeSeam({
+        distance: station.distance,
+        side,
+        seams: options.junctionEdgeSeams ?? []
+      });
+      const seamInnerPoint =
+        seam === null
+          ? null
+          : addVec3(station.center, {
+              x: leftDirection.x * innerOffset,
+              y: 0,
+              z: leftDirection.z * innerOffset
+            });
 
       for (let profileIndex = 0; profileIndex < profile.length; profileIndex += 1) {
         const profilePoint = profile[profileIndex]!;
-        const edgePoint = addVec3(station.center, {
-          x: leftDirection.x * profilePoint.offset,
-          y: 0,
-          z: leftDirection.z * profilePoint.offset
-        });
+        const profileOffsetRatio =
+          edge.width <= 1e-8
+            ? 0
+            : (profilePoint.offset - innerOffset) / (sideSign * edge.width);
+        const edgePoint =
+          seam === null || seamInnerPoint === null
+            ? addVec3(station.center, {
+                x: leftDirection.x * profilePoint.offset,
+                y: 0,
+                z: leftDirection.z * profilePoint.offset
+              })
+            : {
+                x: seamInnerPoint.x + seam.outerOffset.x * profileOffsetRatio,
+                y: seamInnerPoint.y,
+                z: seamInnerPoint.z + seam.outerOffset.z * profileOffsetRatio
+              };
         const vertex = resolveRoadVertexPosition({
           path,
           terrains,
