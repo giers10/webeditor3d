@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createScenePath } from "../../src/document/paths";
+import { createSplineCorridorJunction } from "../../src/document/spline-corridor-junctions";
 import { createTerrain } from "../../src/document/terrains";
 import { deriveSplineCorridorBoxColliders } from "../../src/spline-corridor/spline-corridor-colliders";
 
@@ -102,5 +103,75 @@ describe("spline corridor colliders", () => {
         size: { x: 0.4, y: 0.2, z: 4 }
       })
     ]);
+  });
+
+  it("derives box colliders for collision-enabled junction edges while skipping road mouths", () => {
+    const pathA = createScenePath({
+      id: "path-junction-collision-a",
+      road: {
+        enabled: true,
+        width: 2
+      },
+      points: [
+        {
+          id: "path-junction-collision-a-start",
+          position: { x: 0, y: 0, z: 0 }
+        },
+        {
+          id: "path-junction-collision-a-end",
+          position: { x: 10, y: 0, z: 0 }
+        }
+      ]
+    });
+    const pathB = createScenePath({
+      id: "path-junction-collision-b",
+      road: {
+        enabled: true,
+        width: 2
+      },
+      points: [
+        {
+          id: "path-junction-collision-b-start",
+          position: { x: 5, y: 0, z: -5 }
+        },
+        {
+          id: "path-junction-collision-b-end",
+          position: { x: 5, y: 0, z: 5 }
+        }
+      ]
+    });
+    const junction = createSplineCorridorJunction({
+      id: "junction-collision",
+      center: { x: 5, y: 0, z: 0 },
+      radius: 3,
+      edge: {
+        enabled: true,
+        collisionEnabled: true,
+        kind: "curb",
+        width: 0.4,
+        height: 0.2,
+        materialId: null
+      },
+      connections: [
+        { pathId: pathA.id, progress: 0.5, clipDistance: 2 },
+        { pathId: pathB.id, progress: 0.5, clipDistance: 2 }
+      ]
+    });
+
+    const colliders = deriveSplineCorridorBoxColliders({
+      paths: [pathA, pathB],
+      junctions: [junction]
+    });
+
+    expect(colliders).toHaveLength(4);
+    expect(colliders).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          junctionId: junction.id,
+          edgeSide: "junction",
+          size: expect.objectContaining({ x: 0.4, y: 0.2 })
+        })
+      ])
+    );
   });
 });
