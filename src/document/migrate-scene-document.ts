@@ -254,6 +254,7 @@ import {
   NPC_PRESENCE_SCENE_DOCUMENT_VERSION,
   NPC_TARGETING_SCENE_DOCUMENT_VERSION,
   PATH_TERRAIN_GLUE_SCENE_DOCUMENT_VERSION,
+  SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION,
   SPLINE_ROAD_EDGES_SCENE_DOCUMENT_VERSION,
   SPLINE_REPEATERS_SCENE_DOCUMENT_VERSION,
   SPLINE_PATH_SCENE_DOCUMENT_VERSION,
@@ -5712,6 +5713,11 @@ function readScenePathRoadEdgeSettingsValue(
 
   return createScenePathRoadEdgeSettings({
     enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, false),
+    collisionEnabled: readOptionalBoolean(
+      value.collisionEnabled,
+      `${label}.collisionEnabled`,
+      false
+    ),
     kind:
       value.kind === undefined
         ? undefined
@@ -5802,6 +5808,11 @@ function readScenePathRepeaterValue(
         ? undefined
         : expectString(value.name, `${label}.name`),
     enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, true),
+    collisionEnabled: readOptionalBoolean(
+      value.collisionEnabled,
+      `${label}.collisionEnabled`,
+      false
+    ),
     assetId:
       value.assetId === undefined
         ? undefined
