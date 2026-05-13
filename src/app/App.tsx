@@ -9735,6 +9735,7 @@ export function App({
         glueToTerrain: selectedPath.glueToTerrain,
         terrainOffset: selectedPath.terrainOffset,
         road: selectedPath.road,
+        repeaters: selectedPath.repeaters,
         points: selectedPath.points.map((point, index) => ({
           id: point.id,
           position: readVec3Draft(
