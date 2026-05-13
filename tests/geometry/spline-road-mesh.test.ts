@@ -133,19 +133,19 @@ describe("spline road mesh generation", () => {
       ]
     });
 
-    expect(mesh?.stationCount).toBe(6);
-    expect(Array.from(mesh?.indices ?? []).length).toBeGreaterThan(24);
-    expect(Array.from(mesh!.positions.slice(24, 36))).toEqual([
-      4,
+    expect(mesh?.stationCount).toBe(4);
+    expect(Array.from(mesh?.indices ?? [])).toHaveLength(48);
+    expect(Array.from(mesh!.positions.slice(12, 24))).toEqual([
+      expect.closeTo(3.8425, 5),
       expect.closeTo(0.03, 5),
       1,
-      4,
-      expect.closeTo(0.03, 5),
+      expect.closeTo(3.8425, 5),
+      expect.closeTo(0.15, 5),
       1,
-      4,
-      expect.closeTo(0.03, 5),
+      expect.closeTo(3.8425, 5),
+      expect.closeTo(0.15, 5),
       expect.closeTo(1.35, 5),
-      4,
+      expect.closeTo(3.8425, 5),
       expect.closeTo(0.03, 5),
       expect.closeTo(1.35, 5)
     ]);
