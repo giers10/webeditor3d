@@ -210,7 +210,8 @@ import {
 } from "../geometry/spline-road-mesh";
 import {
   buildSplineCorridorJunctionEdgeMeshGeometry,
-  buildSplineCorridorJunctionMeshGeometry
+  buildSplineCorridorJunctionMeshGeometry,
+  resolveSplineCorridorJunctionRoadEdgeSeams
 } from "../geometry/spline-corridor-junction-mesh";
 import {
   detectSplineCorridorJunctionCandidates,
@@ -7706,6 +7707,9 @@ export class ViewportHost {
     terrains: readonly Terrain[],
     clipIntervalsByPath: ReturnType<
       typeof resolveSplineCorridorJunctionClipIntervals
+    >,
+    roadEdgeSeamsByPath: ReturnType<
+      typeof resolveSplineCorridorJunctionRoadEdgeSeams
     >
   ): RoadSurfaceRenderObjects | null {
     if (!path.enabled || !path.visible || !path.road.enabled) {
@@ -7734,7 +7738,8 @@ export class ViewportHost {
         path,
         side,
         terrains,
-        clipIntervals: clipIntervalsByPath.get(path.id)
+        clipIntervals: clipIntervalsByPath.get(path.id),
+        junctionEdgeSeams: roadEdgeSeamsByPath.get(path.id)
       });
 
       if (edgeGeometry === null) {
@@ -7816,12 +7821,18 @@ export class ViewportHost {
       junctions,
       terrains
     });
+    const roadEdgeSeamsByPath = resolveSplineCorridorJunctionRoadEdgeSeams({
+      paths,
+      junctions,
+      terrains
+    });
 
     for (const path of paths) {
       const renderObjects = this.createRoadSurfaceRenderObjects(
         path,
         terrains,
-        clipIntervalsByPath
+        clipIntervalsByPath,
+        roadEdgeSeamsByPath
       );
 
       if (renderObjects === null) {
