@@ -1,6 +1,7 @@
 import type { Vec3 } from "../core/vector";
 import {
   createScenePathRoadEdgeSettings,
+  resolveNearestPointOnResolvedScenePath,
   resolveScenePath,
   sampleResolvedScenePathPosition,
   type ResolvedScenePath,
