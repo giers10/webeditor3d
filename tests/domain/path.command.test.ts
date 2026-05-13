@@ -11,6 +11,7 @@ import { createSetPathNameCommand } from "../../src/commands/set-path-name-comma
 import { createUpsertPathCommand } from "../../src/commands/upsert-path-command";
 import { createScenePath, createScenePathPoint } from "../../src/document/paths";
 import { createEmptySceneDocument } from "../../src/document/scene-document";
+import { createSplineCorridorJunction } from "../../src/document/spline-corridor-junctions";
 import { createTerrain } from "../../src/document/terrains";
 
 describe("path commands", () => {
