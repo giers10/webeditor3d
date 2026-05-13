@@ -9,6 +9,7 @@ import {
 } from "../../src/controls/control-surface";
 import { createBoxBrush } from "../../src/document/brushes";
 import { createScenePath } from "../../src/document/paths";
+import { createSplineCorridorJunction } from "../../src/document/spline-corridor-junctions";
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import {
   createTerrain,
@@ -2005,6 +2006,60 @@ describe("buildRuntimeSceneFromDocument", () => {
         seed: 11
       })
     ]);
+  });
+
+  it("carries spline corridor junctions and clip intervals into runtime builds", () => {
+    const pathA = createScenePath({
+      id: "path-runtime-junction-a",
+      road: {
+        enabled: true,
+        width: 2,
+        materialId: "ground_sand_300x300"
+      }
+    });
+    const pathB = createScenePath({
+      id: "path-runtime-junction-b",
+      road: {
+        enabled: true,
+        width: 2
+      }
+    });
+    const junction = createSplineCorridorJunction({
+      id: "junction-runtime",
+      center: { x: 0, y: 0, z: 0 },
+      materialId: "ground_sand_300x300",
+      connections: [
+        { pathId: pathA.id, progress: 0.5, clipDistance: 1.25 },
+        { pathId: pathB.id, progress: 0.5, clipDistance: 1.25 }
+      ]
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({
+        name: "Runtime Junction Scene"
+      }),
+      paths: {
+        [pathA.id]: pathA,
+        [pathB.id]: pathB
+      },
+      splineCorridorJunctions: {
+        [junction.id]: junction
+      }
+    });
+
+    expect(runtimeScene.splineCorridorJunctions).toEqual([
+      expect.objectContaining({
+        id: junction.id,
+        material: expect.objectContaining({ id: "ground_sand_300x300" })
+      })
+    ]);
+    expect(runtimeScene.splineCorridorClipIntervalsByPath.get(pathA.id)).toEqual(
+      [
+        expect.objectContaining({
+          junctionId: junction.id
+        })
+      ]
+    );
   });
 
   it("adds spline corridor box colliders for collision-enabled edges and repeaters", () => {
