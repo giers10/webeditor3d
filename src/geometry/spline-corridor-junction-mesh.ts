@@ -72,42 +72,6 @@ function shouldConformToTerrain(options: {
   });
 }
 
-export function resolveSplineCorridorJunctionEdgeSettings<
-  TPath extends SplineCorridorJunctionMeshPathLike
->(options: {
-  junction: SplineCorridorJunction;
-  paths: readonly TPath[];
-}): TPath["road"]["edges"]["left"] | TPath["road"]["edges"]["right"] | null {
-  const sides = ["left", "right"] as const;
-  const enabledEdges: Array<
-    TPath["road"]["edges"]["left"] | TPath["road"]["edges"]["right"]
-  > = [];
-
-  for (const connection of options.junction.connections) {
-    const path =
-      options.paths.find((candidate) => candidate.id === connection.pathId) ??
-      null;
-
-    if (path === null || !path.road.enabled) {
-      continue;
-    }
-
-    for (const side of sides) {
-      const edge = path.road.edges[side];
-
-      if (edge.enabled && edge.width > 0) {
-        enabledEdges.push(edge);
-      }
-    }
-  }
-
-  return (
-    enabledEdges.find((edge) => edge.kind !== "softShoulder") ??
-    enabledEdges[0] ??
-    null
-  );
-}
-
 function buildJunctionEdgeProfile(
   edge: ScenePathRoadEdgeSettings
 ): JunctionEdgeProfilePoint[] {
