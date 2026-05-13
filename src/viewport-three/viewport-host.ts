@@ -11564,6 +11564,7 @@ export class ViewportHost {
     }
 
     this.pathRenderObjects.clear();
+    this.clearPathJunctionMarkers();
   }
 
   private clearTerrains() {
