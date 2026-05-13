@@ -835,7 +835,23 @@ describe("scene document JSON", () => {
       falloff: 0.5,
       heightOffset: 0.03,
       terrainConform: true,
-      materialId: null
+      materialId: null,
+      edges: {
+        left: {
+          enabled: false,
+          kind: "softShoulder",
+          width: 0.35,
+          height: 0.12,
+          materialId: null
+        },
+        right: {
+          enabled: false,
+          kind: "softShoulder",
+          width: 0.35,
+          height: 0.12,
+          materialId: null
+        }
+      }
     });
   });
 
