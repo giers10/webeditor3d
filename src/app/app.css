@@ -398,6 +398,31 @@ button:disabled {
   flex-wrap: wrap;
 }
 
+.stacked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.compact-card {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.compact-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.toolbar__button--danger {
+  color: #ffd2c7;
+  border-color: rgba(207, 123, 66, 0.55);
+}
+
 .info-banner {
   padding: 12px 14px;
   color: var(--color-text);
