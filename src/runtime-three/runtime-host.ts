@@ -4348,6 +4348,11 @@ export class RuntimeHost {
 
   private rebuildRoadSurfaces(runtimeScene: RuntimeSceneDefinition) {
     this.clearRoadSurfaces();
+    const roadEdgeSeamsByPath = resolveSplineCorridorJunctionRoadEdgeSeams({
+      junctions: runtimeScene.splineCorridorJunctions,
+      paths: runtimeScene.paths,
+      terrains: runtimeScene.foliage.terrains
+    });
 
     for (const path of runtimeScene.paths) {
       if (!path.enabled || !path.visible || !path.road.enabled) {
@@ -4383,7 +4388,8 @@ export class RuntimeHost {
           terrains: runtimeScene.foliage.terrains,
           clipIntervals: runtimeScene.splineCorridorClipIntervalsByPath.get(
             path.id
-          )
+          ),
+          junctionEdgeSeams: roadEdgeSeamsByPath.get(path.id)
         });
 
         if (edgeGeometry === null) {
