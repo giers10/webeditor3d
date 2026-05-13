@@ -68,6 +68,10 @@ import {
   type ScenePathPoint
 } from "../document/paths";
 import {
+  getSplineCorridorJunctions,
+  type SplineCorridorJunction
+} from "../document/spline-corridor-junctions";
+import {
   cloneTerrain,
   createEmptyTerrainFoliageBlockerMask,
   getTerrainBounds,
@@ -86,6 +90,7 @@ import {
   deriveSplineCorridorBoxColliders,
   type SplineCorridorBoxCollider
 } from "../spline-corridor/spline-corridor-colliders";
+import { resolveSplineCorridorJunctionClipIntervals } from "../spline-corridor/spline-corridor-junctions";
 import {
   cloneWorldSettings,
   type WorldSettings

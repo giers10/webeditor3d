@@ -7,7 +7,11 @@ import {
   getTerrains,
   type Terrain
 } from "../document/terrains";
-import { createSplineRoadTerrainPatch } from "../geometry/spline-road-terrain";
+import {
+  createSplineCorridorJunctionTerrainPatch,
+  createSplineRoadTerrainPatch
+} from "../geometry/spline-road-terrain";
+import { getSplineCorridorJunctionsConnectedToPath } from "../spline-corridor/spline-corridor-junctions";
 
 import {
   applyTerrainBrushPatchToDocument,
@@ -71,10 +75,26 @@ function createAppliedTerrainRoads(
     }
 
     const before = cloneTerrain(terrain);
-    const terrainWithMaterialLayer =
+    let terrainWithMaterialLayer =
       path.road.materialId === null
         ? terrain
         : ensureTerrainMaterialLayer(terrain, path.road.materialId).terrain;
+    const connectedJunctions = getSplineCorridorJunctionsConnectedToPath({
+      junctions: document.splineCorridorJunctions,
+      pathId
+    }).filter((junction) => junction.enabled);
+
+    for (const junction of connectedJunctions) {
+      if (junction.materialId === null) {
+        continue;
+      }
+
+      terrainWithMaterialLayer = ensureTerrainMaterialLayer(
+        terrainWithMaterialLayer,
+        junction.materialId
+      ).terrain;
+    }
+
     let tempDocument = {
       ...document,
       terrains: {
@@ -82,20 +102,44 @@ function createAppliedTerrainRoads(
         [terrain.id]: cloneTerrain(terrainWithMaterialLayer)
       }
     };
+    let changed = false;
     const patch = createSplineRoadTerrainPatch({
       path,
       terrain: tempDocument.terrains[terrain.id]!
     });
 
-    if (patch === null || isTerrainBrushPatchEmpty(patch)) {
+    if (patch !== null && !isTerrainBrushPatchEmpty(patch)) {
+      tempDocument = applyTerrainBrushPatchToDocument(
+        tempDocument,
+        patch,
+        "forward"
+      );
+      changed = true;
+    }
+
+    for (const junction of connectedJunctions) {
+      const junctionPatch = createSplineCorridorJunctionTerrainPatch({
+        junction,
+        paths: Object.values(document.paths),
+        terrain: tempDocument.terrains[terrain.id]!
+      });
+
+      if (junctionPatch === null || isTerrainBrushPatchEmpty(junctionPatch)) {
+        continue;
+      }
+
+      tempDocument = applyTerrainBrushPatchToDocument(
+        tempDocument,
+        junctionPatch,
+        "forward"
+      );
+      changed = true;
+    }
+
+    if (!changed) {
       continue;
     }
 
-    tempDocument = applyTerrainBrushPatchToDocument(
-      tempDocument,
-      patch,
-      "forward"
-    );
     appliedTerrains.push({
       terrainId: terrain.id,
       before,
