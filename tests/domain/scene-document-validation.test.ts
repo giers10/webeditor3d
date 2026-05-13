@@ -17,6 +17,7 @@ import {
   createSoundEmitterControlTargetRef
 } from "../../src/controls/control-surface";
 import { createScenePath } from "../../src/document/paths";
+import { createSplineCorridorJunction } from "../../src/document/spline-corridor-junctions";
 import {
   createEmptyProjectDocument,
   createEmptyProjectScene,
