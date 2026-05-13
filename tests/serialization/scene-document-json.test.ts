@@ -1056,7 +1056,7 @@ describe("scene document JSON", () => {
       id: "junction-json",
       center: { x: 1, y: 0, z: 2 },
       radius: 2.5,
-      materialId: "mat-wall",
+      materialId: "starter-concrete-checker",
       terrainMode: "paintOnly",
       connections: [
         { pathId: pathA.id, progress: 0.25, clipDistance: 2.5 },
