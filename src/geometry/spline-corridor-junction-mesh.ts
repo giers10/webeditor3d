@@ -22,7 +22,7 @@ export interface SplineCorridorJunctionMeshPathLike {
   glueToTerrain?: boolean;
   terrainOffset?: number;
   road: ScenePathRoadSettings;
-  points: readonly Array<{
+  points: ReadonlyArray<{
     id?: string;
     pointId?: string;
     position: Vec3;
@@ -190,4 +190,3 @@ export function buildSplineCorridorJunctionMeshGeometry(options: {
   geometry.computeBoundingSphere();
   return geometry;
 }
-
