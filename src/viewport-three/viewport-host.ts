@@ -11475,6 +11475,29 @@ export class ViewportHost {
     }
   }
 
+  private extractTerrainGridResizeSideFromObject(
+    object: Object3D
+  ): TerrainGridResizeSide | null {
+    let current: Object3D | null = object;
+
+    while (current !== null) {
+      const side = current.userData.terrainGridResizeSide;
+
+      if (
+        side === "east" ||
+        side === "west" ||
+        side === "north" ||
+        side === "south"
+      ) {
+        return side;
+      }
+
+      current = current.parent;
+    }
+
+    return null;
+  }
+
   private getTerrainGridResizeEdgePoint(
     terrain: Terrain,
     side: TerrainGridResizeSide,
