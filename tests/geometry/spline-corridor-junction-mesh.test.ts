@@ -130,7 +130,7 @@ describe("spline corridor junction mesh generation", () => {
     );
   });
 
-  it("builds a mitered junction perimeter edge from authored junction edge settings", () => {
+  it("builds junction perimeter edges with exact road-mouth seam rows", () => {
     const pathA = createScenePath({
       id: "path-junction-edge-a",
       road: {
@@ -215,28 +215,51 @@ describe("spline corridor junction mesh generation", () => {
     expect(roadMouthSegmentCount).toBe(4);
     expect(meshData?.footprintPointCount).toBe(8);
     expect(meshData?.profileVertexCount).toBe(4);
-    expect(meshData?.positions).toHaveLength((8 + 1) * 4 * 3);
-    expect(meshData?.indices).toHaveLength(4 * 3 * 6 + 4 * 2 * 2 * 3);
+    expect(meshData?.positions).toHaveLength(16 * 4 * 3);
+    expect(meshData?.indices).toHaveLength(4 * 3 * 3 * 6);
     const firstProfile = Array.from(meshData!.positions.slice(0, 12));
+    const firstProfileWidth = Math.hypot(
+      firstProfile[6]! - firstProfile[3]!,
+      firstProfile[8]! - firstProfile[5]!
+    );
+    const profileRows = Array.from(
+      { length: meshData!.positions.length / 12 },
+      (_, index) => Array.from(meshData!.positions.slice(index * 12, index * 12 + 12))
+    );
 
-    expect(firstProfile).toEqual([
-      3,
-      expect.closeTo(0.1, 5),
-      -1,
-      3,
-      expect.closeTo(0.3, 5),
-      -1,
-      firstProfile[6],
-      expect.closeTo(0.3, 5),
-      firstProfile[8],
-      firstProfile[9],
-      expect.closeTo(0.1, 5),
-      firstProfile[11]
-    ]);
-    expect(firstProfile[6]).not.toBeCloseTo(3);
-    expect(firstProfile[8]).not.toBeCloseTo(-1);
-    expect(firstProfile[9]).not.toBeCloseTo(3);
-    expect(firstProfile[11]).not.toBeCloseTo(-1);
+    expect(firstProfileWidth).toBeCloseTo(0.4, 5);
+    expect(profileRows).toEqual(
+      expect.arrayContaining([
+        [
+          3,
+          expect.closeTo(0.1, 5),
+          -1,
+          3,
+          expect.closeTo(0.3, 5),
+          -1,
+          3,
+          expect.closeTo(0.3, 5),
+          expect.closeTo(-1.4, 5),
+          3,
+          expect.closeTo(0.1, 5),
+          expect.closeTo(-1.4, 5)
+        ],
+        [
+          4,
+          expect.closeTo(0.1, 5),
+          -2,
+          4,
+          expect.closeTo(0.3, 5),
+          -2,
+          expect.closeTo(3.6, 5),
+          expect.closeTo(0.3, 5),
+          -2,
+          expect.closeTo(3.6, 5),
+          expect.closeTo(0.1, 5),
+          -2
+        ]
+      ])
+    );
   });
 
   it("samples full terrain influence inside the connection footprint and falloff outside it", () => {
