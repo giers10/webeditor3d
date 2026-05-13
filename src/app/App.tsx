@@ -22291,6 +22291,143 @@ export function App({
                         ))}
                       </select>
                     </label>
+                    {(["left", "right"] as const).map((side) => {
+                      const edge = selectedPath.road.edges[side];
+                      const edgeLabel = side === "left" ? "Left Edge" : "Right Edge";
+
+                      return (
+                        <div className="form-section" key={side}>
+                          <div className="label">{edgeLabel}</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enable edge mesh</span>
+                            <input
+                              data-testid={`path-road-edge-${side}-enabled`}
+                              type="checkbox"
+                              checked={edge.enabled}
+                              onChange={(event) =>
+                                handlePathRoadEdgeChange(
+                                  side,
+                                  {
+                                    ...edge,
+                                    enabled: event.currentTarget.checked
+                                  },
+                                  event.currentTarget.checked
+                                    ? `Enabled ${edgeLabel.toLowerCase()} mesh.`
+                                    : `Disabled ${edgeLabel.toLowerCase()} mesh.`
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Profile</span>
+                            <select
+                              className="select-input"
+                              data-testid={`path-road-edge-${side}-kind`}
+                              value={edge.kind}
+                              onChange={(event) =>
+                                handlePathRoadEdgeChange(
+                                  side,
+                                  {
+                                    ...edge,
+                                    kind: normalizeScenePathRoadEdgeKind(
+                                      event.currentTarget.value
+                                    )
+                                  },
+                                  `Updated ${edgeLabel.toLowerCase()} profile.`
+                                )
+                              }
+                            >
+                              {(
+                                [
+                                  "curb",
+                                  "softShoulder",
+                                  "bank",
+                                  "ditch"
+                                ] as const
+                              ).map((kind) => (
+                                <option key={kind} value={kind}>
+                                  {getRoadEdgeKindLabel(kind)}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Width</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-road-edge-${side}-width`}
+                              type="number"
+                              min={0.01}
+                              step={0.05}
+                              value={edge.width}
+                              onChange={(event) =>
+                                handlePathRoadEdgeChange(
+                                  side,
+                                  {
+                                    ...edge,
+                                    width: normalizeScenePathRoadEdgeWidth(
+                                      Number(event.currentTarget.value)
+                                    )
+                                  },
+                                  `Updated ${edgeLabel.toLowerCase()} width.`
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Height</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-road-edge-${side}-height`}
+                              type="number"
+                              min={0}
+                              step={0.05}
+                              value={edge.height}
+                              onChange={(event) =>
+                                handlePathRoadEdgeChange(
+                                  side,
+                                  {
+                                    ...edge,
+                                    height: normalizeScenePathRoadEdgeHeight(
+                                      Number(event.currentTarget.value)
+                                    )
+                                  },
+                                  `Updated ${edgeLabel.toLowerCase()} height.`
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Material Placeholder</span>
+                            <select
+                              className="select-input"
+                              data-testid={`path-road-edge-${side}-material`}
+                              value={edge.materialId ?? ""}
+                              onChange={(event) =>
+                                handlePathRoadEdgeChange(
+                                  side,
+                                  {
+                                    ...edge,
+                                    materialId:
+                                      normalizeScenePathRoadEdgeMaterialId(
+                                        event.currentTarget.value
+                                      )
+                                  },
+                                  `Updated ${edgeLabel.toLowerCase()} material.`
+                                )
+                              }
+                            >
+                              <option value="">Profile fallback</option>
+                              {materialList.map((material) => (
+                                <option key={material.id} value={material.id}>
+                                  {material.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+                      );
+                    })}
                     <div className="inline-actions">
                       <button
                         className="toolbar__button"
@@ -22307,8 +22444,8 @@ export function App({
                       spline. Applying it patches terrain heights, terrain paint
                       weights, auto-adds the selected road material to terrain
                       layers when there is room, and patches foliage blocker
-                      masks. It does not generate a
-                      road mesh yet.
+                      masks. Runtime/editor generated road and edge meshes stay
+                      derived from these settings.
                     </div>
                   </div>
 
