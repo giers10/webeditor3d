@@ -856,6 +856,61 @@ describe("scene document JSON", () => {
     });
   });
 
+  it("migrates road-preview paths to disabled edge defaults", () => {
+    const path = createScenePath({
+      id: "path-legacy-road-edges",
+      road: {
+        enabled: true,
+        width: 3,
+        shoulderWidth: 0.75,
+        falloff: 0.25,
+        heightOffset: 0.04,
+        terrainConform: true,
+        materialId: "ground_sand_300x300"
+      }
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Legacy Road Edge Scene" }),
+      paths: {
+        [path.id]: path
+      }
+    };
+    const legacyDocument = JSON.parse(serializeSceneDocument(document)) as {
+      version: number;
+      paths: Record<
+        string,
+        {
+          road: {
+            edges?: unknown;
+          };
+        }
+      >;
+    };
+
+    legacyDocument.version = DYNAMIC_TERRAIN_LAYERS_SCENE_DOCUMENT_VERSION;
+    delete legacyDocument.paths[path.id]!.road.edges;
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.paths[path.id]?.road.edges).toEqual({
+      left: {
+        enabled: false,
+        kind: "softShoulder",
+        width: 0.35,
+        height: 0.12,
+        materialId: null
+      },
+      right: {
+        enabled: false,
+        kind: "softShoulder",
+        width: 0.35,
+        height: 0.12,
+        materialId: null
+      }
+    });
+  });
+
   it("round-trips a document containing a canonical box brush", () => {
     const brush = createBoxBrush({
       id: "brush-box-room",
