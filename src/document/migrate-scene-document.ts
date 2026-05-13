@@ -767,6 +767,24 @@ function readOptionalPositiveInteger(
   return integerValue;
 }
 
+function readOptionalInteger(
+  value: unknown,
+  label: string,
+  fallback: number
+): number {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const integerValue = expectFiniteNumber(value, label);
+
+  if (!Number.isInteger(integerValue)) {
+    throw new Error(`${label} must be an integer.`);
+  }
+
+  return integerValue;
+}
+
 function readOptionalPositiveIntegerWithMax(
   value: unknown,
   label: string,
@@ -6562,6 +6580,7 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== PATH_ROAD_PREVIEW_SCENE_DOCUMENT_VERSION &&
     source.version !== DYNAMIC_TERRAIN_LAYERS_SCENE_DOCUMENT_VERSION &&
     source.version !== SPLINE_ROAD_EDGES_SCENE_DOCUMENT_VERSION &&
+    source.version !== SPLINE_REPEATERS_SCENE_DOCUMENT_VERSION &&
     source.version !== NPC_TARGETING_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
