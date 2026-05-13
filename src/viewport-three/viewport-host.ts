@@ -207,9 +207,7 @@ import {
 import { buildSplineCorridorJunctionMeshGeometry } from "../geometry/spline-corridor-junction-mesh";
 import {
   detectSplineCorridorJunctionCandidates,
-  getSplineCorridorJunctionsConnectedToPath,
-  resolveSplineCorridorJunctionClipIntervals,
-  type SplineCorridorJunctionCandidate
+  resolveSplineCorridorJunctionClipIntervals
 } from "../spline-corridor/spline-corridor-junctions";
 import {
   getSplineCorridorJunctions,
@@ -7534,10 +7532,16 @@ export class ViewportHost {
     const terrains = getTerrains(document.terrains).filter(
       (terrain) => terrain.enabled
     );
+    const paths = getScenePaths(document.paths);
 
     this.splineRepeaterRenderer.sync({
-      paths: getScenePaths(document.paths),
-      terrains
+      paths,
+      terrains,
+      clipIntervalsByPath: resolveSplineCorridorJunctionClipIntervals({
+        paths,
+        junctions: getSplineCorridorJunctions(document.splineCorridorJunctions),
+        terrains
+      })
     });
   }
 
