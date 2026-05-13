@@ -4895,6 +4895,8 @@ export function App({
       setTerrainSampleCountXDraft("9");
       setTerrainSampleCountZDraft("9");
       setTerrainCellSizeDraft("1");
+      setTerrainResizeDirectionXDraft(DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X);
+      setTerrainResizeDirectionZDraft(DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z);
       return;
     }
 
@@ -10306,7 +10308,9 @@ export function App({
       const nextTerrain = resizeTerrainGrid(selectedTerrain, {
         sampleCountX: Number(terrainSampleCountXDraft),
         sampleCountZ: Number(terrainSampleCountZDraft),
-        cellSize: Number(terrainCellSizeDraft)
+        cellSize: Number(terrainCellSizeDraft),
+        resizeDirectionX: terrainResizeDirectionXDraft,
+        resizeDirectionZ: terrainResizeDirectionZDraft
       });
       const terrainLabel = getTerrainLabelById(selectedTerrain.id, terrainList);
 
@@ -21261,7 +21265,8 @@ export function App({
                     <div className="label">Grid Settings</div>
                     <div className="material-summary">
                       Cell Size changes resolution while preserving footprint.
-                      Samples X/Z extend or crop terrain size.
+                      Samples X/Z extend or crop terrain size toward the chosen
+                      cardinal edge.
                     </div>
                     <div className="vector-inputs">
                       <label className="form-field">
@@ -21366,6 +21371,42 @@ export function App({
                             )
                           }
                         />
+                      </label>
+                    </div>
+                    <div className="vector-inputs">
+                      <label className="form-field">
+                        <span className="label">Resize X</span>
+                        <select
+                          data-testid="terrain-grid-resize-direction-x"
+                          className="text-input"
+                          value={terrainResizeDirectionXDraft}
+                          onChange={(event) =>
+                            setTerrainResizeDirectionXDraft(
+                              event.currentTarget
+                                .value as TerrainGridResizeDirectionX
+                            )
+                          }
+                        >
+                          <option value="east">East</option>
+                          <option value="west">West</option>
+                        </select>
+                      </label>
+                      <label className="form-field">
+                        <span className="label">Resize Z</span>
+                        <select
+                          data-testid="terrain-grid-resize-direction-z"
+                          className="text-input"
+                          value={terrainResizeDirectionZDraft}
+                          onChange={(event) =>
+                            setTerrainResizeDirectionZDraft(
+                              event.currentTarget
+                                .value as TerrainGridResizeDirectionZ
+                            )
+                          }
+                        >
+                          <option value="north">North</option>
+                          <option value="south">South</option>
+                        </select>
                       </label>
                     </div>
                     <button
