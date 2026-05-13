@@ -194,4 +194,74 @@ describe("spline road mesh generation", () => {
       7
     ]);
   });
+
+  it("builds bank and ditch edge profiles as capped triangular cross-sections", () => {
+    const createPathWithEdgeKind = (kind: "bank" | "ditch") =>
+      createScenePath({
+        id: `path-road-edge-${kind}`,
+        road: {
+          enabled: true,
+          width: 2,
+          heightOffset: 0.05,
+          terrainConform: false,
+          edges: {
+            left: {
+              enabled: true,
+              collisionEnabled: false,
+              kind,
+              width: 0.6,
+              height: 0.3,
+              materialId: null
+            }
+          }
+        },
+        points: [
+          {
+            id: "point-a",
+            position: { x: 0, y: 0, z: 0 }
+          },
+          {
+            id: "point-b",
+            position: { x: 2, y: 0, z: 0 }
+          }
+        ]
+      });
+    const bankMeshData = buildSplineRoadEdgeMeshData({
+      path: createPathWithEdgeKind("bank"),
+      side: "left"
+    });
+    const ditchMeshData = buildSplineRoadEdgeMeshData({
+      path: createPathWithEdgeKind("ditch"),
+      side: "left"
+    });
+
+    expect(bankMeshData).not.toBeNull();
+    expect(ditchMeshData).not.toBeNull();
+    expect(bankMeshData!.positions).toHaveLength(18);
+    expect(ditchMeshData!.positions).toHaveLength(18);
+    expect(bankMeshData!.indices).toHaveLength(18);
+    expect(ditchMeshData!.indices).toHaveLength(18);
+    expect(Array.from(bankMeshData!.positions.slice(0, 9))).toEqual([
+      0,
+      expect.closeTo(0.05, 5),
+      1,
+      0,
+      expect.closeTo(0.35, 5),
+      expect.closeTo(1.6, 5),
+      0,
+      expect.closeTo(0.05, 5),
+      expect.closeTo(1.6, 5)
+    ]);
+    expect(Array.from(ditchMeshData!.positions.slice(0, 9))).toEqual([
+      0,
+      expect.closeTo(0.05, 5),
+      1,
+      0,
+      expect.closeTo(-0.25, 5),
+      expect.closeTo(1.3, 5),
+      0,
+      expect.closeTo(0.05, 5),
+      expect.closeTo(1.6, 5)
+    ]);
+  });
 });
