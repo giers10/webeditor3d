@@ -160,6 +160,31 @@ describe("terrain grid resizing", () => {
     expect(getTerrainHeightAtSample(resizedTerrain, 2, 2)).toBe(22);
   });
 
+  it("extends west and south when those cardinal resize directions are selected", () => {
+    const terrain = createTerrain({
+      id: "terrain-samples-extend-west-south",
+      position: { x: 10, y: 0, z: 20 },
+      sampleCountX: 3,
+      sampleCountZ: 3,
+      cellSize: 1,
+      heights: createIndexedHeights(3, 3)
+    });
+
+    const resizedTerrain = resizeTerrainGrid(terrain, {
+      sampleCountX: 5,
+      sampleCountZ: 5,
+      cellSize: terrain.cellSize,
+      resizeDirectionX: "west",
+      resizeDirectionZ: "south"
+    });
+
+    expect(resizedTerrain.position).toEqual({ x: 8, y: 0, z: 18 });
+    expect(getTerrainHeightAtSample(resizedTerrain, 2, 2)).toBe(0);
+    expect(getTerrainHeightAtSample(resizedTerrain, 4, 4)).toBe(22);
+    expect(getTerrainHeightAtSample(resizedTerrain, 0, 2)).toBe(0);
+    expect(getTerrainHeightAtSample(resizedTerrain, 2, 0)).toBe(0);
+  });
+
   it("decreases Samples X/Z by cropping terrain instead of squashing existing data", () => {
     const terrain = createTerrain({
       id: "terrain-samples-crop",
@@ -184,6 +209,33 @@ describe("terrain grid resizing", () => {
     expect(getTerrainHeightAtSample(resizedTerrain, 2, 2)).toBe(22);
   });
 
+  it("crops west and south when those cardinal resize directions are selected", () => {
+    const terrain = createTerrain({
+      id: "terrain-samples-crop-west-south",
+      sampleCountX: 5,
+      sampleCountZ: 5,
+      cellSize: 1,
+      heights: createIndexedHeights(5, 5)
+    });
+
+    const resizedTerrain = resizeTerrainGrid(terrain, {
+      sampleCountX: 3,
+      sampleCountZ: 3,
+      cellSize: terrain.cellSize,
+      resizeDirectionX: "west",
+      resizeDirectionZ: "south"
+    });
+
+    expect(resizedTerrain.position).toEqual({
+      x: terrain.position.x + 2,
+      y: terrain.position.y,
+      z: terrain.position.z + 2
+    });
+    expect(getTerrainHeightAtSample(resizedTerrain, 0, 0)).toBe(22);
+    expect(getTerrainHeightAtSample(resizedTerrain, 1, 1)).toBe(33);
+    expect(getTerrainHeightAtSample(resizedTerrain, 2, 2)).toBe(44);
+  });
+
   it("fills newly extended height samples from the nearest existing edge height", () => {
     const terrain = createTerrain({
       id: "terrain-samples-edge-fill",
@@ -202,6 +254,37 @@ describe("terrain grid resizing", () => {
     expect(getTerrainHeightAtSample(resizedTerrain, 4, 1)).toBe(12);
     expect(getTerrainHeightAtSample(resizedTerrain, 1, 4)).toBe(21);
     expect(getTerrainHeightAtSample(resizedTerrain, 4, 4)).toBe(22);
+  });
+
+  it("preserves paint weights at the same world positions with west and south resizing", () => {
+    const terrain = createTerrain({
+      id: "terrain-samples-paint-west-south",
+      position: { x: 10, y: 0, z: 20 },
+      sampleCountX: 3,
+      sampleCountZ: 3,
+      cellSize: 1,
+      paintWeights: createIndexedPaintWeights(3, 3)
+    });
+
+    const resizedTerrain = resizeTerrainGrid(terrain, {
+      sampleCountX: 5,
+      sampleCountZ: 5,
+      cellSize: terrain.cellSize,
+      resizeDirectionX: "west",
+      resizeDirectionZ: "south"
+    });
+    const originalOffset = getTerrainPaintWeightSampleOffset(terrain, 1, 1);
+    const resizedOffset = getTerrainPaintWeightSampleOffset(resizedTerrain, 3, 3);
+
+    expect(resizedTerrain.paintWeights[resizedOffset]).toBeCloseTo(
+      terrain.paintWeights[originalOffset] ?? 0
+    );
+    expect(resizedTerrain.paintWeights[resizedOffset + 1]).toBeCloseTo(
+      terrain.paintWeights[originalOffset + 1] ?? 0
+    );
+    expect(resizedTerrain.paintWeights[resizedOffset + 2]).toBeCloseTo(
+      terrain.paintWeights[originalOffset + 2] ?? 0
+    );
   });
 
   it("keeps foliage masks and blocker masks valid after cell-size and sample-count edits", () => {
@@ -234,7 +317,9 @@ describe("terrain grid resizing", () => {
     const extendedTerrain = resizeTerrainGrid(resolutionChangedTerrain, {
       sampleCountX: 6,
       sampleCountZ: 4,
-      cellSize: resolutionChangedTerrain.cellSize
+      cellSize: resolutionChangedTerrain.cellSize,
+      resizeDirectionX: "west",
+      resizeDirectionZ: "south"
     });
     const resizedMask = getTerrainFoliageMask(extendedTerrain, foliageLayerId);
 
@@ -283,6 +368,35 @@ describe("terrain grid resizing", () => {
     expect(getTerrainFootprintWidth(resizedTerrain)).toBe(9);
     expect(getTerrainFootprintDepth(resizedTerrain)).toBe(9);
     expect(resizedTerrain.position).toEqual(terrain.position);
+  });
+
+  it("uses cardinal directions for non-divisible footprint and cell-size edits", () => {
+    const terrain = createTerrain({
+      id: "terrain-cell-size-non-divisible-west-south",
+      sampleCountX: 9,
+      sampleCountZ: 9,
+      cellSize: 1,
+      heights: createIndexedHeights(9, 9)
+    });
+
+    const resizedTerrain = resizeTerrainGrid(terrain, {
+      sampleCountX: terrain.sampleCountX,
+      sampleCountZ: terrain.sampleCountZ,
+      cellSize: 3,
+      resizeDirectionX: "west",
+      resizeDirectionZ: "south"
+    });
+
+    expect(resizedTerrain.cellSize).toBe(3);
+    expect(resizedTerrain.sampleCountX).toBe(4);
+    expect(resizedTerrain.sampleCountZ).toBe(4);
+    expect(getTerrainFootprintWidth(resizedTerrain)).toBe(9);
+    expect(getTerrainFootprintDepth(resizedTerrain)).toBe(9);
+    expect(resizedTerrain.position).toEqual({
+      x: terrain.position.x - 1,
+      y: terrain.position.y,
+      z: terrain.position.z - 1
+    });
   });
 });
 

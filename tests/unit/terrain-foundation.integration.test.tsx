@@ -180,6 +180,29 @@ describe("Terrain foundation", () => {
       expect(updatedTerrain?.cellSize).toBe(2);
     });
 
+    fireEvent.change(screen.getByTestId("terrain-grid-resize-direction-x"), {
+      target: { value: "west" }
+    });
+    fireEvent.change(screen.getByTestId("terrain-grid-resize-direction-z"), {
+      target: { value: "south" }
+    });
+    fireEvent.change(screen.getByTestId("terrain-grid-sample-count-x"), {
+      target: { value: "7" }
+    });
+    fireEvent.change(screen.getByTestId("terrain-grid-sample-count-z"), {
+      target: { value: "6" }
+    });
+    fireEvent.click(screen.getByTestId("terrain-grid-apply"));
+
+    await waitFor(() => {
+      const updatedTerrain = store.getState().document.terrains[createdTerrain.id];
+
+      expect(updatedTerrain?.sampleCountX).toBe(7);
+      expect(updatedTerrain?.sampleCountZ).toBe(6);
+      expect(updatedTerrain?.position.x).toBe(-8);
+      expect(updatedTerrain?.position.z).toBe(-6);
+    });
+
     fireEvent.click(screen.getByTestId("terrain-collision-enabled"));
 
     await waitFor(() => {
