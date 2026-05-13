@@ -10802,6 +10802,13 @@ export class ViewportHost {
       return this.activeTerrainBrushStroke.previewTerrain;
     }
 
+    if (
+      this.activeTerrainGridResizeDrag !== null &&
+      this.activeTerrainGridResizeDrag.previewTerrain.id === terrainId
+    ) {
+      return this.activeTerrainGridResizeDrag.previewTerrain;
+    }
+
     return this.currentDocument?.terrains[terrainId] ?? null;
   }
 
