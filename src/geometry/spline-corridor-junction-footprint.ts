@@ -30,6 +30,7 @@ export interface SplineCorridorJunctionFootprintPoint {
   z: number;
   fallbackY: number;
   heightOffset: number;
+  connectionBoundaryKey: string | null;
 }
 
 export interface SplineCorridorJunctionFootprint {
@@ -107,13 +108,22 @@ function createFootprintPoint(options: {
   leftAxis: { x: number; z: number };
   offset: number;
   heightOffset: number;
+  connectionBoundaryKey: string;
 }): SplineCorridorJunctionFootprintPoint {
   return {
     x: options.position.x + options.leftAxis.x * options.offset,
     z: options.position.z + options.leftAxis.z * options.offset,
     fallbackY: options.position.y + options.heightOffset,
-    heightOffset: options.heightOffset
+    heightOffset: options.heightOffset,
+    connectionBoundaryKey: options.connectionBoundaryKey
   };
+}
+
+function createConnectionBoundaryKey(options: {
+  pathId: string;
+  distance: number;
+}): string {
+  return `${options.pathId}:${Math.round(options.distance * 100000)}`;
 }
 
 function addConnectionBoundaryPoints(options: {
@@ -184,19 +194,25 @@ function addConnectionBoundaryPoints(options: {
       x: -tangent.z,
       z: tangent.x
     };
+    const connectionBoundaryKey = createConnectionBoundaryKey({
+      pathId: options.path.id,
+      distance
+    });
 
     options.points.push(
       createFootprintPoint({
         position,
         leftAxis: localLeftAxis,
         offset: halfWidth,
-        heightOffset
+        heightOffset,
+        connectionBoundaryKey
       }),
       createFootprintPoint({
         position,
         leftAxis: localLeftAxis,
         offset: -halfWidth,
-        heightOffset
+        heightOffset,
+        connectionBoundaryKey
       })
     );
   }
@@ -236,6 +252,10 @@ function dedupePoints(
 
     existing.fallbackY = (existing.fallbackY + point.fallbackY) * 0.5;
     existing.heightOffset = (existing.heightOffset + point.heightOffset) * 0.5;
+    existing.connectionBoundaryKey =
+      existing.connectionBoundaryKey === point.connectionBoundaryKey
+        ? existing.connectionBoundaryKey
+        : null;
   }
 
   return deduped;
@@ -346,7 +366,8 @@ function buildCircularFootprint(options: {
       x: options.junction.center.x + Math.cos(angle) * options.junction.radius,
       z: options.junction.center.z + Math.sin(angle) * options.junction.radius,
       fallbackY: options.fallbackY,
-      heightOffset: options.heightOffset
+      heightOffset: options.heightOffset,
+      connectionBoundaryKey: null
     });
   }
 
@@ -361,7 +382,8 @@ function buildCircularFootprint(options: {
       x: options.junction.center.x,
       z: options.junction.center.z,
       fallbackY: options.fallbackY,
-      heightOffset: options.heightOffset
+      heightOffset: options.heightOffset,
+      connectionBoundaryKey: null
     },
     points,
     forwardAxis: options.forwardAxis,
@@ -432,7 +454,8 @@ export function buildSplineCorridorJunctionFootprint(options: {
     x: junction.center.x,
     z: junction.center.z,
     fallbackY,
-    heightOffset
+    heightOffset,
+    connectionBoundaryKey: null
   };
 
   if (hull.length < 3 || !isPointInsidePolygonXZ(centerPoint.x, centerPoint.z, hull)) {
@@ -454,6 +477,16 @@ export function buildSplineCorridorJunctionFootprint(options: {
     },
     bounds: getBounds(hull)
   };
+}
+
+export function isSplineCorridorJunctionFootprintRoadMouthEdge(
+  start: SplineCorridorJunctionFootprintPoint,
+  end: SplineCorridorJunctionFootprintPoint
+): boolean {
+  return (
+    start.connectionBoundaryKey !== null &&
+    start.connectionBoundaryKey === end.connectionBoundaryKey
+  );
 }
 
 function getDistanceToSegmentXZ(options: {
