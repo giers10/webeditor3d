@@ -55,6 +55,84 @@ describe("spline road mesh generation", () => {
     expect(Array.from(meshData!.indices)).toEqual([0, 1, 2, 2, 1, 3]);
   });
 
+  it("splits road strips around accepted junction clip intervals", () => {
+    const path = createScenePath({
+      id: "path-road-mesh-clipped",
+      road: {
+        enabled: true,
+        width: 2
+      },
+      points: [
+        {
+          id: "path-road-mesh-clipped-a",
+          position: { x: 0, y: 0, z: 0 }
+        },
+        {
+          id: "path-road-mesh-clipped-b",
+          position: { x: 10, y: 0, z: 0 }
+        }
+      ]
+    });
+
+    const mesh = buildSplineRoadMeshData({
+      path,
+      clipIntervals: [
+        {
+          junctionId: "junction-road-mesh-clipped",
+          startDistance: 4,
+          endDistance: 6
+        }
+      ]
+    });
+
+    expect(mesh?.stationCount).toBe(4);
+    expect(Array.from(mesh?.indices ?? [])).toHaveLength(12);
+    expect(Array.from(mesh?.positions ?? [])).toEqual(
+      expect.arrayContaining([4, 6])
+    );
+  });
+
+  it("clips and caps road edge meshes around junction intervals", () => {
+    const path = createScenePath({
+      id: "path-road-edge-clipped",
+      road: {
+        enabled: true,
+        width: 2,
+        edges: {
+          left: {
+            enabled: true,
+            kind: "curb"
+          }
+        }
+      },
+      points: [
+        {
+          id: "path-road-edge-clipped-a",
+          position: { x: 0, y: 0, z: 0 }
+        },
+        {
+          id: "path-road-edge-clipped-b",
+          position: { x: 10, y: 0, z: 0 }
+        }
+      ]
+    });
+
+    const mesh = buildSplineRoadEdgeMeshData({
+      path,
+      side: "left",
+      clipIntervals: [
+        {
+          junctionId: "junction-road-edge-clipped",
+          startDistance: 4,
+          endDistance: 6
+        }
+      ]
+    });
+
+    expect(mesh?.stationCount).toBe(4);
+    expect(Array.from(mesh?.indices ?? []).length).toBeGreaterThan(24);
+  });
+
   it("conforms road edge vertices to terrain when enabled", () => {
     const terrain = createTerrain({
       id: "terrain-road-mesh-conform",
