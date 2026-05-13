@@ -204,6 +204,18 @@ import {
   buildSplineRoadEdgeMeshGeometry,
   buildSplineRoadMeshGeometry
 } from "../geometry/spline-road-mesh";
+import { buildSplineCorridorJunctionMeshGeometry } from "../geometry/spline-corridor-junction-mesh";
+import {
+  createSplineCorridorJunctionFromCandidate,
+  detectSplineCorridorJunctionCandidates,
+  getSplineCorridorJunctionsConnectedToPath,
+  resolveSplineCorridorJunctionClipIntervals,
+  type SplineCorridorJunctionCandidate
+} from "../spline-corridor/spline-corridor-junctions";
+import {
+  getSplineCorridorJunctions,
+  type SplineCorridorJunction
+} from "../document/spline-corridor-junctions";
 import {
   applyTerrainBrushStampInPlace,
   createTerrainBrushPatchFromTerrains,
