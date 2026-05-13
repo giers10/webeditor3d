@@ -2926,18 +2926,45 @@ function validateScenePath(
     );
   }
 
-  validateScenePathRoadEdge(
-    pathValue.road.edges.left,
-    `${path}.road.edges.left`,
-    document,
-    diagnostics
-  );
-  validateScenePathRoadEdge(
-    pathValue.road.edges.right,
-    `${path}.road.edges.right`,
-    document,
-    diagnostics
-  );
+  const roadEdges = (
+    pathValue.road as {
+      edges?: Partial<Record<"left" | "right", ScenePathRoadEdgeSettings>>;
+    }
+  ).edges;
+
+  if (roadEdges === undefined || roadEdges === null) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-edges",
+        "Path road edges must define left and right edge settings.",
+        `${path}.road.edges`
+      )
+    );
+  } else {
+    for (const side of ["left", "right"] as const) {
+      const edge = roadEdges[side];
+
+      if (edge === undefined || edge === null || typeof edge !== "object") {
+        diagnostics.push(
+          createDiagnostic(
+            "error",
+            "invalid-path-road-edge",
+            "Path road edge settings must be objects.",
+            `${path}.road.edges.${side}`
+          )
+        );
+        continue;
+      }
+
+      validateScenePathRoadEdge(
+        edge,
+        `${path}.road.edges.${side}`,
+        document,
+        diagnostics
+      );
+    }
+  }
 
   if (pathValue.points.length < MIN_SCENE_PATH_POINT_COUNT) {
     diagnostics.push(
