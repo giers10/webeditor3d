@@ -1756,6 +1756,8 @@ export class ViewportHost {
     ) {
       this.rebuildPathJunctionMarkers(this.currentDocument, selection);
     }
+
+    this.syncTerrainGridResizeOverlay();
   }
 
   updateDocument(document: SceneDocument) {
