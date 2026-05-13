@@ -11781,10 +11781,10 @@ export class ViewportHost {
   }
 
   private cancelActiveTerrainGridResizeDrag(rebuildTerrain: boolean) {
-    this.terrainGridResizeOverlayGroup.visible = false;
     this.terrainGridResizeHover = null;
 
     if (this.activeTerrainGridResizeDrag === null) {
+      this.syncTerrainGridResizeOverlay();
       return;
     }
 
@@ -11793,6 +11793,8 @@ export class ViewportHost {
     if (rebuildTerrain) {
       this.rebuildDisplayedTerrainState();
     }
+
+    this.syncTerrainGridResizeOverlay();
   }
 
   private finishTerrainGridResizeDrag(event: PointerEvent): boolean {
@@ -11814,13 +11816,13 @@ export class ViewportHost {
       this.hasTerrainGridResizeChanged(
         activeDrag.baseTerrain,
         finalPreviewTerrain
-      );
+    );
     this.activeTerrainGridResizeDrag = null;
     this.terrainGridResizeHover = null;
-    this.terrainGridResizeOverlayGroup.visible = false;
 
     if (!commit) {
       this.rebuildDisplayedTerrainState();
+      this.syncTerrainGridResizeOverlay();
       return true;
     }
 
@@ -11831,6 +11833,7 @@ export class ViewportHost {
       this.rebuildDisplayedTerrainState();
     }
 
+    this.syncTerrainGridResizeOverlay();
     return true;
   }
 
