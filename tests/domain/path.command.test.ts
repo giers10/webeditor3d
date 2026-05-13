@@ -6,6 +6,7 @@ import { createEditorStore } from "../../src/app/editor-store";
 import { createDeletePathCommand } from "../../src/commands/delete-path-command";
 import { createDeletePathPointCommand } from "../../src/commands/delete-path-point-command";
 import { createDeletePathPointsCommand } from "../../src/commands/delete-path-points-command";
+import { createSetPathPointPositionCommand } from "../../src/commands/set-path-point-position-command";
 import { createSetPathPointPositionsCommand } from "../../src/commands/set-path-point-positions-command";
 import { createSetPathNameCommand } from "../../src/commands/set-path-name-command";
 import { createUpsertPathCommand } from "../../src/commands/upsert-path-command";
@@ -419,6 +420,149 @@ describe("path commands", () => {
       path.points[1],
       path.points[3]
     ]);
+  });
+
+  it("reattaches spline corridor junctions when path points move", () => {
+    const pathA = createScenePath({
+      id: "path-junction-move-a",
+      road: {
+        enabled: true,
+        width: 2,
+        shoulderWidth: 1
+      },
+      points: [
+        {
+          id: "path-junction-move-a-start",
+          position: {
+            x: -5,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-junction-move-a-end",
+          position: {
+            x: 5,
+            y: 0,
+            z: 0
+          }
+        }
+      ]
+    });
+    const pathB = createScenePath({
+      id: "path-junction-move-b",
+      road: {
+        enabled: true,
+        width: 2,
+        shoulderWidth: 1
+      },
+      points: [
+        {
+          id: "path-junction-move-b-start",
+          position: {
+            x: 0,
+            y: 0,
+            z: -5
+          }
+        },
+        {
+          id: "path-junction-move-b-end",
+          position: {
+            x: 0,
+            y: 0,
+            z: 5
+          }
+        }
+      ]
+    });
+    const junction = createSplineCorridorJunction({
+      id: "junction-path-point-move",
+      center: {
+        x: 0,
+        y: 0,
+        z: 0
+      },
+      connections: [
+        {
+          pathId: pathA.id,
+          progress: 0.5
+        },
+        {
+          pathId: pathB.id,
+          progress: 0.5
+        }
+      ]
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({
+          name: "Path Point Junction Reattach Scene"
+        }),
+        paths: {
+          [pathA.id]: pathA,
+          [pathB.id]: pathB
+        },
+        splineCorridorJunctions: {
+          [junction.id]: junction
+        }
+      }
+    });
+
+    store.executeCommand(
+      createSetPathPointPositionCommand({
+        pathId: pathB.id,
+        pointId: "path-junction-move-b-start",
+        position: {
+          x: 2,
+          y: 0,
+          z: -5
+        }
+      })
+    );
+
+    expect(
+      store.getState().document.splineCorridorJunctions[junction.id]?.center.x
+    ).toBeCloseTo(1);
+    expect(
+      store.getState().document.splineCorridorJunctions[junction.id]?.center.z
+    ).toBeCloseTo(0);
+
+    expect(store.undo()).toBe(true);
+    expect(
+      store.getState().document.splineCorridorJunctions[junction.id]?.center
+    ).toEqual(junction.center);
+
+    store.executeCommand(
+      createSetPathPointPositionsCommand({
+        pathId: pathB.id,
+        updates: [
+          {
+            pointId: "path-junction-move-b-start",
+            position: {
+              x: 3,
+              y: 0,
+              z: -5
+            }
+          },
+          {
+            pointId: "path-junction-move-b-end",
+            position: {
+              x: 3,
+              y: 0,
+              z: 5
+            }
+          }
+        ]
+      })
+    );
+
+    expect(
+      store.getState().document.splineCorridorJunctions[junction.id]?.center.x
+    ).toBeCloseTo(3);
+    expect(store.undo()).toBe(true);
+    expect(
+      store.getState().document.splineCorridorJunctions[junction.id]?.center
+    ).toEqual(junction.center);
   });
 
   it("applies a spline road to terrain as one undoable terrain patch", () => {
