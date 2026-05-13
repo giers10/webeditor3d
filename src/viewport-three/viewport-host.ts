@@ -11371,13 +11371,36 @@ export class ViewportHost {
       return null;
     }
 
+    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+    const arrowHits = this.raycaster.intersectObjects(
+      this.terrainGridResizeArrowHitObjects,
+      true
+    );
+
+    for (const hit of arrowHits) {
+      const side = this.extractTerrainGridResizeSideFromObject(hit.object);
+
+      if (side === null) {
+        continue;
+      }
+
+      return {
+        terrainId: terrain.id,
+        side,
+        point: {
+          x: hit.point.x,
+          y: hit.point.y,
+          z: hit.point.z
+        }
+      };
+    }
+
     const renderObjects = this.terrainRenderObjects.get(terrain.id);
 
     if (renderObjects === undefined) {
       return null;
     }
 
-    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
     const hits = this.raycaster.intersectObjects(renderObjects.pickMeshes, true);
     const width = getTerrainFootprintWidth(terrain);
     const depth = getTerrainFootprintDepth(terrain);
