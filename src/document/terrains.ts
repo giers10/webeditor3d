@@ -1573,9 +1573,15 @@ function createLocalPositionResampledTerrainFoliageBlockerMask(
 
 export function changeTerrainCellSizePreservingFootprint(
   terrain: Terrain,
-  requestedCellSize: number
+  requestedCellSize: number,
+  resizeDirectionX: TerrainGridResizeDirectionX = DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X,
+  resizeDirectionZ: TerrainGridResizeDirectionZ = DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z
 ): Terrain {
   const cellSize = normalizeTerrainCellSize(requestedCellSize);
+  const normalizedResizeDirectionX =
+    normalizeTerrainGridResizeDirectionX(resizeDirectionX);
+  const normalizedResizeDirectionZ =
+    normalizeTerrainGridResizeDirectionZ(resizeDirectionZ);
   const sampleCountX = getTerrainSampleCountForFootprint(
     getTerrainFootprintWidth(terrain),
     cellSize
@@ -1584,10 +1590,18 @@ export function changeTerrainCellSizePreservingFootprint(
     getTerrainFootprintDepth(terrain),
     cellSize
   );
+  const nextPosition = getTerrainPositionForResize(
+    terrain,
+    sampleCountX,
+    sampleCountZ,
+    cellSize,
+    normalizedResizeDirectionX,
+    normalizedResizeDirectionZ
+  );
 
   return createTerrain({
     ...terrain,
-    position: cloneVec3(terrain.position),
+    position: nextPosition,
     sampleCountX,
     sampleCountZ,
     cellSize,
@@ -1595,25 +1609,29 @@ export function changeTerrainCellSizePreservingFootprint(
       terrain,
       sampleCountX,
       sampleCountZ,
-      cellSize
+      cellSize,
+      nextPosition
     ),
     paintWeights: createLocalPositionResampledTerrainPaintWeights(
       terrain,
       sampleCountX,
       sampleCountZ,
-      cellSize
+      cellSize,
+      nextPosition
     ),
     foliageMasks: createLocalPositionResampledTerrainFoliageMasks(
       terrain,
       sampleCountX,
       sampleCountZ,
-      cellSize
+      cellSize,
+      nextPosition
     ),
     foliageBlockerMask: createLocalPositionResampledTerrainFoliageBlockerMask(
       terrain,
       sampleCountX,
       sampleCountZ,
-      cellSize
+      cellSize,
+      nextPosition
     )
   });
 }
@@ -1621,7 +1639,9 @@ export function changeTerrainCellSizePreservingFootprint(
 export function changeTerrainSampleCountsByExtendingOrCropping(
   terrain: Terrain,
   requestedSampleCountX: number,
-  requestedSampleCountZ: number
+  requestedSampleCountZ: number,
+  resizeDirectionX: TerrainGridResizeDirectionX = DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X,
+  resizeDirectionZ: TerrainGridResizeDirectionZ = DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z
 ): Terrain {
   const sampleCountX = normalizeTerrainSampleCount(
     requestedSampleCountX,
@@ -1632,10 +1652,22 @@ export function changeTerrainSampleCountsByExtendingOrCropping(
     "Terrain sampleCountZ"
   );
   const cellSize = terrain.cellSize;
+  const normalizedResizeDirectionX =
+    normalizeTerrainGridResizeDirectionX(resizeDirectionX);
+  const normalizedResizeDirectionZ =
+    normalizeTerrainGridResizeDirectionZ(resizeDirectionZ);
+  const nextPosition = getTerrainPositionForResize(
+    terrain,
+    sampleCountX,
+    sampleCountZ,
+    cellSize,
+    normalizedResizeDirectionX,
+    normalizedResizeDirectionZ
+  );
 
   return createTerrain({
     ...terrain,
-    position: cloneVec3(terrain.position),
+    position: nextPosition,
     sampleCountX,
     sampleCountZ,
     cellSize,
@@ -1643,43 +1675,63 @@ export function changeTerrainSampleCountsByExtendingOrCropping(
       terrain,
       sampleCountX,
       sampleCountZ,
-      cellSize
+      cellSize,
+      nextPosition
     ),
     paintWeights: createLocalPositionResampledTerrainPaintWeights(
       terrain,
       sampleCountX,
       sampleCountZ,
-      cellSize
+      cellSize,
+      nextPosition
     ),
     foliageMasks: createLocalPositionResampledTerrainFoliageMasks(
       terrain,
       sampleCountX,
       sampleCountZ,
-      cellSize
+      cellSize,
+      nextPosition
     ),
     foliageBlockerMask: createLocalPositionResampledTerrainFoliageBlockerMask(
       terrain,
       sampleCountX,
       sampleCountZ,
-      cellSize
+      cellSize,
+      nextPosition
     )
   });
 }
 
 export function resizeTerrainGrid(
   terrain: Terrain,
-  options: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "cellSize">
+  options: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "cellSize"> & {
+    resizeDirectionX?: TerrainGridResizeDirectionX;
+    resizeDirectionZ?: TerrainGridResizeDirectionZ;
+  }
 ): Terrain {
   const cellSize = normalizeTerrainCellSize(options.cellSize);
+  const resizeDirectionX = normalizeTerrainGridResizeDirectionX(
+    options.resizeDirectionX
+  );
+  const resizeDirectionZ = normalizeTerrainGridResizeDirectionZ(
+    options.resizeDirectionZ
+  );
 
   if (cellSize !== terrain.cellSize) {
-    return changeTerrainCellSizePreservingFootprint(terrain, cellSize);
+    return changeTerrainCellSizePreservingFootprint(
+      terrain,
+      cellSize,
+      resizeDirectionX,
+      resizeDirectionZ
+    );
   }
 
   return changeTerrainSampleCountsByExtendingOrCropping(
     terrain,
     options.sampleCountX,
-    options.sampleCountZ
+    options.sampleCountZ,
+    resizeDirectionX,
+    resizeDirectionZ
   );
 }
 

@@ -292,6 +292,8 @@ import {
 import {
   areTerrainsEqual,
   createTerrain,
+  DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X,
+  DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z,
   getTerrainBounds,
   getTerrainFootprintDepth,
   getTerrainFootprintWidth,
@@ -301,6 +303,8 @@ import {
   MAX_TERRAIN_LAYER_COUNT,
   MIN_TERRAIN_SAMPLE_COUNT,
   resizeTerrainGrid,
+  type TerrainGridResizeDirectionX,
+  type TerrainGridResizeDirectionZ,
   type Terrain
 } from "../document/terrains";
 import { BUNDLED_FOLIAGE_PROTOTYPES } from "../foliage/bundled-foliage-manifest";
@@ -3488,6 +3492,14 @@ export function App({
   const [terrainSampleCountXDraft, setTerrainSampleCountXDraft] = useState("9");
   const [terrainSampleCountZDraft, setTerrainSampleCountZDraft] = useState("9");
   const [terrainCellSizeDraft, setTerrainCellSizeDraft] = useState("1");
+  const [terrainResizeDirectionXDraft, setTerrainResizeDirectionXDraft] =
+    useState<TerrainGridResizeDirectionX>(
+      DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X
+    );
+  const [terrainResizeDirectionZDraft, setTerrainResizeDirectionZDraft] =
+    useState<TerrainGridResizeDirectionZ>(
+      DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z
+    );
   const [terrainLodGridVisibleTerrainIds, setTerrainLodGridVisibleTerrainIds] =
     useState<readonly string[]>([]);
   const [activeFoliageLayerId, setActiveFoliageLayerId] = useState<
