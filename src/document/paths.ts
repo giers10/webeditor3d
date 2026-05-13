@@ -17,6 +17,7 @@ export type ScenePathRepeaterPlacement = "center" | "left" | "right";
 
 export interface ScenePathRoadEdgeSettings {
   enabled: boolean;
+  collisionEnabled: boolean;
   kind: ScenePathRoadEdgeKind;
   width: number;
   height: number;
@@ -49,6 +50,7 @@ export interface ScenePathRepeater {
   id: string;
   name?: string;
   enabled: boolean;
+  collisionEnabled: boolean;
   assetId: string;
   placement: ScenePathRepeaterPlacement;
   offset: number;
@@ -209,6 +211,7 @@ export const SCENE_PATH_ROAD_EDGE_KINDS = [
   "ditch"
 ] as const satisfies readonly ScenePathRoadEdgeKind[];
 export const DEFAULT_SCENE_PATH_ROAD_EDGE_ENABLED = false;
+export const DEFAULT_SCENE_PATH_ROAD_EDGE_COLLISION_ENABLED = false;
 export const DEFAULT_SCENE_PATH_ROAD_EDGE_KIND: ScenePathRoadEdgeKind =
   "softShoulder";
 export const DEFAULT_SCENE_PATH_ROAD_EDGE_WIDTH = 0.35;
@@ -220,6 +223,7 @@ export const SCENE_PATH_REPEATER_PLACEMENTS = [
   "right"
 ] as const satisfies readonly ScenePathRepeaterPlacement[];
 export const DEFAULT_SCENE_PATH_REPEATER_ENABLED = true;
+export const DEFAULT_SCENE_PATH_REPEATER_COLLISION_ENABLED = false;
 export const DEFAULT_SCENE_PATH_REPEATER_ASSET_ID = "fence_segment_wood_2m";
 export const DEFAULT_SCENE_PATH_REPEATER_PLACEMENT: ScenePathRepeaterPlacement =
   "left";
@@ -497,13 +501,21 @@ export function createScenePathRoadEdgeSettings(
 ): ScenePathRoadEdgeSettings {
   const enabled =
     overrides.enabled ?? DEFAULT_SCENE_PATH_ROAD_EDGE_ENABLED;
+  const collisionEnabled =
+    overrides.collisionEnabled ??
+    DEFAULT_SCENE_PATH_ROAD_EDGE_COLLISION_ENABLED;
 
   if (typeof enabled !== "boolean") {
     throw new Error("Path road edge enabled must be a boolean.");
   }
 
+  if (typeof collisionEnabled !== "boolean") {
+    throw new Error("Path road edge collision enabled must be a boolean.");
+  }
+
   return {
     enabled,
+    collisionEnabled,
     kind:
       overrides.kind === undefined
         ? DEFAULT_SCENE_PATH_ROAD_EDGE_KIND
@@ -671,6 +683,9 @@ export function createScenePathRepeater(
   overrides: ScenePathRepeaterOverrides = {}
 ): ScenePathRepeater {
   const enabled = overrides.enabled ?? DEFAULT_SCENE_PATH_REPEATER_ENABLED;
+  const collisionEnabled =
+    overrides.collisionEnabled ??
+    DEFAULT_SCENE_PATH_REPEATER_COLLISION_ENABLED;
   const terrainConform =
     overrides.terrainConform ?? DEFAULT_SCENE_PATH_REPEATER_TERRAIN_CONFORM;
   const alignToSpline =
@@ -679,6 +694,10 @@ export function createScenePathRepeater(
 
   if (typeof enabled !== "boolean") {
     throw new Error("Path repeater enabled must be a boolean.");
+  }
+
+  if (typeof collisionEnabled !== "boolean") {
+    throw new Error("Path repeater collision enabled must be a boolean.");
   }
 
   if (typeof terrainConform !== "boolean") {
@@ -697,6 +716,7 @@ export function createScenePathRepeater(
     id: overrides.id ?? createOpaqueId("path_repeater"),
     name: normalizeScenePathName(overrides.name),
     enabled,
+    collisionEnabled,
     assetId: normalizeScenePathRepeaterAssetId(
       overrides.assetId ?? DEFAULT_SCENE_PATH_REPEATER_ASSET_ID
     ),
@@ -1194,6 +1214,7 @@ function areScenePathRepeatersEqual(
     left.id === right.id &&
     left.name === right.name &&
     left.enabled === right.enabled &&
+    left.collisionEnabled === right.collisionEnabled &&
     left.assetId === right.assetId &&
     left.placement === right.placement &&
     left.offset === right.offset &&
@@ -1231,11 +1252,15 @@ export function areScenePathsEqual(left: ScenePath, right: ScenePath): boolean {
     left.road.terrainConform === right.road.terrainConform &&
     left.road.materialId === right.road.materialId &&
     left.road.edges.left.enabled === right.road.edges.left.enabled &&
+    left.road.edges.left.collisionEnabled ===
+      right.road.edges.left.collisionEnabled &&
     left.road.edges.left.kind === right.road.edges.left.kind &&
     left.road.edges.left.width === right.road.edges.left.width &&
     left.road.edges.left.height === right.road.edges.left.height &&
     left.road.edges.left.materialId === right.road.edges.left.materialId &&
     left.road.edges.right.enabled === right.road.edges.right.enabled &&
+    left.road.edges.right.collisionEnabled ===
+      right.road.edges.right.collisionEnabled &&
     left.road.edges.right.kind === right.road.edges.right.kind &&
     left.road.edges.right.width === right.road.edges.right.width &&
     left.road.edges.right.height === right.road.edges.right.height &&
