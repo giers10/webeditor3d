@@ -113,6 +113,7 @@ import {
   MAX_SPLINE_CORRIDOR_JUNCTION_RADIUS,
   MIN_SPLINE_CORRIDOR_JUNCTION_CLIP_DISTANCE,
   MIN_SPLINE_CORRIDOR_JUNCTION_RADIUS,
+  isSplineCorridorJunctionShapeMode,
   isSplineCorridorJunctionTerrainMode,
   type SplineCorridorJunction
 } from "./spline-corridor-junctions";
