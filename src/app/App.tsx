@@ -1399,6 +1399,45 @@ function getSelectedPathPointState(
   };
 }
 
+function getPathPointInsertionAnchorId(
+  selection: EditorSelection,
+  path: ScenePath | null,
+  activeSelectionId: string | null
+): string | null {
+  if (path === null) {
+    return null;
+  }
+
+  if (selection.kind === "pathPoint" && selection.pathId === path.id) {
+    return selection.pointId;
+  }
+
+  if (selection.kind !== "pathPoints" || selection.pathId !== path.id) {
+    return null;
+  }
+
+  if (
+    activeSelectionId !== null &&
+    selection.pointIds.includes(activeSelectionId)
+  ) {
+    return activeSelectionId;
+  }
+
+  let anchorId: string | null = null;
+  let anchorIndex = -1;
+
+  for (const pointId of selection.pointIds) {
+    const pointIndex = getScenePathPointIndex(path, pointId);
+
+    if (pointIndex > anchorIndex) {
+      anchorIndex = pointIndex;
+      anchorId = pointId;
+    }
+  }
+
+  return anchorId;
+}
+
 function isModelAsset(asset: ProjectAssetRecord): asset is ModelAssetRecord {
   return asset.kind === "model";
 }
