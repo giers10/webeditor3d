@@ -953,6 +953,80 @@ describe("scene document JSON", () => {
     expect(migratedDocument.paths[path.id]?.repeaters).toEqual([]);
   });
 
+  it("migrates pre-corridor-collision paths to disabled collision defaults", () => {
+    const path = createScenePath({
+      id: "path-legacy-corridor-collision",
+      road: {
+        enabled: true,
+        edges: {
+          left: {
+            enabled: true,
+            kind: "curb",
+            width: 0.4,
+            height: 0.2,
+            materialId: null
+          }
+        }
+      },
+      repeaters: [
+        {
+          id: "repeater-legacy-collision",
+          assetId: "fence_segment_wood_2m"
+        }
+      ]
+    });
+    const document = {
+      ...createEmptySceneDocument({
+        name: "Legacy Corridor Collision Scene"
+      }),
+      paths: {
+        [path.id]: path
+      }
+    };
+    const legacyDocument = JSON.parse(serializeSceneDocument(document)) as {
+      version: number;
+      paths: Record<
+        string,
+        {
+          road: {
+            edges: {
+              left: {
+                collisionEnabled?: unknown;
+              };
+              right: {
+                collisionEnabled?: unknown;
+              };
+            };
+          };
+          repeaters: Array<{
+            collisionEnabled?: unknown;
+          }>;
+        }
+      >;
+    };
+
+    legacyDocument.version = SPLINE_REPEATERS_SCENE_DOCUMENT_VERSION;
+    delete legacyDocument.paths[path.id]!.road.edges.left.collisionEnabled;
+    delete legacyDocument.paths[path.id]!.road.edges.right.collisionEnabled;
+    delete legacyDocument.paths[path.id]!.repeaters[0]!.collisionEnabled;
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(
+      migratedDocument.paths[path.id]?.road.edges.left.collisionEnabled
+    ).toBe(false);
+    expect(
+      migratedDocument.paths[path.id]?.road.edges.right.collisionEnabled
+    ).toBe(false);
+    expect(migratedDocument.paths[path.id]?.repeaters[0]?.collisionEnabled).toBe(
+      false
+    );
+    expect(SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION).toBe(
+      SCENE_DOCUMENT_VERSION
+    );
+  });
+
   it("round-trips a document containing a canonical box brush", () => {
     const brush = createBoxBrush({
       id: "brush-box-room",
