@@ -721,7 +721,25 @@ describe("buildRuntimeSceneFromDocument", () => {
           heightOffset: 0.03,
           terrainConform: true,
           materialId: null,
-          material: null
+          material: null,
+          edges: {
+            left: {
+              enabled: false,
+              kind: "softShoulder",
+              width: 0.35,
+              height: 0.12,
+              materialId: null,
+              material: null
+            },
+            right: {
+              enabled: false,
+              kind: "softShoulder",
+              width: 0.35,
+              height: 0.12,
+              materialId: null,
+              material: null
+            }
+          }
         },
         points: [
           {
