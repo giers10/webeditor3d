@@ -68,6 +68,7 @@ import {
   SCENE_DOCUMENT_VERSION,
   SHADER_SKY_HORIZON_HEIGHT_SCENE_DOCUMENT_VERSION,
   SHADER_SKY_SCENE_DOCUMENT_VERSION,
+  SPLINE_CORRIDOR_JUNCTIONS_SCENE_DOCUMENT_VERSION,
   SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION,
   SPLINE_REPEATERS_SCENE_DOCUMENT_VERSION,
   SPLINE_ROAD_EDGES_SCENE_DOCUMENT_VERSION,
@@ -123,6 +124,7 @@ import {
 } from "../../src/serialization/scene-document-json";
 import { BUNDLED_FOLIAGE_PROTOTYPES } from "../../src/foliage/bundled-foliage-manifest";
 import { createFoliageLayer } from "../../src/foliage/foliage";
+import { createSplineCorridorJunction } from "../../src/document/spline-corridor-junctions";
 
 describe("scene document JSON", () => {
   it("round-trips the current empty schema", () => {
