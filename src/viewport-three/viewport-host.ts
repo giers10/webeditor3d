@@ -2308,16 +2308,26 @@ export class ViewportHost {
     this.terrainGridResizeEdgeTube.material.dispose();
     this.terrainGridResizeEdgeLine.geometry.dispose();
     this.terrainGridResizeEdgeLine.material.dispose();
-    this.terrainGridResizeArrowShaftOutline.geometry.dispose();
-    this.terrainGridResizeArrowShaftOutline.material.dispose();
-    this.terrainGridResizeArrowShaft.geometry.dispose();
-    this.terrainGridResizeArrowShaft.material.dispose();
-    this.terrainGridResizeArrowLine.geometry.dispose();
-    this.terrainGridResizeArrowLine.material.dispose();
-    this.terrainGridResizeArrowHeadOutline.geometry.dispose();
-    this.terrainGridResizeArrowHeadOutline.material.dispose();
-    this.terrainGridResizeArrowHead.geometry.dispose();
-    this.terrainGridResizeArrowHead.material.dispose();
+    for (const visual of this.terrainGridResizeArrowVisuals) {
+      for (const object of [
+        visual.shaftOutline,
+        visual.shaft,
+        visual.line,
+        visual.headOutline,
+        visual.head,
+        visual.pickShaft,
+        visual.pickHead
+      ]) {
+        object.geometry.dispose();
+        const materials = Array.isArray(object.material)
+          ? object.material
+          : [object.material];
+
+        for (const material of materials) {
+          material.dispose();
+        }
+      }
+    }
     this.environmentBlendCache.dispose();
     this.shaderSkyEnvironmentBlendCache.dispose();
     this.shaderSkyEnvironmentCache.dispose();
