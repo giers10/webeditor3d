@@ -912,6 +912,41 @@ describe("scene document JSON", () => {
     });
   });
 
+  it("migrates pre-repeater paths to empty repeaters", () => {
+    const path = createScenePath({
+      id: "path-legacy-repeaters",
+      repeaters: [
+        {
+          id: "repeater-legacy",
+          assetId: "fence_segment_wood_2m"
+        }
+      ]
+    });
+    const document = {
+      ...createEmptySceneDocument({ name: "Legacy Repeater Scene" }),
+      paths: {
+        [path.id]: path
+      }
+    };
+    const legacyDocument = JSON.parse(serializeSceneDocument(document)) as {
+      version: number;
+      paths: Record<
+        string,
+        {
+          repeaters?: unknown;
+        }
+      >;
+    };
+
+    legacyDocument.version = SPLINE_ROAD_EDGES_SCENE_DOCUMENT_VERSION;
+    delete legacyDocument.paths[path.id]!.repeaters;
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.paths[path.id]?.repeaters).toEqual([]);
+  });
+
   it("round-trips a document containing a canonical box brush", () => {
     const brush = createBoxBrush({
       id: "brush-box-room",
