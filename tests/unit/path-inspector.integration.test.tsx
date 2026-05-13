@@ -143,6 +143,7 @@ describe("Path inspector", () => {
     expect(screen.getByTestId("path-road-height-offset")).toHaveValue(0.03);
     expect(screen.getByTestId("path-road-terrain-conform")).toBeChecked();
     expect(screen.getByTestId("path-road-material")).toHaveValue("");
+    expect(screen.getByTestId("path-road-edge-left-collision")).not.toBeChecked();
     expect(screen.getByTestId("apply-path-road-to-terrain")).toBeDisabled();
     expect(screen.getByTestId("add-path-repeater")).toBeInTheDocument();
     expect(screen.getByTestId("path-point-0-x")).toHaveValue(-1);
@@ -194,6 +195,8 @@ describe("Path inspector", () => {
       }
     });
     fireEvent.click(screen.getByTestId("path-road-terrain-conform"));
+    fireEvent.click(screen.getByTestId("path-road-edge-left-enabled"));
+    fireEvent.click(screen.getByTestId("path-road-edge-left-collision"));
     fireEvent.click(screen.getByTestId("add-path-repeater"));
     expect(screen.getByTestId("path-repeater-0-asset")).toHaveValue(
       "fence_segment_wood_2m"
@@ -201,6 +204,8 @@ describe("Path inspector", () => {
     expect(screen.getByTestId("path-repeater-0-placement")).toHaveValue(
       "left"
     );
+    expect(screen.getByTestId("path-repeater-0-collision")).not.toBeChecked();
+    fireEvent.click(screen.getByTestId("path-repeater-0-collision"));
     fireEvent.change(screen.getByTestId("path-repeater-0-asset"), {
       target: {
         value: "fence_post_wood"
@@ -232,6 +237,7 @@ describe("Path inspector", () => {
       ).toMatchObject({
         assetId: "fence_post_wood",
         enabled: true,
+        collisionEnabled: true,
         placement: "right",
         offset: 2.25,
         spacing: 3,
@@ -264,11 +270,25 @@ describe("Path inspector", () => {
           heightOffset: 0.08,
           terrainConform: false,
           materialId: null
+        },
+        repeaters: [
+          expect.objectContaining({
+            collisionEnabled: true
+          })
+        ],
+        road: {
+          edges: {
+            left: expect.objectContaining({
+              enabled: true,
+              collisionEnabled: true
+            })
+          }
         }
       });
       expect(updatedPath?.repeaters[0]).toMatchObject({
         assetId: "fence_post_wood",
         enabled: true,
+        collisionEnabled: true,
         placement: "right",
         offset: 2.25,
         spacing: 3,
