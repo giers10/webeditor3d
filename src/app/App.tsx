@@ -10320,19 +10320,105 @@ export function App({
     }
   };
 
-  const applyTerrainGridChange = () => {
+  const syncTerrainGridSampleDraftsFromTerrain = (terrain: Terrain) => {
+    setTerrainSideSampleDrafts(
+      createTerrainGridSideSampleDrafts(
+        terrain.sampleCountX,
+        terrain.sampleCountZ
+      )
+    );
+    setTerrainLastEditedSampleSide(null);
+  };
+
+  const handleTerrainGridSideSampleDraftChange = (
+    side: TerrainGridSampleSide,
+    value: string
+  ) => {
+    setTerrainSideSampleDrafts((drafts) => ({
+      ...drafts,
+      [side]: value
+    }));
+    setTerrainLastEditedSampleSide(side);
+  };
+
+  const resolveTerrainGridResizeSideX = (
+    terrain: Terrain,
+    requestedSide?: TerrainGridSampleSide
+  ): "east" | "west" => {
+    if (isTerrainGridSampleXSide(requestedSide)) {
+      return requestedSide;
+    }
+
+    if (isTerrainGridSampleXSide(terrainLastEditedSampleSide)) {
+      return terrainLastEditedSampleSide;
+    }
+
+    const eastChanged =
+      Number(terrainSideSampleDrafts.east) !== terrain.sampleCountX;
+    const westChanged =
+      Number(terrainSideSampleDrafts.west) !== terrain.sampleCountX;
+
+    if (westChanged && !eastChanged) {
+      return "west";
+    }
+
+    return "east";
+  };
+
+  const resolveTerrainGridResizeSideZ = (
+    terrain: Terrain,
+    requestedSide?: TerrainGridSampleSide
+  ): "north" | "south" => {
+    if (isTerrainGridSampleZSide(requestedSide)) {
+      return requestedSide;
+    }
+
+    if (isTerrainGridSampleZSide(terrainLastEditedSampleSide)) {
+      return terrainLastEditedSampleSide;
+    }
+
+    const northChanged =
+      Number(terrainSideSampleDrafts.north) !== terrain.sampleCountZ;
+    const southChanged =
+      Number(terrainSideSampleDrafts.south) !== terrain.sampleCountZ;
+
+    if (southChanged && !northChanged) {
+      return "south";
+    }
+
+    return "north";
+  };
+
+  const applyTerrainGridChange = (requestedSide?: TerrainGridSampleSide) => {
     if (selectedTerrain === null) {
       setStatusMessage("Select a terrain before resizing its grid.");
       return;
     }
 
     try {
+      const resizeDirectionX = resolveTerrainGridResizeSideX(
+        selectedTerrain,
+        requestedSide
+      );
+      const resizeDirectionZ = resolveTerrainGridResizeSideZ(
+        selectedTerrain,
+        requestedSide
+      );
+      const applyAllDrafts =
+        requestedSide === undefined ||
+        Number(terrainCellSizeDraft) !== selectedTerrain.cellSize;
       const nextTerrain = resizeTerrainGrid(selectedTerrain, {
-        sampleCountX: Number(terrainSampleCountXDraft),
-        sampleCountZ: Number(terrainSampleCountZDraft),
+        sampleCountX:
+          isTerrainGridSampleXSide(requestedSide) || applyAllDrafts
+            ? Number(terrainSideSampleDrafts[resizeDirectionX])
+            : selectedTerrain.sampleCountX,
+        sampleCountZ:
+          isTerrainGridSampleZSide(requestedSide) || applyAllDrafts
+            ? Number(terrainSideSampleDrafts[resizeDirectionZ])
+            : selectedTerrain.sampleCountZ,
         cellSize: Number(terrainCellSizeDraft),
-        resizeDirectionX: terrainResizeDirectionXDraft,
-        resizeDirectionZ: terrainResizeDirectionZDraft
+        resizeDirectionX,
+        resizeDirectionZ
       });
       const terrainLabel = getTerrainLabelById(selectedTerrain.id, terrainList);
 
@@ -10344,8 +10430,7 @@ export function App({
       );
 
       if (committed) {
-        setTerrainSampleCountXDraft(String(nextTerrain.sampleCountX));
-        setTerrainSampleCountZDraft(String(nextTerrain.sampleCountZ));
+        syncTerrainGridSampleDraftsFromTerrain(nextTerrain);
         setTerrainCellSizeDraft(String(nextTerrain.cellSize));
       }
     } catch (error) {
@@ -10370,8 +10455,7 @@ export function App({
     );
 
     if (committed && selectedTerrain?.id === nextTerrain.id) {
-      setTerrainSampleCountXDraft(String(nextTerrain.sampleCountX));
-      setTerrainSampleCountZDraft(String(nextTerrain.sampleCountZ));
+      syncTerrainGridSampleDraftsFromTerrain(nextTerrain);
       setTerrainCellSizeDraft(String(nextTerrain.cellSize));
     }
 
