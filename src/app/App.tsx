@@ -10036,12 +10036,25 @@ export function App({
     }
 
     try {
-      const nextPoint = createAppendedScenePathPoint(selectedPath);
+      const insertAfterPointId = getPathPointInsertionAnchorId(
+        editorState.selection,
+        selectedPath,
+        editorState.activeSelectionId
+      );
+      const nextPoint =
+        insertAfterPointId === null
+          ? createAppendedScenePathPoint(selectedPath)
+          : createScenePathPointAfter(selectedPath, insertAfterPointId);
+      const nextPointIndex =
+        insertAfterPointId === null
+          ? selectedPath.points.length
+          : getScenePathPointIndex(selectedPath, insertAfterPointId) + 1;
 
       store.executeCommand(
         createAddPathPointCommand({
           pathId: selectedPath.id,
           point: nextPoint,
+          insertAfterPointId: insertAfterPointId ?? undefined,
           label: "Add path point"
         })
       );
@@ -10083,20 +10096,20 @@ export function App({
           latestActiveTransformSessionRef.current = nextTransformSession;
           store.setTransformSession(nextTransformSession);
           setStatusMessage(
-            `Appended path point ${selectedPath.points.length + 1}. Move the pointer, click or press Enter to place it.`
+            `Added path point ${nextPointIndex + 1}. Move the pointer, click or press Enter to place it.`
           );
           return;
         }
 
         setStatusMessage(
           transformTargetResult.message ??
-            "Appended path point, but could not start grab mode."
+            "Added path point, but could not start grab mode."
         );
         return;
       }
 
       setStatusMessage(
-        `Appended path point ${selectedPath.points.length + 1} to ${getPathLabelById(selectedPath.id, pathList)}.`
+        `Added path point ${nextPointIndex + 1} to ${getPathLabelById(selectedPath.id, pathList)}.`
       );
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
