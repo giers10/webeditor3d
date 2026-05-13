@@ -2050,6 +2050,12 @@ export class ViewportHost {
     this.terrainBrushPreviewLine.material.dispose();
     this.terrainBrushPreviewCenter.geometry.dispose();
     this.terrainBrushPreviewCenter.material.dispose();
+    this.terrainGridResizeEdgeLine.geometry.dispose();
+    this.terrainGridResizeEdgeLine.material.dispose();
+    this.terrainGridResizeArrowLine.geometry.dispose();
+    this.terrainGridResizeArrowLine.material.dispose();
+    this.terrainGridResizeArrowHead.geometry.dispose();
+    this.terrainGridResizeArrowHead.material.dispose();
     this.environmentBlendCache.dispose();
     this.shaderSkyEnvironmentBlendCache.dispose();
     this.shaderSkyEnvironmentCache.dispose();
