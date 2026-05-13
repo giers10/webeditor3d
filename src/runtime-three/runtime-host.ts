@@ -82,7 +82,11 @@ import {
   buildSplineRoadEdgeMeshGeometry,
   buildSplineRoadMeshGeometry
 } from "../geometry/spline-road-mesh";
-import { buildSplineCorridorJunctionMeshGeometry } from "../geometry/spline-corridor-junction-mesh";
+import {
+  buildSplineCorridorJunctionEdgeMeshGeometry,
+  buildSplineCorridorJunctionMeshGeometry,
+  resolveSplineCorridorJunctionEdgeSettings
+} from "../geometry/spline-corridor-junction-mesh";
 import {
   createStarterMaterialSignature,
   createStarterMaterialTextureSet,

@@ -208,7 +208,11 @@ import {
   buildSplineRoadEdgeMeshGeometry,
   buildSplineRoadMeshGeometry
 } from "../geometry/spline-road-mesh";
-import { buildSplineCorridorJunctionMeshGeometry } from "../geometry/spline-corridor-junction-mesh";
+import {
+  buildSplineCorridorJunctionEdgeMeshGeometry,
+  buildSplineCorridorJunctionMeshGeometry,
+  resolveSplineCorridorJunctionEdgeSettings
+} from "../geometry/spline-corridor-junction-mesh";
 import {
   detectSplineCorridorJunctionCandidates,
   resolveSplineCorridorJunctionClipIntervals
@@ -7762,18 +7766,44 @@ export class ViewportHost {
       paths,
       terrains
     });
+    const meshes: Array<Mesh<BufferGeometry, Material>> = [];
 
-    if (geometry === null) {
-      return null;
+    if (geometry !== null) {
+      const mesh = new Mesh(geometry, this.createRoadJunctionMaterial(junction));
+      mesh.castShadow = false;
+      mesh.receiveShadow = true;
+      mesh.userData.splineCorridorJunctionId = junction.id;
+      mesh.userData.nonPickable = true;
+      applyRendererRenderCategoryFromMaterial(mesh);
+      meshes.push(mesh);
     }
 
-    const mesh = new Mesh(geometry, this.createRoadJunctionMaterial(junction));
-    mesh.castShadow = false;
-    mesh.receiveShadow = true;
-    mesh.userData.splineCorridorJunctionId = junction.id;
-    mesh.userData.nonPickable = true;
-    applyRendererRenderCategoryFromMaterial(mesh);
-    return { meshes: [mesh] };
+    const edge = resolveSplineCorridorJunctionEdgeSettings({
+      junction,
+      paths
+    });
+    const edgeGeometry =
+      edge === null
+        ? null
+        : buildSplineCorridorJunctionEdgeMeshGeometry({
+            junction,
+            paths,
+            terrains,
+            edge
+          });
+
+    if (edge !== null && edgeGeometry !== null) {
+      const edgeMesh = new Mesh(edgeGeometry, this.createRoadEdgeMaterial(edge));
+      edgeMesh.castShadow = false;
+      edgeMesh.receiveShadow = true;
+      edgeMesh.userData.splineCorridorJunctionId = junction.id;
+      edgeMesh.userData.roadEdgeSide = "junction";
+      edgeMesh.userData.nonPickable = true;
+      applyRendererRenderCategoryFromMaterial(edgeMesh);
+      meshes.push(edgeMesh);
+    }
+
+    return meshes.length === 0 ? null : { meshes };
   }
 
   private rebuildRoadSurfaces(document: SceneDocument) {
