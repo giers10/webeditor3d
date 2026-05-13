@@ -1,10 +1,12 @@
 import type { Vec3 } from "../core/vector";
 import {
+  createScenePathRoadEdgeSettings,
   resolveScenePath,
   sampleResolvedScenePathPosition,
   type ResolvedScenePath,
   type ResolvedScenePathSegment,
-  type ScenePath
+  type ScenePath,
+  type ScenePathRoadEdgeSettings
 } from "../document/paths";
 import {
   createSplineCorridorJunction,
@@ -30,6 +32,7 @@ export interface SplineCorridorJunctionCandidate {
   center: Vec3;
   radius: number;
   materialId: string | null;
+  edge: ScenePathRoadEdgeSettings;
   connections: SplineCorridorJunctionCandidateConnection[];
 }
 
@@ -60,6 +63,23 @@ function getCandidateRadius(paths: readonly ScenePath[]): number {
     1.5,
     ...paths.map((path) => getRoadInfluenceRadius(path) * 1.15)
   );
+}
+
+function getCandidateEdge(paths: readonly ScenePath[]): ScenePathRoadEdgeSettings {
+  const edges = paths.flatMap((path) => [
+    path.road.edges.left,
+    path.road.edges.right
+  ]);
+  const inheritedEdge =
+    edges.find((edge) => edge.enabled && edge.kind !== "softShoulder") ??
+    edges.find((edge) => edge.enabled) ??
+    null;
+
+  if (inheritedEdge === null) {
+    return createScenePathRoadEdgeSettings();
+  }
+
+  return createScenePathRoadEdgeSettings(inheritedEdge);
 }
 
 function createCandidateId(
@@ -190,6 +210,7 @@ function createCandidateFromConnections(options: {
     materialId:
       options.paths.find((path) => path.road.materialId !== null)?.road
         .materialId ?? null,
+    edge: getCandidateEdge(options.paths),
     connections
   };
 }
@@ -473,6 +494,7 @@ export function createSplineCorridorJunctionFromCandidate(
     center: candidate.center,
     radius: candidate.radius,
     materialId: candidate.materialId,
+    edge: candidate.edge,
     connections: candidate.connections
   });
 }
@@ -534,4 +556,3 @@ export function getSplineCorridorJunctionsConnectedToPath(options: {
     junction.connections.some((connection) => connection.pathId === options.pathId)
   );
 }
-
