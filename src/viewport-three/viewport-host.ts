@@ -1796,8 +1796,11 @@ export class ViewportHost {
     if (toolMode !== "select") {
       this.cancelActiveTerrainBrushStroke(false);
       this.setTerrainBrushHover(null);
+      this.cancelActiveTerrainGridResizeDrag(false);
+      this.setTerrainGridResizeHover(null);
     } else {
       this.syncTerrainBrushPreview();
+      this.syncTerrainGridResizeOverlay();
     }
 
     if (toolMode !== "create") {
@@ -1825,6 +1828,11 @@ export class ViewportHost {
             isTerrainFoliageMaskTool(terrainBrushState?.tool);
 
     this.currentTerrainBrushState = terrainBrushState;
+
+    if (terrainBrushState !== null) {
+      this.cancelActiveTerrainGridResizeDrag(false);
+      this.setTerrainGridResizeHover(null);
+    }
 
     if (
       terrainChanged ||
