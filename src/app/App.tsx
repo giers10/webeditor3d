@@ -22434,6 +22434,27 @@ export function App({
                               }
                             />
                           </label>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Simple box collision</span>
+                            <input
+                              data-testid={`path-road-edge-${side}-collision`}
+                              type="checkbox"
+                              checked={edge.collisionEnabled}
+                              onChange={(event) =>
+                                handlePathRoadEdgeChange(
+                                  side,
+                                  {
+                                    ...edge,
+                                    collisionEnabled:
+                                      event.currentTarget.checked
+                                  },
+                                  event.currentTarget.checked
+                                    ? `Enabled ${edgeLabel.toLowerCase()} collision.`
+                                    : `Disabled ${edgeLabel.toLowerCase()} collision.`
+                                )
+                              }
+                            />
+                          </label>
                           <label className="form-field">
                             <span className="label">Profile</span>
                             <select
@@ -22615,6 +22636,27 @@ export function App({
                                   event.currentTarget.checked
                                     ? "Enabled Path repeater."
                                     : "Disabled Path repeater."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Simple box collision</span>
+                            <input
+                              data-testid={`path-repeater-${repeaterIndex}-collision`}
+                              type="checkbox"
+                              checked={repeater.collisionEnabled}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    collisionEnabled:
+                                      event.currentTarget.checked
+                                  },
+                                  event.currentTarget.checked
+                                    ? "Enabled Path repeater collision."
+                                    : "Disabled Path repeater collision."
                                 )
                               }
                             />
