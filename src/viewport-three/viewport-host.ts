@@ -996,10 +996,52 @@ export class ViewportHost {
     })
   );
   private readonly terrainGridResizeOverlayGroup = new Group();
+  private readonly terrainGridResizeEdgeOutline = new Mesh(
+    new BufferGeometry(),
+    new MeshBasicMaterial({
+      color: TERRAIN_GRID_RESIZE_OUTLINE_COLOR,
+      depthTest: false,
+      depthWrite: false
+    })
+  );
+  private readonly terrainGridResizeEdgeTube = new Mesh(
+    new BufferGeometry(),
+    new MeshBasicMaterial({
+      color: TERRAIN_GRID_RESIZE_EDGE_COLOR,
+      depthTest: false,
+      depthWrite: false
+    })
+  );
   private readonly terrainGridResizeEdgeLine = new Line(
     new BufferGeometry(),
     new LineBasicMaterial({
       color: TERRAIN_GRID_RESIZE_EDGE_COLOR,
+      depthTest: false,
+      depthWrite: false
+    })
+  );
+  private readonly terrainGridResizeArrowShaftOutline = new Mesh(
+    new CylinderGeometry(
+      TERRAIN_GRID_RESIZE_ARROW_SHAFT_OUTLINE_RADIUS,
+      TERRAIN_GRID_RESIZE_ARROW_SHAFT_OUTLINE_RADIUS,
+      1,
+      16
+    ),
+    new MeshBasicMaterial({
+      color: TERRAIN_GRID_RESIZE_OUTLINE_COLOR,
+      depthTest: false,
+      depthWrite: false
+    })
+  );
+  private readonly terrainGridResizeArrowShaft = new Mesh(
+    new CylinderGeometry(
+      TERRAIN_GRID_RESIZE_ARROW_SHAFT_RADIUS,
+      TERRAIN_GRID_RESIZE_ARROW_SHAFT_RADIUS,
+      1,
+      16
+    ),
+    new MeshBasicMaterial({
+      color: TERRAIN_GRID_RESIZE_ARROW_COLOR,
       depthTest: false,
       depthWrite: false
     })
@@ -1012,8 +1054,24 @@ export class ViewportHost {
       depthWrite: false
     })
   );
+  private readonly terrainGridResizeArrowHeadOutline = new Mesh(
+    new ConeGeometry(
+      TERRAIN_GRID_RESIZE_ARROW_HEAD_OUTLINE_RADIUS,
+      TERRAIN_GRID_RESIZE_ARROW_HEAD_OUTLINE_LENGTH,
+      24
+    ),
+    new MeshBasicMaterial({
+      color: TERRAIN_GRID_RESIZE_OUTLINE_COLOR,
+      depthTest: false,
+      depthWrite: false
+    })
+  );
   private readonly terrainGridResizeArrowHead = new Mesh(
-    new ConeGeometry(0.13, TERRAIN_GRID_RESIZE_ARROW_HEAD_LENGTH, 16),
+    new ConeGeometry(
+      TERRAIN_GRID_RESIZE_ARROW_HEAD_RADIUS,
+      TERRAIN_GRID_RESIZE_ARROW_HEAD_LENGTH,
+      24
+    ),
     new MeshBasicMaterial({
       color: TERRAIN_GRID_RESIZE_ARROW_COLOR,
       depthTest: false,
