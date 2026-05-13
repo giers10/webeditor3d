@@ -21397,80 +21397,54 @@ export function App({
                     <div className="label">Grid Settings</div>
                     <div className="material-summary">
                       Cell Size changes resolution while preserving footprint.
-                      Samples X/Z extend or crop terrain size toward the chosen
-                      cardinal edge.
+                      East, West, North, and South samples extend or crop that
+                      side of the terrain.
                     </div>
-                    <div className="vector-inputs">
-                      <label className="form-field">
-                        <span className="label">Samples X</span>
-                        <input
-                          data-testid="terrain-grid-sample-count-x"
-                          className="text-input"
-                          type="number"
-                          min={MIN_TERRAIN_SAMPLE_COUNT}
-                          step="1"
-                          value={terrainSampleCountXDraft}
-                          onChange={(event) =>
-                            setTerrainSampleCountXDraft(
-                              event.currentTarget.value
-                            )
-                          }
-                          onBlur={applyTerrainGridChange}
-                          onKeyDown={(event) =>
-                            handleDraftVectorKeyDown(
-                              event,
-                              applyTerrainGridChange
-                            )
-                          }
-                          onKeyUp={(event) =>
-                            handleNumberInputKeyUp(
-                              event,
-                              applyTerrainGridChange
-                            )
-                          }
-                          onPointerUp={(event) =>
-                            handleNumberInputPointerUp(
-                              event,
-                              applyTerrainGridChange
-                            )
-                          }
-                        />
-                      </label>
-                      <label className="form-field">
-                        <span className="label">Samples Z</span>
-                        <input
-                          data-testid="terrain-grid-sample-count-z"
-                          className="text-input"
-                          type="number"
-                          min={MIN_TERRAIN_SAMPLE_COUNT}
-                          step="1"
-                          value={terrainSampleCountZDraft}
-                          onChange={(event) =>
-                            setTerrainSampleCountZDraft(
-                              event.currentTarget.value
-                            )
-                          }
-                          onBlur={applyTerrainGridChange}
-                          onKeyDown={(event) =>
-                            handleDraftVectorKeyDown(
-                              event,
-                              applyTerrainGridChange
-                            )
-                          }
-                          onKeyUp={(event) =>
-                            handleNumberInputKeyUp(
-                              event,
-                              applyTerrainGridChange
-                            )
-                          }
-                          onPointerUp={(event) =>
-                            handleNumberInputPointerUp(
-                              event,
-                              applyTerrainGridChange
-                            )
-                          }
-                        />
-                      </label>
+                    <div className="vector-inputs vector-inputs--two">
+                      {(
+                        [
+                          ["east", "East"],
+                          ["west", "West"],
+                          ["north", "North"],
+                          ["south", "South"]
+                        ] as const
+                      ).map(([side, label]) => (
+                        <label key={side} className="form-field">
+                          <span className="label">{label}</span>
+                          <input
+                            data-testid={`terrain-grid-samples-${side}`}
+                            className="text-input"
+                            type="number"
+                            min={MIN_TERRAIN_SAMPLE_COUNT}
+                            step="1"
+                            value={terrainSideSampleDrafts[side]}
+                            onChange={(event) =>
+                              handleTerrainGridSideSampleDraftChange(
+                                side,
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={() => applyTerrainGridChange(side)}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(event, () =>
+                                applyTerrainGridChange(side)
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(event, () =>
+                                applyTerrainGridChange(side)
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(event, () =>
+                                applyTerrainGridChange(side)
+                              )
+                            }
+                          />
+                        </label>
+                      ))}
+                    </div>
+                    <div className="vector-inputs vector-inputs--two">
                       <label className="form-field">
                         <span className="label">Cell Size</span>
                         <input
@@ -21483,69 +21457,30 @@ export function App({
                           onChange={(event) =>
                             setTerrainCellSizeDraft(event.currentTarget.value)
                           }
-                          onBlur={applyTerrainGridChange}
+                          onBlur={() => applyTerrainGridChange()}
                           onKeyDown={(event) =>
-                            handleDraftVectorKeyDown(
-                              event,
-                              applyTerrainGridChange
+                            handleDraftVectorKeyDown(event, () =>
+                              applyTerrainGridChange()
                             )
                           }
                           onKeyUp={(event) =>
-                            handleNumberInputKeyUp(
-                              event,
-                              applyTerrainGridChange
+                            handleNumberInputKeyUp(event, () =>
+                              applyTerrainGridChange()
                             )
                           }
                           onPointerUp={(event) =>
-                            handleNumberInputPointerUp(
-                              event,
-                              applyTerrainGridChange
+                            handleNumberInputPointerUp(event, () =>
+                              applyTerrainGridChange()
                             )
                           }
                         />
-                      </label>
-                    </div>
-                    <div className="vector-inputs">
-                      <label className="form-field">
-                        <span className="label">Resize X</span>
-                        <select
-                          data-testid="terrain-grid-resize-direction-x"
-                          className="text-input"
-                          value={terrainResizeDirectionXDraft}
-                          onChange={(event) =>
-                            setTerrainResizeDirectionXDraft(
-                              event.currentTarget
-                                .value as TerrainGridResizeDirectionX
-                            )
-                          }
-                        >
-                          <option value="east">East</option>
-                          <option value="west">West</option>
-                        </select>
-                      </label>
-                      <label className="form-field">
-                        <span className="label">Resize Z</span>
-                        <select
-                          data-testid="terrain-grid-resize-direction-z"
-                          className="text-input"
-                          value={terrainResizeDirectionZDraft}
-                          onChange={(event) =>
-                            setTerrainResizeDirectionZDraft(
-                              event.currentTarget
-                                .value as TerrainGridResizeDirectionZ
-                            )
-                          }
-                        >
-                          <option value="north">North</option>
-                          <option value="south">South</option>
-                        </select>
                       </label>
                     </div>
                     <button
                       className="viewport-panel__button"
                       type="button"
                       data-testid="terrain-grid-apply"
-                      onClick={applyTerrainGridChange}
+                      onClick={() => applyTerrainGridChange()}
                     >
                       Apply Grid
                     </button>
