@@ -3512,17 +3512,13 @@ export function App({
   const [terrainBrushSettings, setTerrainBrushSettings] = useState(
     createDefaultTerrainBrushSettings()
   );
-  const [terrainSampleCountXDraft, setTerrainSampleCountXDraft] = useState("9");
-  const [terrainSampleCountZDraft, setTerrainSampleCountZDraft] = useState("9");
+  const [terrainSideSampleDrafts, setTerrainSideSampleDrafts] =
+    useState<TerrainGridSideSampleDrafts>(() =>
+      createTerrainGridSideSampleDrafts(9, 9)
+    );
+  const [terrainLastEditedSampleSide, setTerrainLastEditedSampleSide] =
+    useState<TerrainGridSampleSide | null>(null);
   const [terrainCellSizeDraft, setTerrainCellSizeDraft] = useState("1");
-  const [terrainResizeDirectionXDraft, setTerrainResizeDirectionXDraft] =
-    useState<TerrainGridResizeDirectionX>(
-      DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X
-    );
-  const [terrainResizeDirectionZDraft, setTerrainResizeDirectionZDraft] =
-    useState<TerrainGridResizeDirectionZ>(
-      DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z
-    );
   const [terrainLodGridVisibleTerrainIds, setTerrainLodGridVisibleTerrainIds] =
     useState<readonly string[]>([]);
   const [activeFoliageLayerId, setActiveFoliageLayerId] = useState<
