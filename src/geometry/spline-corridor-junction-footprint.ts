@@ -4,6 +4,7 @@ import {
   sampleResolvedScenePathPosition,
   sampleResolvedScenePathTangent,
   type ScenePathCurveMode,
+  type ScenePathRoadEdgeSide,
   type ScenePathPoint,
   type ScenePathRoadSettings
 } from "../document/paths";
@@ -31,6 +32,10 @@ export interface SplineCorridorJunctionFootprintPoint {
   fallbackY: number;
   heightOffset: number;
   connectionBoundaryKey: string | null;
+  connectionPathId?: string;
+  connectionDistance?: number;
+  connectionSide?: ScenePathRoadEdgeSide;
+  connectionOutwardAxis?: { x: number; z: number };
 }
 
 export interface SplineCorridorJunctionFootprint {
@@ -109,13 +114,21 @@ function createFootprintPoint(options: {
   offset: number;
   heightOffset: number;
   connectionBoundaryKey: string;
+  connectionPathId: string;
+  connectionDistance: number;
+  connectionSide: ScenePathRoadEdgeSide;
+  connectionOutwardAxis: { x: number; z: number };
 }): SplineCorridorJunctionFootprintPoint {
   return {
     x: options.position.x + options.leftAxis.x * options.offset,
     z: options.position.z + options.leftAxis.z * options.offset,
     fallbackY: options.position.y + options.heightOffset,
     heightOffset: options.heightOffset,
-    connectionBoundaryKey: options.connectionBoundaryKey
+    connectionBoundaryKey: options.connectionBoundaryKey,
+    connectionPathId: options.connectionPathId,
+    connectionDistance: options.connectionDistance,
+    connectionSide: options.connectionSide,
+    connectionOutwardAxis: options.connectionOutwardAxis
   };
 }
 
@@ -205,14 +218,25 @@ function addConnectionBoundaryPoints(options: {
         leftAxis: localLeftAxis,
         offset: halfWidth,
         heightOffset,
-        connectionBoundaryKey
+        connectionBoundaryKey,
+        connectionPathId: options.path.id,
+        connectionDistance: distance,
+        connectionSide: "left",
+        connectionOutwardAxis: localLeftAxis
       }),
       createFootprintPoint({
         position,
         leftAxis: localLeftAxis,
         offset: -halfWidth,
         heightOffset,
-        connectionBoundaryKey
+        connectionBoundaryKey,
+        connectionPathId: options.path.id,
+        connectionDistance: distance,
+        connectionSide: "right",
+        connectionOutwardAxis: {
+          x: -localLeftAxis.x,
+          z: -localLeftAxis.z
+        }
       })
     );
   }
@@ -252,10 +276,18 @@ function dedupePoints(
 
     existing.fallbackY = (existing.fallbackY + point.fallbackY) * 0.5;
     existing.heightOffset = (existing.heightOffset + point.heightOffset) * 0.5;
-    existing.connectionBoundaryKey =
-      existing.connectionBoundaryKey === point.connectionBoundaryKey
-        ? existing.connectionBoundaryKey
-        : null;
+    const keepsConnection =
+      existing.connectionBoundaryKey === point.connectionBoundaryKey &&
+      existing.connectionPathId === point.connectionPathId &&
+      existing.connectionSide === point.connectionSide;
+
+    if (!keepsConnection) {
+      existing.connectionBoundaryKey = null;
+      delete existing.connectionPathId;
+      delete existing.connectionDistance;
+      delete existing.connectionSide;
+      delete existing.connectionOutwardAxis;
+    }
   }
 
   return deduped;
