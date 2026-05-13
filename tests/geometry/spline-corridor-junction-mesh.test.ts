@@ -4,6 +4,7 @@ import { createScenePath } from "../../src/document/paths";
 import { createSplineCorridorJunction } from "../../src/document/spline-corridor-junctions";
 import {
   buildSplineCorridorJunctionFootprint,
+  isSplineCorridorJunctionFootprintRoadMouthEdge,
   sampleSplineCorridorJunctionFootprintInfluence
 } from "../../src/geometry/spline-corridor-junction-footprint";
 import {
@@ -196,12 +197,28 @@ describe("spline corridor junction mesh generation", () => {
       paths: [pathA, pathB],
       edge
     });
+    const footprint = buildSplineCorridorJunctionFootprint({
+      junction,
+      paths: [pathA, pathB]
+    });
+
+    if (footprint === null) {
+      throw new Error("Expected a junction footprint.");
+    }
+
+    const roadMouthSegmentCount = footprint.points.filter((point, index) =>
+      isSplineCorridorJunctionFootprintRoadMouthEdge(
+        point,
+        footprint.points[(index + 1) % footprint.points.length]!
+      )
+    ).length;
 
     expect(edge.materialId).toBe("curb-material");
+    expect(roadMouthSegmentCount).toBe(4);
     expect(meshData?.footprintPointCount).toBe(8);
     expect(meshData?.profileVertexCount).toBe(4);
     expect(meshData?.positions).toHaveLength((8 + 1) * 4 * 3);
-    expect(meshData?.indices).toHaveLength(8 * 3 * 6);
+    expect(meshData?.indices).toHaveLength(4 * 3 * 6 + 4 * 2 * 2 * 3);
     const firstProfile = Array.from(meshData!.positions.slice(0, 12));
 
     expect(firstProfile).toEqual([
