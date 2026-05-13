@@ -9964,6 +9964,48 @@ export function App({
     );
   };
 
+  const handleCreateSplineCorridorJunction = (
+    candidate: SplineCorridorJunctionCandidate
+  ) => {
+    try {
+      store.executeCommand(
+        createUpsertSplineCorridorJunctionCommand({
+          junction: createSplineCorridorJunctionFromCandidate(candidate),
+          label: "Create spline corridor junction"
+        })
+      );
+      setStatusMessage("Created spline corridor junction.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleSplineCorridorJunctionChange = (
+    junction: SplineCorridorJunction,
+    successMessage: string
+  ) => {
+    try {
+      store.executeCommand(
+        createUpsertSplineCorridorJunctionCommand({
+          junction,
+          label: "Update spline corridor junction"
+        })
+      );
+      setStatusMessage(successMessage);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleDeleteSplineCorridorJunction = (junctionId: string) => {
+    try {
+      store.executeCommand(createDeleteSplineCorridorJunctionCommand(junctionId));
+      setStatusMessage("Deleted spline corridor junction.");
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const handleAddPathRepeater = () => {
     if (selectedPath === null) {
       setStatusMessage("Select a path before adding a repeater.");
