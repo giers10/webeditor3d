@@ -107,6 +107,18 @@ function createRapierHeightfieldHeights(collider: {
   return heights;
 }
 
+function getRapierHeightfieldSubdivisions(collider: {
+  rows: number;
+  cols: number;
+}): { rowSubdivisions: number; colSubdivisions: number } {
+  return {
+    // Rapier names these as row/column subdivisions, but in world space those
+    // map to Z rows and X columns respectively.
+    rowSubdivisions: collider.cols - 1,
+    colSubdivisions: collider.rows - 1
+  };
+}
+
 function createFixedBodyForModelCollider(world: RAPIER.World, collider: GeneratedModelCollider): RAPIER.RigidBody {
   return world.createRigidBody(
     RAPIER.RigidBodyDesc.fixed()
@@ -197,8 +209,8 @@ function attachTerrainModelCollider(world: RAPIER.World, collider: GeneratedMode
     },
     collider.transform.scale
   );
-  const rowSubdivisions = collider.rows - 1;
-  const colSubdivisions = collider.cols - 1;
+  const { rowSubdivisions, colSubdivisions } =
+    getRapierHeightfieldSubdivisions(collider);
 
   world.createCollider(
     // Rapier expects the number of grid subdivisions here, while our generated
@@ -229,8 +241,8 @@ function attachTerrainCollider(
       collider.position.z
     )
   );
-  const rowSubdivisions = collider.rows - 1;
-  const colSubdivisions = collider.cols - 1;
+  const { rowSubdivisions, colSubdivisions } =
+    getRapierHeightfieldSubdivisions(collider);
 
   world.createCollider(
     RAPIER.ColliderDesc.heightfield(
