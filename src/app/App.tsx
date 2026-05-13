@@ -1534,6 +1534,36 @@ function getRoadEdgeKindLabel(kind: ScenePathRoadEdgeKind): string {
   }
 }
 
+function getPathRepeaterPlacementLabel(
+  placement: ScenePathRepeaterPlacement
+): string {
+  switch (placement) {
+    case "center":
+      return "Center";
+    case "left":
+      return "Left";
+    case "right":
+      return "Right";
+  }
+}
+
+function getSplineCorridorAssetCategoryLabel(category: string): string {
+  switch (category) {
+    case "road_curb_edge":
+      return "Road / Curb Edge";
+    case "trail_forest_edge":
+      return "Trail / Forest Edge";
+    case "river_ditch_bank":
+      return "River / Ditch Bank";
+    case "fence_repeater":
+      return "Fence";
+    case "debris_scatter":
+      return "Debris";
+    default:
+      return category;
+  }
+}
+
 function getTerrainLabel(terrain: Terrain, index: number): string {
   return terrain.name ?? `Terrain ${index + 1}`;
 }
