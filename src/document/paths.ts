@@ -835,21 +835,26 @@ export function createDefaultScenePathPoints(anchor?: Vec3): ScenePathPoint[] {
 
 export function createScenePath(
   overrides: Partial<
-    Pick<
-      ScenePath,
-      | "id"
-      | "name"
-      | "visible"
-      | "enabled"
-      | "loop"
-      | "curveMode"
-      | "sampledResolution"
-      | "glueToTerrain"
-      | "terrainOffset"
-      | "road"
-      | "points"
+    Omit<
+      Pick<
+        ScenePath,
+        | "id"
+        | "name"
+        | "visible"
+        | "enabled"
+        | "loop"
+        | "curveMode"
+        | "sampledResolution"
+        | "glueToTerrain"
+        | "terrainOffset"
+        | "road"
+        | "points"
+      >,
+      "road"
     >
-  > = {}
+  > & {
+    road?: Partial<ScenePathRoadSettings>;
+  } = {}
 ): ScenePath {
   const points =
     overrides.points === undefined
