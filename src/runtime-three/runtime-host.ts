@@ -42,6 +42,7 @@ import {
   disposeModelInstance
 } from "../assets/model-instance-rendering";
 import { FoliageInstancedRenderer } from "../foliage/foliage-instanced-renderer";
+import { SplineRepeaterRenderer } from "../spline-corridor/spline-repeater-renderer";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
 import type { LoadedImageAsset } from "../assets/image-assets";
 import type { LoadedAudioAsset } from "../assets/audio-assets";
@@ -775,6 +776,11 @@ export class RuntimeHost {
     string,
     RuntimeRoadSurfaceRenderObjects
   >();
+  private readonly splineRepeaterRenderer = new SplineRepeaterRenderer({
+    onRebuilt: () => {
+      this.applyShadowState();
+    }
+  });
   private volumeTime = 0;
   private readonly volumeAnimatedUniforms: Array<{ value: number }> = [];
   private readonly runtimeWaterContactUniforms: RuntimeWaterContactUniformBinding[] =
