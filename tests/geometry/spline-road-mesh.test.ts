@@ -120,6 +120,7 @@ describe("spline road mesh generation", () => {
         edges: {
           left: {
             enabled: true,
+            collisionEnabled: false,
             kind: "curb",
             width: 0.4,
             height: 0.2,
