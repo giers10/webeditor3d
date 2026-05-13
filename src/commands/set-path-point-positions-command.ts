@@ -7,8 +7,13 @@ import {
   getScenePathPointIndex,
   type ScenePath
 } from "../document/paths";
+import type { SplineCorridorJunctionRegistry } from "../document/spline-corridor-junctions";
 
 import type { EditorCommand } from "./command";
+import {
+  cloneSplineCorridorJunctionRegistry,
+  setScenePathAndReattachJunctions
+} from "./path-junction-maintenance";
 
 export interface PathPointPositionUpdate {
   pointId: string;
@@ -85,6 +90,7 @@ export function createSetPathPointPositionsCommand(
     position: cloneVec3(update.position)
   }));
   let previousPath: ScenePath | null = null;
+  let previousJunctions: SplineCorridorJunctionRegistry | null = null;
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
 
@@ -115,13 +121,18 @@ export function createSetPathPointPositionsCommand(
         previousToolMode = context.getToolMode();
       }
 
-      context.setDocument({
-        ...currentDocument,
-        paths: {
-          ...currentDocument.paths,
-          [path.id]: applyPathPointUpdates(path, updates)
-        }
-      });
+      if (previousJunctions === null) {
+        previousJunctions = cloneSplineCorridorJunctionRegistry(
+          currentDocument.splineCorridorJunctions
+        );
+      }
+
+      context.setDocument(
+        setScenePathAndReattachJunctions(
+          currentDocument,
+          applyPathPointUpdates(path, updates)
+        )
+      );
       context.setSelection(
         createPathPointSelection(
           options.pathId,
@@ -142,7 +153,11 @@ export function createSetPathPointPositionsCommand(
         paths: {
           ...currentDocument.paths,
           [previousPath.id]: cloneScenePath(previousPath)
-        }
+        },
+        splineCorridorJunctions:
+          previousJunctions === null
+            ? currentDocument.splineCorridorJunctions
+            : cloneSplineCorridorJunctionRegistry(previousJunctions)
       });
 
       if (previousSelection !== null) {
