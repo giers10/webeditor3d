@@ -9,8 +9,13 @@ import {
   getScenePathPointIndex,
   type ScenePathPoint
 } from "../document/paths";
+import type { SplineCorridorJunctionRegistry } from "../document/spline-corridor-junctions";
 
 import type { EditorCommand } from "./command";
+import {
+  cloneSplineCorridorJunctionRegistry,
+  setScenePathAndReattachJunctions
+} from "./path-junction-maintenance";
 
 interface AddPathPointCommandOptions {
   pathId: string;
@@ -35,6 +40,7 @@ export function createAddPathPointCommand(
 ): EditorCommand {
   let addedPoint: ScenePathPoint | null =
     options.point === undefined ? null : cloneScenePathPoint(options.point);
+  let previousJunctions: SplineCorridorJunctionRegistry | null = null;
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
 
@@ -64,6 +70,12 @@ export function createAddPathPointCommand(
         previousToolMode = context.getToolMode();
       }
 
+      if (previousJunctions === null) {
+        previousJunctions = cloneSplineCorridorJunctionRegistry(
+          currentDocument.splineCorridorJunctions
+        );
+      }
+
       const insertionIndex =
         options.insertAfterPointId === undefined
           ? path.points.length
@@ -75,11 +87,10 @@ export function createAddPathPointCommand(
         );
       }
 
-      context.setDocument({
-        ...currentDocument,
-        paths: {
-          ...currentDocument.paths,
-          [path.id]: cloneScenePath({
+      context.setDocument(
+        setScenePathAndReattachJunctions(
+          currentDocument,
+          cloneScenePath({
             ...path,
             points: [
               ...path.points.slice(0, insertionIndex),
@@ -87,8 +98,8 @@ export function createAddPathPointCommand(
               ...path.points.slice(insertionIndex)
             ]
           })
-        }
-      });
+        )
+      );
       context.setSelection(
         setSelectedPathPointSelection(options.pathId, addedPoint.id)
       );
@@ -114,7 +125,11 @@ export function createAddPathPointCommand(
             ...path,
             points: path.points.filter((point) => point.id !== addedPoint?.id)
           })
-        }
+        },
+        splineCorridorJunctions:
+          previousJunctions === null
+            ? currentDocument.splineCorridorJunctions
+            : cloneSplineCorridorJunctionRegistry(previousJunctions)
       });
 
       if (previousSelection !== null) {
