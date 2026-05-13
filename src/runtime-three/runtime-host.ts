@@ -237,6 +237,7 @@ import type {
   RuntimeLocalLightCollection,
   RuntimeNavigationMode,
   RuntimePath,
+  RuntimePathRoadEdgeSettings,
   RuntimeSceneDefinition,
   RuntimeTerrain,
   RuntimeTeleportTarget
@@ -271,7 +272,7 @@ interface RuntimeTerrainRenderObjects {
 }
 
 interface RuntimeRoadSurfaceRenderObjects {
-  mesh: Mesh<BufferGeometry, Material>;
+  meshes: Array<Mesh<BufferGeometry, Material>>;
 }
 
 function createRuntimeGeometryBrush(brush: RuntimeBoxBrushInstance): Brush {
@@ -378,6 +379,15 @@ interface RuntimeWaterContactUniformBinding {
 }
 
 const FALLBACK_FACE_COLOR = 0xf2ece2;
+const RUNTIME_ROAD_EDGE_FALLBACK_COLORS: Record<
+  RuntimePathRoadEdgeSettings["kind"],
+  number
+> = {
+  curb: 0x8d8676,
+  softShoulder: 0x5f4b31,
+  bank: 0x4f6a39,
+  ditch: 0x33402f
+};
 const RUNTIME_PERSPECTIVE_CAMERA_FAR = 1000;
 const RUNTIME_CLOCK_PUBLISH_INTERVAL_SECONDS = 1 / 30;
 const WATER_REFLECTION_UPDATE_INTERVAL_MS = 96;
@@ -3202,10 +3212,9 @@ export class RuntimeHost {
     }
 
     for (const renderObjects of this.roadSurfaceMeshes.values()) {
-      applyAdvancedRenderingRenderableShadowFlags(
-        renderObjects.mesh,
-        shadowsEnabled
-      );
+      for (const mesh of renderObjects.meshes) {
+        applyAdvancedRenderingRenderableShadowFlags(mesh, shadowsEnabled);
+      }
     }
 
     applyAdvancedRenderingRenderableShadowFlags(
