@@ -86,6 +86,8 @@ function createRuntimeSceneFixture(): RuntimeSceneDefinition {
     },
     modelInstances: [],
     paths: [],
+    splineCorridorJunctions: [],
+    splineCorridorClipIntervalsByPath: new Map(),
     npcDefinitions: [],
     entities: {
       playerStarts: [],
