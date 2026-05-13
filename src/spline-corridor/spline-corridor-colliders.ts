@@ -6,10 +6,16 @@ import {
   type ScenePathRepeater,
   type ScenePathRoadSettings
 } from "../document/paths";
+import type { SplineCorridorJunction } from "../document/spline-corridor-junctions";
 import {
   sampleTerrainHeightAtWorldPosition,
   type Terrain
 } from "../document/terrains";
+import {
+  buildSplineCorridorJunctionFootprint,
+  isSplineCorridorJunctionFootprintRoadMouthEdge,
+  type SplineCorridorJunctionFootprintPoint
+} from "../geometry/spline-corridor-junction-footprint";
 
 import { deriveSplineRepeaterInstances } from "./spline-repeaters";
 import {
@@ -41,10 +47,11 @@ export interface SplineCorridorBoxCollider {
   kind: "box";
   source: "splineCorridor";
   colliderId: string;
-  pathId: string;
+  pathId?: string;
+  junctionId?: string;
   repeaterId?: string;
   assetId?: string;
-  edgeSide?: "left" | "right";
+  edgeSide?: "left" | "right" | "junction";
   position: Vec3;
   rotationDegrees: Vec3;
   center: Vec3;
@@ -181,7 +188,8 @@ function computeBoxWorldBounds(options: {
 
 function createBoxCollider(options: {
   colliderId: string;
-  pathId: string;
+  pathId?: string;
+  junctionId?: string;
   repeaterId?: string;
   assetId?: string;
   edgeSide?: "left" | "right";
@@ -201,6 +209,7 @@ function createBoxCollider(options: {
     source: "splineCorridor",
     colliderId: options.colliderId,
     pathId: options.pathId,
+    junctionId: options.junctionId,
     repeaterId: options.repeaterId,
     assetId: options.assetId,
     edgeSide: options.edgeSide,
@@ -219,6 +228,145 @@ function createBoxCollider(options: {
       size
     })
   };
+}
+
+function shouldJunctionConformToTerrain(options: {
+  junction: SplineCorridorJunction;
+  paths: readonly SplineCorridorColliderPathLike[];
+}): boolean {
+  return options.junction.connections.some((connection) => {
+    const path =
+      options.paths.find((candidate) => candidate.id === connection.pathId) ??
+      null;
+
+    return path?.road.terrainConform ?? false;
+  });
+}
+
+function normalizeXZ(vector: { x: number; z: number }): { x: number; z: number } | null {
+  const length = Math.hypot(vector.x, vector.z);
+
+  if (length <= 1e-8) {
+    return null;
+  }
+
+  return {
+    x: vector.x / length,
+    z: vector.z / length
+  };
+}
+
+function getOutwardSegmentNormal(
+  start: SplineCorridorJunctionFootprintPoint,
+  end: SplineCorridorJunctionFootprintPoint
+): { x: number; z: number } | null {
+  const direction = normalizeXZ({
+    x: end.x - start.x,
+    z: end.z - start.z
+  });
+
+  if (direction === null) {
+    return null;
+  }
+
+  return {
+    x: direction.z,
+    z: -direction.x
+  };
+}
+
+function buildJunctionEdgeColliders(options: {
+  junctions: readonly SplineCorridorJunction[];
+  paths: readonly SplineCorridorColliderPathLike[];
+  terrains: readonly Terrain[];
+}): SplineCorridorBoxCollider[] {
+  const colliders: SplineCorridorBoxCollider[] = [];
+
+  for (const junction of options.junctions) {
+    if (
+      !junction.enabled ||
+      !junction.visible ||
+      !junction.edge.enabled ||
+      !junction.edge.collisionEnabled ||
+      junction.edge.width <= 0
+    ) {
+      continue;
+    }
+
+    const footprint = buildSplineCorridorJunctionFootprint({
+      junction,
+      paths: options.paths,
+      terrains: options.terrains
+    });
+
+    if (footprint === null || footprint.points.length < 3) {
+      continue;
+    }
+
+    const conformToTerrain = shouldJunctionConformToTerrain({
+      junction,
+      paths: options.paths
+    });
+    const boxHeight = Math.max(MIN_COLLIDER_SIZE, junction.edge.height);
+
+    for (let index = 0; index < footprint.points.length; index += 1) {
+      const start = footprint.points[index]!;
+      const end = footprint.points[(index + 1) % footprint.points.length]!;
+
+      if (isSplineCorridorJunctionFootprintRoadMouthEdge(start, end)) {
+        continue;
+      }
+
+      const segmentLength = Math.hypot(end.x - start.x, end.z - start.z);
+      const outwardNormal = getOutwardSegmentNormal(start, end);
+
+      if (segmentLength <= 1e-8 || outwardNormal === null) {
+        continue;
+      }
+
+      const midpoint = {
+        x: (start.x + end.x) * 0.5,
+        y: (start.fallbackY + end.fallbackY) * 0.5,
+        z: (start.z + end.z) * 0.5
+      };
+      const basePosition = {
+        x: midpoint.x + outwardNormal.x * junction.edge.width * 0.5,
+        y: midpoint.y,
+        z: midpoint.z + outwardNormal.z * junction.edge.width * 0.5
+      };
+      const terrainWorldY = conformToTerrain
+        ? sampleHighestTerrainWorldY(options.terrains, basePosition)
+        : null;
+      const yawDegrees =
+        (Math.atan2(end.x - start.x, end.z - start.z) * 180) / Math.PI;
+
+      colliders.push(
+        createBoxCollider({
+          colliderId: `${junction.id}:junction-edge:${index}:box`,
+          junctionId: junction.id,
+          edgeSide: "junction",
+          position: {
+            x: basePosition.x,
+            y: (terrainWorldY ?? basePosition.y) + boxHeight * 0.5,
+            z: basePosition.z
+          },
+          yawDegrees,
+          center: {
+            x: 0,
+            y: 0,
+            z: 0
+          },
+          size: {
+            x: junction.edge.width,
+            y: boxHeight,
+            z: segmentLength
+          }
+        })
+      );
+    }
+  }
+
+  return colliders;
 }
 
 function buildRepeaterColliders(options: {
@@ -382,12 +530,14 @@ function buildRoadEdgeColliders(options: {
 
 export function deriveSplineCorridorBoxColliders(options: {
   paths: readonly SplineCorridorColliderPathLike[];
+  junctions?: readonly SplineCorridorJunction[];
   terrains?: readonly Terrain[];
   clipIntervalsByPath?: SplineCorridorPathClipIntervalMap;
 }): SplineCorridorBoxCollider[] {
   const terrains = options.terrains ?? [];
 
-  return options.paths.flatMap((path) => [
+  return [
+    ...options.paths.flatMap((path) => [
     ...buildRoadEdgeColliders({
       path,
       terrains,
@@ -398,5 +548,11 @@ export function deriveSplineCorridorBoxColliders(options: {
       terrains,
       clipIntervalsByPath: options.clipIntervalsByPath
     })
-  ]);
+    ]),
+    ...buildJunctionEdgeColliders({
+      junctions: options.junctions ?? [],
+      paths: options.paths,
+      terrains
+    })
+  ];
 }
