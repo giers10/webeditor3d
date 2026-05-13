@@ -43,6 +43,7 @@ import type { ToolMode } from "../core/tool-mode";
 import type { SceneDocument } from "../document/scene-document";
 import type { WorldSettings } from "../document/world-settings";
 import type { EditorSimulationController } from "../runtime-three/editor-simulation-controller";
+import type { Terrain } from "../document/terrains";
 
 interface ViewportPanelProps {
   panelId: ViewportPanelId;
@@ -91,6 +92,7 @@ interface ViewportPanelProps {
   ): void;
   onCommitCreation(toolPreview: CreationViewportToolPreview): boolean;
   onTerrainBrushCommit(commit: TerrainBrushStrokeCommit): boolean;
+  onTerrainGridResizeCommit(terrain: Terrain): boolean;
   onCameraStateChange(cameraState: ViewportPanelCameraState): void;
   onToolPreviewChange(toolPreview: ViewportToolPreview): void;
   onBeginTransformOperation(operation: TransformOperation): void;
@@ -166,6 +168,7 @@ export function ViewportPanel({
   onSetPanelDisplayMode,
   onCommitCreation,
   onTerrainBrushCommit,
+  onTerrainGridResizeCommit,
   onCameraStateChange,
   onToolPreviewChange,
   onBeginTransformOperation,
@@ -229,6 +232,7 @@ export function ViewportPanel({
         focusSelection={focusSelection}
         onSelectionChange={onSelectionChange}
         onTerrainBrushCommit={onTerrainBrushCommit}
+        onTerrainGridResizeCommit={onTerrainGridResizeCommit}
         onCommitCreation={onCommitCreation}
         onCameraStateChange={onCameraStateChange}
         onToolPreviewChange={onToolPreviewChange}
