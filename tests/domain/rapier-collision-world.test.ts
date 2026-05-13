@@ -1126,6 +1126,87 @@ describe("RapierCollisionWorld", () => {
     }
   });
 
+  it("keeps rectangular authored terrain collision aligned along the Z axis", async () => {
+    const terrain = createTerrain({
+      id: "terrain-authored-rectangular-z-collision",
+      position: {
+        x: 10,
+        y: 0,
+        z: 20
+      },
+      sampleCountX: 5,
+      sampleCountZ: 3,
+      cellSize: 2,
+      heights: [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4
+      ]
+    });
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({
+        name: "Authored Rectangular Terrain Z Collision Scene"
+      }),
+      terrains: {
+        [terrain.id]: terrain
+      }
+    });
+    const collisionWorld = await RapierCollisionWorld.create(
+      runtimeScene.colliders,
+      runtimeScene.playerCollider
+    );
+
+    try {
+      const southLanding = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 14,
+          y: 8,
+          z: 21
+        },
+        {
+          x: 0,
+          y: -10,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+      const northLanding = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 14,
+          y: 8,
+          z: 23
+        },
+        {
+          x: 0,
+          y: -10,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+
+      expect(southLanding.grounded).toBe(true);
+      expect(southLanding.feetPosition.y).toBeGreaterThan(0.08);
+      expect(southLanding.feetPosition.y).toBeLessThan(0.12);
+      expect(northLanding.grounded).toBe(true);
+      expect(northLanding.feetPosition.y).toBeGreaterThan(0.28);
+      expect(northLanding.feetPosition.y).toBeLessThan(0.32);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
+
   it("keeps authored terrain collision aligned after west and south grid resize", async () => {
     const terrain = resizeTerrainGrid(
       createTerrain({
