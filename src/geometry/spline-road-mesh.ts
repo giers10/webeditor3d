@@ -683,7 +683,12 @@ export function buildSplineRoadEdgeMeshData(options: {
   );
   let stationCount = 0;
 
-  for (const run of stationRuns) {
+  for (const rawRun of stationRuns) {
+    const run = buildEdgeStationRunWithJunctionTapers({
+      run: rawRun,
+      clipIntervals: options.clipIntervals ?? [],
+      edge
+    });
     const runVertexOffset = positions.length / 3;
 
     for (let stationIndex = 0; stationIndex < run.length; stationIndex += 1) {
@@ -716,7 +721,7 @@ export function buildSplineRoadEdgeMeshData(options: {
 
         positions.push(
           vertex.x,
-          vertex.y + profilePoint.heightOffset,
+          vertex.y + profilePoint.heightOffset * station.edgeHeightScale,
           vertex.z
         );
         uvs.push(profileIndex / profileLastIndex, station.distance);
