@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { createScenePath } from "../../src/document/paths";
 import { createTerrain } from "../../src/document/terrains";
-import { buildSplineRoadMeshData } from "../../src/geometry/spline-road-mesh";
+import {
+  buildSplineRoadEdgeMeshData,
+  buildSplineRoadMeshData
+} from "../../src/geometry/spline-road-mesh";
 
 describe("spline road mesh generation", () => {
   it("builds a continuous road strip with arc-length UVs", () => {
@@ -104,5 +107,78 @@ describe("spline road mesh generation", () => {
     expect(meshData!.positions[4]).toBe(1.25);
     expect(meshData!.positions[7]).toBe(3.25);
     expect(meshData!.positions[10]).toBe(1.25);
+  });
+
+  it("builds raised curb edge profile meshes per side", () => {
+    const path = createScenePath({
+      id: "path-road-edge-curb",
+      road: {
+        enabled: true,
+        width: 2,
+        heightOffset: 0.05,
+        terrainConform: false,
+        edges: {
+          left: {
+            enabled: true,
+            kind: "curb",
+            width: 0.4,
+            height: 0.2,
+            materialId: null
+          }
+        }
+      },
+      points: [
+        {
+          id: "point-a",
+          position: { x: 0, y: 0, z: 0 }
+        },
+        {
+          id: "point-b",
+          position: { x: 2, y: 0, z: 0 }
+        }
+      ]
+    });
+
+    const meshData = buildSplineRoadEdgeMeshData({
+      path,
+      side: "left"
+    });
+
+    expect(meshData).not.toBeNull();
+    expect(meshData?.stationCount).toBe(2);
+    expect(Array.from(meshData!.positions.slice(0, 12))).toEqual([
+      0,
+      expect.closeTo(0.05, 5),
+      1,
+      0,
+      expect.closeTo(0.25, 5),
+      1,
+      0,
+      expect.closeTo(0.25, 5),
+      1.4,
+      0,
+      expect.closeTo(0.05, 5),
+      1.4
+    ]);
+    expect(Array.from(meshData!.indices)).toEqual([
+      0,
+      1,
+      4,
+      4,
+      1,
+      5,
+      1,
+      2,
+      5,
+      5,
+      2,
+      6,
+      2,
+      3,
+      6,
+      6,
+      3,
+      7
+    ]);
   });
 });
