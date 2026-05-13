@@ -13,6 +13,7 @@ export interface ScenePathPoint {
 export type ScenePathCurveMode = "linear" | "catmullRom";
 export type ScenePathRoadEdgeKind = "curb" | "softShoulder" | "bank" | "ditch";
 export type ScenePathRoadEdgeSide = "left" | "right";
+export type ScenePathRepeaterPlacement = "center" | "left" | "right";
 
 export interface ScenePathRoadEdgeSettings {
   enabled: boolean;
@@ -44,6 +45,28 @@ export interface ScenePathRoadSettings {
   edges: ScenePathRoadEdgesSettings;
 }
 
+export interface ScenePathRepeater {
+  id: string;
+  name?: string;
+  enabled: boolean;
+  assetId: string;
+  placement: ScenePathRepeaterPlacement;
+  offset: number;
+  spacing: number;
+  startInset: number;
+  endInset: number;
+  scale: number;
+  randomScale: number;
+  randomYawDegrees: number;
+  yawOffsetDegrees: number;
+  terrainConform: boolean;
+  heightOffset: number;
+  alignToSpline: boolean;
+  seed: number;
+}
+
+export type ScenePathRepeaterOverrides = Partial<ScenePathRepeater>;
+
 export interface ScenePath {
   id: string;
   kind: "path";
@@ -56,6 +79,7 @@ export interface ScenePath {
   glueToTerrain: boolean;
   terrainOffset: number;
   road: ScenePathRoadSettings;
+  repeaters: ScenePathRepeater[];
   points: ScenePathPoint[];
 }
 
@@ -190,6 +214,38 @@ export const DEFAULT_SCENE_PATH_ROAD_EDGE_KIND: ScenePathRoadEdgeKind =
 export const DEFAULT_SCENE_PATH_ROAD_EDGE_WIDTH = 0.35;
 export const DEFAULT_SCENE_PATH_ROAD_EDGE_HEIGHT = 0.12;
 export const DEFAULT_SCENE_PATH_ROAD_EDGE_MATERIAL_ID = null;
+export const SCENE_PATH_REPEATER_PLACEMENTS = [
+  "center",
+  "left",
+  "right"
+] as const satisfies readonly ScenePathRepeaterPlacement[];
+export const DEFAULT_SCENE_PATH_REPEATER_ENABLED = true;
+export const DEFAULT_SCENE_PATH_REPEATER_ASSET_ID = "fence_segment_wood_2m";
+export const DEFAULT_SCENE_PATH_REPEATER_PLACEMENT: ScenePathRepeaterPlacement =
+  "left";
+export const DEFAULT_SCENE_PATH_REPEATER_OFFSET = 1.4;
+export const DEFAULT_SCENE_PATH_REPEATER_SPACING = 2;
+export const DEFAULT_SCENE_PATH_REPEATER_START_INSET = 0;
+export const DEFAULT_SCENE_PATH_REPEATER_END_INSET = 0;
+export const DEFAULT_SCENE_PATH_REPEATER_SCALE = 1;
+export const DEFAULT_SCENE_PATH_REPEATER_RANDOM_SCALE = 0;
+export const DEFAULT_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES = 0;
+export const DEFAULT_SCENE_PATH_REPEATER_YAW_OFFSET_DEGREES = 0;
+export const DEFAULT_SCENE_PATH_REPEATER_TERRAIN_CONFORM = true;
+export const DEFAULT_SCENE_PATH_REPEATER_HEIGHT_OFFSET = 0;
+export const DEFAULT_SCENE_PATH_REPEATER_ALIGN_TO_SPLINE = true;
+export const MIN_SCENE_PATH_REPEATER_SPACING = 0.05;
+export const MAX_SCENE_PATH_REPEATER_SPACING = 100;
+export const MIN_SCENE_PATH_REPEATER_INSET = 0;
+export const MAX_SCENE_PATH_REPEATER_INSET = 10000;
+export const MIN_SCENE_PATH_REPEATER_OFFSET = 0;
+export const MAX_SCENE_PATH_REPEATER_OFFSET = 1000;
+export const MIN_SCENE_PATH_REPEATER_SCALE = 0.01;
+export const MAX_SCENE_PATH_REPEATER_SCALE = 100;
+export const MIN_SCENE_PATH_REPEATER_RANDOM_SCALE = 0;
+export const MAX_SCENE_PATH_REPEATER_RANDOM_SCALE = 1;
+export const MIN_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES = 0;
+export const MAX_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES = 180;
 export const MIN_SCENE_PATH_ROAD_WIDTH = 0.1;
 export const MAX_SCENE_PATH_ROAD_WIDTH = 100;
 export const MIN_SCENE_PATH_ROAD_SHOULDER_WIDTH = 0;
