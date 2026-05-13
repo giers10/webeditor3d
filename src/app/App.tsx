@@ -22700,6 +22700,187 @@ export function App({
                         </div>
                       );
                     })}
+                    <div className="form-section">
+                      <div className="label">Road Junctions</div>
+                      <div className="material-summary">
+                        Junctions are visual corridor merges only. They clip
+                        road edges, repeaters, and generated colliders near the
+                        merge without changing NPC or camera path routing.
+                      </div>
+                      {selectedPathJunctionCandidates.length === 0 ? (
+                        <div className="material-summary">
+                          No uncreated road junction candidates for this path.
+                        </div>
+                      ) : (
+                        <div className="stacked-list">
+                          {selectedPathJunctionCandidates
+                            .slice(0, 6)
+                            .map((candidate, candidateIndex) => (
+                              <div
+                                className="compact-card"
+                                key={candidate.id}
+                              >
+                                <div className="compact-card__header">
+                                  <strong>
+                                    Candidate {candidateIndex + 1}
+                                  </strong>
+                                  <button
+                                    className="toolbar__button"
+                                    data-testid={`create-spline-corridor-junction-${candidateIndex}`}
+                                    type="button"
+                                    onClick={() =>
+                                      handleCreateSplineCorridorJunction(
+                                        candidate
+                                      )
+                                    }
+                                  >
+                                    Create Junction
+                                  </button>
+                                </div>
+                                <div className="material-summary">
+                                  {candidate.connections.length} connections at
+                                  X {candidate.center.x.toFixed(2)}, Z{" "}
+                                  {candidate.center.z.toFixed(2)}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                      {selectedPathJunctions.length === 0 ? (
+                        <div className="material-summary">
+                          No persisted junctions are connected to this path.
+                        </div>
+                      ) : (
+                        <div className="stacked-list">
+                          {selectedPathJunctions.map((junction) => (
+                            <div className="compact-card" key={junction.id}>
+                              <div className="compact-card__header">
+                                <strong>
+                                  {junction.name ?? "Road Junction"}
+                                </strong>
+                                <button
+                                  className="toolbar__button toolbar__button--danger"
+                                  data-testid={`delete-spline-corridor-junction-${junction.id}`}
+                                  type="button"
+                                  onClick={() =>
+                                    handleDeleteSplineCorridorJunction(
+                                      junction.id
+                                    )
+                                  }
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                              <label className="form-field form-field--toggle">
+                                <span className="label">Enabled</span>
+                                <input
+                                  data-testid={`spline-corridor-junction-${junction.id}-enabled`}
+                                  type="checkbox"
+                                  checked={junction.enabled}
+                                  onChange={(event) =>
+                                    handleSplineCorridorJunctionChange(
+                                      createSplineCorridorJunction({
+                                        ...junction,
+                                        enabled: event.currentTarget.checked
+                                      }),
+                                      event.currentTarget.checked
+                                        ? "Enabled spline corridor junction."
+                                        : "Disabled spline corridor junction."
+                                    )
+                                  }
+                                />
+                              </label>
+                              <label className="form-field">
+                                <span className="label">Radius</span>
+                                <input
+                                  className="text-input"
+                                  data-testid={`spline-corridor-junction-${junction.id}-radius`}
+                                  type="number"
+                                  min={0.05}
+                                  step={0.1}
+                                  value={junction.radius}
+                                  onChange={(event) => {
+                                    const radius =
+                                      normalizeSplineCorridorJunctionRadius(
+                                        Number(event.currentTarget.value)
+                                      );
+                                    handleSplineCorridorJunctionChange(
+                                      createSplineCorridorJunction({
+                                        ...junction,
+                                        radius,
+                                        connections: junction.connections.map(
+                                          (connection) => ({
+                                            ...connection,
+                                            clipDistance: radius
+                                          })
+                                        )
+                                      }),
+                                      "Updated spline corridor junction radius."
+                                    );
+                                  }}
+                                />
+                              </label>
+                              <label className="form-field">
+                                <span className="label">Material</span>
+                                <select
+                                  className="select-input"
+                                  data-testid={`spline-corridor-junction-${junction.id}-material`}
+                                  value={junction.materialId ?? ""}
+                                  onChange={(event) =>
+                                    handleSplineCorridorJunctionChange(
+                                      createSplineCorridorJunction({
+                                        ...junction,
+                                        materialId:
+                                          normalizeSplineCorridorJunctionMaterialId(
+                                            event.currentTarget.value
+                                          )
+                                      }),
+                                      "Updated spline corridor junction material."
+                                    )
+                                  }
+                                >
+                                  <option value="">Unassigned preview</option>
+                                  {materialList.map((material) => (
+                                    <option
+                                      key={material.id}
+                                      value={material.id}
+                                    >
+                                      {material.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label className="form-field">
+                                <span className="label">Terrain Mode</span>
+                                <select
+                                  className="select-input"
+                                  data-testid={`spline-corridor-junction-${junction.id}-terrain-mode`}
+                                  value={junction.terrainMode}
+                                  onChange={(event) =>
+                                    handleSplineCorridorJunctionChange(
+                                      createSplineCorridorJunction({
+                                        ...junction,
+                                        terrainMode:
+                                          normalizeSplineCorridorJunctionTerrainMode(
+                                            event.currentTarget.value
+                                          ) as SplineCorridorJunctionTerrainMode
+                                      }),
+                                      "Updated spline corridor junction terrain mode."
+                                    )
+                                  }
+                                >
+                                  <option value="flattenAndPaint">
+                                    Flatten and paint
+                                  </option>
+                                  <option value="paintOnly">Paint only</option>
+                                  <option value="none">None</option>
+                                </select>
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className="inline-actions">
                       <button
                         className="toolbar__button"
