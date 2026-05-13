@@ -266,6 +266,24 @@ function buildEdgeProfile(options: {
   }
 }
 
+function addEdgeProfileCaps(options: {
+  indices: number[];
+  profileVertexCount: number;
+  stationCount: number;
+}) {
+  if (options.profileVertexCount < 3 || options.stationCount < 2) {
+    return;
+  }
+
+  const lastRow = (options.stationCount - 1) * options.profileVertexCount;
+
+  for (let index = 1; index < options.profileVertexCount - 1; index += 1) {
+    // Start cap faces backward along the spline; end cap faces forward.
+    options.indices.push(0, index + 1, index);
+    options.indices.push(lastRow, lastRow + index, lastRow + index + 1);
+  }
+}
+
 export function buildSplineRoadMeshData(options: {
   path: SplineRoadPathLike;
   terrains?: readonly Terrain[];
@@ -429,6 +447,14 @@ export function buildSplineRoadEdgeMeshData(options: {
 
       indices.push(current, currentNext, next, next, currentNext, nextNext);
     }
+  }
+
+  if (edge.kind === "curb") {
+    addEdgeProfileCaps({
+      indices,
+      profileVertexCount: profile.length,
+      stationCount: stations.length
+    });
   }
 
   return {
