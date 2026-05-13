@@ -1125,4 +1125,83 @@ describe("RapierCollisionWorld", () => {
       collisionWorld.dispose();
     }
   });
+
+  it("keeps authored terrain collision aligned after west and south grid resize", async () => {
+    const terrain = resizeTerrainGrid(
+      createTerrain({
+        id: "terrain-authored-resized-collision",
+        position: {
+          x: 0,
+          y: 0,
+          z: 0
+        },
+        sampleCountX: 3,
+        sampleCountZ: 3,
+        cellSize: 2,
+        heights: [1, 1, 1, 1, 1, 1, 1, 1, 1]
+      }),
+      {
+        sampleCountX: 5,
+        sampleCountZ: 5,
+        cellSize: 2,
+        resizeDirectionX: "west",
+        resizeDirectionZ: "south"
+      }
+    );
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({
+        name: "Authored Resized Terrain Collision Scene"
+      }),
+      terrains: {
+        [terrain.id]: terrain
+      }
+    });
+    const collisionWorld = await RapierCollisionWorld.create(
+      runtimeScene.colliders,
+      runtimeScene.playerCollider
+    );
+
+    try {
+      const southwestLanding = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: -3,
+          y: 8,
+          z: -3
+        },
+        {
+          x: 0,
+          y: -10,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+      const northeastLanding = collisionWorld.resolveFirstPersonMotion(
+        {
+          x: 4,
+          y: 8,
+          z: 4
+        },
+        {
+          x: 0,
+          y: -10,
+          z: 0
+        },
+        runtimeScene.playerCollider
+      );
+
+      expect(terrain.position).toEqual({
+        x: -4,
+        y: 0,
+        z: -4
+      });
+      expect(southwestLanding.grounded).toBe(true);
+      expect(southwestLanding.feetPosition.y).toBeGreaterThan(0.9);
+      expect(southwestLanding.feetPosition.y).toBeLessThan(1.1);
+      expect(northeastLanding.grounded).toBe(true);
+      expect(northeastLanding.feetPosition.y).toBeGreaterThan(0.9);
+      expect(northeastLanding.feetPosition.y).toBeLessThan(1.1);
+    } finally {
+      collisionWorld.dispose();
+    }
+  });
 });
