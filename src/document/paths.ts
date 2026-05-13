@@ -1354,6 +1354,32 @@ export function createAppendedScenePathPoint(path: ScenePath): ScenePathPoint {
   });
 }
 
+export function createScenePathPointAfter(
+  path: ScenePath,
+  pointId: string
+): ScenePathPoint {
+  const pointIndex = getScenePathPointIndex(path, pointId);
+
+  if (pointIndex === -1) {
+    throw new Error(`Path point ${pointId} does not exist.`);
+  }
+
+  const currentPoint = path.points[pointIndex]!;
+  const nextPoint = path.points[pointIndex + 1] ?? null;
+
+  if (nextPoint !== null) {
+    return createScenePathPoint({
+      position: {
+        x: (currentPoint.position.x + nextPoint.position.x) * 0.5,
+        y: (currentPoint.position.y + nextPoint.position.y) * 0.5,
+        z: (currentPoint.position.z + nextPoint.position.z) * 0.5
+      }
+    });
+  }
+
+  return createAppendedScenePathPoint(path);
+}
+
 function createResolvedPathSegment(
   options: {
     index: number;
