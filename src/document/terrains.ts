@@ -1285,43 +1285,29 @@ export function sampleTerrainFoliageBlockerMaskAtWorldPosition(
   );
 }
 
-function createTerrainPositionFromCenter(
-  center: Vec3,
+function getTerrainSampleCountForFootprint(
+  footprint: number,
+  cellSize: number
+): number {
+  return Math.max(
+    MIN_TERRAIN_SAMPLE_COUNT,
+    Math.round(footprint / cellSize) + 1
+  );
+}
+
+function createLocalPositionResampledTerrainHeights(
+  terrain: Terrain,
   sampleCountX: number,
   sampleCountZ: number,
   cellSize: number
-): Vec3 {
-  return {
-    x: center.x - ((sampleCountX - 1) * cellSize) * 0.5,
-    y: center.y,
-    z: center.z - ((sampleCountZ - 1) * cellSize) * 0.5
-  };
-}
-
-function getTerrainFootprintCenter(terrain: Terrain): Vec3 {
-  return {
-    x: terrain.position.x + getTerrainFootprintWidth(terrain) * 0.5,
-    y: terrain.position.y,
-    z: terrain.position.z + getTerrainFootprintDepth(terrain) * 0.5
-  };
-}
-
-function createResampledTerrainHeights(
-  terrain: Terrain,
-  sampleCountX: number,
-  sampleCountZ: number
 ): number[] {
   const heights = new Array<number>(sampleCountX * sampleCountZ);
 
   for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
-    const normalizedSampleZ =
-      sampleCountZ === 1 ? 0 : sampleZ / (sampleCountZ - 1);
-    const sourceSampleZ = normalizedSampleZ * (terrain.sampleCountZ - 1);
+    const sourceSampleZ = (sampleZ * cellSize) / terrain.cellSize;
 
     for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
-      const normalizedSampleX =
-        sampleCountX === 1 ? 0 : sampleX / (sampleCountX - 1);
-      const sourceSampleX = normalizedSampleX * (terrain.sampleCountX - 1);
+      const sourceSampleX = (sampleX * cellSize) / terrain.cellSize;
 
       heights[sampleZ * sampleCountX + sampleX] =
         sampleTerrainHeightAtGridCoordinate(
@@ -1335,10 +1321,11 @@ function createResampledTerrainHeights(
   return heights;
 }
 
-function createResampledTerrainPaintWeights(
+function createLocalPositionResampledTerrainPaintWeights(
   terrain: Terrain,
   sampleCountX: number,
-  sampleCountZ: number
+  sampleCountZ: number,
+  cellSize: number
 ): number[] {
   const storedWeightCount = getTerrainStoredPaintWeightCount(
     terrain.layers.length
@@ -1348,14 +1335,10 @@ function createResampledTerrainPaintWeights(
   );
 
   for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
-    const normalizedSampleZ =
-      sampleCountZ === 1 ? 0 : sampleZ / (sampleCountZ - 1);
-    const sourceSampleZ = normalizedSampleZ * (terrain.sampleCountZ - 1);
+    const sourceSampleZ = (sampleZ * cellSize) / terrain.cellSize;
 
     for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
-      const normalizedSampleX =
-        sampleCountX === 1 ? 0 : sampleX / (sampleCountX - 1);
-      const sourceSampleX = normalizedSampleX * (terrain.sampleCountX - 1);
+      const sourceSampleX = (sampleX * cellSize) / terrain.cellSize;
       const offset =
         (sampleZ * sampleCountX + sampleX) * storedWeightCount;
 
@@ -1374,24 +1357,21 @@ function createResampledTerrainPaintWeights(
   return paintWeights;
 }
 
-function createResampledTerrainFoliageMasks(
+function createLocalPositionResampledTerrainFoliageMasks(
   terrain: Terrain,
   sampleCountX: number,
-  sampleCountZ: number
+  sampleCountZ: number,
+  cellSize: number
 ): TerrainFoliageMaskRegistry {
   return Object.fromEntries(
     Object.entries(terrain.foliageMasks).map(([layerId, mask]) => {
       const values = new Array<number>(sampleCountX * sampleCountZ);
 
       for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
-        const normalizedSampleZ =
-          sampleCountZ === 1 ? 0 : sampleZ / (sampleCountZ - 1);
-        const sourceSampleZ = normalizedSampleZ * (mask.resolutionZ - 1);
+        const sourceSampleZ = (sampleZ * cellSize) / terrain.cellSize;
 
         for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
-          const normalizedSampleX =
-            sampleCountX === 1 ? 0 : sampleX / (sampleCountX - 1);
-          const sourceSampleX = normalizedSampleX * (mask.resolutionX - 1);
+          const sourceSampleX = (sampleX * cellSize) / terrain.cellSize;
 
           values[sampleZ * sampleCountX + sampleX] =
             sampleTerrainFoliageMaskAtGridCoordinate(
@@ -1415,24 +1395,19 @@ function createResampledTerrainFoliageMasks(
   );
 }
 
-function createResampledTerrainFoliageBlockerMask(
+function createLocalPositionResampledTerrainFoliageBlockerMask(
   terrain: Terrain,
   sampleCountX: number,
-  sampleCountZ: number
+  sampleCountZ: number,
+  cellSize: number
 ): TerrainFoliageBlockerMask {
   const values = new Array<number>(sampleCountX * sampleCountZ);
 
   for (let sampleZ = 0; sampleZ < sampleCountZ; sampleZ += 1) {
-    const normalizedSampleZ =
-      sampleCountZ === 1 ? 0 : sampleZ / (sampleCountZ - 1);
-    const sourceSampleZ =
-      normalizedSampleZ * (terrain.foliageBlockerMask.resolutionZ - 1);
+    const sourceSampleZ = (sampleZ * cellSize) / terrain.cellSize;
 
     for (let sampleX = 0; sampleX < sampleCountX; sampleX += 1) {
-      const normalizedSampleX =
-        sampleCountX === 1 ? 0 : sampleX / (sampleCountX - 1);
-      const sourceSampleX =
-        normalizedSampleX * (terrain.foliageBlockerMask.resolutionX - 1);
+      const sourceSampleX = (sampleX * cellSize) / terrain.cellSize;
 
       values[sampleZ * sampleCountX + sampleX] =
         sampleTerrainFoliageBlockerMaskAtGridCoordinate(
@@ -1450,54 +1425,116 @@ function createResampledTerrainFoliageBlockerMask(
   });
 }
 
-export function resizeTerrainGrid(
+export function changeTerrainCellSizePreservingFootprint(
   terrain: Terrain,
-  options: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "cellSize"> & {
-    preserveCenter?: boolean;
-  }
+  requestedCellSize: number
 ): Terrain {
-  const sampleCountX = normalizeTerrainSampleCount(
-    options.sampleCountX,
-    "Terrain sampleCountX"
+  const cellSize = normalizeTerrainCellSize(requestedCellSize);
+  const sampleCountX = getTerrainSampleCountForFootprint(
+    getTerrainFootprintWidth(terrain),
+    cellSize
   );
-  const sampleCountZ = normalizeTerrainSampleCount(
-    options.sampleCountZ,
-    "Terrain sampleCountZ"
+  const sampleCountZ = getTerrainSampleCountForFootprint(
+    getTerrainFootprintDepth(terrain),
+    cellSize
   );
-  const cellSize = normalizeTerrainCellSize(options.cellSize);
-  const preserveCenter = options.preserveCenter ?? true;
-  const nextPosition = preserveCenter
-    ? createTerrainPositionFromCenter(
-        getTerrainFootprintCenter(terrain),
-        sampleCountX,
-        sampleCountZ,
-        cellSize
-      )
-    : cloneVec3(terrain.position);
 
   return createTerrain({
     ...terrain,
-    position: nextPosition,
+    position: cloneVec3(terrain.position),
     sampleCountX,
     sampleCountZ,
     cellSize,
-    heights: createResampledTerrainHeights(terrain, sampleCountX, sampleCountZ),
-    paintWeights: createResampledTerrainPaintWeights(
+    heights: createLocalPositionResampledTerrainHeights(
       terrain,
       sampleCountX,
-      sampleCountZ
+      sampleCountZ,
+      cellSize
     ),
-    foliageMasks: createResampledTerrainFoliageMasks(
+    paintWeights: createLocalPositionResampledTerrainPaintWeights(
       terrain,
       sampleCountX,
-      sampleCountZ
+      sampleCountZ,
+      cellSize
     ),
-    foliageBlockerMask: createResampledTerrainFoliageBlockerMask(
+    foliageMasks: createLocalPositionResampledTerrainFoliageMasks(
       terrain,
       sampleCountX,
-      sampleCountZ
+      sampleCountZ,
+      cellSize
+    ),
+    foliageBlockerMask: createLocalPositionResampledTerrainFoliageBlockerMask(
+      terrain,
+      sampleCountX,
+      sampleCountZ,
+      cellSize
     )
   });
+}
+
+export function changeTerrainSampleCountsByExtendingOrCropping(
+  terrain: Terrain,
+  requestedSampleCountX: number,
+  requestedSampleCountZ: number
+): Terrain {
+  const sampleCountX = normalizeTerrainSampleCount(
+    requestedSampleCountX,
+    "Terrain sampleCountX"
+  );
+  const sampleCountZ = normalizeTerrainSampleCount(
+    requestedSampleCountZ,
+    "Terrain sampleCountZ"
+  );
+  const cellSize = terrain.cellSize;
+
+  return createTerrain({
+    ...terrain,
+    position: cloneVec3(terrain.position),
+    sampleCountX,
+    sampleCountZ,
+    cellSize,
+    heights: createLocalPositionResampledTerrainHeights(
+      terrain,
+      sampleCountX,
+      sampleCountZ,
+      cellSize
+    ),
+    paintWeights: createLocalPositionResampledTerrainPaintWeights(
+      terrain,
+      sampleCountX,
+      sampleCountZ,
+      cellSize
+    ),
+    foliageMasks: createLocalPositionResampledTerrainFoliageMasks(
+      terrain,
+      sampleCountX,
+      sampleCountZ,
+      cellSize
+    ),
+    foliageBlockerMask: createLocalPositionResampledTerrainFoliageBlockerMask(
+      terrain,
+      sampleCountX,
+      sampleCountZ,
+      cellSize
+    )
+  });
+}
+
+export function resizeTerrainGrid(
+  terrain: Terrain,
+  options: Pick<Terrain, "sampleCountX" | "sampleCountZ" | "cellSize">
+): Terrain {
+  const cellSize = normalizeTerrainCellSize(options.cellSize);
+
+  if (cellSize !== terrain.cellSize) {
+    return changeTerrainCellSizePreservingFootprint(terrain, cellSize);
+  }
+
+  return changeTerrainSampleCountsByExtendingOrCropping(
+    terrain,
+    options.sampleCountX,
+    options.sampleCountZ
+  );
 }
 
 function createDefaultTerrainPosition(
