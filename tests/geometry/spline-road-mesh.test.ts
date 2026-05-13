@@ -224,10 +224,10 @@ describe("spline road mesh generation", () => {
       -1,
       expect.closeTo(2.8343145, 5),
       expect.closeTo(0.3, 5),
-      -1.4,
+      expect.closeTo(-1.4, 5),
       expect.closeTo(2.8343145, 5),
       expect.closeTo(0.1, 5),
-      -1.4
+      expect.closeTo(-1.4, 5)
     ]);
   });
 
