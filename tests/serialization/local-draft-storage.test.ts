@@ -431,6 +431,7 @@ describe("local draft storage", () => {
           terrains: {},
           foliageLayers: {},
           paths: {},
+          splineCorridorJunctions: {},
           modelInstances: {},
           entities: {},
           interactionLinks: {}
