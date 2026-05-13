@@ -11398,6 +11398,28 @@ export class ViewportHost {
     }
 
     const edgePoints = this.createTerrainGridResizeEdgePoints(terrain, side);
+    const edgeCurve = new CatmullRomCurve3(edgePoints, false, "centripetal");
+    const previousEdgeOutlineGeometry =
+      this.terrainGridResizeEdgeOutline.geometry;
+    this.terrainGridResizeEdgeOutline.geometry = new TubeGeometry(
+      edgeCurve,
+      TERRAIN_GRID_RESIZE_EDGE_SEGMENTS,
+      TERRAIN_GRID_RESIZE_EDGE_OUTLINE_RADIUS,
+      8,
+      false
+    );
+    previousEdgeOutlineGeometry.dispose();
+
+    const previousEdgeTubeGeometry = this.terrainGridResizeEdgeTube.geometry;
+    this.terrainGridResizeEdgeTube.geometry = new TubeGeometry(
+      edgeCurve,
+      TERRAIN_GRID_RESIZE_EDGE_SEGMENTS,
+      TERRAIN_GRID_RESIZE_EDGE_TUBE_RADIUS,
+      8,
+      false
+    );
+    previousEdgeTubeGeometry.dispose();
+
     const previousEdgeGeometry = this.terrainGridResizeEdgeLine.geometry;
     this.terrainGridResizeEdgeLine.geometry =
       new BufferGeometry().setFromPoints(edgePoints);
@@ -11412,21 +11434,42 @@ export class ViewportHost {
         terrain.cellSize * TERRAIN_GRID_RESIZE_ARROW_CELL_FACTOR
       )
     );
+    const arrowQuaternion = new Quaternion().setFromUnitVectors(
+      new Vector3(0, 1, 0),
+      direction
+    );
     const arrowStart = midpoint
       .clone()
-      .addScaledVector(direction, arrowLength * 0.18);
+      .addScaledVector(direction, arrowLength * 0.12);
     const arrowEnd = midpoint.clone().addScaledVector(direction, arrowLength);
+    const shaftEnd = arrowEnd
+      .clone()
+      .addScaledVector(direction, -TERRAIN_GRID_RESIZE_ARROW_HEAD_LENGTH * 0.72);
+    const shaftLength = Math.max(0.1, arrowStart.distanceTo(shaftEnd));
+    const shaftCenter = arrowStart.clone().add(shaftEnd).multiplyScalar(0.5);
+
+    this.terrainGridResizeArrowShaftOutline.position.copy(shaftCenter);
+    this.terrainGridResizeArrowShaftOutline.quaternion.copy(arrowQuaternion);
+    this.terrainGridResizeArrowShaftOutline.scale.set(1, shaftLength, 1);
+    this.terrainGridResizeArrowShaft.position.copy(shaftCenter);
+    this.terrainGridResizeArrowShaft.quaternion.copy(arrowQuaternion);
+    this.terrainGridResizeArrowShaft.scale.set(1, shaftLength, 1);
+
     const previousArrowGeometry = this.terrainGridResizeArrowLine.geometry;
     this.terrainGridResizeArrowLine.geometry =
       new BufferGeometry().setFromPoints([arrowStart, arrowEnd]);
     previousArrowGeometry.dispose();
+    this.terrainGridResizeArrowHeadOutline.position
+      .copy(arrowEnd)
+      .addScaledVector(
+        direction,
+        -TERRAIN_GRID_RESIZE_ARROW_HEAD_OUTLINE_LENGTH * 0.5
+      );
+    this.terrainGridResizeArrowHeadOutline.quaternion.copy(arrowQuaternion);
     this.terrainGridResizeArrowHead.position
       .copy(arrowEnd)
       .addScaledVector(direction, -TERRAIN_GRID_RESIZE_ARROW_HEAD_LENGTH * 0.5);
-    this.terrainGridResizeArrowHead.quaternion.setFromUnitVectors(
-      new Vector3(0, 1, 0),
-      direction
-    );
+    this.terrainGridResizeArrowHead.quaternion.copy(arrowQuaternion);
     this.terrainGridResizeOverlayGroup.visible = true;
   }
 
