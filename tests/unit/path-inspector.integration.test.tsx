@@ -226,6 +226,18 @@ describe("Path inspector", () => {
         value: "15"
       }
     });
+    await waitFor(() => {
+      expect(
+        store.getState().document.paths[createdPath.id]?.repeaters[0]
+      ).toMatchObject({
+        assetId: "fence_post_wood",
+        enabled: true,
+        placement: "right",
+        offset: 2.25,
+        spacing: 3,
+        yawOffsetDegrees: 15
+      });
+    });
     fireEvent.change(screen.getByTestId("path-point-1-z"), {
       target: {
         value: "2"
