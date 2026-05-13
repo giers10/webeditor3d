@@ -7468,6 +7468,17 @@ export class ViewportHost {
     this.applyShadowState();
   }
 
+  private rebuildSplineRepeaters(document: SceneDocument) {
+    const terrains = getTerrains(document.terrains).filter(
+      (terrain) => terrain.enabled
+    );
+
+    this.splineRepeaterRenderer.sync({
+      paths: getScenePaths(document.paths),
+      terrains
+    });
+  }
+
   private rebuildTerrains(
     document: SceneDocument,
     _selection: EditorSelection,
