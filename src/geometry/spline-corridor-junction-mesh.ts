@@ -13,6 +13,10 @@ import {
   type SplineCorridorJunctionFootprintPoint,
   type SplineCorridorJunctionFootprintPathLike
 } from "./spline-corridor-junction-footprint";
+import type {
+  SplineCorridorRoadEdgeSeam,
+  SplineCorridorRoadEdgeSeamMap
+} from "../spline-corridor/spline-corridor-clips";
 
 export type SplineCorridorJunctionMeshPathLike =
   SplineCorridorJunctionFootprintPathLike;
@@ -132,6 +136,16 @@ function dotXZVector(
   return left.x * right.x + left.z * right.z;
 }
 
+function multiplyXZVector(
+  vector: { x: number; z: number },
+  scalar: number
+): { x: number; z: number } {
+  return {
+    x: vector.x * scalar,
+    z: vector.z * scalar
+  };
+}
+
 function getOutwardSegmentNormal(
   start: SplineCorridorJunctionFootprintPoint,
   end: SplineCorridorJunctionFootprintPoint
@@ -224,53 +238,15 @@ function isRoadMouthSegment(
   );
 }
 
-function cloneFootprintPointAtXZ(
-  point: SplineCorridorJunctionFootprintPoint,
-  x: number,
-  z: number
-): SplineCorridorJunctionFootprintPoint {
-  return {
-    x,
-    z,
-    fallbackY: point.fallbackY,
-    heightOffset: point.heightOffset,
-    connectionBoundaryKey: null
-  };
-}
-
-function getPointAlongSegment(options: {
-  start: SplineCorridorJunctionFootprintPoint;
-  end: SplineCorridorJunctionFootprintPoint;
-  distance: number;
-  length: number;
-}): SplineCorridorJunctionFootprintPoint {
-  if (options.length <= 1e-8 || options.distance <= 1e-8) {
-    return cloneFootprintPointAtXZ(options.start, options.start.x, options.start.z);
-  }
-
-  if (options.distance >= options.length - 1e-8) {
-    return cloneFootprintPointAtXZ(options.end, options.end.x, options.end.z);
-  }
-
-  const alpha = options.distance / options.length;
-
-  return cloneFootprintPointAtXZ(
-    options.start,
-    options.start.x + (options.end.x - options.start.x) * alpha,
-    options.start.z + (options.end.z - options.start.z) * alpha
-  );
-}
-
-function getConnectionMiterDistance(options: {
+function getConnectionMiterOuterOffset(options: {
   point: SplineCorridorJunctionFootprintPoint;
   segmentStart: SplineCorridorJunctionFootprintPoint;
   segmentDirection: { x: number; z: number };
   segmentNormal: { x: number; z: number };
   edgeWidth: number;
-  segmentLength: number;
-}): number {
+}): { x: number; z: number } {
   if (options.point.connectionOutwardAxis === undefined) {
-    return 0;
+    return multiplyXZVector(options.segmentNormal, options.edgeWidth);
   }
 
   const connectionOutwardAxis = normalizeXZ(options.point.connectionOutwardAxis);
@@ -289,7 +265,7 @@ function getConnectionMiterDistance(options: {
   const denominator = crossXZVector(options.segmentDirection, roadTangent);
 
   if (Math.abs(denominator) <= 1e-6) {
-    return 0;
+    return multiplyXZVector(connectionOutwardAxis, options.edgeWidth);
   }
 
   const delta = {
@@ -297,19 +273,66 @@ function getConnectionMiterDistance(options: {
     z: roadOuterPoint.z - segmentOuterStart.z
   };
   const intersectionDistance = crossXZVector(delta, roadTangent) / denominator;
-  const pointDistance = dotXZVector(
-    {
-      x: options.point.x - options.segmentStart.x,
-      z: options.point.z - options.segmentStart.z
-    },
-    options.segmentDirection
-  );
-  const rawDistance = Math.abs(intersectionDistance - pointDistance);
+  const outerPoint = {
+    x: segmentOuterStart.x + options.segmentDirection.x * intersectionDistance,
+    z: segmentOuterStart.z + options.segmentDirection.z * intersectionDistance
+  };
 
-  return Math.min(
-    options.segmentLength * 0.45,
-    Math.max(0, Math.min(options.edgeWidth, rawDistance))
-  );
+  return {
+    x: outerPoint.x - options.point.x,
+    z: outerPoint.z - options.point.z
+  };
+}
+
+function getPathEdgeWidth(options: {
+  paths: readonly SplineCorridorJunctionMeshPathLike[];
+  point: SplineCorridorJunctionFootprintPoint;
+}): number | null {
+  if (
+    options.point.connectionPathId === undefined ||
+    options.point.connectionSide === undefined
+  ) {
+    return null;
+  }
+
+  const path =
+    options.paths.find((candidate) => candidate.id === options.point.connectionPathId) ??
+    null;
+
+  if (path === null) {
+    return null;
+  }
+
+  const edge = path.road.edges[options.point.connectionSide];
+
+  return edge.enabled && edge.width > 0 ? edge.width : null;
+}
+
+function pushRoadEdgeSeam(options: {
+  seamsByPath: SplineCorridorRoadEdgeSeamMap;
+  junctionId: string;
+  point: SplineCorridorJunctionFootprintPoint;
+  outerOffset: { x: number; z: number };
+}) {
+  if (
+    options.point.connectionPathId === undefined ||
+    options.point.connectionDistance === undefined ||
+    options.point.connectionSide === undefined
+  ) {
+    return;
+  }
+
+  const seam: SplineCorridorRoadEdgeSeam = {
+    junctionId: options.junctionId,
+    pathId: options.point.connectionPathId,
+    side: options.point.connectionSide,
+    distance: options.point.connectionDistance,
+    outerOffset: options.outerOffset
+  };
+  const seams = options.seamsByPath.get(seam.pathId) ?? [];
+
+  seams.push(seam);
+  options.seamsByPath.set(seam.pathId, seams);
 }
 
 export function buildSplineCorridorJunctionEdgeMeshData(options: {
