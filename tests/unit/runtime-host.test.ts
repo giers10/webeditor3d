@@ -3588,7 +3588,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-active",
             visible: true,
-            position: { x: 0, y: 0, z: 4 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 4 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -4094,7 +4096,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-active",
             visible: true,
-            position: { x: 0, y: 0, z: 5 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 5 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -4108,7 +4112,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-right",
             visible: true,
-            position: { x: 2, y: 0, z: 5 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 2, y: 0, z: 5 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -4122,7 +4128,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-above",
             visible: true,
-            position: { x: 0, y: 2, z: 5 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 2, z: 5 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -4281,7 +4289,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-active",
             visible: true,
-            position: { x: 0, y: 0, z: 5 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 5 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -4378,7 +4388,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-active",
             visible: true,
-            position: { x: 0, y: 0, z: 5 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 5 },
             collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
             name: "Active",
             defaultDialogueId: null,
@@ -4387,7 +4399,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-right",
             visible: true,
-            position: { x: 2, y: 0, z: 5 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 2, y: 0, z: 5 },
             collider: { mode: "capsule", radius: 0.35, height: 1.8, eyeHeight: 1.6 },
             name: "Right",
             defaultDialogueId: null,
@@ -4484,7 +4498,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-far",
             visible: true,
-            position: { x: 0, y: 0, z: 16 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 16 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -4498,7 +4514,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-near",
             visible: true,
-            position: { x: 0, y: 0, z: 6 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 6 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -4608,7 +4626,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-border-a",
             visible: true,
-            position: { x: 0, y: 0, z: 15.5 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 15.5 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -4622,7 +4642,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-border-b",
             visible: true,
-            position: { x: 0.3, y: 0, z: 15.2 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0.3, y: 0, z: 15.2 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -4766,7 +4788,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-far",
             visible: true,
-            position: { x: 0, y: 0, z: 16 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 16 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -4835,7 +4859,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-close-edge",
             visible: true,
-            position: { x: 3, y: 0, z: 4 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 3, y: 0, z: 4 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -4849,7 +4875,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-center-farther",
             visible: true,
-            position: { x: 0, y: 0, z: 10 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 10 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -5004,7 +5032,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-visible",
             visible: true,
-            position: { x: 0, y: 0, z: 6 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 6 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -5018,7 +5048,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-occluded",
             visible: true,
-            position: { x: 0, y: 0, z: 8 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 8 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -5111,7 +5143,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-player-occluded",
             visible: true,
-            position: { x: 0, y: 0, z: 7 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 7 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -5125,7 +5159,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-player-visible",
             visible: true,
-            position: { x: 0.8, y: 0, z: 8 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0.8, y: 0, z: 8 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -5219,7 +5255,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-close-above",
             visible: true,
-            position: { x: 0, y: 0, z: 1 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 1 },
             collider: {
               mode: "capsule",
               radius: 0.35,
@@ -5302,7 +5340,9 @@ describe("RuntimeHost", () => {
           {
             entityId: "npc-occluded-active",
             visible: true,
-            position: { x: 0, y: 0, z: 6 },
+            position:targetable: true,
+            position:targetAnchor: createNpcTargetAnchor(),
+            position:position: { x: 0, y: 0, z: 6 },
             collider: {
               mode: "capsule",
               radius: 0.35,
