@@ -8049,6 +8049,103 @@ export class ViewportHost {
     }
   }
 
+  private clearPathJunctionMarkers() {
+    for (const marker of this.pathJunctionMarkerMeshes) {
+      this.pathGroup.remove(marker);
+      marker.geometry.dispose();
+      marker.material.dispose();
+    }
+
+    this.pathJunctionMarkerMeshes.length = 0;
+  }
+
+  private createPathJunctionMarker(options: {
+    center: Vec3;
+    radius: number;
+    color: number;
+    opacity: number;
+  }): Mesh<TorusGeometry, MeshBasicMaterial> {
+    const marker = new Mesh(
+      new TorusGeometry(options.radius, 0.035, 8, 48),
+      new MeshBasicMaterial({
+        color: options.color,
+        transparent: true,
+        opacity: options.opacity,
+        depthTest: false,
+        depthWrite: false
+      })
+    );
+
+    marker.position.set(options.center.x, options.center.y + 0.08, options.center.z);
+    marker.rotation.x = Math.PI * 0.5;
+    marker.renderOrder = PATH_RENDER_ORDER + 4;
+    marker.userData.nonPickable = true;
+    return marker;
+  }
+
+  private rebuildPathJunctionMarkers(
+    document: SceneDocument,
+    selection: EditorSelection
+  ) {
+    this.clearPathJunctionMarkers();
+
+    const paths = getScenePaths(document.paths);
+    const terrains = this.getPathTerrainGlueTerrains();
+
+    for (const junction of getSplineCorridorJunctions(
+      document.splineCorridorJunctions
+    )) {
+      if (!junction.enabled || !junction.visible) {
+        continue;
+      }
+
+      const marker = this.createPathJunctionMarker({
+        center: junction.center,
+        radius: junction.radius,
+        color: PATH_JUNCTION_PREVIEW_COLOR,
+        opacity: 0.75
+      });
+
+      marker.userData.splineCorridorJunctionId = junction.id;
+      this.pathGroup.add(marker);
+      this.pathJunctionMarkerMeshes.push(marker);
+    }
+
+    const selectedPathIds =
+      selection.kind === "paths"
+        ? selection.ids
+        : selection.kind === "pathPoint" || selection.kind === "pathPoints"
+          ? [selection.pathId]
+          : [];
+
+    if (selectedPathIds.length === 0) {
+      return;
+    }
+
+    const candidates = detectSplineCorridorJunctionCandidates({
+      paths,
+      junctions: document.splineCorridorJunctions,
+      terrains
+    }).filter((candidate) =>
+      candidate.connections.some((connection) =>
+        selectedPathIds.includes(connection.pathId)
+      )
+    );
+
+    for (const candidate of candidates) {
+      const marker = this.createPathJunctionMarker({
+        center: candidate.center,
+        radius: candidate.radius,
+        color: PATH_JUNCTION_CANDIDATE_COLOR,
+        opacity: 0.92
+      });
+
+      marker.userData.splineCorridorJunctionCandidateId = candidate.id;
+      this.pathGroup.add(marker);
+      this.pathJunctionMarkerMeshes.push(marker);
+    }
+  }
+
   private disposePathSegmentMeshes(segments: PathRenderObjects["segments"]) {
     for (const segment of segments) {
       this.pathGroup.remove(segment.outlineMesh);
