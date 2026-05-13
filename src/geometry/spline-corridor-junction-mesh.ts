@@ -452,37 +452,37 @@ export function resolveSplineCorridorJunctionRoadEdgeSeams(options: {
 
       const currentPoint = footprint.points[pointIndex]!;
       const nextPoint = footprint.points[(pointIndex + 1) % footprint.points.length]!;
-    const previousSegmentIndex =
-      (pointIndex - 1 + footprint.points.length) % footprint.points.length;
-    const nextSegmentIndex = (pointIndex + 1) % footprint.points.length;
+      const previousSegmentIndex =
+        (pointIndex - 1 + footprint.points.length) % footprint.points.length;
+      const nextSegmentIndex = (pointIndex + 1) % footprint.points.length;
 
-    if (isRoadMouthSegment(footprint.points, previousSegmentIndex)) {
-      pushRoadEdgeSeam({
-        seamsByPath,
-        junctionId: junction.id,
-        point: currentPoint,
-        outerOffset: getBoundaryPointOuterOffset({
-          points: footprint.points,
-          pointIndex,
-          paths: options.paths,
-          edge: junction.edge
-        })
-      });
-    }
+      if (isRoadMouthSegment(footprint.points, previousSegmentIndex)) {
+        pushRoadEdgeSeam({
+          seamsByPath,
+          junctionId: junction.id,
+          point: currentPoint,
+          outerOffset: getBoundaryPointOuterOffset({
+            points: footprint.points,
+            pointIndex,
+            paths: options.paths,
+            edge: junction.edge
+          })
+        });
+      }
 
-    if (isRoadMouthSegment(footprint.points, nextSegmentIndex)) {
-      pushRoadEdgeSeam({
-        seamsByPath,
-        junctionId: junction.id,
-        point: nextPoint,
-        outerOffset: getBoundaryPointOuterOffset({
-          points: footprint.points,
-          pointIndex: nextSegmentIndex,
-          paths: options.paths,
-          edge: junction.edge
-        })
-      });
-    }
+      if (isRoadMouthSegment(footprint.points, nextSegmentIndex)) {
+        pushRoadEdgeSeam({
+          seamsByPath,
+          junctionId: junction.id,
+          point: nextPoint,
+          outerOffset: getBoundaryPointOuterOffset({
+            points: footprint.points,
+            pointIndex: nextSegmentIndex,
+            paths: options.paths,
+            edge: junction.edge
+          })
+        });
+      }
     }
   }
 
@@ -570,66 +570,30 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
     return rowOffset;
   }
 
+  const rowOffsets = footprint.points.map((point, pointIndex) =>
+    pushProfileRow({
+      point,
+      outerOffset: getBoundaryPointOuterOffset({
+        points: footprint.points,
+        pointIndex,
+        paths: options.paths,
+        edge: options.edge
+      }),
+      perimeterDistance: perimeterDistances[pointIndex]!
+    })
+  );
+
   for (let pointIndex = 0; pointIndex < footprint.points.length; pointIndex += 1) {
     if (isRoadMouthSegment(footprint.points, pointIndex)) {
       continue;
     }
 
-    const currentPoint = footprint.points[pointIndex]!;
-    const nextPoint = footprint.points[(pointIndex + 1) % footprint.points.length]!;
-    const segmentDirection = normalizeXZ({
-      x: nextPoint.x - currentPoint.x,
-      z: nextPoint.z - currentPoint.z
-    });
-    const segmentOutwardNormal = getOutwardSegmentNormal(currentPoint, nextPoint);
+    const nextPointIndex = (pointIndex + 1) % footprint.points.length;
     const previousSegmentIndex =
       (pointIndex - 1 + footprint.points.length) % footprint.points.length;
     const nextSegmentIndex = (pointIndex + 1) % footprint.points.length;
-    const startEdgeWidth =
-      isRoadMouthSegment(footprint.points, previousSegmentIndex)
-        ? getPathEdgeWidth({
-            paths: options.paths,
-            point: currentPoint
-          }) ?? options.edge.width
-        : options.edge.width;
-    const endEdgeWidth =
-      isRoadMouthSegment(footprint.points, nextSegmentIndex)
-        ? getPathEdgeWidth({
-            paths: options.paths,
-            point: nextPoint
-          }) ?? options.edge.width
-        : options.edge.width;
-    const startOuterOffset = isRoadMouthSegment(
-      footprint.points,
-      previousSegmentIndex
-    )
-      ? getConnectionMiterOuterOffset({
-          point: currentPoint,
-          segmentStart: currentPoint,
-          segmentDirection,
-          segmentNormal: segmentOutwardNormal,
-          edgeWidth: startEdgeWidth
-        })
-      : multiplyXZVector(segmentOutwardNormal, options.edge.width);
-    const endOuterOffset = isRoadMouthSegment(footprint.points, nextSegmentIndex)
-      ? getConnectionMiterOuterOffset({
-          point: nextPoint,
-          segmentStart: currentPoint,
-          segmentDirection,
-          segmentNormal: segmentOutwardNormal,
-          edgeWidth: endEdgeWidth
-        })
-      : multiplyXZVector(segmentOutwardNormal, options.edge.width);
-    const currentRow = pushProfileRow({
-      point: currentPoint,
-      outerOffset: startOuterOffset,
-      perimeterDistance: perimeterDistances[pointIndex]!
-    });
-    const nextRow = pushProfileRow({
-      point: nextPoint,
-      outerOffset: endOuterOffset,
-      perimeterDistance: perimeterDistances[pointIndex + 1]!
-    });
+    const currentRow = rowOffsets[pointIndex]!;
+    const nextRow = rowOffsets[nextPointIndex]!;
 
     addProfileStrip({
       indices,
