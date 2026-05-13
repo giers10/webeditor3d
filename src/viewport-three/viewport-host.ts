@@ -8188,6 +8188,7 @@ export class ViewportHost {
     }
 
     applyRendererRenderCategory(this.pathGroup, "overlay");
+    this.rebuildPathJunctionMarkers(document, selection);
     this.refreshPathPresentation();
   }
 
