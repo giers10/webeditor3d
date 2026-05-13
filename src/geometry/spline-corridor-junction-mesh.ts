@@ -296,15 +296,15 @@ function getConnectionMiterDistance(options: {
     x: roadOuterPoint.x - segmentOuterStart.x,
     z: roadOuterPoint.z - segmentOuterStart.z
   };
-  const rawDistance =
-    crossXZVector(delta, roadTangent) / denominator -
-    dotXZVector(
-      {
-        x: options.point.x - options.segmentStart.x,
-        z: options.point.z - options.segmentStart.z
-      },
-      options.segmentDirection
-    );
+  const intersectionDistance = crossXZVector(delta, roadTangent) / denominator;
+  const pointDistance = dotXZVector(
+    {
+      x: options.point.x - options.segmentStart.x,
+      z: options.point.z - options.segmentStart.z
+    },
+    options.segmentDirection
+  );
+  const rawDistance = Math.abs(intersectionDistance - pointDistance);
 
   return Math.min(
     options.segmentLength * 0.45,
@@ -394,19 +394,6 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
     }
 
     return rowOffset;
-  }
-
-  function getTransitionUvDistance(
-    firstNormal: { x: number; z: number },
-    secondNormal: { x: number; z: number }
-  ): number {
-    return Math.max(
-      0.01,
-      Math.hypot(
-        (firstNormal.x - secondNormal.x) * options.edge.width,
-        (firstNormal.z - secondNormal.z) * options.edge.width
-      )
-    );
   }
 
   for (let pointIndex = 0; pointIndex < footprint.points.length; pointIndex += 1) {
