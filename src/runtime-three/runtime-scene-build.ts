@@ -62,6 +62,7 @@ import {
   resolveScenePath,
   type ScenePath,
   type ScenePathCurveMode,
+  type ScenePathRoadEdgeSettings,
   type ScenePathRoadSettings,
   type ScenePathPoint
 } from "../document/paths";
@@ -504,6 +505,11 @@ export interface RuntimePathSegment {
   tangent: Vec3;
 }
 
+export interface RuntimePathRoadEdgeSettings
+  extends ScenePathRoadEdgeSettings {
+  material: MaterialDef | null;
+}
+
 export interface RuntimePath {
   id: string;
   name?: string;
@@ -514,8 +520,12 @@ export interface RuntimePath {
   sampledResolution: number;
   glueToTerrain: boolean;
   terrainOffset: number;
-  road: ScenePathRoadSettings & {
+  road: Omit<ScenePathRoadSettings, "edges"> & {
     material: MaterialDef | null;
+    edges: {
+      left: RuntimePathRoadEdgeSettings;
+      right: RuntimePathRoadEdgeSettings;
+    };
   };
   points: RuntimePathPoint[];
   segments: RuntimePathSegment[];
