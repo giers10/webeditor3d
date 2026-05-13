@@ -206,7 +206,6 @@ import {
 } from "../geometry/spline-road-mesh";
 import { buildSplineCorridorJunctionMeshGeometry } from "../geometry/spline-corridor-junction-mesh";
 import {
-  createSplineCorridorJunctionFromCandidate,
   detectSplineCorridorJunctionCandidates,
   getSplineCorridorJunctionsConnectedToPath,
   resolveSplineCorridorJunctionClipIntervals,
