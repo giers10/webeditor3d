@@ -1956,7 +1956,16 @@ describe("buildRuntimeSceneFromDocument", () => {
         falloff: 0.5,
         heightOffset: 0.03,
         terrainConform: true,
-        materialId: "ground_sand_300x300"
+        materialId: "ground_sand_300x300",
+        edges: {
+          left: {
+            enabled: true,
+            kind: "curb",
+            width: 0.3,
+            height: 0.2,
+            materialId: "stone_flooring_200x200"
+          }
+        }
       }
     });
     const runtimeScene = buildRuntimeSceneFromDocument({
@@ -1968,6 +1977,9 @@ describe("buildRuntimeSceneFromDocument", () => {
 
     expect(runtimeScene.paths[0]?.road.material?.id).toBe(
       "ground_sand_300x300"
+    );
+    expect(runtimeScene.paths[0]?.road.edges.left.material?.id).toBe(
+      "stone_flooring_200x200"
     );
   });
 
