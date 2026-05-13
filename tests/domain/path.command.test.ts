@@ -190,6 +190,85 @@ describe("path commands", () => {
     expect(store.getState().document.paths[path.id]?.points).toHaveLength(2);
   });
 
+  it("inserts added path points after the requested anchor point", () => {
+    const path = createScenePath({
+      id: "path-point-insert",
+      points: [
+        {
+          id: "path-point-a",
+          position: {
+            x: 0,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-point-b",
+          position: {
+            x: 4,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-point-c",
+          position: {
+            x: 8,
+            y: 0,
+            z: 0
+          }
+        }
+      ]
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({
+          name: "Path Point Insert Command Scene"
+        }),
+        paths: {
+          [path.id]: path
+        }
+      }
+    });
+
+    store.executeCommand(
+      createAddPathPointCommand({
+        pathId: path.id,
+        insertAfterPointId: "path-point-a"
+      })
+    );
+
+    const updatedPath = store.getState().document.paths[path.id];
+    const insertedPoint = updatedPath?.points[1];
+
+    expect(updatedPath?.points.map((point) => point.id)).toEqual([
+      "path-point-a",
+      insertedPoint?.id,
+      "path-point-b",
+      "path-point-c"
+    ]);
+    expect(insertedPoint?.position).toEqual({
+      x: 2,
+      y: 0,
+      z: 0
+    });
+    expect(store.getState().selection).toEqual({
+      kind: "pathPoint",
+      pathId: path.id,
+      pointId: insertedPoint?.id
+    });
+
+    expect(store.undo()).toBe(true);
+    expect(store.getState().document.paths[path.id]?.points).toEqual(
+      path.points
+    );
+
+    expect(store.redo()).toBe(true);
+    expect(store.getState().document.paths[path.id]?.points[1]?.id).toBe(
+      insertedPoint?.id
+    );
+  });
+
   it("moves and deletes multiple path points with undo and redo", () => {
     const path = createScenePath({
       id: "path-point-batch-ops",
