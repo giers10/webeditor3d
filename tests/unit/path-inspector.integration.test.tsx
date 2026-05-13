@@ -144,6 +144,7 @@ describe("Path inspector", () => {
     expect(screen.getByTestId("path-road-terrain-conform")).toBeChecked();
     expect(screen.getByTestId("path-road-material")).toHaveValue("");
     expect(screen.getByTestId("apply-path-road-to-terrain")).toBeDisabled();
+    expect(screen.getByTestId("add-path-repeater")).toBeInTheDocument();
     expect(screen.getByTestId("path-point-0-x")).toHaveValue(-1);
     expect(screen.getByTestId("path-point-1-x")).toHaveValue(1);
 
@@ -193,6 +194,38 @@ describe("Path inspector", () => {
       }
     });
     fireEvent.click(screen.getByTestId("path-road-terrain-conform"));
+    fireEvent.click(screen.getByTestId("add-path-repeater"));
+    expect(screen.getByTestId("path-repeater-0-asset")).toHaveValue(
+      "fence_segment_wood_2m"
+    );
+    expect(screen.getByTestId("path-repeater-0-placement")).toHaveValue(
+      "left"
+    );
+    fireEvent.change(screen.getByTestId("path-repeater-0-asset"), {
+      target: {
+        value: "fence_post_wood"
+      }
+    });
+    fireEvent.change(screen.getByTestId("path-repeater-0-placement"), {
+      target: {
+        value: "right"
+      }
+    });
+    fireEvent.change(screen.getByTestId("path-repeater-0-offset"), {
+      target: {
+        value: "2.25"
+      }
+    });
+    fireEvent.change(screen.getByTestId("path-repeater-0-spacing"), {
+      target: {
+        value: "3"
+      }
+    });
+    fireEvent.change(screen.getByTestId("path-repeater-0-yaw-offset"), {
+      target: {
+        value: "15"
+      }
+    });
     fireEvent.change(screen.getByTestId("path-point-1-z"), {
       target: {
         value: "2"
@@ -220,6 +253,14 @@ describe("Path inspector", () => {
           terrainConform: false,
           materialId: null
         }
+      });
+      expect(updatedPath?.repeaters[0]).toMatchObject({
+        assetId: "fence_post_wood",
+        enabled: true,
+        placement: "right",
+        offset: 2.25,
+        spacing: 3,
+        yawOffsetDegrees: 15
       });
       expect(updatedPath?.points).toHaveLength(3);
       expect(updatedPath?.points[1]?.position).toEqual({
