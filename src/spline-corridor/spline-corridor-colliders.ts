@@ -192,7 +192,7 @@ function createBoxCollider(options: {
   junctionId?: string;
   repeaterId?: string;
   assetId?: string;
-  edgeSide?: "left" | "right";
+  edgeSide?: "left" | "right" | "junction";
   position: Vec3;
   yawDegrees: number;
   center: Vec3;
