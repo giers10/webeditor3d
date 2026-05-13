@@ -2005,6 +2005,64 @@ describe("buildRuntimeSceneFromDocument", () => {
     ]);
   });
 
+  it("adds spline corridor box colliders for collision-enabled edges and repeaters", () => {
+    const path = createScenePath({
+      id: "path-runtime-spline-corridor-collision",
+      road: {
+        enabled: true,
+        width: 2,
+        edges: {
+          left: {
+            enabled: true,
+            collisionEnabled: true,
+            kind: "curb",
+            width: 0.4,
+            height: 0.2,
+            materialId: null
+          }
+        }
+      },
+      repeaters: [
+        {
+          id: "repeater-runtime-collision",
+          assetId: "fence_segment_wood_2m",
+          collisionEnabled: true,
+          placement: "center",
+          spacing: 2
+        }
+      ]
+    });
+
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({
+        name: "Runtime Spline Corridor Collision Scene"
+      }),
+      paths: {
+        [path.id]: path
+      }
+    });
+    const corridorColliders = runtimeScene.staticColliders.filter(
+      (collider) => collider.source === "splineCorridor"
+    );
+
+    expect(corridorColliders).toHaveLength(3);
+    expect(corridorColliders).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          edgeSide: "left",
+          kind: "box",
+          pathId: path.id
+        }),
+        expect.objectContaining({
+          repeaterId: "repeater-runtime-collision",
+          assetId: "fence_segment_wood_2m",
+          kind: "box",
+          pathId: path.id
+        })
+      ])
+    );
+  });
+
   it("includes authored foliage layers, prototypes, and terrain masks for derived rendering", () => {
     const bundledPrototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
     const layer = createFoliageLayer({
