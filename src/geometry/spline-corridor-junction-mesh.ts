@@ -392,20 +392,17 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
 
   function pushProfileRow(optionsForRow: {
     point: SplineCorridorJunctionFootprintPoint;
-    outwardNormal: { x: number; z: number };
+    outerOffset: { x: number; z: number };
     perimeterDistance: number;
   }): number {
     const rowOffset = positions.length / 3;
-    const outwardNormal = normalizeXZ(optionsForRow.outwardNormal);
 
     for (let profileIndex = 0; profileIndex < profile.length; profileIndex += 1) {
       const profilePoint = profile[profileIndex]!;
       const x =
-        optionsForRow.point.x +
-        outwardNormal.x * options.edge.width * profilePoint.offsetRatio;
+        optionsForRow.point.x + optionsForRow.outerOffset.x * profilePoint.offsetRatio;
       const z =
-        optionsForRow.point.z +
-        outwardNormal.z * options.edge.width * profilePoint.offsetRatio;
+        optionsForRow.point.z + optionsForRow.outerOffset.z * profilePoint.offsetRatio;
       const y =
         resolveBaseY(optionsForRow.point, x, z) + profilePoint.heightOffset;
 
@@ -426,10 +423,6 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
 
     const currentPoint = footprint.points[pointIndex]!;
     const nextPoint = footprint.points[(pointIndex + 1) % footprint.points.length]!;
-    const segmentLength = Math.hypot(
-      nextPoint.x - currentPoint.x,
-      nextPoint.z - currentPoint.z
-    );
     const segmentDirection = normalizeXZ({
       x: nextPoint.x - currentPoint.x,
       z: nextPoint.z - currentPoint.z
@@ -438,61 +431,50 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
     const previousSegmentIndex =
       (pointIndex - 1 + footprint.points.length) % footprint.points.length;
     const nextSegmentIndex = (pointIndex + 1) % footprint.points.length;
-    const hasStartMouth =
-      isRoadMouthSegment(footprint.points, previousSegmentIndex) &&
-      currentPoint.connectionOutwardAxis !== undefined;
-    const hasEndMouth =
-      isRoadMouthSegment(footprint.points, nextSegmentIndex) &&
-      nextPoint.connectionOutwardAxis !== undefined;
-    const startMiterDistance = hasStartMouth
-      ? getConnectionMiterDistance({
+    const startEdgeWidth =
+      isRoadMouthSegment(footprint.points, previousSegmentIndex)
+        ? getPathEdgeWidth({
+            paths: options.paths,
+            point: currentPoint
+          }) ?? options.edge.width
+        : options.edge.width;
+    const endEdgeWidth =
+      isRoadMouthSegment(footprint.points, nextSegmentIndex)
+        ? getPathEdgeWidth({
+            paths: options.paths,
+            point: nextPoint
+          }) ?? options.edge.width
+        : options.edge.width;
+    const startOuterOffset = isRoadMouthSegment(
+      footprint.points,
+      previousSegmentIndex
+    )
+      ? getConnectionMiterOuterOffset({
           point: currentPoint,
           segmentStart: currentPoint,
           segmentDirection,
           segmentNormal: segmentOutwardNormal,
-          edgeWidth: options.edge.width,
-          segmentLength
+          edgeWidth: startEdgeWidth
         })
-      : 0;
-    const endMiterDistance = hasEndMouth
-      ? getConnectionMiterDistance({
+      : multiplyXZVector(segmentOutwardNormal, options.edge.width);
+    const endOuterOffset = isRoadMouthSegment(footprint.points, nextSegmentIndex)
+      ? getConnectionMiterOuterOffset({
           point: nextPoint,
           segmentStart: currentPoint,
           segmentDirection,
           segmentNormal: segmentOutwardNormal,
-          edgeWidth: options.edge.width,
-          segmentLength
+          edgeWidth: endEdgeWidth
         })
-      : 0;
-    const clampedStartDistance = Math.min(
-      startMiterDistance,
-      segmentLength * 0.45
-    );
-    const clampedEndDistance = Math.max(
-      clampedStartDistance,
-      segmentLength - Math.min(endMiterDistance, segmentLength * 0.45)
-    );
-    const segmentStartPoint = getPointAlongSegment({
-      start: currentPoint,
-      end: nextPoint,
-      distance: clampedStartDistance,
-      length: segmentLength
-    });
-    const segmentEndPoint = getPointAlongSegment({
-      start: currentPoint,
-      end: nextPoint,
-      distance: clampedEndDistance,
-      length: segmentLength
-    });
+      : multiplyXZVector(segmentOutwardNormal, options.edge.width);
     const currentRow = pushProfileRow({
-      point: segmentStartPoint,
-      outwardNormal: segmentOutwardNormal,
-      perimeterDistance: perimeterDistances[pointIndex]! + clampedStartDistance
+      point: currentPoint,
+      outerOffset: startOuterOffset,
+      perimeterDistance: perimeterDistances[pointIndex]!
     });
     const nextRow = pushProfileRow({
-      point: segmentEndPoint,
-      outwardNormal: segmentOutwardNormal,
-      perimeterDistance: perimeterDistances[pointIndex]! + clampedEndDistance
+      point: nextPoint,
+      outerOffset: endOuterOffset,
+      perimeterDistance: perimeterDistances[pointIndex + 1]!
     });
 
     addProfileStrip({
@@ -503,51 +485,35 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
     });
 
     if (isRoadMouthSegment(footprint.points, previousSegmentIndex)) {
-      if (currentPoint.connectionOutwardAxis !== undefined) {
-        const seamRow = pushProfileRow({
-          point: currentPoint,
-          outwardNormal: currentPoint.connectionOutwardAxis,
-          perimeterDistance: perimeterDistances[pointIndex]!
-        });
+      pushRoadEdgeSeam({
+        seamsByPath: new Map(),
+        junctionId: options.junction.id,
+        point: currentPoint,
+        outerOffset: startOuterOffset
+      });
 
-        addProfileStrip({
-          indices,
-          startRow: seamRow,
-          endRow: currentRow,
-          profileVertexCount: profile.length
-        });
-      } else {
-        addJunctionEdgeProfileCap({
-          indices,
-          rowOffset: currentRow,
-          profileVertexCount: profile.length,
-          reverse: true
-        });
-      }
+      addJunctionEdgeProfileCap({
+        indices,
+        rowOffset: currentRow,
+        profileVertexCount: profile.length,
+        reverse: true
+      });
     }
 
     if (isRoadMouthSegment(footprint.points, nextSegmentIndex)) {
-      if (nextPoint.connectionOutwardAxis !== undefined) {
-        const seamRow = pushProfileRow({
-          point: nextPoint,
-          outwardNormal: nextPoint.connectionOutwardAxis,
-          perimeterDistance: perimeterDistances[pointIndex + 1]!
-        });
+      pushRoadEdgeSeam({
+        seamsByPath: new Map(),
+        junctionId: options.junction.id,
+        point: nextPoint,
+        outerOffset: endOuterOffset
+      });
 
-        addProfileStrip({
-          indices,
-          startRow: nextRow,
-          endRow: seamRow,
-          profileVertexCount: profile.length
-        });
-      } else {
-        addJunctionEdgeProfileCap({
-          indices,
-          rowOffset: nextRow,
-          profileVertexCount: profile.length,
-          reverse: false
-        });
-      }
+      addJunctionEdgeProfileCap({
+        indices,
+        rowOffset: nextRow,
+        profileVertexCount: profile.length,
+        reverse: false
+      });
     }
   }
 
