@@ -202,20 +202,26 @@ describe("spline corridor junction mesh generation", () => {
     expect(meshData?.profileVertexCount).toBe(4);
     expect(meshData?.positions).toHaveLength((8 + 1) * 4 * 3);
     expect(meshData?.indices).toHaveLength(8 * 3 * 6);
-    expect(Array.from(meshData!.positions.slice(0, 12))).toEqual([
+    const firstProfile = Array.from(meshData!.positions.slice(0, 12));
+
+    expect(firstProfile).toEqual([
       3,
       expect.closeTo(0.1, 5),
       -1,
       3,
       expect.closeTo(0.3, 5),
       -1,
-      expect.not.closeTo(3, 5),
+      firstProfile[6],
       expect.closeTo(0.3, 5),
-      expect.not.closeTo(-1, 5),
-      expect.not.closeTo(3, 5),
+      firstProfile[8],
+      firstProfile[9],
       expect.closeTo(0.1, 5),
-      expect.not.closeTo(-1, 5)
+      firstProfile[11]
     ]);
+    expect(firstProfile[6]).not.toBeCloseTo(3);
+    expect(firstProfile[8]).not.toBeCloseTo(-1);
+    expect(firstProfile[9]).not.toBeCloseTo(3);
+    expect(firstProfile[11]).not.toBeCloseTo(-1);
   });
 
   it("samples full terrain influence inside the connection footprint and falloff outside it", () => {
