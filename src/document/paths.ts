@@ -1186,6 +1186,31 @@ export function cloneScenePath(path: ScenePath): ScenePath {
   return createScenePath(path);
 }
 
+function areScenePathRepeatersEqual(
+  left: ScenePathRepeater,
+  right: ScenePathRepeater
+): boolean {
+  return (
+    left.id === right.id &&
+    left.name === right.name &&
+    left.enabled === right.enabled &&
+    left.assetId === right.assetId &&
+    left.placement === right.placement &&
+    left.offset === right.offset &&
+    left.spacing === right.spacing &&
+    left.startInset === right.startInset &&
+    left.endInset === right.endInset &&
+    left.scale === right.scale &&
+    left.randomScale === right.randomScale &&
+    left.randomYawDegrees === right.randomYawDegrees &&
+    left.yawOffsetDegrees === right.yawOffsetDegrees &&
+    left.terrainConform === right.terrainConform &&
+    left.heightOffset === right.heightOffset &&
+    left.alignToSpline === right.alignToSpline &&
+    left.seed === right.seed
+  );
+}
+
 export function areScenePathsEqual(left: ScenePath, right: ScenePath): boolean {
   return (
     left.id === right.id &&
@@ -1215,6 +1240,10 @@ export function areScenePathsEqual(left: ScenePath, right: ScenePath): boolean {
     left.road.edges.right.width === right.road.edges.right.width &&
     left.road.edges.right.height === right.road.edges.right.height &&
     left.road.edges.right.materialId === right.road.edges.right.materialId &&
+    left.repeaters.length === right.repeaters.length &&
+    left.repeaters.every((repeater, index) =>
+      areScenePathRepeatersEqual(repeater, right.repeaters[index]!)
+    ) &&
     left.points.length === right.points.length &&
     left.points.every(
       (point, index) =>
