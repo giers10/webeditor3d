@@ -100,12 +100,12 @@ describe("terrain grid resizing", () => {
       cellSize: 0.5
     });
 
-    expect(
-      sampleTerrainHeightAtLocalPosition(resizedTerrain, 2.5, 3.5)
-    ).toBeCloseTo(sampleTerrainHeightAtLocalPosition(terrain, 2.5, 3.5) ?? 0);
-    expect(
-      sampleTerrainHeightAtLocalPosition(resizedTerrain, 6, 1)
-    ).toBeCloseTo(sampleTerrainHeightAtLocalPosition(terrain, 6, 1) ?? 0);
+    expect(sampleTerrainHeightAtLocalPosition(resizedTerrain, 2.5, 3.5)).toBeCloseTo(
+      sampleTerrainHeightAtLocalPosition(terrain, 2.5, 3.5) ?? 0
+    );
+    expect(sampleTerrainHeightAtLocalPosition(resizedTerrain, 6, 1)).toBeCloseTo(
+      sampleTerrainHeightAtLocalPosition(terrain, 6, 1) ?? 0
+    );
   });
 
   it("preserves paint weights at representative local positions when Cell Size changes", () => {
@@ -123,11 +123,7 @@ describe("terrain grid resizing", () => {
       cellSize: 0.5
     });
     const originalOffset = getTerrainPaintWeightSampleOffset(terrain, 4, 2);
-    const resizedOffset = getTerrainPaintWeightSampleOffset(
-      resizedTerrain,
-      8,
-      4
-    );
+    const resizedOffset = getTerrainPaintWeightSampleOffset(resizedTerrain, 8, 4);
 
     expect(resizedTerrain.paintWeights[resizedOffset]).toBeCloseTo(
       terrain.paintWeights[originalOffset] ?? 0
@@ -296,7 +292,20 @@ describe("terrain material layers", () => {
       id: "terrain-add-layer",
       sampleCountX: 2,
       sampleCountZ: 2,
-      paintWeights: [0.2, 0.3, 0.1, 0.4, 0.1, 0, 0, 0.5, 0, 0.25, 0.25, 0.25]
+      paintWeights: [
+        0.2,
+        0.3,
+        0.1,
+        0.4,
+        0.1,
+        0,
+        0,
+        0.5,
+        0,
+        0.25,
+        0.25,
+        0.25
+      ]
     });
 
     const nextTerrain = createTerrainWithAddedLayer(terrain, "road-material");
@@ -313,12 +322,18 @@ describe("terrain material layers", () => {
 
     expect(nextTerrain.layers).toHaveLength(5);
     expect(nextTerrain.layers[4]).toEqual({ materialId: "road-material" });
-    expect(
-      nextTerrain.paintWeights.slice(firstSampleOffset, firstSampleOffset + 4)
-    ).toEqual([0.2, 0.3, 0.1, 0]);
-    expect(
-      nextTerrain.paintWeights.slice(secondSampleOffset, secondSampleOffset + 4)
-    ).toEqual([0.4, 0.1, 0, 0]);
+    expect(nextTerrain.paintWeights.slice(firstSampleOffset, firstSampleOffset + 4)).toEqual([
+      0.2,
+      0.3,
+      0.1,
+      0
+    ]);
+    expect(nextTerrain.paintWeights.slice(secondSampleOffset, secondSampleOffset + 4)).toEqual([
+      0.4,
+      0.1,
+      0,
+      0
+    ]);
   });
 
   it("removes non-base layers by compacting explicit weights", () => {
@@ -327,7 +342,20 @@ describe("terrain material layers", () => {
         id: "terrain-remove-layer",
         sampleCountX: 2,
         sampleCountZ: 2,
-        paintWeights: [0.2, 0.3, 0.1, 0.4, 0.1, 0, 0, 0.5, 0, 0.25, 0.25, 0.25]
+        paintWeights: [
+          0.2,
+          0.3,
+          0.1,
+          0.4,
+          0.1,
+          0,
+          0,
+          0.5,
+          0,
+          0.25,
+          0.25,
+          0.25
+        ]
       }),
       "fifth-material"
     );
@@ -336,7 +364,18 @@ describe("terrain material layers", () => {
 
     expect(nextTerrain.layers).toHaveLength(4);
     expect(nextTerrain.paintWeights).toEqual([
-      0.2, 0.1, 0, 0.4, 0, 0, 0, 0, 0, 0.25, 0.25, 0
+      0.2,
+      0.1,
+      0,
+      0.4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.25,
+      0.25,
+      0
     ]);
   });
 });
@@ -407,13 +446,28 @@ describe("terrain foliage masks", () => {
     expect(clonedTerrain.foliageMasks[foliageLayerId]).not.toBe(mask);
     expect(getTerrainFoliageMaskValueAtSample(mask!, 1, 1)).toBe(0.5);
     expect(
-      sampleTerrainFoliageMaskAtWorldPosition(terrain, foliageLayerId, 11, 21)
+      sampleTerrainFoliageMaskAtWorldPosition(
+        terrain,
+        foliageLayerId,
+        11,
+        21
+      )
     ).toBeCloseTo(0.375);
     expect(
-      sampleTerrainFoliageMaskAtWorldPosition(terrain, "missing-layer", 11, 21)
+      sampleTerrainFoliageMaskAtWorldPosition(
+        terrain,
+        "missing-layer",
+        11,
+        21
+      )
     ).toBe(0);
     expect(
-      sampleTerrainFoliageMaskAtWorldPosition(terrain, foliageLayerId, 99, 99)
+      sampleTerrainFoliageMaskAtWorldPosition(
+        terrain,
+        foliageLayerId,
+        99,
+        99
+      )
     ).toBeNull();
   });
 });

@@ -173,8 +173,7 @@ describe("Terrain foundation", () => {
     fireEvent.click(screen.getByTestId("terrain-grid-apply"));
 
     await waitFor(() => {
-      const updatedTerrain =
-        store.getState().document.terrains[createdTerrain.id];
+      const updatedTerrain = store.getState().document.terrains[createdTerrain.id];
 
       expect(updatedTerrain?.sampleCountX).toBe(5);
       expect(updatedTerrain?.sampleCountZ).toBe(5);
