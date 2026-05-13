@@ -538,6 +538,15 @@ const PATH_POINT_HOVERED_SCALE = 1.22;
 const PATH_POINT_SELECTED_SCALE = 1.45;
 const PATH_ROAD_PREVIEW_COLOR = 0x5f5747;
 const PATH_ROAD_SHOULDER_PREVIEW_COLOR = 0x2d261d;
+const PATH_ROAD_EDGE_FALLBACK_COLORS: Record<
+  ScenePathRoadEdgeSettings["kind"],
+  number
+> = {
+  curb: 0x8d8676,
+  softShoulder: 0x5f4b31,
+  bank: 0x4f6a39,
+  ditch: 0x33402f
+};
 const TERRAIN_BASE_COLOR = 0x708b57;
 const TERRAIN_HOVERED_COLOR = 0x89a765;
 const TERRAIN_SELECTED_COLOR = 0xe0c17f;
@@ -2675,10 +2684,9 @@ export class ViewportHost {
     }
 
     for (const renderObjects of this.roadSurfaceRenderObjects.values()) {
-      applyAdvancedRenderingRenderableShadowFlags(
-        renderObjects.mesh,
-        shadowsEnabled
-      );
+      for (const mesh of renderObjects.meshes) {
+        applyAdvancedRenderingRenderableShadowFlags(mesh, shadowsEnabled);
+      }
     }
 
     for (const renderObjects of this.entityRenderObjects.values()) {
