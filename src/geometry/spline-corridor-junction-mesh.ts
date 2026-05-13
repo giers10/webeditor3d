@@ -129,13 +129,6 @@ function crossXZVector(
   return left.x * right.z - left.z * right.x;
 }
 
-function dotXZVector(
-  left: { x: number; z: number },
-  right: { x: number; z: number }
-): number {
-  return left.x * right.x + left.z * right.z;
-}
-
 function multiplyXZVector(
   vector: { x: number; z: number },
   scalar: number
