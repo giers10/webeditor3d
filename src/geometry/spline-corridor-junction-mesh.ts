@@ -135,32 +135,6 @@ function getOutwardSegmentNormal(
   };
 }
 
-function getMiteredOutwardOffset(options: {
-  footprint: SplineCorridorJunctionFootprint;
-  pointIndex: number;
-  edgeWidth: number;
-}): { x: number; z: number } {
-  const points = options.footprint.points;
-  const previous = points[(options.pointIndex - 1 + points.length) % points.length]!;
-  const current = points[options.pointIndex]!;
-  const next = points[(options.pointIndex + 1) % points.length]!;
-  const previousNormal = getOutwardSegmentNormal(previous, current);
-  const nextNormal = getOutwardSegmentNormal(current, next);
-  const miter = normalizeXZ({
-    x: previousNormal.x + nextNormal.x,
-    z: previousNormal.z + nextNormal.z
-  });
-  const scale = Math.min(
-    3,
-    Math.max(1, 1 / Math.max(0.25, miter.x * nextNormal.x + miter.z * nextNormal.z))
-  );
-
-  return {
-    x: miter.x * options.edgeWidth * scale,
-    z: miter.z * options.edgeWidth * scale
-  };
-}
-
 function getPerimeterDistances(
   points: readonly SplineCorridorJunctionFootprintPoint[]
 ): number[] {
@@ -204,6 +178,26 @@ function addJunctionEdgeProfileCap(options: {
       options.rowOffset + index,
       options.rowOffset + index + 1
     );
+  }
+}
+
+function addProfileStrip(options: {
+  indices: number[];
+  startRow: number;
+  endRow: number;
+  profileVertexCount: number;
+}) {
+  for (
+    let profileIndex = 0;
+    profileIndex < options.profileVertexCount - 1;
+    profileIndex += 1
+  ) {
+    const current = options.startRow + profileIndex;
+    const currentNext = current + 1;
+    const next = options.endRow + profileIndex;
+    const nextNext = next + 1;
+
+    options.indices.push(current, currentNext, next, next, currentNext, nextNext);
   }
 }
 
@@ -272,24 +266,33 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
       : terrainWorldY + point.heightOffset;
   }
 
-  for (let pointIndex = 0; pointIndex <= footprint.points.length; pointIndex += 1) {
-    const wrappedPointIndex = pointIndex % footprint.points.length;
-    const point = footprint.points[wrappedPointIndex]!;
-    const outwardOffset = getMiteredOutwardOffset({
-      footprint,
-      pointIndex: wrappedPointIndex,
-      edgeWidth: options.edge.width
-    });
+  function pushProfileRow(optionsForRow: {
+    point: SplineCorridorJunctionFootprintPoint;
+    outwardNormal: { x: number; z: number };
+    perimeterDistance: number;
+  }): number {
+    const rowOffset = positions.length / 3;
+    const outwardNormal = normalizeXZ(optionsForRow.outwardNormal);
 
     for (let profileIndex = 0; profileIndex < profile.length; profileIndex += 1) {
       const profilePoint = profile[profileIndex]!;
-      const x = point.x + outwardOffset.x * profilePoint.offsetRatio;
-      const z = point.z + outwardOffset.z * profilePoint.offsetRatio;
-      const y = resolveBaseY(point, x, z) + profilePoint.heightOffset;
+      const x =
+        optionsForRow.point.x +
+        outwardNormal.x * options.edge.width * profilePoint.offsetRatio;
+      const z =
+        optionsForRow.point.z +
+        outwardNormal.z * options.edge.width * profilePoint.offsetRatio;
+      const y =
+        resolveBaseY(optionsForRow.point, x, z) + profilePoint.heightOffset;
 
       positions.push(x, y, z);
-      uvs.push(perimeterDistances[pointIndex]!, profileIndex / profileLastIndex);
+      uvs.push(
+        optionsForRow.perimeterDistance,
+        profileIndex / profileLastIndex
+      );
     }
+
+    return rowOffset;
   }
 
   for (let pointIndex = 0; pointIndex < footprint.points.length; pointIndex += 1) {
@@ -297,38 +300,76 @@ export function buildSplineCorridorJunctionEdgeMeshData(options: {
       continue;
     }
 
-    const currentRow = pointIndex * profile.length;
-    const nextRow = currentRow + profile.length;
-
-    for (let profileIndex = 0; profileIndex < profile.length - 1; profileIndex += 1) {
-      const current = currentRow + profileIndex;
-      const currentNext = current + 1;
-      const next = nextRow + profileIndex;
-      const nextNext = next + 1;
-
-      indices.push(current, currentNext, next, next, currentNext, nextNext);
-    }
-
+    const currentPoint = footprint.points[pointIndex]!;
+    const nextPoint = footprint.points[(pointIndex + 1) % footprint.points.length]!;
+    const segmentOutwardNormal = getOutwardSegmentNormal(currentPoint, nextPoint);
+    const currentRow = pushProfileRow({
+      point: currentPoint,
+      outwardNormal: segmentOutwardNormal,
+      perimeterDistance: perimeterDistances[pointIndex]!
+    });
+    const nextRow = pushProfileRow({
+      point: nextPoint,
+      outwardNormal: segmentOutwardNormal,
+      perimeterDistance: perimeterDistances[pointIndex + 1]!
+    });
     const previousSegmentIndex =
       (pointIndex - 1 + footprint.points.length) % footprint.points.length;
     const nextSegmentIndex = (pointIndex + 1) % footprint.points.length;
 
+    addProfileStrip({
+      indices,
+      startRow: currentRow,
+      endRow: nextRow,
+      profileVertexCount: profile.length
+    });
+
     if (isRoadMouthSegment(footprint.points, previousSegmentIndex)) {
-      addJunctionEdgeProfileCap({
-        indices,
-        rowOffset: currentRow,
-        profileVertexCount: profile.length,
-        reverse: true
-      });
+      if (currentPoint.connectionOutwardAxis !== undefined) {
+        const seamRow = pushProfileRow({
+          point: currentPoint,
+          outwardNormal: currentPoint.connectionOutwardAxis,
+          perimeterDistance: perimeterDistances[pointIndex]!
+        });
+
+        addProfileStrip({
+          indices,
+          startRow: seamRow,
+          endRow: currentRow,
+          profileVertexCount: profile.length
+        });
+      } else {
+        addJunctionEdgeProfileCap({
+          indices,
+          rowOffset: currentRow,
+          profileVertexCount: profile.length,
+          reverse: true
+        });
+      }
     }
 
     if (isRoadMouthSegment(footprint.points, nextSegmentIndex)) {
-      addJunctionEdgeProfileCap({
-        indices,
-        rowOffset: nextRow,
-        profileVertexCount: profile.length,
-        reverse: false
-      });
+      if (nextPoint.connectionOutwardAxis !== undefined) {
+        const seamRow = pushProfileRow({
+          point: nextPoint,
+          outwardNormal: nextPoint.connectionOutwardAxis,
+          perimeterDistance: perimeterDistances[pointIndex + 1]!
+        });
+
+        addProfileStrip({
+          indices,
+          startRow: nextRow,
+          endRow: seamRow,
+          profileVertexCount: profile.length
+        });
+      } else {
+        addJunctionEdgeProfileCap({
+          indices,
+          rowOffset: nextRow,
+          profileVertexCount: profile.length,
+          reverse: false
+        });
+      }
     }
   }
 
