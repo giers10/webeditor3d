@@ -974,6 +974,9 @@ export class ViewportHost {
     string,
     RoadSurfaceRenderObjects
   >();
+  private readonly pathJunctionMarkerMeshes: Array<
+    Mesh<TorusGeometry, MeshBasicMaterial>
+  > = [];
   private readonly pathRenderObjects = new Map<string, PathRenderObjects>();
   private readonly entityRenderObjects = new Map<string, EntityRenderObjects>();
   private readonly localLightRenderObjects = new Map<
