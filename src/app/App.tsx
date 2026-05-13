@@ -22974,6 +22974,32 @@ export function App({
                                 </select>
                               </label>
                               <label className="form-field">
+                                <span className="label">Shape</span>
+                                <select
+                                  className="select-input"
+                                  data-testid={`spline-corridor-junction-${junction.id}-shape-mode`}
+                                  value={junction.shapeMode}
+                                  onChange={(event) =>
+                                    handleSplineCorridorJunctionChange(
+                                      createSplineCorridorJunction({
+                                        ...junction,
+                                        shapeMode:
+                                          normalizeSplineCorridorJunctionShapeMode(
+                                            event.currentTarget.value
+                                          )
+                                      }),
+                                      "Updated spline corridor junction shape."
+                                    )
+                                  }
+                                >
+                                  <option value="straight">
+                                    Straight chamfer
+                                  </option>
+                                  <option value="curve">Curve</option>
+                                  <option value="corner">Corner</option>
+                                </select>
+                              </label>
+                              <label className="form-field">
                                 <span className="label">Terrain Mode</span>
                                 <select
                                   className="select-input"
