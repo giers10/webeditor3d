@@ -2650,6 +2650,83 @@ function validateEntityName(
   }
 }
 
+function validateScenePathRoadEdge(
+  edge: ScenePathRoadEdgeSettings,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (!isBoolean(edge.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-edge-enabled",
+        "Path road edge enabled must remain a boolean.",
+        `${path}.enabled`
+      )
+    );
+  }
+
+  if (!isScenePathRoadEdgeKind(edge.kind)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-edge-kind",
+        "Path road edge kind must be curb, softShoulder, bank, or ditch.",
+        `${path}.kind`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      edge.width,
+      MIN_SCENE_PATH_ROAD_EDGE_WIDTH,
+      MAX_SCENE_PATH_ROAD_EDGE_WIDTH
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-edge-width",
+        `Path road edge width must be from ${MIN_SCENE_PATH_ROAD_EDGE_WIDTH} to ${MAX_SCENE_PATH_ROAD_EDGE_WIDTH}.`,
+        `${path}.width`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      edge.height,
+      MIN_SCENE_PATH_ROAD_EDGE_HEIGHT,
+      MAX_SCENE_PATH_ROAD_EDGE_HEIGHT
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-edge-height",
+        `Path road edge height must be from ${MIN_SCENE_PATH_ROAD_EDGE_HEIGHT} to ${MAX_SCENE_PATH_ROAD_EDGE_HEIGHT}.`,
+        `${path}.height`
+      )
+    );
+  }
+
+  if (
+    edge.materialId !== null &&
+    document.materials[edge.materialId] === undefined
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-path-road-edge-material",
+        `Path road edge material reference ${edge.materialId} does not exist in the document material registry.`,
+        `${path}.materialId`
+      )
+    );
+  }
+}
+
 function validateScenePath(
   pathValue: ScenePath,
   path: string,
