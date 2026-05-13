@@ -22564,6 +22564,413 @@ export function App({
                   </div>
 
                   <div className="form-section">
+                    <div className="label">Spline Repeaters</div>
+                    <div className="material-summary">
+                      Place bundled corridor GLBs along this spline. Repeaters
+                      work even when the road corridor is disabled.
+                    </div>
+                    <div className="inline-actions">
+                      <button
+                        className="toolbar__button"
+                        data-testid="add-path-repeater"
+                        type="button"
+                        onClick={handleAddPathRepeater}
+                      >
+                        Add Repeater
+                      </button>
+                    </div>
+                    {selectedPath.repeaters.length === 0 ? (
+                      <div className="material-summary">
+                        No repeaters on this path yet.
+                      </div>
+                    ) : null}
+                    {selectedPath.repeaters.map((repeater, repeaterIndex) => {
+                      const selectedAsset =
+                        BUNDLED_SPLINE_CORRIDOR_ASSETS.find(
+                          (asset) => asset.id === repeater.assetId
+                        ) ?? BUNDLED_SPLINE_CORRIDOR_ASSETS[0];
+                      const repeaterLabel =
+                        repeater.name ??
+                        selectedAsset?.label ??
+                        `Repeater ${repeaterIndex + 1}`;
+
+                      return (
+                        <div className="form-section" key={repeater.id}>
+                          <div className="label">{repeaterLabel}</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              data-testid={`path-repeater-${repeaterIndex}-enabled`}
+                              type="checkbox"
+                              checked={repeater.enabled}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    enabled: event.currentTarget.checked
+                                  },
+                                  event.currentTarget.checked
+                                    ? "Enabled Path repeater."
+                                    : "Disabled Path repeater."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Asset</span>
+                            <select
+                              className="select-input"
+                              data-testid={`path-repeater-${repeaterIndex}-asset`}
+                              value={repeater.assetId}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    assetId: normalizeScenePathRepeaterAssetId(
+                                      event.currentTarget.value
+                                    )
+                                  },
+                                  "Updated Path repeater asset."
+                                )
+                              }
+                            >
+                              {BUNDLED_SPLINE_CORRIDOR_ASSETS.map((asset) => (
+                                <option key={asset.id} value={asset.id}>
+                                  {getSplineCorridorAssetCategoryLabel(
+                                    asset.category
+                                  )}
+                                  {" - "}
+                                  {asset.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Placement</span>
+                            <select
+                              className="select-input"
+                              data-testid={`path-repeater-${repeaterIndex}-placement`}
+                              value={repeater.placement}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    placement:
+                                      normalizeScenePathRepeaterPlacement(
+                                        event.currentTarget.value
+                                      )
+                                  },
+                                  "Updated Path repeater placement."
+                                )
+                              }
+                            >
+                              {(["center", "left", "right"] as const).map(
+                                (placement) => (
+                                  <option key={placement} value={placement}>
+                                    {getPathRepeaterPlacementLabel(placement)}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Offset</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-repeater-${repeaterIndex}-offset`}
+                              type="number"
+                              min={0}
+                              step={0.1}
+                              value={repeater.offset}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    offset: normalizeScenePathRepeaterOffset(
+                                      Number(event.currentTarget.value)
+                                    )
+                                  },
+                                  "Updated Path repeater offset."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Spacing</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-repeater-${repeaterIndex}-spacing`}
+                              type="number"
+                              min={0.05}
+                              step={0.1}
+                              value={repeater.spacing}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    spacing: normalizeScenePathRepeaterSpacing(
+                                      Number(event.currentTarget.value)
+                                    )
+                                  },
+                                  "Updated Path repeater spacing."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Start Inset</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-repeater-${repeaterIndex}-start-inset`}
+                              type="number"
+                              min={0}
+                              step={0.1}
+                              value={repeater.startInset}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    startInset: normalizeScenePathRepeaterInset(
+                                      Number(event.currentTarget.value)
+                                    )
+                                  },
+                                  "Updated Path repeater start inset."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">End Inset</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-repeater-${repeaterIndex}-end-inset`}
+                              type="number"
+                              min={0}
+                              step={0.1}
+                              value={repeater.endInset}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    endInset: normalizeScenePathRepeaterInset(
+                                      Number(event.currentTarget.value)
+                                    )
+                                  },
+                                  "Updated Path repeater end inset."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Scale</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-repeater-${repeaterIndex}-scale`}
+                              type="number"
+                              min={0.01}
+                              step={0.05}
+                              value={repeater.scale}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    scale: normalizeScenePathRepeaterScale(
+                                      Number(event.currentTarget.value)
+                                    )
+                                  },
+                                  "Updated Path repeater scale."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Random Scale</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-repeater-${repeaterIndex}-random-scale`}
+                              type="number"
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              value={repeater.randomScale}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    randomScale:
+                                      normalizeScenePathRepeaterRandomScale(
+                                        Number(event.currentTarget.value)
+                                      )
+                                  },
+                                  "Updated Path repeater random scale."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Random Yaw</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-repeater-${repeaterIndex}-random-yaw`}
+                              type="number"
+                              min={0}
+                              max={180}
+                              step={1}
+                              value={repeater.randomYawDegrees}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    randomYawDegrees:
+                                      normalizeScenePathRepeaterRandomYawDegrees(
+                                        Number(event.currentTarget.value)
+                                      )
+                                  },
+                                  "Updated Path repeater random yaw."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Yaw Offset</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-repeater-${repeaterIndex}-yaw-offset`}
+                              type="number"
+                              step={1}
+                              value={repeater.yawOffsetDegrees}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    yawOffsetDegrees:
+                                      normalizeScenePathRepeaterYawOffsetDegrees(
+                                        Number(event.currentTarget.value)
+                                      )
+                                  },
+                                  "Updated Path repeater yaw offset."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Align to spline</span>
+                            <input
+                              data-testid={`path-repeater-${repeaterIndex}-align`}
+                              type="checkbox"
+                              checked={repeater.alignToSpline}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    alignToSpline: event.currentTarget.checked
+                                  },
+                                  "Updated Path repeater alignment."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Conform to terrain</span>
+                            <input
+                              data-testid={`path-repeater-${repeaterIndex}-terrain-conform`}
+                              type="checkbox"
+                              checked={repeater.terrainConform}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    terrainConform: event.currentTarget.checked
+                                  },
+                                  "Updated Path repeater terrain conform."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Height Offset</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-repeater-${repeaterIndex}-height-offset`}
+                              type="number"
+                              step={0.05}
+                              value={repeater.heightOffset}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    heightOffset:
+                                      normalizeScenePathRepeaterHeightOffset(
+                                        Number(event.currentTarget.value)
+                                      )
+                                  },
+                                  "Updated Path repeater height offset."
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Seed</span>
+                            <input
+                              className="text-input"
+                              data-testid={`path-repeater-${repeaterIndex}-seed`}
+                              type="number"
+                              step={1}
+                              value={repeater.seed}
+                              onChange={(event) =>
+                                handlePathRepeaterChange(
+                                  repeaterIndex,
+                                  {
+                                    ...repeater,
+                                    seed: Math.trunc(
+                                      Number(event.currentTarget.value)
+                                    )
+                                  },
+                                  "Updated Path repeater seed."
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="inline-actions">
+                            <button
+                              className="toolbar__button toolbar__button--danger"
+                              data-testid={`delete-path-repeater-${repeaterIndex}`}
+                              type="button"
+                              onClick={() =>
+                                handleDeletePathRepeater(repeaterIndex)
+                              }
+                            >
+                              Remove Repeater
+                            </button>
+                          </div>
+                          {selectedAsset === undefined ? null : (
+                            <div className="material-summary">
+                              {selectedAsset.intendedUse} Dimensions:{" "}
+                              {selectedAsset.dimensions.widthX}m x{" "}
+                              {selectedAsset.dimensions.heightY}m x{" "}
+                              {selectedAsset.dimensions.lengthZ}m.
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="form-section">
                     <div className="label">Points</div>
                     <div className="material-summary">
                       Edit authored point positions directly. Keep at least{" "}
