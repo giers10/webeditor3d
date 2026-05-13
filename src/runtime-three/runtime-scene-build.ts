@@ -2078,6 +2078,7 @@ export function buildRuntimeSceneFromDocument(
     });
   const splineCorridorColliders = deriveSplineCorridorBoxColliders({
     paths,
+    junctions: splineCorridorJunctions,
     terrains: enabledTerrains,
     clipIntervalsByPath: splineCorridorClipIntervalsByPath
   });
