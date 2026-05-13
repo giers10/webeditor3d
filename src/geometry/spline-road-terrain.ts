@@ -17,6 +17,10 @@ import {
   getTerrainStoredPaintWeightCount,
   type Terrain
 } from "../document/terrains";
+import {
+  buildSplineCorridorJunctionFootprint,
+  sampleSplineCorridorJunctionFootprintInfluence
+} from "./spline-corridor-junction-footprint";
 import { createTerrainBrushPatchFromTerrains } from "./terrain-brush";
 
 interface RoadProjection {
