@@ -562,6 +562,189 @@ export function createScenePathRoadSettings(
   };
 }
 
+export function isScenePathRepeaterPlacement(
+  value: unknown
+): value is ScenePathRepeaterPlacement {
+  return (
+    typeof value === "string" &&
+    SCENE_PATH_REPEATER_PLACEMENTS.includes(
+      value as ScenePathRepeaterPlacement
+    )
+  );
+}
+
+export function normalizeScenePathRepeaterPlacement(
+  value: unknown
+): ScenePathRepeaterPlacement {
+  if (isScenePathRepeaterPlacement(value)) {
+    return value;
+  }
+
+  throw new Error("Path repeater placement must be center, left, or right.");
+}
+
+export function normalizeScenePathRepeaterAssetId(value: string): string {
+  const trimmedValue = value.trim();
+
+  if (trimmedValue.length === 0) {
+    throw new Error("Path repeater asset id must be non-empty.");
+  }
+
+  return trimmedValue;
+}
+
+export function normalizeScenePathRepeaterOffset(value: number): number {
+  return normalizeFiniteRange(
+    value,
+    MIN_SCENE_PATH_REPEATER_OFFSET,
+    MAX_SCENE_PATH_REPEATER_OFFSET,
+    "Path repeater offset"
+  );
+}
+
+export function normalizeScenePathRepeaterSpacing(value: number): number {
+  return normalizeFiniteRange(
+    value,
+    MIN_SCENE_PATH_REPEATER_SPACING,
+    MAX_SCENE_PATH_REPEATER_SPACING,
+    "Path repeater spacing"
+  );
+}
+
+export function normalizeScenePathRepeaterInset(value: number): number {
+  return normalizeFiniteRange(
+    value,
+    MIN_SCENE_PATH_REPEATER_INSET,
+    MAX_SCENE_PATH_REPEATER_INSET,
+    "Path repeater inset"
+  );
+}
+
+export function normalizeScenePathRepeaterScale(value: number): number {
+  return normalizeFiniteRange(
+    value,
+    MIN_SCENE_PATH_REPEATER_SCALE,
+    MAX_SCENE_PATH_REPEATER_SCALE,
+    "Path repeater scale"
+  );
+}
+
+export function normalizeScenePathRepeaterRandomScale(value: number): number {
+  return normalizeFiniteRange(
+    value,
+    MIN_SCENE_PATH_REPEATER_RANDOM_SCALE,
+    MAX_SCENE_PATH_REPEATER_RANDOM_SCALE,
+    "Path repeater random scale"
+  );
+}
+
+export function normalizeScenePathRepeaterRandomYawDegrees(
+  value: number
+): number {
+  return normalizeFiniteRange(
+    value,
+    MIN_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES,
+    MAX_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES,
+    "Path repeater random yaw"
+  );
+}
+
+export function normalizeScenePathRepeaterYawOffsetDegrees(
+  value: number
+): number {
+  if (!Number.isFinite(value)) {
+    throw new Error("Path repeater yaw offset must be a finite number.");
+  }
+
+  return value;
+}
+
+export function normalizeScenePathRepeaterHeightOffset(value: number): number {
+  if (!Number.isFinite(value)) {
+    throw new Error("Path repeater height offset must be a finite number.");
+  }
+
+  return value;
+}
+
+export function createScenePathRepeater(
+  overrides: ScenePathRepeaterOverrides = {}
+): ScenePathRepeater {
+  const enabled = overrides.enabled ?? DEFAULT_SCENE_PATH_REPEATER_ENABLED;
+  const terrainConform =
+    overrides.terrainConform ?? DEFAULT_SCENE_PATH_REPEATER_TERRAIN_CONFORM;
+  const alignToSpline =
+    overrides.alignToSpline ?? DEFAULT_SCENE_PATH_REPEATER_ALIGN_TO_SPLINE;
+  const seed = overrides.seed ?? 1;
+
+  if (typeof enabled !== "boolean") {
+    throw new Error("Path repeater enabled must be a boolean.");
+  }
+
+  if (typeof terrainConform !== "boolean") {
+    throw new Error("Path repeater terrain conform must be a boolean.");
+  }
+
+  if (typeof alignToSpline !== "boolean") {
+    throw new Error("Path repeater align to spline must be a boolean.");
+  }
+
+  if (!Number.isFinite(seed) || !Number.isInteger(seed)) {
+    throw new Error("Path repeater seed must be a finite integer.");
+  }
+
+  return {
+    id: overrides.id ?? createOpaqueId("path_repeater"),
+    name: normalizeScenePathName(overrides.name),
+    enabled,
+    assetId: normalizeScenePathRepeaterAssetId(
+      overrides.assetId ?? DEFAULT_SCENE_PATH_REPEATER_ASSET_ID
+    ),
+    placement:
+      overrides.placement === undefined
+        ? DEFAULT_SCENE_PATH_REPEATER_PLACEMENT
+        : normalizeScenePathRepeaterPlacement(overrides.placement),
+    offset: normalizeScenePathRepeaterOffset(
+      overrides.offset ?? DEFAULT_SCENE_PATH_REPEATER_OFFSET
+    ),
+    spacing: normalizeScenePathRepeaterSpacing(
+      overrides.spacing ?? DEFAULT_SCENE_PATH_REPEATER_SPACING
+    ),
+    startInset: normalizeScenePathRepeaterInset(
+      overrides.startInset ?? DEFAULT_SCENE_PATH_REPEATER_START_INSET
+    ),
+    endInset: normalizeScenePathRepeaterInset(
+      overrides.endInset ?? DEFAULT_SCENE_PATH_REPEATER_END_INSET
+    ),
+    scale: normalizeScenePathRepeaterScale(
+      overrides.scale ?? DEFAULT_SCENE_PATH_REPEATER_SCALE
+    ),
+    randomScale: normalizeScenePathRepeaterRandomScale(
+      overrides.randomScale ?? DEFAULT_SCENE_PATH_REPEATER_RANDOM_SCALE
+    ),
+    randomYawDegrees: normalizeScenePathRepeaterRandomYawDegrees(
+      overrides.randomYawDegrees ??
+        DEFAULT_SCENE_PATH_REPEATER_RANDOM_YAW_DEGREES
+    ),
+    yawOffsetDegrees: normalizeScenePathRepeaterYawOffsetDegrees(
+      overrides.yawOffsetDegrees ??
+        DEFAULT_SCENE_PATH_REPEATER_YAW_OFFSET_DEGREES
+    ),
+    terrainConform,
+    heightOffset: normalizeScenePathRepeaterHeightOffset(
+      overrides.heightOffset ?? DEFAULT_SCENE_PATH_REPEATER_HEIGHT_OFFSET
+    ),
+    alignToSpline,
+    seed
+  };
+}
+
+export function cloneScenePathRepeater(
+  repeater: ScenePathRepeater
+): ScenePathRepeater {
+  return createScenePathRepeater(repeater);
+}
+
 function resolvePathSegmentSample(
   path: ResolvedPathLike<PathPointLike, ResolvedPathSegmentLike>,
   progress: number
