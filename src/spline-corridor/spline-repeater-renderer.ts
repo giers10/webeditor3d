@@ -147,6 +147,7 @@ export class SplineRepeaterRenderer {
     const instanceQuaternion = new Quaternion();
     const instanceMatrix = new Matrix4();
     const finalMatrix = new Matrix4();
+    const yAxis = new Vector3(0, 1, 0);
 
     return options.meshSources.map((meshSource, meshIndex) => {
       const instancedMesh = new InstancedMesh(
@@ -169,7 +170,7 @@ export class SplineRepeaterRenderer {
           instance.position.z
         );
         instanceQuaternion.setFromAxisAngle(
-          new Vector3(0, 1, 0),
+          yAxis,
           MathUtils.degToRad(instance.yawDegrees)
         );
         instanceScale.set(instance.scale, instance.scale, instance.scale);
