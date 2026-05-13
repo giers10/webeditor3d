@@ -155,10 +155,10 @@ describe("spline road mesh generation", () => {
       1,
       0,
       expect.closeTo(0.25, 5),
-      1.4,
+      expect.closeTo(1.4, 5),
       0,
       expect.closeTo(0.05, 5),
-      1.4
+      expect.closeTo(1.4, 5)
     ]);
     expect(Array.from(meshData!.indices)).toEqual([
       0,
