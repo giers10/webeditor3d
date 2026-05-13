@@ -51,10 +51,16 @@ interface RoadStation {
   tangent: Vec3;
 }
 
+interface EdgeRoadStation extends RoadStation {
+  edgeHeightScale: number;
+}
+
 interface EdgeProfilePoint {
   offset: number;
   heightOffset: number;
 }
+
+const DISTANCE_EPSILON = 1e-6;
 
 function cloneVec3(vector: Vec3): Vec3 {
   return {
@@ -331,6 +337,134 @@ function buildVisibleRoadStationRuns(
   }
 
   return runs;
+}
+
+function getClipBoundaryDistances(
+  clipIntervals: readonly SplineCorridorPathClipInterval[]
+): number[] {
+  return clipIntervals.flatMap((clipInterval) => [
+    clipInterval.startDistance,
+    clipInterval.endDistance
+  ]);
+}
+
+function getEdgeJunctionTaperDistance(edge: ScenePathRoadEdgeSettings): number {
+  return Math.min(1.25, Math.max(0.35, edge.width * 1.5));
+}
+
+function interpolateStationInRun(
+  run: readonly RoadStation[],
+  distance: number
+): RoadStation {
+  const first = run[0]!;
+  const last = run[run.length - 1]!;
+
+  if (distance <= first.distance + DISTANCE_EPSILON) {
+    return cloneVec3Station(first);
+  }
+
+  if (distance >= last.distance - DISTANCE_EPSILON) {
+    return cloneVec3Station(last);
+  }
+
+  for (let index = 0; index < run.length - 1; index += 1) {
+    const start = run[index]!;
+    const end = run[index + 1]!;
+
+    if (
+      distance >= start.distance - DISTANCE_EPSILON &&
+      distance <= end.distance + DISTANCE_EPSILON
+    ) {
+      return interpolateStation(start, end, distance);
+    }
+  }
+
+  return cloneVec3Station(last);
+}
+
+function cloneVec3Station(station: RoadStation): RoadStation {
+  return {
+    center: cloneVec3(station.center),
+    distance: station.distance,
+    tangent: cloneVec3(station.tangent)
+  };
+}
+
+function getNearestClipBoundaryDistance(
+  distance: number,
+  boundaries: readonly number[]
+): number | null {
+  let nearestDistance: number | null = null;
+
+  for (const boundary of boundaries) {
+    const boundaryDistance = Math.abs(distance - boundary);
+
+    if (nearestDistance === null || boundaryDistance < nearestDistance) {
+      nearestDistance = boundaryDistance;
+    }
+  }
+
+  return nearestDistance;
+}
+
+function getEdgeHeightScale(
+  distance: number,
+  boundaries: readonly number[],
+  taperDistance: number
+): number {
+  const nearestDistance = getNearestClipBoundaryDistance(distance, boundaries);
+
+  if (nearestDistance === null || nearestDistance >= taperDistance) {
+    return 1;
+  }
+
+  return Math.min(1, Math.max(0, nearestDistance / taperDistance));
+}
+
+function pushUniqueDistance(distances: number[], distance: number) {
+  if (
+    Number.isFinite(distance) &&
+    !distances.some(
+      (candidate) => Math.abs(candidate - distance) <= DISTANCE_EPSILON
+    )
+  ) {
+    distances.push(distance);
+  }
+}
+
+function buildEdgeStationRunWithJunctionTapers(options: {
+  run: readonly RoadStation[];
+  clipIntervals: readonly SplineCorridorPathClipInterval[];
+  edge: ScenePathRoadEdgeSettings;
+}): EdgeRoadStation[] {
+  const runStart = options.run[0]?.distance ?? 0;
+  const runEnd = options.run[options.run.length - 1]?.distance ?? 0;
+  const taperDistance = getEdgeJunctionTaperDistance(options.edge);
+  const clipBoundaries = getClipBoundaryDistances(options.clipIntervals).filter(
+    (distance) =>
+      distance >= runStart - DISTANCE_EPSILON &&
+      distance <= runEnd + DISTANCE_EPSILON
+  );
+  const distances = options.run.map((station) => station.distance);
+
+  for (const boundary of clipBoundaries) {
+    pushUniqueDistance(distances, boundary);
+    pushUniqueDistance(
+      distances,
+      Math.min(runEnd, Math.max(runStart, boundary - taperDistance))
+    );
+    pushUniqueDistance(
+      distances,
+      Math.min(runEnd, Math.max(runStart, boundary + taperDistance))
+    );
+  }
+
+  return distances
+    .sort((left, right) => left - right)
+    .map((distance) => ({
+      ...interpolateStationInRun(options.run, distance),
+      edgeHeightScale: getEdgeHeightScale(distance, clipBoundaries, taperDistance)
+    }));
 }
 
 function createGeometryFromMeshData(meshData: SplineRoadMeshData) {
