@@ -301,6 +301,100 @@ function getPathEdgeWidth(options: {
   return edge.enabled && edge.width > 0 ? edge.width : null;
 }
 
+function getMiteredOuterOffset(options: {
+  previousNormal: { x: number; z: number };
+  nextNormal: { x: number; z: number };
+  edgeWidth: number;
+}): { x: number; z: number } {
+  const miter = normalizeXZ({
+    x: options.previousNormal.x + options.nextNormal.x,
+    z: options.previousNormal.z + options.nextNormal.z
+  });
+  const scale = Math.min(
+    3,
+    Math.max(
+      1,
+      1 /
+        Math.max(
+          0.25,
+          miter.x * options.nextNormal.x + miter.z * options.nextNormal.z
+        )
+    )
+  );
+
+  return multiplyXZVector(miter, options.edgeWidth * scale);
+}
+
+function getBoundaryPointOuterOffset(options: {
+  points: readonly SplineCorridorJunctionFootprintPoint[];
+  pointIndex: number;
+  paths: readonly SplineCorridorJunctionMeshPathLike[];
+  edge: ScenePathRoadEdgeSettings;
+}): { x: number; z: number } {
+  const points = options.points;
+  const previousIndex = (options.pointIndex - 1 + points.length) % points.length;
+  const nextIndex = (options.pointIndex + 1) % points.length;
+  const point = points[options.pointIndex]!;
+  const previousPoint = points[previousIndex]!;
+  const nextPoint = points[nextIndex]!;
+  const previousSegmentIsRoadMouth = isRoadMouthSegment(points, previousIndex);
+  const nextSegmentIsRoadMouth = isRoadMouthSegment(points, options.pointIndex);
+  const previousNormal = getOutwardSegmentNormal(previousPoint, point);
+  const nextNormal = getOutwardSegmentNormal(point, nextPoint);
+
+  if (previousSegmentIsRoadMouth && !nextSegmentIsRoadMouth) {
+    return getConnectionMiterOuterOffset({
+      point,
+      segmentStart: point,
+      segmentDirection: normalizeXZ({
+        x: nextPoint.x - point.x,
+        z: nextPoint.z - point.z
+      }),
+      segmentNormal: nextNormal,
+      edgeWidth:
+        getPathEdgeWidth({
+          paths: options.paths,
+          point
+        }) ?? options.edge.width
+    });
+  }
+
+  if (!previousSegmentIsRoadMouth && nextSegmentIsRoadMouth) {
+    return getConnectionMiterOuterOffset({
+      point,
+      segmentStart: previousPoint,
+      segmentDirection: normalizeXZ({
+        x: point.x - previousPoint.x,
+        z: point.z - previousPoint.z
+      }),
+      segmentNormal: previousNormal,
+      edgeWidth:
+        getPathEdgeWidth({
+          paths: options.paths,
+          point
+        }) ?? options.edge.width
+    });
+  }
+
+  if (previousSegmentIsRoadMouth && nextSegmentIsRoadMouth) {
+    return point.connectionOutwardAxis === undefined
+      ? multiplyXZVector(nextNormal, options.edge.width)
+      : multiplyXZVector(
+          normalizeXZ(point.connectionOutwardAxis),
+          getPathEdgeWidth({
+            paths: options.paths,
+            point
+          }) ?? options.edge.width
+        );
+  }
+
+  return getMiteredOuterOffset({
+    previousNormal,
+    nextNormal,
+    edgeWidth: options.edge.width
+  });
+}
+
 function pushRoadEdgeSeam(options: {
   seamsByPath: SplineCorridorRoadEdgeSeamMap;
   junctionId: string;
@@ -358,59 +452,37 @@ export function resolveSplineCorridorJunctionRoadEdgeSeams(options: {
 
       const currentPoint = footprint.points[pointIndex]!;
       const nextPoint = footprint.points[(pointIndex + 1) % footprint.points.length]!;
-      const segmentDirection = normalizeXZ({
-        x: nextPoint.x - currentPoint.x,
-        z: nextPoint.z - currentPoint.z
+    const previousSegmentIndex =
+      (pointIndex - 1 + footprint.points.length) % footprint.points.length;
+    const nextSegmentIndex = (pointIndex + 1) % footprint.points.length;
+
+    if (isRoadMouthSegment(footprint.points, previousSegmentIndex)) {
+      pushRoadEdgeSeam({
+        seamsByPath,
+        junctionId: junction.id,
+        point: currentPoint,
+        outerOffset: getBoundaryPointOuterOffset({
+          points: footprint.points,
+          pointIndex,
+          paths: options.paths,
+          edge: junction.edge
+        })
       });
-      const segmentOutwardNormal = getOutwardSegmentNormal(
-        currentPoint,
-        nextPoint
-      );
-      const previousSegmentIndex =
-        (pointIndex - 1 + footprint.points.length) % footprint.points.length;
-      const nextSegmentIndex = (pointIndex + 1) % footprint.points.length;
+    }
 
-      if (isRoadMouthSegment(footprint.points, previousSegmentIndex)) {
-        const edgeWidth =
-          getPathEdgeWidth({
-            paths: options.paths,
-            point: currentPoint
-          }) ?? junction.edge.width;
-
-        pushRoadEdgeSeam({
-          seamsByPath,
-          junctionId: junction.id,
-          point: currentPoint,
-          outerOffset: getConnectionMiterOuterOffset({
-            point: currentPoint,
-            segmentStart: currentPoint,
-            segmentDirection,
-            segmentNormal: segmentOutwardNormal,
-            edgeWidth
-          })
-        });
-      }
-
-      if (isRoadMouthSegment(footprint.points, nextSegmentIndex)) {
-        const edgeWidth =
-          getPathEdgeWidth({
-            paths: options.paths,
-            point: nextPoint
-          }) ?? junction.edge.width;
-
-        pushRoadEdgeSeam({
-          seamsByPath,
-          junctionId: junction.id,
-          point: nextPoint,
-          outerOffset: getConnectionMiterOuterOffset({
-            point: nextPoint,
-            segmentStart: currentPoint,
-            segmentDirection,
-            segmentNormal: segmentOutwardNormal,
-            edgeWidth
-          })
-        });
-      }
+    if (isRoadMouthSegment(footprint.points, nextSegmentIndex)) {
+      pushRoadEdgeSeam({
+        seamsByPath,
+        junctionId: junction.id,
+        point: nextPoint,
+        outerOffset: getBoundaryPointOuterOffset({
+          points: footprint.points,
+          pointIndex: nextSegmentIndex,
+          paths: options.paths,
+          edge: junction.edge
+        })
+      });
+    }
     }
   }
 
