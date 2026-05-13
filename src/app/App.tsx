@@ -9817,6 +9817,28 @@ export function App({
     }
   };
 
+  const handlePathRoadEdgeChange = (
+    side: ScenePathRoadEdgeSide,
+    edge: ScenePath["road"]["edges"][ScenePathRoadEdgeSide],
+    successMessage: string
+  ) => {
+    if (selectedPath === null) {
+      setStatusMessage("Select a path before changing road edge settings.");
+      return;
+    }
+
+    handlePathRoadChange(
+      {
+        ...selectedPath.road,
+        edges: {
+          ...selectedPath.road.edges,
+          [side]: edge
+        }
+      },
+      successMessage
+    );
+  };
+
   const handleApplyPathRoadToTerrain = () => {
     if (selectedPath === null) {
       setStatusMessage("Select a path before applying its road to terrain.");
