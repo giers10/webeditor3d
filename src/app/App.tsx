@@ -277,12 +277,10 @@ import {
 } from "../document/paths";
 import {
   createSplineCorridorJunction,
-  getSplineCorridorJunctions,
   normalizeSplineCorridorJunctionMaterialId,
   normalizeSplineCorridorJunctionRadius,
   normalizeSplineCorridorJunctionTerrainMode,
-  type SplineCorridorJunction,
-  type SplineCorridorJunctionTerrainMode
+  type SplineCorridorJunction
 } from "../document/spline-corridor-junctions";
 import { BUNDLED_SPLINE_CORRIDOR_ASSETS } from "../spline-corridor/bundled-spline-corridor-assets";
 import {
