@@ -9,6 +9,7 @@ export type SplineCorridorJunctionTerrainMode =
   | "none"
   | "paintOnly"
   | "flattenAndPaint";
+export type SplineCorridorJunctionShapeMode = "straight" | "curve" | "corner";
 
 export interface SplineCorridorJunctionConnection {
   id: string;
@@ -27,6 +28,7 @@ export interface SplineCorridorJunction {
   radius: number;
   materialId: string | null;
   terrainMode: SplineCorridorJunctionTerrainMode;
+  shapeMode: SplineCorridorJunctionShapeMode;
   edge: ScenePathRoadEdgeSettings;
   connections: SplineCorridorJunctionConnection[];
 }
@@ -43,6 +45,8 @@ export const DEFAULT_SPLINE_CORRIDOR_JUNCTION_CLIP_DISTANCE = 1.5;
 export const DEFAULT_SPLINE_CORRIDOR_JUNCTION_MATERIAL_ID = null;
 export const DEFAULT_SPLINE_CORRIDOR_JUNCTION_TERRAIN_MODE: SplineCorridorJunctionTerrainMode =
   "flattenAndPaint";
+export const DEFAULT_SPLINE_CORRIDOR_JUNCTION_SHAPE_MODE: SplineCorridorJunctionShapeMode =
+  "straight";
 export const DEFAULT_SPLINE_CORRIDOR_JUNCTION_EDGE_ENABLED = false;
 export const MIN_SPLINE_CORRIDOR_JUNCTION_RADIUS = 0.05;
 export const MAX_SPLINE_CORRIDOR_JUNCTION_RADIUS = 500;
@@ -53,6 +57,11 @@ export const SPLINE_CORRIDOR_JUNCTION_TERRAIN_MODES = [
   "paintOnly",
   "flattenAndPaint"
 ] as const satisfies readonly SplineCorridorJunctionTerrainMode[];
+export const SPLINE_CORRIDOR_JUNCTION_SHAPE_MODES = [
+  "straight",
+  "curve",
+  "corner"
+] as const satisfies readonly SplineCorridorJunctionShapeMode[];
 
 function cloneVec3(vector: Vec3): Vec3 {
   return {
@@ -84,6 +93,14 @@ export function isSplineCorridorJunctionTerrainMode(
 ): value is SplineCorridorJunctionTerrainMode {
   return SPLINE_CORRIDOR_JUNCTION_TERRAIN_MODES.includes(
     value as SplineCorridorJunctionTerrainMode
+  );
+}
+
+export function isSplineCorridorJunctionShapeMode(
+  value: unknown
+): value is SplineCorridorJunctionShapeMode {
+  return SPLINE_CORRIDOR_JUNCTION_SHAPE_MODES.includes(
+    value as SplineCorridorJunctionShapeMode
   );
 }
 
@@ -138,6 +155,18 @@ export function normalizeSplineCorridorJunctionTerrainMode(
 
   throw new Error(
     "Spline corridor junction terrain mode must be none, paintOnly, or flattenAndPaint."
+  );
+}
+
+export function normalizeSplineCorridorJunctionShapeMode(
+  value: unknown
+): SplineCorridorJunctionShapeMode {
+  if (isSplineCorridorJunctionShapeMode(value)) {
+    return value;
+  }
+
+  throw new Error(
+    "Spline corridor junction shape mode must be straight, curve, or corner."
   );
 }
 
@@ -196,6 +225,10 @@ export function createSplineCorridorJunction(
       overrides.terrainMode === undefined
         ? DEFAULT_SPLINE_CORRIDOR_JUNCTION_TERRAIN_MODE
         : normalizeSplineCorridorJunctionTerrainMode(overrides.terrainMode),
+    shapeMode:
+      overrides.shapeMode === undefined
+        ? DEFAULT_SPLINE_CORRIDOR_JUNCTION_SHAPE_MODE
+        : normalizeSplineCorridorJunctionShapeMode(overrides.shapeMode),
     edge: createScenePathRoadEdgeSettings({
       enabled:
         overrides.edge?.enabled ?? DEFAULT_SPLINE_CORRIDOR_JUNCTION_EDGE_ENABLED,
