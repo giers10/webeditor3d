@@ -91,6 +91,7 @@ import {
   type SplineCorridorBoxCollider
 } from "../spline-corridor/spline-corridor-colliders";
 import { resolveSplineCorridorJunctionClipIntervals } from "../spline-corridor/spline-corridor-junctions";
+import type { SplineCorridorPathClipIntervalMap } from "../spline-corridor/spline-corridor-clips";
 import {
   cloneWorldSettings,
   type WorldSettings
@@ -544,6 +545,9 @@ export interface RuntimePath {
   totalLength: number;
 }
 
+export interface RuntimeSplineCorridorJunction
+  extends SplineCorridorJunction {}
+
 export interface RuntimeFoliageDefinition {
   terrains: Terrain[];
   layers: FoliageLayerRegistry;
@@ -584,6 +588,8 @@ export interface RuntimeSceneDefinition {
   foliage: RuntimeFoliageDefinition;
   modelInstances: RuntimeModelInstance[];
   paths: RuntimePath[];
+  splineCorridorJunctions: RuntimeSplineCorridorJunction[];
+  splineCorridorClipIntervalsByPath: SplineCorridorPathClipIntervalMap;
   npcDefinitions: RuntimeNpcDefinition[];
   entities: RuntimeEntityCollection;
   interactionLinks: InteractionLink[];
@@ -2047,9 +2053,19 @@ export function buildRuntimeSceneFromDocument(
   const paths = getScenePaths(document.paths)
     .filter((path) => path.enabled)
     .map((path) => buildRuntimePath(path, enabledTerrains, document));
+  const splineCorridorJunctions = getSplineCorridorJunctions(
+    document.splineCorridorJunctions
+  ).filter((junction) => junction.enabled);
+  const splineCorridorClipIntervalsByPath =
+    resolveSplineCorridorJunctionClipIntervals({
+      paths: getScenePaths(document.paths),
+      junctions: splineCorridorJunctions,
+      terrains: enabledTerrains
+    });
   const splineCorridorColliders = deriveSplineCorridorBoxColliders({
     paths,
-    terrains: enabledTerrains
+    terrains: enabledTerrains,
+    clipIntervalsByPath: splineCorridorClipIntervalsByPath
   });
   const collections = buildRuntimeSceneCollections(
     document,
@@ -2189,6 +2205,8 @@ export function buildRuntimeSceneFromDocument(
     foliage,
     modelInstances,
     paths,
+    splineCorridorJunctions,
+    splineCorridorClipIntervalsByPath,
     npcDefinitions: collections.npcDefinitions,
     entities: collections.entities,
     interactionLinks,
