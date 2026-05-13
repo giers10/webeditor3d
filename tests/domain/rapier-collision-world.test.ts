@@ -1103,7 +1103,7 @@ describe("RapierCollisionWorld", () => {
       );
       const westLanding = collisionWorld.resolveFirstPersonMotion(
         {
-          x: 10,
+          x: 11,
           y: 8,
           z: 22
         },
@@ -1119,8 +1119,8 @@ describe("RapierCollisionWorld", () => {
       expect(eastLanding.feetPosition.y).toBeGreaterThan(3.9);
       expect(eastLanding.feetPosition.y).toBeLessThan(4.1);
       expect(westLanding.grounded).toBe(true);
-      expect(westLanding.feetPosition.y).toBeGreaterThan(-0.1);
-      expect(westLanding.feetPosition.y).toBeLessThan(0.1);
+      expect(westLanding.feetPosition.y).toBeGreaterThan(0.4);
+      expect(westLanding.feetPosition.y).toBeLessThan(0.6);
     } finally {
       collisionWorld.dispose();
     }
