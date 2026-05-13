@@ -11108,6 +11108,421 @@ export class ViewportHost {
     this.terrainBrushPreviewGroup.visible = true;
   }
 
+  private isTerrainGridResizeAvailable(): boolean {
+    return (
+      this.toolMode === "select" &&
+      this.currentTerrainBrushState === null &&
+      this.currentDocument !== null &&
+      this.currentSelection.kind === "terrains" &&
+      this.currentSelection.ids.length === 1 &&
+      this.currentTransformSession.kind !== "active" &&
+      this.activeTerrainBrushStroke === null
+    );
+  }
+
+  private getSelectedTerrainForGridResize(): Terrain | null {
+    if (
+      !this.isTerrainGridResizeAvailable() ||
+      this.currentDocument === null ||
+      this.currentSelection.kind !== "terrains"
+    ) {
+      return null;
+    }
+
+    const terrainId = this.currentSelection.ids[0];
+    return terrainId === undefined
+      ? null
+      : (this.currentDocument.terrains[terrainId] ?? null);
+  }
+
+  private getTerrainGridResizeEdgeHoverThreshold(terrain: Terrain): number {
+    const preferredThreshold = Math.max(
+      TERRAIN_GRID_RESIZE_EDGE_HOVER_MIN_THRESHOLD,
+      terrain.cellSize * TERRAIN_GRID_RESIZE_EDGE_HOVER_CELL_FACTOR
+    );
+    const footprintThreshold = Math.max(
+      TERRAIN_GRID_RESIZE_EDGE_HOVER_MIN_THRESHOLD,
+      Math.min(
+        getTerrainFootprintWidth(terrain),
+        getTerrainFootprintDepth(terrain)
+      ) * TERRAIN_GRID_RESIZE_EDGE_HOVER_FOOTPRINT_FACTOR
+    );
+
+    return Math.min(preferredThreshold, footprintThreshold);
+  }
+
+  private getTerrainGridResizeHitAtClientPosition(
+    clientX: number,
+    clientY: number
+  ): TerrainGridResizeHit | null {
+    const terrain = this.getSelectedTerrainForGridResize();
+
+    if (
+      terrain === null ||
+      !this.setPointerFromClientPosition(clientX, clientY)
+    ) {
+      return null;
+    }
+
+    const renderObjects = this.terrainRenderObjects.get(terrain.id);
+
+    if (renderObjects === undefined) {
+      return null;
+    }
+
+    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+    const hits = this.raycaster.intersectObjects(renderObjects.pickMeshes, true);
+    const width = getTerrainFootprintWidth(terrain);
+    const depth = getTerrainFootprintDepth(terrain);
+
+    for (const hit of hits) {
+      if (this.extractTerrainIdFromObject(hit.object) !== terrain.id) {
+        continue;
+      }
+
+      const localX = hit.point.x - terrain.position.x;
+      const localZ = hit.point.z - terrain.position.z;
+
+      if (localX < 0 || localX > width || localZ < 0 || localZ > depth) {
+        continue;
+      }
+
+      const side = resolveTerrainGridResizeSideFromLocalPosition(
+        terrain,
+        localX,
+        localZ,
+        this.getTerrainGridResizeEdgeHoverThreshold(terrain)
+      );
+
+      if (side === null) {
+        continue;
+      }
+
+      return {
+        terrainId: terrain.id,
+        side,
+        point: {
+          x: hit.point.x,
+          y: hit.point.y,
+          z: hit.point.z
+        }
+      };
+    }
+
+    return null;
+  }
+
+  private setTerrainGridResizeHover(hit: TerrainGridResizeHit | null) {
+    const previousHover = this.terrainGridResizeHover;
+    this.terrainGridResizeHover = hit;
+
+    if (
+      previousHover?.terrainId === hit?.terrainId &&
+      previousHover?.side === hit?.side &&
+      this.activeTerrainGridResizeDrag === null
+    ) {
+      return;
+    }
+
+    this.syncTerrainGridResizeOverlay();
+  }
+
+  private getTerrainGridResizeSideDirection(
+    side: TerrainGridResizeSide
+  ): Vector3 {
+    switch (side) {
+      case "east":
+        return new Vector3(1, 0, 0);
+      case "west":
+        return new Vector3(-1, 0, 0);
+      case "north":
+        return new Vector3(0, 0, 1);
+      case "south":
+        return new Vector3(0, 0, -1);
+    }
+  }
+
+  private getTerrainGridResizeEdgePoint(
+    terrain: Terrain,
+    side: TerrainGridResizeSide,
+    alpha: number
+  ): Vector3 {
+    const width = getTerrainFootprintWidth(terrain);
+    const depth = getTerrainFootprintDepth(terrain);
+    const worldX =
+      side === "east"
+        ? terrain.position.x + width
+        : side === "west"
+          ? terrain.position.x
+          : terrain.position.x + width * alpha;
+    const worldZ =
+      side === "north"
+        ? terrain.position.z + depth
+        : side === "south"
+          ? terrain.position.z
+          : terrain.position.z + depth * alpha;
+    const height =
+      sampleDocumentTerrainHeightAtWorldPosition(terrain, worldX, worldZ, true) ??
+      0;
+
+    return new Vector3(
+      worldX,
+      terrain.position.y + height + TERRAIN_GRID_RESIZE_OVERLAY_OFFSET,
+      worldZ
+    );
+  }
+
+  private createTerrainGridResizeEdgePoints(
+    terrain: Terrain,
+    side: TerrainGridResizeSide
+  ): Vector3[] {
+    const points: Vector3[] = [];
+
+    for (
+      let segmentIndex = 0;
+      segmentIndex <= TERRAIN_GRID_RESIZE_EDGE_SEGMENTS;
+      segmentIndex += 1
+    ) {
+      points.push(
+        this.getTerrainGridResizeEdgePoint(
+          terrain,
+          side,
+          segmentIndex / TERRAIN_GRID_RESIZE_EDGE_SEGMENTS
+        )
+      );
+    }
+
+    return points;
+  }
+
+  private syncTerrainGridResizeOverlay() {
+    const activeDrag = this.activeTerrainGridResizeDrag;
+    const hover = this.terrainGridResizeHover;
+    const side = activeDrag?.side ?? hover?.side ?? null;
+    const terrain =
+      activeDrag?.previewTerrain ??
+      (hover === null ? null : this.getDisplayedTerrainState(hover.terrainId));
+
+    if (side === null || terrain === null) {
+      this.terrainGridResizeOverlayGroup.visible = false;
+      return;
+    }
+
+    const edgePoints = this.createTerrainGridResizeEdgePoints(terrain, side);
+    const previousEdgeGeometry = this.terrainGridResizeEdgeLine.geometry;
+    this.terrainGridResizeEdgeLine.geometry =
+      new BufferGeometry().setFromPoints(edgePoints);
+    previousEdgeGeometry.dispose();
+
+    const midpoint = this.getTerrainGridResizeEdgePoint(terrain, side, 0.5);
+    const direction = this.getTerrainGridResizeSideDirection(side);
+    const arrowLength = Math.min(
+      TERRAIN_GRID_RESIZE_ARROW_MAX_LENGTH,
+      Math.max(
+        TERRAIN_GRID_RESIZE_ARROW_MIN_LENGTH,
+        terrain.cellSize * TERRAIN_GRID_RESIZE_ARROW_CELL_FACTOR
+      )
+    );
+    const arrowStart = midpoint
+      .clone()
+      .addScaledVector(direction, arrowLength * 0.18);
+    const arrowEnd = midpoint.clone().addScaledVector(direction, arrowLength);
+    const previousArrowGeometry = this.terrainGridResizeArrowLine.geometry;
+    this.terrainGridResizeArrowLine.geometry =
+      new BufferGeometry().setFromPoints([arrowStart, arrowEnd]);
+    previousArrowGeometry.dispose();
+    this.terrainGridResizeArrowHead.position
+      .copy(arrowEnd)
+      .addScaledVector(direction, -TERRAIN_GRID_RESIZE_ARROW_HEAD_LENGTH * 0.5);
+    this.terrainGridResizeArrowHead.quaternion.setFromUnitVectors(
+      new Vector3(0, 1, 0),
+      direction
+    );
+    this.terrainGridResizeOverlayGroup.visible = true;
+  }
+
+  private getTerrainGridResizePointerPlanePoint(
+    clientX: number,
+    clientY: number,
+    terrain: Terrain
+  ): Vec3 | null {
+    if (!this.setPointerFromClientPosition(clientX, clientY)) {
+      return null;
+    }
+
+    this.raycaster.setFromCamera(this.pointer, this.getActiveCamera());
+    this.transformPlane.set(new Vector3(0, 1, 0), -terrain.position.y);
+
+    const point = this.raycaster.ray.intersectPlane(
+      this.transformPlane,
+      this.transformIntersection
+    );
+
+    if (point === null) {
+      return null;
+    }
+
+    return {
+      x: point.x,
+      y: point.y,
+      z: point.z
+    };
+  }
+
+  private getTerrainGridResizeOutwardDragDistance(
+    side: TerrainGridResizeSide,
+    startPoint: Vec3,
+    currentPoint: Vec3
+  ): number {
+    const direction = this.getTerrainGridResizeSideDirection(side);
+    return (
+      (currentPoint.x - startPoint.x) * direction.x +
+      (currentPoint.z - startPoint.z) * direction.z
+    );
+  }
+
+  private hasTerrainGridResizeChanged(
+    baseTerrain: Terrain,
+    previewTerrain: Terrain
+  ): boolean {
+    return (
+      baseTerrain.sampleCountX !== previewTerrain.sampleCountX ||
+      baseTerrain.sampleCountZ !== previewTerrain.sampleCountZ ||
+      baseTerrain.position.x !== previewTerrain.position.x ||
+      baseTerrain.position.z !== previewTerrain.position.z
+    );
+  }
+
+  private beginTerrainGridResizeDrag(
+    event: PointerEvent,
+    hit: TerrainGridResizeHit
+  ): boolean {
+    const terrain = this.getSelectedTerrainForGridResize();
+
+    if (terrain === null || terrain.id !== hit.terrainId) {
+      return false;
+    }
+
+    event.preventDefault();
+    this.setTerrainGridResizeHover(hit);
+    this.activeTerrainGridResizeDrag = {
+      pointerId: event.pointerId,
+      side: hit.side,
+      baseTerrain: terrain,
+      previewTerrain: terrain,
+      startPoint: hit.point,
+      outwardDragDistance: 0,
+      changed: false
+    };
+    this.renderer.domElement.setPointerCapture(event.pointerId);
+    this.syncTerrainGridResizeOverlay();
+    return true;
+  }
+
+  private continueTerrainGridResizeDrag(event: PointerEvent): boolean {
+    const activeDrag = this.activeTerrainGridResizeDrag;
+
+    if (activeDrag === null || activeDrag.pointerId !== event.pointerId) {
+      return false;
+    }
+
+    const currentPoint = this.getTerrainGridResizePointerPlanePoint(
+      event.clientX,
+      event.clientY,
+      activeDrag.baseTerrain
+    );
+
+    if (currentPoint === null) {
+      return true;
+    }
+
+    const outwardDragDistance = this.getTerrainGridResizeOutwardDragDistance(
+      activeDrag.side,
+      activeDrag.startPoint,
+      currentPoint
+    );
+    const previewTerrain = resizeTerrainGridFromBorderDrag(
+      activeDrag.baseTerrain,
+      activeDrag.side,
+      outwardDragDistance
+    );
+
+    if (
+      previewTerrain.sampleCountX === activeDrag.previewTerrain.sampleCountX &&
+      previewTerrain.sampleCountZ === activeDrag.previewTerrain.sampleCountZ &&
+      previewTerrain.position.x === activeDrag.previewTerrain.position.x &&
+      previewTerrain.position.z === activeDrag.previewTerrain.position.z
+    ) {
+      return true;
+    }
+
+    this.activeTerrainGridResizeDrag = {
+      ...activeDrag,
+      previewTerrain,
+      outwardDragDistance,
+      changed:
+        activeDrag.changed ||
+        this.hasTerrainGridResizeChanged(activeDrag.baseTerrain, previewTerrain)
+    };
+    this.rebuildDisplayedTerrainState();
+    this.syncTerrainGridResizeOverlay();
+    return true;
+  }
+
+  private cancelActiveTerrainGridResizeDrag(rebuildTerrain: boolean) {
+    this.terrainGridResizeOverlayGroup.visible = false;
+    this.terrainGridResizeHover = null;
+
+    if (this.activeTerrainGridResizeDrag === null) {
+      return;
+    }
+
+    this.activeTerrainGridResizeDrag = null;
+
+    if (rebuildTerrain) {
+      this.rebuildDisplayedTerrainState();
+    }
+  }
+
+  private finishTerrainGridResizeDrag(event: PointerEvent): boolean {
+    const activeDrag = this.activeTerrainGridResizeDrag;
+
+    if (activeDrag === null || activeDrag.pointerId !== event.pointerId) {
+      return false;
+    }
+
+    if (this.renderer.domElement.hasPointerCapture(event.pointerId)) {
+      this.renderer.domElement.releasePointerCapture(event.pointerId);
+    }
+
+    const cancelled = event.type === "pointercancel";
+    const finalPreviewTerrain = activeDrag.previewTerrain;
+    const commit =
+      !cancelled &&
+      activeDrag.changed &&
+      this.hasTerrainGridResizeChanged(
+        activeDrag.baseTerrain,
+        finalPreviewTerrain
+      );
+    this.activeTerrainGridResizeDrag = null;
+    this.terrainGridResizeHover = null;
+    this.terrainGridResizeOverlayGroup.visible = false;
+
+    if (!commit) {
+      this.rebuildDisplayedTerrainState();
+      return true;
+    }
+
+    const committed =
+      this.terrainGridResizeCommitHandler?.(finalPreviewTerrain) === true;
+
+    if (!committed) {
+      this.rebuildDisplayedTerrainState();
+    }
+
+    return true;
+  }
+
   private extractTerrainIdFromObject(object: Object3D): string | null {
     let current: Object3D | null = object;
 
