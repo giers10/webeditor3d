@@ -5769,6 +5769,90 @@ function readScenePathRoadSettingsValue(
   });
 }
 
+function readScenePathRepeaterValue(
+  value: unknown,
+  label: string
+): ScenePathRepeater {
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return createScenePathRepeater({
+    id: expectString(value.id, `${label}.id`),
+    name:
+      value.name === undefined
+        ? undefined
+        : expectString(value.name, `${label}.name`),
+    enabled: readOptionalBoolean(value.enabled, `${label}.enabled`, true),
+    assetId:
+      value.assetId === undefined
+        ? undefined
+        : normalizeScenePathRepeaterAssetId(
+            expectString(value.assetId, `${label}.assetId`)
+          ),
+    placement:
+      value.placement === undefined
+        ? undefined
+        : normalizeScenePathRepeaterPlacement(value.placement),
+    offset:
+      value.offset === undefined
+        ? undefined
+        : expectFiniteNumber(value.offset, `${label}.offset`),
+    spacing:
+      value.spacing === undefined
+        ? undefined
+        : expectFiniteNumber(value.spacing, `${label}.spacing`),
+    startInset:
+      value.startInset === undefined
+        ? undefined
+        : expectFiniteNumber(value.startInset, `${label}.startInset`),
+    endInset:
+      value.endInset === undefined
+        ? undefined
+        : expectFiniteNumber(value.endInset, `${label}.endInset`),
+    scale:
+      value.scale === undefined
+        ? undefined
+        : expectFiniteNumber(value.scale, `${label}.scale`),
+    randomScale:
+      value.randomScale === undefined
+        ? undefined
+        : expectFiniteNumber(value.randomScale, `${label}.randomScale`),
+    randomYawDegrees:
+      value.randomYawDegrees === undefined
+        ? undefined
+        : expectFiniteNumber(
+            value.randomYawDegrees,
+            `${label}.randomYawDegrees`
+          ),
+    yawOffsetDegrees:
+      value.yawOffsetDegrees === undefined
+        ? undefined
+        : expectFiniteNumber(
+            value.yawOffsetDegrees,
+            `${label}.yawOffsetDegrees`
+          ),
+    terrainConform: readOptionalBoolean(
+      value.terrainConform,
+      `${label}.terrainConform`,
+      true
+    ),
+    heightOffset:
+      value.heightOffset === undefined
+        ? undefined
+        : expectFiniteNumber(value.heightOffset, `${label}.heightOffset`),
+    alignToSpline: readOptionalBoolean(
+      value.alignToSpline,
+      `${label}.alignToSpline`,
+      true
+    ),
+    seed:
+      value.seed === undefined
+        ? undefined
+        : readOptionalInteger(value.seed, `${label}.seed`, 1)
+  });
+}
+
 function readScenePathValue(value: unknown, label: string): ScenePath {
   if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
@@ -5776,6 +5860,10 @@ function readScenePathValue(value: unknown, label: string): ScenePath {
 
   if (!Array.isArray(value.points)) {
     throw new Error(`${label}.points must be an array.`);
+  }
+
+  if (value.repeaters !== undefined && !Array.isArray(value.repeaters)) {
+    throw new Error(`${label}.repeaters must be an array.`);
   }
 
   return createScenePath({
@@ -5820,6 +5908,15 @@ function readScenePathValue(value: unknown, label: string): ScenePath {
       )
     ),
     road: readScenePathRoadSettingsValue(value.road, `${label}.road`),
+    repeaters:
+      value.repeaters === undefined
+        ? []
+        : value.repeaters.map((repeaterValue, index) =>
+            readScenePathRepeaterValue(
+              repeaterValue,
+              `${label}.repeaters.${index}`
+            )
+          ),
     points: value.points.map((pointValue, index) =>
       readScenePathPointValue(pointValue, `${label}.points.${index}`)
     )
