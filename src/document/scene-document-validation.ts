@@ -3318,6 +3318,189 @@ function validateScenePath(
   }
 }
 
+function validateSplineCorridorJunction(
+  junction: SplineCorridorJunction,
+  path: string,
+  document: SceneDocument,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (junction.kind !== "splineCorridorJunction") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spline-corridor-junction-kind",
+        "Spline corridor junction kind must remain splineCorridorJunction.",
+        `${path}.kind`
+      )
+    );
+  }
+
+  if (junction.name !== undefined && junction.name.trim().length === 0) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spline-corridor-junction-name",
+        "Spline corridor junction names must be non-empty when authored.",
+        `${path}.name`
+      )
+    );
+  }
+
+  if (!isBoolean(junction.visible)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spline-corridor-junction-visible",
+        "Spline corridor junction visible must remain a boolean.",
+        `${path}.visible`
+      )
+    );
+  }
+
+  if (!isBoolean(junction.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spline-corridor-junction-enabled",
+        "Spline corridor junction enabled must remain a boolean.",
+        `${path}.enabled`
+      )
+    );
+  }
+
+  if (!isFiniteVec3(junction.center)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spline-corridor-junction-center",
+        "Spline corridor junction center must remain finite on every axis.",
+        `${path}.center`
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      junction.radius,
+      MIN_SPLINE_CORRIDOR_JUNCTION_RADIUS,
+      MAX_SPLINE_CORRIDOR_JUNCTION_RADIUS
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spline-corridor-junction-radius",
+        `Spline corridor junction radius must be from ${MIN_SPLINE_CORRIDOR_JUNCTION_RADIUS} to ${MAX_SPLINE_CORRIDOR_JUNCTION_RADIUS}.`,
+        `${path}.radius`
+      )
+    );
+  }
+
+  if (
+    junction.materialId !== null &&
+    document.materials[junction.materialId] === undefined
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spline-corridor-junction-material",
+        `Spline corridor junction material reference ${junction.materialId} does not exist in the document material registry.`,
+        `${path}.materialId`
+      )
+    );
+  }
+
+  if (!isSplineCorridorJunctionTerrainMode(junction.terrainMode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spline-corridor-junction-terrain-mode",
+        "Spline corridor junction terrain mode must be none, paintOnly, or flattenAndPaint.",
+        `${path}.terrainMode`
+      )
+    );
+  }
+
+  if (!Array.isArray(junction.connections) || junction.connections.length < 2) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-spline-corridor-junction-connections",
+        "Spline corridor junctions must define at least two connections.",
+        `${path}.connections`
+      )
+    );
+    return;
+  }
+
+  const seenConnectionIds = new Set<string>();
+
+  junction.connections.forEach((connection, index) => {
+    const connectionPath = `${path}.connections.${index}`;
+
+    if (connection.id.trim().length === 0) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-spline-corridor-junction-connection-id",
+          "Spline corridor junction connection ids must be non-empty strings.",
+          `${connectionPath}.id`
+        )
+      );
+    } else if (seenConnectionIds.has(connection.id)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "duplicate-spline-corridor-junction-connection-id",
+          `Duplicate spline corridor junction connection id ${connection.id}.`,
+          `${connectionPath}.id`
+        )
+      );
+    } else {
+      seenConnectionIds.add(connection.id);
+    }
+
+    if (document.paths[connection.pathId] === undefined) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-spline-corridor-junction-connection-path",
+          `Spline corridor junction connection path ${connection.pathId} does not exist.`,
+          `${connectionPath}.pathId`
+        )
+      );
+    }
+
+    if (!isFiniteNumberInRange(connection.progress, 0, 1)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-spline-corridor-junction-connection-progress",
+          "Spline corridor junction connection progress must be from 0 to 1.",
+          `${connectionPath}.progress`
+        )
+      );
+    }
+
+    if (
+      !isFiniteNumberInRange(
+        connection.clipDistance,
+        MIN_SPLINE_CORRIDOR_JUNCTION_CLIP_DISTANCE,
+        MAX_SPLINE_CORRIDOR_JUNCTION_CLIP_DISTANCE
+      )
+    ) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-spline-corridor-junction-connection-clip-distance",
+          `Spline corridor junction connection clip distance must be from ${MIN_SPLINE_CORRIDOR_JUNCTION_CLIP_DISTANCE} to ${MAX_SPLINE_CORRIDOR_JUNCTION_CLIP_DISTANCE}.`,
+          `${connectionPath}.clipDistance`
+        )
+      );
+    }
+  });
+}
+
 function validateTerrain(
   terrain: Terrain,
   path: string,
