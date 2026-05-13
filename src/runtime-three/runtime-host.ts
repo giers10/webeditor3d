@@ -1252,6 +1252,7 @@ export class RuntimeHost {
     this.rebuildBrushMeshes(runtimeScene.brushes);
     this.rebuildTerrainMeshes(runtimeScene.terrains);
     this.rebuildRoadSurfaces(runtimeScene);
+    this.rebuildSplineRepeaters(runtimeScene);
     this.rebuildFoliage(runtimeScene);
     this.rebuildModelRenderObjects(
       runtimeScene.modelInstances,
