@@ -1967,7 +1967,17 @@ describe("buildRuntimeSceneFromDocument", () => {
             materialId: "quartzite_stone_250x250"
           }
         }
-      }
+      },
+      repeaters: [
+        {
+          id: "repeater-runtime-fence",
+          assetId: "fence_segment_wood_2m",
+          placement: "left",
+          offset: 1.5,
+          spacing: 2,
+          seed: 11
+        }
+      ]
     });
     const runtimeScene = buildRuntimeSceneFromDocument({
       ...createEmptySceneDocument({ name: "Runtime Road Material Scene" }),
@@ -1982,6 +1992,16 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.paths[0]?.road.edges.left.material?.id).toBe(
       "quartzite_stone_250x250"
     );
+    expect(runtimeScene.paths[0]?.repeaters).toEqual([
+      expect.objectContaining({
+        id: "repeater-runtime-fence",
+        assetId: "fence_segment_wood_2m",
+        placement: "left",
+        offset: 1.5,
+        spacing: 2,
+        seed: 11
+      })
+    ]);
   });
 
   it("includes authored foliage layers, prototypes, and terrain masks for derived rendering", () => {
