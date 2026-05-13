@@ -174,6 +174,87 @@ describe("Path point editing integration", () => {
     vi.restoreAllMocks();
   });
 
+  it("inserts keyboard-added points after the selected path point", async () => {
+    const path = createScenePath({
+      id: "path-insert-main",
+      points: [
+        {
+          id: "path-insert-point-a",
+          position: {
+            x: 0,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-insert-point-b",
+          position: {
+            x: 4,
+            y: 0,
+            z: 0
+          }
+        },
+        {
+          id: "path-insert-point-c",
+          position: {
+            x: 8,
+            y: 0,
+            z: 0
+          }
+        }
+      ]
+    });
+    const store = createEditorStore({
+      initialDocument: {
+        ...createEmptySceneDocument({ name: "Path Insert Fixture" }),
+        paths: {
+          [path.id]: path
+        }
+      }
+    });
+
+    render(<App store={store} />);
+
+    await waitFor(() => {
+      expect(viewportHostInstances.length).toBeGreaterThan(0);
+    });
+
+    emitSelectionChange(getTopLeftViewportHost(), {
+      kind: "pathPoint",
+      pathId: path.id,
+      pointId: path.points[0].id
+    });
+    fireEvent.keyDown(window, {
+      key: "W",
+      code: "KeyW",
+      shiftKey: true
+    });
+
+    await waitFor(() => {
+      expect(store.getState().document.paths[path.id]?.points).toHaveLength(4);
+    });
+
+    const updatedPoints = store.getState().document.paths[path.id]?.points ?? [];
+    const insertedPoint = updatedPoints[1];
+
+    expect(updatedPoints.map((point) => point.id)).toEqual([
+      path.points[0].id,
+      insertedPoint?.id,
+      path.points[1].id,
+      path.points[2].id
+    ]);
+    expect(insertedPoint?.position).toEqual({
+      x: 2,
+      y: 0,
+      z: 0
+    });
+    expect(store.getState().selection).toEqual({
+      kind: "pathPoint",
+      pathId: path.id,
+      pointId: insertedPoint?.id
+    });
+  });
+
   it("moves selected path points and supports keyboard add, delete, undo, and redo", async () => {
     const path = createScenePath({
       id: "path-edit-main",
