@@ -16,6 +16,10 @@ import {
   BUNDLED_SPLINE_CORRIDOR_ASSET_REGISTRY,
   type BundledSplineCorridorAsset
 } from "./bundled-spline-corridor-assets";
+import {
+  isDistanceInSplineCorridorClipIntervals,
+  type SplineCorridorPathClipInterval
+} from "./spline-corridor-clips";
 
 export interface SplineRepeaterPathPointLike {
   id?: string;
@@ -149,6 +153,7 @@ function resolvePlacementOffset(repeater: ScenePathRepeater): number {
 export function deriveSplineRepeaterInstances(options: {
   path: SplineRepeaterPathLike;
   terrains?: readonly Terrain[];
+  clipIntervals?: readonly SplineCorridorPathClipInterval[];
 }): SplineRepeaterInstance[] {
   const { path } = options;
   const terrains = options.terrains ?? [];
@@ -206,6 +211,15 @@ export function deriveSplineRepeaterInstances(options: {
 
       if (distance > endDistance + 1e-6) {
         break;
+      }
+
+      if (
+        isDistanceInSplineCorridorClipIntervals(
+          distance,
+          options.clipIntervals
+        )
+      ) {
+        continue;
       }
 
       const progress = distance / resolvedPath.totalLength;
