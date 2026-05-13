@@ -10331,6 +10331,31 @@ export function App({
     }
   };
 
+  const handleTerrainGridResizeCommit = (nextTerrain: Terrain): boolean => {
+    const currentTerrain = editorState.document.terrains[nextTerrain.id];
+
+    if (currentTerrain === undefined) {
+      setStatusMessage("The resized terrain no longer exists.");
+      return false;
+    }
+
+    const terrainLabel = getTerrainLabelById(nextTerrain.id, terrainList);
+    const committed = commitTerrainChange(
+      currentTerrain,
+      nextTerrain,
+      "Resize terrain grid",
+      `Resized ${terrainLabel} to ${nextTerrain.sampleCountX} x ${nextTerrain.sampleCountZ} samples.`
+    );
+
+    if (committed && selectedTerrain?.id === nextTerrain.id) {
+      setTerrainSampleCountXDraft(String(nextTerrain.sampleCountX));
+      setTerrainSampleCountZDraft(String(nextTerrain.sampleCountZ));
+      setTerrainCellSizeDraft(String(nextTerrain.cellSize));
+    }
+
+    return committed;
+  };
+
   const handleTerrainCollisionEnabledChange = (enabled: boolean) => {
     if (
       selectedTerrain === null ||
