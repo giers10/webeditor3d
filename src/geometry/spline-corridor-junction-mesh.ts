@@ -72,6 +72,7 @@ export function buildSplineCorridorJunctionMeshGeometry(options: {
     return null;
   }
 
+  const resolvedFootprint = footprint;
   const conformToTerrain = shouldConformToTerrain({ junction, paths });
   const positions: number[] = [];
   const uvs: number[] = [];
@@ -86,30 +87,32 @@ export function buildSplineCorridorJunctionMeshGeometry(options: {
   }
 
   function pushUv(x: number, z: number) {
-    const deltaX = x - footprint.center.x;
-    const deltaZ = z - footprint.center.z;
+    const deltaX = x - resolvedFootprint.center.x;
+    const deltaZ = z - resolvedFootprint.center.z;
     uvs.push(
-      deltaX * footprint.rightAxis.x + deltaZ * footprint.rightAxis.z,
-      deltaX * footprint.forwardAxis.x + deltaZ * footprint.forwardAxis.z
+      deltaX * resolvedFootprint.rightAxis.x +
+        deltaZ * resolvedFootprint.rightAxis.z,
+      deltaX * resolvedFootprint.forwardAxis.x +
+        deltaZ * resolvedFootprint.forwardAxis.z
     );
   }
 
   positions.push(
-    footprint.center.x,
+    resolvedFootprint.center.x,
     resolveY(
       {
-        x: footprint.center.x,
+        x: resolvedFootprint.center.x,
         y: junction.center.y,
-        z: footprint.center.z
+        z: resolvedFootprint.center.z
       },
-      footprint.center.fallbackY,
-      footprint.center.heightOffset
+      resolvedFootprint.center.fallbackY,
+      resolvedFootprint.center.heightOffset
     ),
-    footprint.center.z
+    resolvedFootprint.center.z
   );
-  pushUv(footprint.center.x, footprint.center.z);
+  pushUv(resolvedFootprint.center.x, resolvedFootprint.center.z);
 
-  for (const point of footprint.points) {
+  for (const point of resolvedFootprint.points) {
     positions.push(
       point.x,
       resolveY(
@@ -126,9 +129,10 @@ export function buildSplineCorridorJunctionMeshGeometry(options: {
     pushUv(point.x, point.z);
   }
 
-  for (let index = 0; index < footprint.points.length; index += 1) {
+  for (let index = 0; index < resolvedFootprint.points.length; index += 1) {
     const current = index + 1;
-    const next = index === footprint.points.length - 1 ? 1 : current + 1;
+    const next =
+      index === resolvedFootprint.points.length - 1 ? 1 : current + 1;
 
     indices.push(0, current, next);
   }
