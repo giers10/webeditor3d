@@ -239,6 +239,7 @@ import {
   areScenePathsEqual,
   createAppendedScenePathPoint,
   createScenePath,
+  createScenePathPointAfter,
   createScenePathRepeater,
   getScenePathLabel,
   getScenePathPointIndex,
