@@ -2034,7 +2034,7 @@ describe("buildRuntimeSceneFromDocument", () => {
         kind: "curb",
         width: 0.35,
         height: 0.12,
-        materialId: "stone_block_large"
+        materialId: "splitface_stone_bricks_250x250"
       },
       connections: [
         { pathId: pathA.id, progress: 0.5, clipDistance: 1.25 },
@@ -2061,7 +2061,9 @@ describe("buildRuntimeSceneFromDocument", () => {
         material: expect.objectContaining({ id: "ground_sand_300x300" }),
         edge: expect.objectContaining({
           kind: "curb",
-          material: expect.objectContaining({ id: "stone_block_large" })
+          material: expect.objectContaining({
+            id: "splitface_stone_bricks_250x250"
+          })
         })
       })
     ]);
