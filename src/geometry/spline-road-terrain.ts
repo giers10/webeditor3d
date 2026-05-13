@@ -364,34 +364,22 @@ export function createSplineRoadTerrainPatch(options: {
     : patch;
 }
 
-function getJunctionInfluence(
-  distance: number,
+function getJunctionTerrainFalloffDistance(
   junction: SplineCorridorJunction,
   paths: readonly ScenePath[]
 ): number {
-  if (distance > junction.radius) {
-    return 0;
-  }
+  return Math.max(
+    0.001,
+    ...junction.connections.map((connection) => {
+      const path = paths.find((candidate) => candidate.id === connection.pathId);
 
-  const coreRadius = Math.min(
-    junction.radius,
-    Math.max(
-      0.1,
-      ...junction.connections.map((connection) => {
-        const path = paths.find((candidate) => candidate.id === connection.pathId);
-        return path === undefined ? 0 : path.road.width * 0.5;
-      })
-    )
+      if (path === undefined) {
+        return 0;
+      }
+
+      return Math.max(path.road.shoulderWidth, junction.radius * 0.25);
+    })
   );
-
-  if (distance <= coreRadius) {
-    return 1;
-  }
-
-  const falloffDistance = Math.max(0.001, junction.radius - coreRadius);
-  const progress = clamp((distance - coreRadius) / falloffDistance, 0, 1);
-
-  return Math.pow(1 - progress, 2);
 }
 
 function getAverageJunctionTargetHeight(options: {
