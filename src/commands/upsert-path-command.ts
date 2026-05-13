@@ -5,8 +5,13 @@ import {
   cloneScenePath,
   type ScenePath
 } from "../document/paths";
+import type { SplineCorridorJunctionRegistry } from "../document/spline-corridor-junctions";
 
 import type { EditorCommand } from "./command";
+import {
+  cloneSplineCorridorJunctionRegistry,
+  setScenePathAndReattachJunctions
+} from "./path-junction-maintenance";
 
 interface UpsertPathCommandOptions {
   path: ScenePath;
@@ -29,6 +34,7 @@ export function createUpsertPathCommand(
 ): EditorCommand {
   const nextPath = cloneScenePath(options.path);
   let previousPath: ScenePath | null = null;
+  let previousJunctions: SplineCorridorJunctionRegistry | null = null;
   let previousSelection: EditorSelection | null = null;
   let previousToolMode: ToolMode | null = null;
 
@@ -51,13 +57,15 @@ export function createUpsertPathCommand(
         previousPath = cloneScenePath(currentPath);
       }
 
-      context.setDocument({
-        ...currentDocument,
-        paths: {
-          ...currentDocument.paths,
-          [nextPath.id]: cloneScenePath(nextPath)
-        }
-      });
+      if (previousJunctions === null) {
+        previousJunctions = cloneSplineCorridorJunctionRegistry(
+          currentDocument.splineCorridorJunctions
+        );
+      }
+
+      context.setDocument(
+        setScenePathAndReattachJunctions(currentDocument, nextPath)
+      );
       context.setSelection(setSinglePathSelection(nextPath.id));
       context.setToolMode("select");
     },
@@ -75,7 +83,11 @@ export function createUpsertPathCommand(
 
       context.setDocument({
         ...currentDocument,
-        paths: nextPaths
+        paths: nextPaths,
+        splineCorridorJunctions:
+          previousJunctions === null
+            ? currentDocument.splineCorridorJunctions
+            : cloneSplineCorridorJunctionRegistry(previousJunctions)
       });
 
       if (previousSelection !== null) {
