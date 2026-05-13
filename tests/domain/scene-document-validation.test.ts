@@ -2322,6 +2322,14 @@ describe("validateSceneDocument", () => {
     invalidJunction.radius = 0;
     invalidJunction.materialId = "missing-junction-material";
     invalidJunction.terrainMode = "dig" as never;
+    invalidJunction.edge = {
+      enabled: "yes",
+      collisionEnabled: "yes",
+      kind: "wall",
+      width: 0,
+      height: -1,
+      materialId: "missing-edge-material"
+    } as never;
     invalidJunction.connections = [
       {
         id: "",
@@ -2376,6 +2384,30 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-spline-corridor-junction-terrain-mode",
           path: "splineCorridorJunctions.junction-invalid.terrainMode"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge-enabled",
+          path: "splineCorridorJunctions.junction-invalid.edge.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge-collision-enabled",
+          path: "splineCorridorJunctions.junction-invalid.edge.collisionEnabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge-kind",
+          path: "splineCorridorJunctions.junction-invalid.edge.kind"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge-width",
+          path: "splineCorridorJunctions.junction-invalid.edge.width"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge-height",
+          path: "splineCorridorJunctions.junction-invalid.edge.height"
+        }),
+        expect.objectContaining({
+          code: "invalid-path-road-edge-material",
+          path: "splineCorridorJunctions.junction-invalid.edge.materialId"
         }),
         expect.objectContaining({
           code: "invalid-spline-corridor-junction-connection-id",
