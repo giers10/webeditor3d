@@ -4911,16 +4911,19 @@ export function App({
 
   useEffect(() => {
     if (selectedTerrain === null) {
-      setTerrainSampleCountXDraft("9");
-      setTerrainSampleCountZDraft("9");
+      setTerrainSideSampleDrafts(createTerrainGridSideSampleDrafts(9, 9));
+      setTerrainLastEditedSampleSide(null);
       setTerrainCellSizeDraft("1");
-      setTerrainResizeDirectionXDraft(DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_X);
-      setTerrainResizeDirectionZDraft(DEFAULT_TERRAIN_GRID_RESIZE_DIRECTION_Z);
       return;
     }
 
-    setTerrainSampleCountXDraft(String(selectedTerrain.sampleCountX));
-    setTerrainSampleCountZDraft(String(selectedTerrain.sampleCountZ));
+    setTerrainSideSampleDrafts(
+      createTerrainGridSideSampleDrafts(
+        selectedTerrain.sampleCountX,
+        selectedTerrain.sampleCountZ
+      )
+    );
+    setTerrainLastEditedSampleSide(null);
     setTerrainCellSizeDraft(String(selectedTerrain.cellSize));
   }, [selectedTerrain]);
 
