@@ -1239,6 +1239,135 @@ export class ViewportHost {
   private lastClickPointer: { x: number; y: number } | null = null;
   private lastClickSelectionKey: string | null = null;
 
+  private createTerrainGridResizeArrowVisual(
+    side: TerrainGridResizeSide
+  ): TerrainGridResizeArrowVisual {
+    const group = new Group();
+    const shaftOutline = new Mesh(
+      new CylinderGeometry(
+        TERRAIN_GRID_RESIZE_ARROW_SHAFT_OUTLINE_RADIUS,
+        TERRAIN_GRID_RESIZE_ARROW_SHAFT_OUTLINE_RADIUS,
+        1,
+        16
+      ),
+      new MeshBasicMaterial({
+        color: TERRAIN_GRID_RESIZE_OUTLINE_COLOR,
+        depthTest: false,
+        depthWrite: false
+      })
+    );
+    const shaft = new Mesh(
+      new CylinderGeometry(
+        TERRAIN_GRID_RESIZE_ARROW_SHAFT_RADIUS,
+        TERRAIN_GRID_RESIZE_ARROW_SHAFT_RADIUS,
+        1,
+        16
+      ),
+      new MeshBasicMaterial({
+        color: TERRAIN_GRID_RESIZE_ARROW_COLOR,
+        depthTest: false,
+        depthWrite: false
+      })
+    );
+    const line = new Line(
+      new BufferGeometry(),
+      new LineBasicMaterial({
+        color: TERRAIN_GRID_RESIZE_ARROW_COLOR,
+        depthTest: false,
+        depthWrite: false
+      })
+    );
+    const headOutline = new Mesh(
+      new ConeGeometry(
+        TERRAIN_GRID_RESIZE_ARROW_HEAD_OUTLINE_RADIUS,
+        TERRAIN_GRID_RESIZE_ARROW_HEAD_OUTLINE_LENGTH,
+        24
+      ),
+      new MeshBasicMaterial({
+        color: TERRAIN_GRID_RESIZE_OUTLINE_COLOR,
+        depthTest: false,
+        depthWrite: false
+      })
+    );
+    const head = new Mesh(
+      new ConeGeometry(
+        TERRAIN_GRID_RESIZE_ARROW_HEAD_RADIUS,
+        TERRAIN_GRID_RESIZE_ARROW_HEAD_LENGTH,
+        24
+      ),
+      new MeshBasicMaterial({
+        color: TERRAIN_GRID_RESIZE_ARROW_COLOR,
+        depthTest: false,
+        depthWrite: false
+      })
+    );
+    const pickMaterial = new MeshBasicMaterial({
+      color: TERRAIN_GRID_RESIZE_ARROW_COLOR,
+      depthTest: false,
+      depthWrite: false,
+      opacity: 0,
+      transparent: true
+    });
+    const pickShaft = new Mesh(
+      new CylinderGeometry(
+        TERRAIN_GRID_RESIZE_ARROW_PICK_SHAFT_RADIUS,
+        TERRAIN_GRID_RESIZE_ARROW_PICK_SHAFT_RADIUS,
+        1,
+        12
+      ),
+      pickMaterial.clone()
+    );
+    const pickHead = new Mesh(
+      new ConeGeometry(
+        TERRAIN_GRID_RESIZE_ARROW_PICK_HEAD_RADIUS,
+        TERRAIN_GRID_RESIZE_ARROW_HEAD_OUTLINE_LENGTH,
+        16
+      ),
+      pickMaterial.clone()
+    );
+
+    for (const object of [
+      shaftOutline,
+      shaft,
+      line,
+      headOutline,
+      head,
+      pickShaft,
+      pickHead
+    ]) {
+      object.frustumCulled = false;
+      object.userData.terrainGridResizeSide = side;
+    }
+
+    shaftOutline.renderOrder = GIZMO_RENDER_ORDER + 8;
+    headOutline.renderOrder = GIZMO_RENDER_ORDER + 9;
+    shaft.renderOrder = GIZMO_RENDER_ORDER + 10;
+    line.renderOrder = GIZMO_RENDER_ORDER + 11;
+    head.renderOrder = GIZMO_RENDER_ORDER + 12;
+    pickShaft.renderOrder = GIZMO_RENDER_ORDER + 13;
+    pickHead.renderOrder = GIZMO_RENDER_ORDER + 13;
+
+    group.add(shaftOutline);
+    group.add(headOutline);
+    group.add(shaft);
+    group.add(line);
+    group.add(head);
+    group.add(pickShaft);
+    group.add(pickHead);
+
+    return {
+      side,
+      group,
+      shaftOutline,
+      shaft,
+      line,
+      headOutline,
+      head,
+      pickShaft,
+      pickHead
+    };
+  }
+
   constructor() {
     enableCameraRendererRenderCategories(this.perspectiveCamera);
     enableCameraRendererRenderCategories(this.orthographicCamera);
