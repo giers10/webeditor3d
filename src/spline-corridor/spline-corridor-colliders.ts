@@ -12,6 +12,10 @@ import {
 } from "../document/terrains";
 
 import { deriveSplineRepeaterInstances } from "./spline-repeaters";
+import {
+  isDistanceInSplineCorridorClipIntervals,
+  type SplineCorridorPathClipIntervalMap
+} from "./spline-corridor-clips";
 
 export interface SplineCorridorColliderPathPointLike {
   id?: string;
@@ -220,6 +224,7 @@ function createBoxCollider(options: {
 function buildRepeaterColliders(options: {
   path: SplineCorridorColliderPathLike;
   terrains: readonly Terrain[];
+  clipIntervalsByPath?: SplineCorridorPathClipIntervalMap;
 }): SplineCorridorBoxCollider[] {
   const collisionRepeaterIds = new Set(
     options.path.repeaters
@@ -233,7 +238,8 @@ function buildRepeaterColliders(options: {
 
   return deriveSplineRepeaterInstances({
     path: options.path,
-    terrains: options.terrains
+    terrains: options.terrains,
+    clipIntervals: options.clipIntervalsByPath?.get(options.path.id)
   })
     .filter((instance) => collisionRepeaterIds.has(instance.repeaterId))
     .map((instance, index) => {
@@ -263,6 +269,7 @@ function buildRepeaterColliders(options: {
 function buildRoadEdgeColliders(options: {
   path: SplineCorridorColliderPathLike;
   terrains: readonly Terrain[];
+  clipIntervalsByPath?: SplineCorridorPathClipIntervalMap;
 }): SplineCorridorBoxCollider[] {
   const { path, terrains } = options;
 
@@ -290,6 +297,7 @@ function buildRoadEdgeColliders(options: {
 
   const colliders: SplineCorridorBoxCollider[] = [];
   const roadHalfWidth = path.road.width * 0.5;
+  const clipIntervals = options.clipIntervalsByPath?.get(path.id);
 
   for (const side of ["left", "right"] as const) {
     const edge = path.road.edges[side];
@@ -304,6 +312,13 @@ function buildRoadEdgeColliders(options: {
 
     resolvedPath.segments.forEach((segment, segmentIndex) => {
       if (segment.length <= 1e-8) {
+        return;
+      }
+
+      const midpointDistance =
+        segment.distanceStart + (segment.distanceEnd - segment.distanceStart) * 0.5;
+
+      if (isDistanceInSplineCorridorClipIntervals(midpointDistance, clipIntervals)) {
         return;
       }
 
@@ -368,11 +383,20 @@ function buildRoadEdgeColliders(options: {
 export function deriveSplineCorridorBoxColliders(options: {
   paths: readonly SplineCorridorColliderPathLike[];
   terrains?: readonly Terrain[];
+  clipIntervalsByPath?: SplineCorridorPathClipIntervalMap;
 }): SplineCorridorBoxCollider[] {
   const terrains = options.terrains ?? [];
 
   return options.paths.flatMap((path) => [
-    ...buildRoadEdgeColliders({ path, terrains }),
-    ...buildRepeaterColliders({ path, terrains })
+    ...buildRoadEdgeColliders({
+      path,
+      terrains,
+      clipIntervalsByPath: options.clipIntervalsByPath
+    }),
+    ...buildRepeaterColliders({
+      path,
+      terrains,
+      clipIntervalsByPath: options.clipIntervalsByPath
+    })
   ]);
 }
