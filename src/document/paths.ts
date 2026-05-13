@@ -1096,7 +1096,7 @@ export function createScenePath(
         | "repeaters"
         | "points"
       >,
-      "road"
+      "road" | "repeaters"
     >
   > & {
     road?: ScenePathRoadSettingsOverrides;
