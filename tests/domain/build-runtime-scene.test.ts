@@ -725,6 +725,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           edges: {
             left: {
               enabled: false,
+              collisionEnabled: false,
               kind: "softShoulder",
               width: 0.35,
               height: 0.12,
@@ -733,6 +734,7 @@ describe("buildRuntimeSceneFromDocument", () => {
             },
             right: {
               enabled: false,
+              collisionEnabled: false,
               kind: "softShoulder",
               width: 0.35,
               height: 0.12,
