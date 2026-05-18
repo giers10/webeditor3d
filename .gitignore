@@ -25,6 +25,7 @@ tmp*
 *.log
 *.tmp
 *.swp
+*.we3d
 .last-run.json
 playwright-report
 test-results
