@@ -7728,29 +7728,35 @@ export class ViewportHost {
     const materialTransparent =
       isCustomMaterial &&
       (materialDef.opacity < 0.999 || textureSet.albedoHasAlpha);
+    const roadMaterial = new MeshPhysicalMaterial({
+      color: isCustomMaterial ? materialDef.albedoColorHex : 0xffffff,
+      map: textureSet.baseColor,
+      normalMap: textureSet.normal,
+      roughnessMap: textureSet.roughness,
+      roughness: isCustomMaterial ? materialDef.roughness : 1,
+      metalnessMap: textureSet.metallic,
+      metalness: isCustomMaterial
+        ? materialDef.metallic
+        : textureSet.metallic === null
+          ? 0.03
+          : 1,
+      specularColorMap: textureSet.specular,
+      specularColor: new Color(0xffffff),
+      specularIntensity: textureSet.specular === null ? 0.2 : 1,
+      transparent: materialTransparent,
+      opacity: isCustomMaterial ? materialDef.opacity : 1,
+      depthWrite: !materialTransparent,
+      side: DoubleSide
+    });
 
-    return this.configureRoadSurfaceMaterial(
-      new MeshPhysicalMaterial({
-        color: isCustomMaterial ? materialDef.albedoColorHex : 0xffffff,
-        map: textureSet.baseColor,
-        normalMap: textureSet.normal,
-        roughnessMap: textureSet.roughness,
-        roughness: isCustomMaterial ? materialDef.roughness : 1,
-        metalnessMap: textureSet.metallic,
-        metalness: isCustomMaterial
-          ? materialDef.metallic
-          : textureSet.metallic === null
-            ? 0.03
-            : 1,
-        specularColorMap: textureSet.specular,
-        specularColor: new Color(0xffffff),
-        specularIntensity: textureSet.specular === null ? 0.2 : 1,
-        transparent: materialTransparent,
-        opacity: isCustomMaterial ? materialDef.opacity : 1,
-        depthWrite: !materialTransparent,
-        side: DoubleSide
-      })
-    );
+    if (isCustomMaterial && textureSet.normal !== null) {
+      roadMaterial.normalScale.set(
+        materialDef.normalStrength,
+        materialDef.normalStrength
+      );
+    }
+
+    return this.configureRoadSurfaceMaterial(roadMaterial);
   }
 
   private createRoadSurfaceMaterial(path: ScenePath): Material {
