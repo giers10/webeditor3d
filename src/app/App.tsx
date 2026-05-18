@@ -29293,6 +29293,25 @@ export function App({
                       <div className="form-section">
                         <div className="label">Material</div>
                         <div className="material-browser">
+                          <button
+                            type="button"
+                            data-testid="material-button-default-whitebox"
+                            className={`material-item ${materialInspectorMaterialId === null && !selectedBrushHasMixedFaceMaterials ? "material-item--active" : ""}`}
+                            onClick={clearFaceMaterial}
+                          >
+                            <span
+                              className="material-item__preview material-item__preview--default"
+                              aria-hidden="true"
+                            />
+                            <span className="material-item__text">
+                              <span className="material-item__title">
+                                Default Whitebox
+                              </span>
+                              <span className="material-item__meta">
+                                shared built-in | white
+                              </span>
+                            </span>
+                          </button>
                           {materialList.map((material) => (
                             <button
                               key={material.id}
@@ -29321,12 +29340,221 @@ export function App({
                           <button
                             className="toolbar__button"
                             type="button"
-                            onClick={clearFaceMaterial}
+                            data-testid="create-custom-material"
+                            onClick={handleCreateCustomMaterial}
                           >
-                            Clear Material
+                            New Material
                           </button>
                         </div>
                       </div>
+
+                      {materialInspectorCustomMaterial !== null ? (
+                        <div className="form-section">
+                          <div className="label">Material Settings</div>
+                          <label className="form-field">
+                            <span className="label">Name</span>
+                            <input
+                              className="text-input text-input--dense"
+                              type="text"
+                              value={materialInspectorCustomMaterial.name}
+                              onChange={(event) =>
+                                updateCustomMaterial(
+                                  materialInspectorCustomMaterial,
+                                  {
+                                    name: event.currentTarget.value
+                                  },
+                                  "Rename custom material"
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Albedo</span>
+                              <input
+                                data-testid="custom-material-albedo"
+                                className="color-input"
+                                type="color"
+                                value={
+                                  materialInspectorCustomMaterial.albedoColorHex
+                                }
+                                onChange={(event) =>
+                                  updateCustomMaterial(
+                                    materialInspectorCustomMaterial,
+                                    {
+                                      albedoColorHex:
+                                        event.currentTarget.value,
+                                      swatchColorHex: event.currentTarget.value
+                                    },
+                                    "Update material albedo"
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Opacity</span>
+                              <input
+                                data-testid="custom-material-opacity"
+                                className="text-input text-input--dense"
+                                type="number"
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                value={materialInspectorCustomMaterial.opacity}
+                                onChange={(event) =>
+                                  updateCustomMaterialUnitValue(
+                                    materialInspectorCustomMaterial,
+                                    "opacity",
+                                    event.currentTarget.value
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <div className="vector-inputs vector-inputs--three">
+                            <label className="form-field">
+                              <span className="label">Roughness</span>
+                              <input
+                                data-testid="custom-material-roughness"
+                                className="text-input text-input--dense"
+                                type="number"
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                value={
+                                  materialInspectorCustomMaterial.roughness
+                                }
+                                onChange={(event) =>
+                                  updateCustomMaterialUnitValue(
+                                    materialInspectorCustomMaterial,
+                                    "roughness",
+                                    event.currentTarget.value
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Metallic</span>
+                              <input
+                                data-testid="custom-material-metallic"
+                                className="text-input text-input--dense"
+                                type="number"
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                value={materialInspectorCustomMaterial.metallic}
+                                onChange={(event) =>
+                                  updateCustomMaterialUnitValue(
+                                    materialInspectorCustomMaterial,
+                                    "metallic",
+                                    event.currentTarget.value
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Normal</span>
+                              <input
+                                data-testid="custom-material-normal-strength"
+                                className="text-input text-input--dense"
+                                type="number"
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                value={
+                                  materialInspectorCustomMaterial.normalStrength
+                                }
+                                onChange={(event) =>
+                                  updateCustomMaterialUnitValue(
+                                    materialInspectorCustomMaterial,
+                                    "normalStrength",
+                                    event.currentTarget.value
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <div className="material-map-list">
+                            {MATERIAL_TEXTURE_SLOTS.map((slot) => (
+                              <div className="material-map-row" key={slot}>
+                                <div className="material-map-row__header">
+                                  <span className="label">
+                                    {getMaterialTextureSlotLabel(slot)} Map
+                                  </span>
+                                  <span className="material-item__meta">
+                                    {getMaterialTextureSlotValueLabel(
+                                      slot,
+                                      materialInspectorCustomMaterial,
+                                      editorState.document.assets
+                                    )}
+                                  </span>
+                                </div>
+                                <select
+                                  className="select-input select-input--dense"
+                                  value={
+                                    materialInspectorCustomMaterial.textures[
+                                      slot
+                                    ]?.assetId ?? ""
+                                  }
+                                  onChange={(event) =>
+                                    setCustomMaterialTexture(
+                                      materialInspectorCustomMaterial,
+                                      slot,
+                                      event.currentTarget.value.trim()
+                                        .length === 0
+                                        ? null
+                                        : event.currentTarget.value
+                                    )
+                                  }
+                                >
+                                  <option value="">No map</option>
+                                  {materialMapImageAssetList.map((asset) => (
+                                    <option key={asset.id} value={asset.id}>
+                                      {asset.sourceName}
+                                    </option>
+                                  ))}
+                                </select>
+                                <div className="inline-actions">
+                                  <label
+                                    className="toolbar__button toolbar__button--file"
+                                    htmlFor={getMaterialTextureSlotInputId(
+                                      slot
+                                    )}
+                                  >
+                                    Import
+                                  </label>
+                                  <input
+                                    id={getMaterialTextureSlotInputId(slot)}
+                                    className="visually-hidden"
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp,image/avif,image/gif,image/svg+xml"
+                                    onChange={(event) =>
+                                      handleMaterialTextureImportChange(
+                                        materialInspectorCustomMaterial,
+                                        slot,
+                                        event
+                                      )
+                                    }
+                                  />
+                                  <button
+                                    className="toolbar__button"
+                                    type="button"
+                                    onClick={() =>
+                                      setCustomMaterialTexture(
+                                        materialInspectorCustomMaterial,
+                                        slot,
+                                        null
+                                      )
+                                    }
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
 
                       <div className="form-section">
                         <div className="label">UV Offset</div>
