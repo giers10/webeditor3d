@@ -8033,6 +8033,7 @@ function validateProjectResources(
     }
 
     registerAuthoredId(material.id, path, seenIds, diagnostics);
+    validateMaterialDef(material, path, document.assets, diagnostics);
   }
 
   for (const [assetKey, asset] of Object.entries(document.assets)) {
@@ -8097,6 +8098,216 @@ function validateProjectResources(
       context,
       diagnostics
     );
+  }
+}
+
+function isMaterialMapImageAsset(asset: ProjectAssetRecord): boolean {
+  if (asset.kind !== "image") {
+    return false;
+  }
+
+  const sourceName = asset.sourceName.toLowerCase();
+
+  return (
+    asset.mimeType !== "image/x-exr" &&
+    asset.mimeType !== "image/vnd.radiance" &&
+    !sourceName.endsWith(".exr") &&
+    !sourceName.endsWith(".hdr")
+  );
+}
+
+function validateMaterialTags(
+  tags: unknown,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (!Array.isArray(tags) || tags.some((tag) => typeof tag !== "string")) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-material-tags",
+        "Material tags must remain a string array.",
+        `${path}.tags`
+      )
+    );
+  }
+}
+
+function validateStarterMaterialDef(
+  material: StarterMaterialDef,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (
+    material.workflow !== "roughness-only" &&
+    material.workflow !== "metallic-roughness" &&
+    material.workflow !== "specular-roughness"
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-material-workflow",
+        "Starter material workflow must be roughness-only, metallic-roughness, or specular-roughness.",
+        `${path}.workflow`
+      )
+    );
+  }
+
+  if (
+    material.previewImageName !== "preview.webp" &&
+    material.previewImageName !== "preview_sphere.webp"
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-material-preview-image",
+        "Starter material preview image must be preview.webp or preview_sphere.webp.",
+        `${path}.previewImageName`
+      )
+    );
+  }
+
+  if (
+    !isPositiveFiniteNumber(material.sizeCm.width) ||
+    !isPositiveFiniteNumber(material.sizeCm.height)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-material-size",
+        "Starter material tile size must be positive.",
+        `${path}.sizeCm`
+      )
+    );
+  }
+}
+
+function validateCustomMaterialTextureRef(
+  material: CustomMaterialDef,
+  slot: MaterialTextureSlot,
+  assets: Record<string, ProjectAssetRecord>,
+  path: string,
+  diagnostics: SceneDiagnostic[]
+) {
+  const textureRef = material.textures[slot];
+
+  if (textureRef === null) {
+    return;
+  }
+
+  const asset = assets[textureRef.assetId];
+
+  if (asset === undefined) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "missing-material-texture-asset",
+        `Material ${slot} texture asset ${textureRef.assetId} does not exist.`,
+        `${path}.textures.${slot}.assetId`
+      )
+    );
+    return;
+  }
+
+  if (asset.kind !== "image") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-material-texture-asset-kind",
+        `Material ${slot} texture asset ${textureRef.assetId} must be an image asset.`,
+        `${path}.textures.${slot}.assetId`
+      )
+    );
+    return;
+  }
+
+  if (!isMaterialMapImageAsset(asset)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-material-texture-image-format",
+        `Material ${slot} texture asset ${textureRef.assetId} must be a browser image, not HDR or EXR.`,
+        `${path}.textures.${slot}.assetId`
+      )
+    );
+  }
+}
+
+function validateCustomMaterialDef(
+  material: CustomMaterialDef,
+  path: string,
+  assets: Record<string, ProjectAssetRecord>,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (!isHexColorString(material.albedoColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-material-albedo-color",
+        "Custom material albedo color must use #RRGGBB format.",
+        `${path}.albedoColorHex`
+      )
+    );
+  }
+
+  for (const [property, value] of [
+    ["opacity", material.opacity],
+    ["roughness", material.roughness],
+    ["metallic", material.metallic],
+    ["normalStrength", material.normalStrength]
+  ] as const) {
+    if (!isFiniteNumberInRange(value, 0, 1)) {
+      diagnostics.push(
+        createDiagnostic(
+          "error",
+          "invalid-material-scalar",
+          "Custom material scalar values must be between 0 and 1.",
+          `${path}.${property}`
+        )
+      );
+    }
+  }
+
+  for (const slot of MATERIAL_TEXTURE_SLOTS) {
+    validateCustomMaterialTextureRef(material, slot, assets, path, diagnostics);
+  }
+}
+
+function validateMaterialDef(
+  material: MaterialDef,
+  path: string,
+  assets: Record<string, ProjectAssetRecord>,
+  diagnostics: SceneDiagnostic[]
+) {
+  if (material.kind !== "starter" && material.kind !== "custom") {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-material-kind",
+        "Material kind must be starter or custom.",
+        `${path}.kind`
+      )
+    );
+    return;
+  }
+
+  if (!isHexColorString(material.swatchColorHex)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-material-swatch-color",
+        "Material swatch color must use #RRGGBB format.",
+        `${path}.swatchColorHex`
+      )
+    );
+  }
+
+  validateMaterialTags(material.tags, path, diagnostics);
+
+  if (material.kind === "starter") {
+    validateStarterMaterialDef(material, path, diagnostics);
+  } else {
+    validateCustomMaterialDef(material, path, assets, diagnostics);
   }
 }
 
