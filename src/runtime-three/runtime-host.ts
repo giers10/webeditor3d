@@ -87,13 +87,13 @@ import {
   buildSplineCorridorJunctionMeshGeometry,
   resolveSplineCorridorJunctionRoadEdgeSeams
 } from "../geometry/spline-corridor-junction-mesh";
-import {
-  createStarterMaterialSignature,
-  createStarterMaterialTextureSet,
-  disposeStarterMaterialTextureSet,
-  type StarterMaterialTextureSet
-} from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
+import {
+  createMaterialSignature,
+  createMaterialTextureSet,
+  disposeMaterialTextureSet,
+  type MaterialTextureSet
+} from "../materials/material-rendering";
 import {
   applyAdvancedRenderingRenderableShadowFlags,
   configureAdvancedRenderingShadowLight,
@@ -260,7 +260,7 @@ import { resolvePlayerClimbSurface } from "./player-climbing";
 
 interface CachedMaterialTexture {
   signature: string;
-  textureSet: StarterMaterialTextureSet;
+  textureSet: MaterialTextureSet;
 }
 
 interface RuntimeTerrainRenderChunkObjects {
