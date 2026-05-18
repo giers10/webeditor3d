@@ -162,6 +162,13 @@ import {
 import { isBundledFoliagePrototypeId } from "../foliage/bundled-foliage-manifest";
 import { isBundledSplineCorridorAssetId } from "../spline-corridor/bundled-spline-corridor-assets";
 import {
+  MATERIAL_TEXTURE_SLOTS,
+  type CustomMaterialDef,
+  type MaterialDef,
+  type MaterialTextureSlot,
+  type StarterMaterialDef
+} from "../materials/starter-material-library";
+import {
   FOLIAGE_PROTOTYPE_LOD_LEVELS,
   isFoliagePrototypeCategory,
   isFoliagePrototypeLodLevel,
