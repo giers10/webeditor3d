@@ -564,35 +564,46 @@ function cloneMaterialSizeCm(sizeCm: MaterialSizeCm): MaterialSizeCm {
   };
 }
 
-export const STARTER_MATERIAL_LIBRARY: readonly MaterialDef[] =
+export const STARTER_MATERIAL_LIBRARY: readonly StarterMaterialDef[] =
   STARTER_MATERIAL_CATALOG.map((entry) => ({
     ...entry,
+    kind: "starter",
     sizeCm: cloneMaterialSizeCm(entry.sizeCm),
     tags: createMaterialTags(entry)
   }));
 
-export function getStarterMaterialAssetDirectory(material: MaterialDef): string {
+export function getStarterMaterialAssetDirectory(
+  material: StarterMaterialDef
+): string {
   return `${STARTER_MATERIAL_ASSET_ROOT}/${material.assetFolder}`;
 }
 
-export function getStarterMaterialPreviewUrl(material: MaterialDef): string {
+export function getStarterMaterialPreviewUrl(
+  material: StarterMaterialDef
+): string {
   return `${getStarterMaterialAssetDirectory(material)}/${material.previewImageName}`;
 }
 
-export function getStarterMaterialBaseColorUrl(material: MaterialDef): string {
+export function getStarterMaterialBaseColorUrl(
+  material: StarterMaterialDef
+): string {
   return `${getStarterMaterialAssetDirectory(material)}/basecolor.webp`;
 }
 
-export function getStarterMaterialNormalUrl(material: MaterialDef): string {
+export function getStarterMaterialNormalUrl(
+  material: StarterMaterialDef
+): string {
   return `${getStarterMaterialAssetDirectory(material)}/normal.webp`;
 }
 
-export function getStarterMaterialRoughnessUrl(material: MaterialDef): string {
+export function getStarterMaterialRoughnessUrl(
+  material: StarterMaterialDef
+): string {
   return `${getStarterMaterialAssetDirectory(material)}/roughness.webp`;
 }
 
 export function getStarterMaterialMetallicUrl(
-  material: MaterialDef
+  material: StarterMaterialDef
 ): string | null {
   return material.workflow === "metallic-roughness"
     ? `${getStarterMaterialAssetDirectory(material)}/metallic.webp`
@@ -600,14 +611,14 @@ export function getStarterMaterialMetallicUrl(
 }
 
 export function getStarterMaterialSpecularUrl(
-  material: MaterialDef
+  material: StarterMaterialDef
 ): string | null {
   return material.workflow === "specular-roughness"
     ? `${getStarterMaterialAssetDirectory(material)}/specular.webp`
     : null;
 }
 
-export function getStarterMaterialTileSizeMeters(material: MaterialDef): {
+export function getStarterMaterialTileSizeMeters(material: StarterMaterialDef): {
   x: number;
   y: number;
 } {
@@ -617,7 +628,7 @@ export function getStarterMaterialTileSizeMeters(material: MaterialDef): {
   };
 }
 
-export function getStarterMaterialTextureRepeat(material: MaterialDef): {
+export function getStarterMaterialTextureRepeat(material: StarterMaterialDef): {
   x: number;
   y: number;
 } {
@@ -630,10 +641,18 @@ export function getStarterMaterialTextureRepeat(material: MaterialDef): {
 }
 
 export function cloneMaterialDef(material: MaterialDef): MaterialDef {
+  if (material.kind === "starter") {
+    return {
+      ...material,
+      sizeCm: cloneMaterialSizeCm(material.sizeCm),
+      tags: [...material.tags]
+    };
+  }
+
   return {
     ...material,
-    sizeCm: cloneMaterialSizeCm(material.sizeCm),
-    tags: [...material.tags]
+    tags: [...material.tags],
+    textures: cloneCustomMaterialTextureRefs(material.textures)
   };
 }
 
@@ -655,4 +674,69 @@ export function createStarterMaterialRegistry(): Record<string, MaterialDef> {
       cloneMaterialDef(material)
     ])
   );
+}
+
+export function createEmptyCustomMaterialTextureRefs(): CustomMaterialTextureRefs {
+  return {
+    albedo: null,
+    normal: null,
+    roughness: null,
+    metallic: null
+  };
+}
+
+export function cloneCustomMaterialTextureRefs(
+  textures: CustomMaterialTextureRefs
+): CustomMaterialTextureRefs {
+  return {
+    albedo:
+      textures.albedo === null ? null : { assetId: textures.albedo.assetId },
+    normal:
+      textures.normal === null ? null : { assetId: textures.normal.assetId },
+    roughness:
+      textures.roughness === null
+        ? null
+        : { assetId: textures.roughness.assetId },
+    metallic:
+      textures.metallic === null
+        ? null
+        : { assetId: textures.metallic.assetId }
+  };
+}
+
+export function createCustomMaterialDef(
+  overrides: Partial<
+    Pick<
+      CustomMaterialDef,
+      | "id"
+      | "name"
+      | "swatchColorHex"
+      | "tags"
+      | "albedoColorHex"
+      | "opacity"
+      | "roughness"
+      | "metallic"
+      | "normalStrength"
+      | "textures"
+    >
+  > = {}
+): CustomMaterialDef {
+  const albedoColorHex = overrides.albedoColorHex ?? "#ffffff";
+
+  return {
+    id: overrides.id ?? createOpaqueId("material"),
+    kind: "custom",
+    name: overrides.name ?? "Custom Material",
+    swatchColorHex: overrides.swatchColorHex ?? albedoColorHex,
+    tags: overrides.tags ?? ["custom"],
+    albedoColorHex,
+    opacity: overrides.opacity ?? 1,
+    roughness: overrides.roughness ?? 0.8,
+    metallic: overrides.metallic ?? 0,
+    normalStrength: overrides.normalStrength ?? 1,
+    textures:
+      overrides.textures === undefined
+        ? createEmptyCustomMaterialTextureRefs()
+        : cloneCustomMaterialTextureRefs(overrides.textures)
+  };
 }

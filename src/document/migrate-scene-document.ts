@@ -1,5 +1,8 @@
 import {
+  MATERIAL_TEXTURE_SLOTS,
+  createEmptyCustomMaterialTextureRefs,
   createStarterMaterialRegistry,
+  type CustomMaterialTextureRefs,
   type MaterialDef
 } from "../materials/starter-material-library";
 import type { Vec3 } from "../core/vector";
@@ -263,6 +266,7 @@ import {
   SPLINE_PATH_SCENE_DOCUMENT_VERSION,
   WHITEBOX_BOX_LIGHT_VOLUME_SCENE_DOCUMENT_VERSION,
   CELESTIAL_BODY_OVERLAY_SCENE_DOCUMENT_VERSION,
+  CUSTOM_PBR_MATERIALS_SCENE_DOCUMENT_VERSION,
   SCENE_DOCUMENT_VERSION,
   STATIC_SIMPLE_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   TRIGGER_ACTION_TARGET_FOUNDATION_SCENE_DOCUMENT_VERSION,

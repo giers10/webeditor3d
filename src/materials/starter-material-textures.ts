@@ -12,7 +12,7 @@ import {
   getStarterMaterialRoughnessUrl,
   getStarterMaterialSpecularUrl,
   getStarterMaterialTextureRepeat,
-  type MaterialDef
+  type StarterMaterialDef
 } from "./starter-material-library";
 
 export interface StarterMaterialTextureSet {
@@ -23,8 +23,11 @@ export interface StarterMaterialTextureSet {
   specular: Texture | null;
 }
 
-export function createStarterMaterialSignature(material: MaterialDef): string {
+export function createStarterMaterialSignature(
+  material: StarterMaterialDef
+): string {
   return [
+    material.kind,
     material.assetFolder,
     material.workflow,
     material.previewImageName,
@@ -72,7 +75,7 @@ function createRepeatableTextureImage(
 
 function configureTexture(
   texture: Texture,
-  material: MaterialDef,
+  material: StarterMaterialDef,
   options: { colorSpace?: typeof SRGBColorSpace | null }
 ) {
   const repeat = getStarterMaterialTextureRepeat(material);
@@ -85,7 +88,7 @@ function configureTexture(
 function loadMaterialTexture(
   loader: TextureLoader,
   url: string,
-  material: MaterialDef,
+  material: StarterMaterialDef,
   options: { colorSpace?: typeof SRGBColorSpace | null }
 ): Texture {
   const texture = loader.load(url, (loadedTexture) => {
@@ -102,7 +105,7 @@ function loadMaterialTexture(
 }
 
 export function createStarterMaterialTextureSet(
-  material: MaterialDef,
+  material: StarterMaterialDef,
   loader: TextureLoader = new TextureLoader()
 ): StarterMaterialTextureSet {
   const metallicUrl = getStarterMaterialMetallicUrl(material);

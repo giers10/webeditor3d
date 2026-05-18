@@ -36,7 +36,8 @@ import {
   type FoliagePrototypeRegistry
 } from "../foliage/foliage";
 
-export const SCENE_DOCUMENT_VERSION = 109 as const;
+export const SCENE_DOCUMENT_VERSION = 110 as const;
+export const CUSTOM_PBR_MATERIALS_SCENE_DOCUMENT_VERSION = 110 as const;
 export const SPLINE_CORRIDOR_JUNCTION_SHAPE_SCENE_DOCUMENT_VERSION = 109 as const;
 export const SPLINE_CORRIDOR_JUNCTION_EDGE_SCENE_DOCUMENT_VERSION = 108 as const;
 export const SPLINE_CORRIDOR_JUNCTIONS_SCENE_DOCUMENT_VERSION = 107 as const;
