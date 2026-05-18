@@ -15078,6 +15078,178 @@ export function App({
     );
   };
 
+  const handleCreateCustomMaterial = () => {
+    if (materialInspectorScope === null) {
+      setStatusMessage("Select a whitebox or face before creating a material.");
+      return;
+    }
+
+    const customMaterialCount = materialList.filter(
+      (material) => material.kind === "custom"
+    ).length;
+    const material = createCustomMaterialDef({
+      name: `Custom Material ${customMaterialCount + 1}`
+    });
+    const applyTo =
+      materialInspectorScope === "brush" && selectedBrush !== null
+        ? ({ kind: "brush", brushId: selectedBrush.id } as const)
+        : materialInspectorScope === "face" &&
+            selectedBrush !== null &&
+            selectedFaceId !== null
+          ? ({
+              kind: "face",
+              brushId: selectedBrush.id,
+              faceId: selectedFaceId
+            } as const)
+          : undefined;
+
+    try {
+      store.executeCommand(
+        createCreateCustomMaterialCommand({
+          material,
+          applyTo,
+          label: "Create custom material"
+        })
+      );
+      setStatusMessage(`Created and applied ${material.name}.`);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const updateCustomMaterial = (
+    material: CustomMaterialDef,
+    update: Parameters<typeof createUpdateCustomMaterialCommand>[0]["update"],
+    label = "Update custom material"
+  ) => {
+    try {
+      store.executeCommand(
+        createUpdateCustomMaterialCommand({
+          materialId: material.id,
+          update,
+          label
+        })
+      );
+      setStatusMessage(`Updated ${material.name}.`);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const updateCustomMaterialUnitValue = (
+    material: CustomMaterialDef,
+    property: "opacity" | "roughness" | "metallic" | "normalStrength",
+    value: string
+  ) => {
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return;
+    }
+
+    updateCustomMaterial(
+      material,
+      {
+        [property]: clampNumber(numericValue, 0, 1)
+      },
+      `Update ${property} material value`
+    );
+  };
+
+  const setCustomMaterialTexture = (
+    material: CustomMaterialDef,
+    slot: MaterialTextureSlot,
+    assetId: string | null
+  ) => {
+    try {
+      store.executeCommand(
+        createSetCustomMaterialTextureCommand({
+          materialId: material.id,
+          slot,
+          assetId,
+          label:
+            assetId === null
+              ? `Remove ${getMaterialTextureSlotLabel(slot)} material map`
+              : `Set ${getMaterialTextureSlotLabel(slot)} material map`
+        })
+      );
+      setStatusMessage(
+        assetId === null
+          ? `Removed ${getMaterialTextureSlotLabel(slot)} map from ${material.name}.`
+          : `Assigned ${getMaterialTextureSlotLabel(slot)} map to ${material.name}.`
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const handleMaterialTextureImportChange = async (
+    material: CustomMaterialDef,
+    slot: MaterialTextureSlot,
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+
+    if (file === undefined) {
+      return;
+    }
+
+    if (projectAssetStorage === null) {
+      setAssetStatusMessage(
+        "Imported material textures require project asset storage. IndexedDB is unavailable in this browser."
+      );
+      input.value = "";
+      return;
+    }
+
+    let importedImageForCleanup: ImportedImageAssetResult | null = null;
+
+    try {
+      const importedImage = await importMaterialImageAssetFromFile(
+        file,
+        projectAssetStorage
+      );
+      importedImageForCleanup = importedImage;
+
+      store.executeCommand(
+        createSetCustomMaterialTextureCommand({
+          materialId: material.id,
+          slot,
+          assetId: importedImage.asset.id,
+          asset: importedImage.asset,
+          label: `Import ${getMaterialTextureSlotLabel(slot)} material map`
+        })
+      );
+
+      loadedImageAssetsRef.current = {
+        ...loadedImageAssetsRef.current,
+        [importedImage.asset.id]: importedImage.loadedAsset
+      };
+      setLoadedImageAssets((currentLoadedAssets) => ({
+        ...currentLoadedAssets,
+        [importedImage.asset.id]: importedImage.loadedAsset
+      }));
+      setAssetStatusMessage(null);
+      setStatusMessage(
+        `Imported ${importedImage.asset.sourceName} as ${getMaterialTextureSlotLabel(slot).toLowerCase()} map for ${material.name}.`
+      );
+    } catch (error) {
+      if (importedImageForCleanup !== null) {
+        await projectAssetStorage
+          .deleteAsset(importedImageForCleanup.asset.storageKey)
+          .catch(() => undefined);
+        disposeLoadedImageAsset(importedImageForCleanup.loadedAsset);
+      }
+
+      const message = getErrorMessage(error);
+      setStatusMessage(message);
+      setAssetStatusMessage(message);
+    } finally {
+      input.value = "";
+    }
+  };
+
   const handleFaceClimbableChange = (climbable: boolean) => {
     if (
       selectedBrush === null ||
