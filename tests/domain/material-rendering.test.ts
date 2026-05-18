@@ -8,6 +8,10 @@ import {
   disposeMaterialTextureSet
 } from "../../src/materials/material-rendering";
 import { createCustomMaterialDef } from "../../src/materials/starter-material-library";
+import {
+  getFallbackTerrainLayerTexture,
+  getTerrainLayerTexture
+} from "../../src/rendering/terrain-layer-material";
 
 function createLoadedImageAsset(
   assetId: string,
@@ -74,14 +78,10 @@ describe("material rendering", () => {
       }
     });
 
-    const textureSet = createMaterialTextureSet(
-      material,
-      new TextureLoader(),
-      {
-        [albedoAsset.assetId]: albedoAsset,
-        [normalAsset.assetId]: normalAsset
-      }
-    );
+    const textureSet = createMaterialTextureSet(material, new TextureLoader(), {
+      [albedoAsset.assetId]: albedoAsset,
+      [normalAsset.assetId]: normalAsset
+    });
 
     expect(textureSet.baseColor).not.toBeNull();
     expect(textureSet.normal).not.toBeNull();
@@ -95,5 +95,16 @@ describe("material rendering", () => {
     disposeMaterialTextureSet(textureSet);
     albedoAsset.texture.dispose();
     normalAsset.texture.dispose();
+  });
+
+  it("uses custom material swatch colors for scalar-only terrain layers", () => {
+    const material = createCustomMaterialDef({
+      id: "material-terrain-swatch",
+      albedoColorHex: "#335577"
+    });
+    const texture = getTerrainLayerTexture(material, () => null);
+
+    expect(texture).not.toBe(getFallbackTerrainLayerTexture());
+    expect(getTerrainLayerTexture(material, () => null)).toBe(texture);
   });
 });

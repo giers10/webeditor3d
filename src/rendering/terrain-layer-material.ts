@@ -100,7 +100,10 @@ export function getTerrainLayerTexture(
     return getFallbackTerrainLayerTexture();
   }
 
-  return textureLookup(material) ?? getSolidColorTerrainLayerTexture(material.swatchColorHex);
+  return (
+    textureLookup(material) ??
+    getSolidColorTerrainLayerTexture(material.swatchColorHex)
+  );
 }
 
 export function getTerrainLayerPreviewColor(
