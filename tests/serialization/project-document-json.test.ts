@@ -57,8 +57,56 @@ import {
 } from "../../src/serialization/scene-document-json";
 import { BUNDLED_FOLIAGE_PROTOTYPES } from "../../src/foliage/bundled-foliage-manifest";
 import { createFoliageLayer } from "../../src/foliage/foliage";
+import {
+  createProjectAssetStorageKey,
+  type ImageAssetRecord
+} from "../../src/assets/project-assets";
+import { createCustomMaterialDef } from "../../src/materials/starter-material-library";
 
 describe("project document JSON", () => {
+  it("round-trips project custom materials and their texture asset refs", () => {
+    const document = createEmptyProjectDocument({
+      name: "Material Project"
+    });
+    const imageAsset: ImageAssetRecord = {
+      id: "asset-project-material-roughness",
+      kind: "image",
+      sourceName: "roughness.webp",
+      mimeType: "image/webp",
+      storageKey: createProjectAssetStorageKey(
+        "asset-project-material-roughness"
+      ),
+      byteLength: 512,
+      metadata: {
+        kind: "image",
+        width: 16,
+        height: 16,
+        hasAlpha: false,
+        warnings: []
+      }
+    };
+    const material = createCustomMaterialDef({
+      id: "material-project-custom",
+      name: "Project Custom",
+      roughness: 0.35,
+      textures: {
+        albedo: null,
+        normal: null,
+        roughness: {
+          assetId: imageAsset.id
+        },
+        metallic: null
+      }
+    });
+
+    document.assets[imageAsset.id] = imageAsset;
+    document.materials[material.id] = material;
+
+    expect(
+      parseProjectDocumentJson(serializeProjectDocument(document))
+    ).toEqual(document);
+  });
+
   it("round-trips shader sky world settings in project scenes", () => {
     const document = createEmptyProjectDocument({
       name: "Shader Sky Project"
