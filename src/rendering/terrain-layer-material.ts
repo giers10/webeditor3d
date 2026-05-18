@@ -62,11 +62,11 @@ export function getFallbackTerrainLayerTexture(): Texture {
 
 export function getTerrainLayerTexture(
   material: MaterialDef | null,
-  textureLookup: (material: MaterialDef) => Texture
+  textureLookup: (material: MaterialDef) => Texture | null
 ): Texture {
   return material === null
     ? getFallbackTerrainLayerTexture()
-    : textureLookup(material);
+    : (textureLookup(material) ?? getFallbackTerrainLayerTexture());
 }
 
 export function getTerrainLayerPreviewColor(material: MaterialDef | null): number {
