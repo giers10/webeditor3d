@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { Object3D } from "three";
 
 import { createDefaultProjectTimeSettings } from "../../src/document/project-time-settings";
 import { createDefaultWorldSettings } from "../../src/document/world-settings";
 import {
+  collectTerrainBrushRaycastObjectsForTerrain,
   createViewportSimulationMembershipSignatures,
   resolveViewportWorldState
 } from "../../src/viewport-three/viewport-host";
@@ -99,6 +101,41 @@ describe("createViewportSimulationMembershipSignatures", () => {
     expect(
       createViewportSimulationMembershipSignatures(changedStructureScene)
     ).not.toEqual(createViewportSimulationMembershipSignatures(runtimeScene));
+  });
+});
+
+describe("collectTerrainBrushRaycastObjectsForTerrain", () => {
+  it("limits terrain brush raycasts to the active terrain pick meshes", () => {
+    const targetPickMesh = new Object3D();
+    const targetChunkPickMesh = new Object3D();
+    const otherTerrainPickMesh = new Object3D();
+
+    const raycastObjects = collectTerrainBrushRaycastObjectsForTerrain(
+      new Map([
+        [
+          "terrain-target",
+          {
+            pickMeshes: [targetPickMesh, targetChunkPickMesh]
+          }
+        ],
+        [
+          "terrain-other",
+          {
+            pickMeshes: [otherTerrainPickMesh]
+          }
+        ]
+      ]),
+      "terrain-target"
+    );
+
+    expect(raycastObjects).toEqual([targetPickMesh, targetChunkPickMesh]);
+    expect(raycastObjects).not.toContain(otherTerrainPickMesh);
+  });
+
+  it("returns no terrain brush raycast objects when the terrain has no render mesh", () => {
+    expect(
+      collectTerrainBrushRaycastObjectsForTerrain(new Map(), "terrain-missing")
+    ).toEqual([]);
   });
 });
 
