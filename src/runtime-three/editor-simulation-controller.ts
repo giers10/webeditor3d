@@ -1,5 +1,8 @@
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
-import type { SceneDocument } from "../document/scene-document";
+import type {
+  ProjectDocument,
+  SceneDocument
+} from "../document/scene-document";
 
 import {
   advanceRuntimeClockState,
@@ -53,6 +56,7 @@ interface EditorSimulationControllerOptions {
 
 export interface EditorSimulationControllerInputs {
   document: SceneDocument;
+  projectDocument?: ProjectDocument;
   loadedModelAssets: Record<string, LoadedModelAsset>;
 }
 
@@ -103,8 +107,95 @@ function cancelBrowserAnimationFrame(handle: number): void {
   window.cancelAnimationFrame(handle);
 }
 
+interface EditorSimulationProjectSchedulingSignature {
+  scheduler: ProjectDocument["scheduler"];
+  sequences: ProjectDocument["sequences"];
+  assets: ProjectDocument["assets"];
+  targetRegistry: string;
+}
+
+function compareIds(left: { id: string }, right: { id: string }): number {
+  return left.id.localeCompare(right.id);
+}
+
+function createProjectSchedulingTargetRegistrySignature(
+  document: ProjectDocument
+): string {
+  const parts: string[] = [];
+
+  for (const scene of Object.values(document.scenes).sort(compareIds)) {
+    parts.push(`scene:${scene.id}`);
+
+    for (const brush of Object.values(scene.brushes).sort(compareIds)) {
+      parts.push(`brush:${brush.id}`);
+    }
+
+    for (const entity of Object.values(scene.entities).sort(compareIds)) {
+      parts.push(`entity:${entity.id}:${entity.kind}`);
+
+      if (entity.kind === "npc") {
+        parts.push(
+          `actor:${entity.actorId}:${entity.id}:${entity.modelAssetId ?? ""}`
+        );
+      }
+
+      if (entity.kind === "soundEmitter") {
+        parts.push(
+          `sound:${entity.id}:${entity.audioAssetId === null ? "0" : "1"}`
+        );
+      }
+    }
+
+    for (const modelInstance of Object.values(scene.modelInstances).sort(
+      compareIds
+    )) {
+      parts.push(`model:${modelInstance.id}:${modelInstance.assetId}`);
+    }
+
+    for (const path of Object.values(scene.paths).sort(compareIds)) {
+      parts.push(`path:${path.id}:${path.enabled ? "1" : "0"}`);
+    }
+  }
+
+  return parts.join("|");
+}
+
+function createProjectSchedulingSignature(
+  document: ProjectDocument | null
+): EditorSimulationProjectSchedulingSignature | null {
+  if (document === null) {
+    return null;
+  }
+
+  return {
+    scheduler: document.scheduler,
+    sequences: document.sequences,
+    assets: document.assets,
+    targetRegistry: createProjectSchedulingTargetRegistrySignature(document)
+  };
+}
+
+function areProjectSchedulingSignaturesEqual(
+  left: EditorSimulationProjectSchedulingSignature | null,
+  right: EditorSimulationProjectSchedulingSignature | null
+): boolean {
+  if (left === null || right === null) {
+    return left === right;
+  }
+
+  return (
+    left.scheduler === right.scheduler &&
+    left.sequences === right.sequences &&
+    left.assets === right.assets &&
+    left.targetRegistry === right.targetRegistry
+  );
+}
+
 export class EditorSimulationController {
   private document: SceneDocument | null = null;
+  private projectDocument: ProjectDocument | null = null;
+  private projectSchedulingSignature: EditorSimulationProjectSchedulingSignature | null =
+    null;
   private loadedModelAssets: Record<string, LoadedModelAsset> | null = null;
   private runtimeScene: RuntimeSceneDefinition | null = null;
   private runtimeScheduleSyncContext: RuntimeScheduleSyncContext | null = null;
@@ -147,9 +238,18 @@ export class EditorSimulationController {
 
   updateInputs(inputs: EditorSimulationControllerInputs) {
     const documentChanged = this.document !== inputs.document;
+    const projectDocument = inputs.projectDocument ?? null;
+    const nextProjectSchedulingSignature =
+      createProjectSchedulingSignature(projectDocument);
+    const projectSchedulingChanged = !areProjectSchedulingSignaturesEqual(
+      this.projectSchedulingSignature,
+      nextProjectSchedulingSignature
+    );
     const assetsChanged = this.loadedModelAssets !== inputs.loadedModelAssets;
 
     this.document = inputs.document;
+    this.projectDocument = projectDocument;
+    this.projectSchedulingSignature = nextProjectSchedulingSignature;
     this.loadedModelAssets = inputs.loadedModelAssets;
 
     if (this.clockOverride === null) {
@@ -162,7 +262,12 @@ export class EditorSimulationController {
       this.currentClock = cloneRuntimeClockState(this.clockOverride);
     }
 
-    if (documentChanged || assetsChanged || this.runtimeScene === null) {
+    if (
+      documentChanged ||
+      projectSchedulingChanged ||
+      assetsChanged ||
+      this.runtimeScene === null
+    ) {
       this.rebuildCachedRuntimeScene();
       return;
     }
@@ -326,7 +431,10 @@ export class EditorSimulationController {
     try {
       const runtimeScene = this.buildScene(this.document, {
         loadedModelAssets: this.loadedModelAssets,
-        runtimeClock: this.currentClock
+        runtimeClock: this.currentClock,
+        ...(this.projectDocument === null
+          ? {}
+          : { projectDocument: this.projectDocument })
       });
       const syncContext = createRuntimeScheduleSyncContext(runtimeScene);
 
