@@ -1,28 +1,65 @@
+import { createOpaqueId } from "../core/ids";
+
 export type MaterialWorkflow =
   | "roughness-only"
   | "metallic-roughness"
   | "specular-roughness";
 
 export type MaterialPreviewImageName = "preview.webp" | "preview_sphere.webp";
+export const MATERIAL_TEXTURE_SLOTS = [
+  "albedo",
+  "normal",
+  "roughness",
+  "metallic"
+] as const;
+
+export type MaterialKind = "starter" | "custom";
+export type MaterialTextureSlot = (typeof MATERIAL_TEXTURE_SLOTS)[number];
 
 export interface MaterialSizeCm {
   width: number;
   height: number;
 }
 
-export interface MaterialDef {
+interface MaterialDefBase {
   id: string;
+  kind: MaterialKind;
   name: string;
-  assetFolder: string;
-  workflow: MaterialWorkflow;
-  previewImageName: MaterialPreviewImageName;
-  sizeCm: MaterialSizeCm;
   swatchColorHex: string;
   tags: string[];
 }
 
+export interface StarterMaterialDef extends MaterialDefBase {
+  kind: "starter";
+  assetFolder: string;
+  workflow: MaterialWorkflow;
+  previewImageName: MaterialPreviewImageName;
+  sizeCm: MaterialSizeCm;
+}
+
+export interface MaterialTextureRef {
+  assetId: string;
+}
+
+export type CustomMaterialTextureRefs = Record<
+  MaterialTextureSlot,
+  MaterialTextureRef | null
+>;
+
+export interface CustomMaterialDef extends MaterialDefBase {
+  kind: "custom";
+  albedoColorHex: string;
+  opacity: number;
+  roughness: number;
+  metallic: number;
+  normalStrength: number;
+  textures: CustomMaterialTextureRefs;
+}
+
+export type MaterialDef = StarterMaterialDef | CustomMaterialDef;
+
 interface MaterialCatalogEntry
-  extends Omit<MaterialDef, "tags"> {}
+  extends Omit<StarterMaterialDef, "kind" | "tags"> {}
 
 const STARTER_MATERIAL_ASSET_ROOT = "/starter-materials";
 
