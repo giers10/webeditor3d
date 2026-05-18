@@ -11,9 +11,7 @@ import type { LoadedImageAsset } from "../assets/image-assets";
 
 import {
   createStarterMaterialSignature,
-  createStarterMaterialTextureSet,
-  disposeStarterMaterialTextureSet,
-  type StarterMaterialTextureSet
+  createStarterMaterialTextureSet
 } from "./starter-material-textures";
 import type {
   CustomMaterialDef,
@@ -184,25 +182,6 @@ export function createMaterialTextureSet(
 }
 
 export function disposeMaterialTextureSet(textureSet: MaterialTextureSet): void {
-  if (textureSet.specular !== null || textureSet.metallic !== null) {
-    const starterCandidate: StarterMaterialTextureSet = {
-      baseColor: textureSet.baseColor as Texture,
-      normal: textureSet.normal as Texture,
-      roughness: textureSet.roughness as Texture,
-      metallic: textureSet.metallic,
-      specular: textureSet.specular
-    };
-
-    if (
-      starterCandidate.baseColor !== null &&
-      starterCandidate.normal !== null &&
-      starterCandidate.roughness !== null
-    ) {
-      disposeStarterMaterialTextureSet(starterCandidate);
-      return;
-    }
-  }
-
   const textures = new Set<Texture>();
 
   for (const texture of [
