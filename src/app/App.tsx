@@ -2913,11 +2913,12 @@ export function App({
     terrainList
   );
   const selectedPath = getSelectedPath(editorState.selection, pathList);
-  const splineCorridorJunctionCandidates = detectSplineCorridorJunctionCandidates({
-    paths: pathList,
-    junctions: editorState.document.splineCorridorJunctions,
-    terrains: terrainList.filter((terrain) => terrain.enabled)
-  });
+  const splineCorridorJunctionCandidates =
+    detectSplineCorridorJunctionCandidates({
+      paths: pathList,
+      junctions: editorState.document.splineCorridorJunctions,
+      terrains: terrainList.filter((terrain) => terrain.enabled)
+    });
   const selectedPathJunctionCandidates =
     selectedPath === null
       ? []
@@ -9769,10 +9770,7 @@ export function App({
 
   const handleTerrainPaintLayerChange = (value: string) => {
     setActiveTerrainPaintLayerIndex(
-      clampTerrainPaintLayerIndex(
-        Number(value),
-        selectedTerrain?.layers.length
-      )
+      clampTerrainPaintLayerIndex(Number(value), selectedTerrain?.layers.length)
     );
   };
 
@@ -10113,7 +10111,9 @@ export function App({
 
   const handleDeleteSplineCorridorJunction = (junctionId: string) => {
     try {
-      store.executeCommand(createDeleteSplineCorridorJunctionCommand(junctionId));
+      store.executeCommand(
+        createDeleteSplineCorridorJunctionCommand(junctionId)
+      );
       setStatusMessage("Deleted spline corridor junction.");
     } catch (error) {
       setStatusMessage(getErrorMessage(error));
@@ -21868,7 +21868,10 @@ export function App({
                     <div className="terrain-layer-list">
                       {selectedTerrain.layers.map((layer, layerIndex) => (
                         <div key={layerIndex} className="form-field">
-                          <label className="label" htmlFor={`terrain-layer-material-${layerIndex}`}>
+                          <label
+                            className="label"
+                            htmlFor={`terrain-layer-material-${layerIndex}`}
+                          >
                             {getTerrainLayerLabel(layerIndex)}
                           </label>
                           <div className="inline-actions">
@@ -21895,7 +21898,9 @@ export function App({
                               type="button"
                               data-testid={`terrain-layer-remove-${layerIndex}`}
                               disabled={layerIndex === 0}
-                              onClick={() => handleDeleteTerrainLayer(layerIndex)}
+                              onClick={() =>
+                                handleDeleteTerrainLayer(layerIndex)
+                              }
                             >
                               Remove
                             </button>
@@ -22865,10 +22870,9 @@ export function App({
                           handlePathRoadChange(
                             {
                               ...selectedPath.road,
-                              heightOffset:
-                                normalizeScenePathRoadHeightOffset(
-                                  Number(event.currentTarget.value)
-                                )
+                              heightOffset: normalizeScenePathRoadHeightOffset(
+                                Number(event.currentTarget.value)
+                              )
                             },
                             "Updated Path road height offset."
                           )
@@ -22922,7 +22926,8 @@ export function App({
                     </label>
                     {(["left", "right"] as const).map((side) => {
                       const edge = selectedPath.road.edges[side];
-                      const edgeLabel = side === "left" ? "Left Edge" : "Right Edge";
+                      const edgeLabel =
+                        side === "left" ? "Left Edge" : "Right Edge";
 
                       return (
                         <div className="form-section" key={side}>
@@ -23094,10 +23099,7 @@ export function App({
                           {selectedPathJunctionCandidates
                             .slice(0, 6)
                             .map((candidate, candidateIndex) => (
-                              <div
-                                className="compact-card"
-                                key={candidate.id}
-                              >
+                              <div className="compact-card" key={candidate.id}>
                                 <div className="compact-card__header">
                                   <strong>
                                     Candidate {candidateIndex + 1}
@@ -23292,11 +23294,13 @@ export function App({
                                       handleSplineCorridorJunctionChange(
                                         createSplineCorridorJunction({
                                           ...junction,
-                                          edge: createScenePathRoadEdgeSettings({
-                                            ...junction.edge,
-                                            enabled:
-                                              event.currentTarget.checked
-                                          })
+                                          edge: createScenePathRoadEdgeSettings(
+                                            {
+                                              ...junction.edge,
+                                              enabled:
+                                                event.currentTarget.checked
+                                            }
+                                          )
                                         }),
                                         event.currentTarget.checked
                                           ? "Enabled spline corridor junction edge."
@@ -23315,11 +23319,13 @@ export function App({
                                       handleSplineCorridorJunctionChange(
                                         createSplineCorridorJunction({
                                           ...junction,
-                                          edge: createScenePathRoadEdgeSettings({
-                                            ...junction.edge,
-                                            collisionEnabled:
-                                              event.currentTarget.checked
-                                          })
+                                          edge: createScenePathRoadEdgeSettings(
+                                            {
+                                              ...junction.edge,
+                                              collisionEnabled:
+                                                event.currentTarget.checked
+                                            }
+                                          )
                                         }),
                                         event.currentTarget.checked
                                           ? "Enabled spline corridor junction edge collision."
@@ -23338,12 +23344,14 @@ export function App({
                                       handleSplineCorridorJunctionChange(
                                         createSplineCorridorJunction({
                                           ...junction,
-                                          edge: createScenePathRoadEdgeSettings({
-                                            ...junction.edge,
-                                            kind: normalizeScenePathRoadEdgeKind(
-                                              event.currentTarget.value
-                                            )
-                                          })
+                                          edge: createScenePathRoadEdgeSettings(
+                                            {
+                                              ...junction.edge,
+                                              kind: normalizeScenePathRoadEdgeKind(
+                                                event.currentTarget.value
+                                              )
+                                            }
+                                          )
                                         }),
                                         "Updated spline corridor junction edge profile."
                                       )
@@ -23370,12 +23378,17 @@ export function App({
                                       handleSplineCorridorJunctionChange(
                                         createSplineCorridorJunction({
                                           ...junction,
-                                          edge: createScenePathRoadEdgeSettings({
-                                            ...junction.edge,
-                                            width: normalizeScenePathRoadEdgeWidth(
-                                              Number(event.currentTarget.value)
-                                            )
-                                          })
+                                          edge: createScenePathRoadEdgeSettings(
+                                            {
+                                              ...junction.edge,
+                                              width:
+                                                normalizeScenePathRoadEdgeWidth(
+                                                  Number(
+                                                    event.currentTarget.value
+                                                  )
+                                                )
+                                            }
+                                          )
                                         }),
                                         "Updated spline corridor junction edge width."
                                       )
@@ -23395,15 +23408,17 @@ export function App({
                                       handleSplineCorridorJunctionChange(
                                         createSplineCorridorJunction({
                                           ...junction,
-                                          edge: createScenePathRoadEdgeSettings({
-                                            ...junction.edge,
-                                            height:
-                                              normalizeScenePathRoadEdgeHeight(
-                                                Number(
-                                                  event.currentTarget.value
+                                          edge: createScenePathRoadEdgeSettings(
+                                            {
+                                              ...junction.edge,
+                                              height:
+                                                normalizeScenePathRoadEdgeHeight(
+                                                  Number(
+                                                    event.currentTarget.value
+                                                  )
                                                 )
-                                              )
-                                          })
+                                            }
+                                          )
                                         }),
                                         "Updated spline corridor junction edge height."
                                       )
@@ -23420,13 +23435,15 @@ export function App({
                                       handleSplineCorridorJunctionChange(
                                         createSplineCorridorJunction({
                                           ...junction,
-                                          edge: createScenePathRoadEdgeSettings({
-                                            ...junction.edge,
-                                            materialId:
-                                              normalizeScenePathRoadEdgeMaterialId(
-                                                event.currentTarget.value
-                                              )
-                                          })
+                                          edge: createScenePathRoadEdgeSettings(
+                                            {
+                                              ...junction.edge,
+                                              materialId:
+                                                normalizeScenePathRoadEdgeMaterialId(
+                                                  event.currentTarget.value
+                                                )
+                                            }
+                                          )
                                         }),
                                         "Updated spline corridor junction edge material."
                                       )
@@ -23904,8 +23921,8 @@ export function App({
                       Edit authored point positions directly. Keep at least{" "}
                       {MIN_SCENE_PATH_POINT_COUNT} points. <code>Shift+W</code>{" "}
                       adds a point after the selected control point, or appends
-                      to the end when the whole path is selected. When a point is
-                      selected, <code>Shift+D</code> adds one and starts grab
+                      to the end when the whole path is selected. When a point
+                      is selected, <code>Shift+D</code> adds one and starts grab
                       mode.
                     </div>
                     {selectedPathPointIndex === null ? null : (
@@ -29382,8 +29399,7 @@ export function App({
                                   updateCustomMaterial(
                                     materialInspectorCustomMaterial,
                                     {
-                                      albedoColorHex:
-                                        event.currentTarget.value,
+                                      albedoColorHex: event.currentTarget.value,
                                       swatchColorHex: event.currentTarget.value
                                     },
                                     "Update material albedo"

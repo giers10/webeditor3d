@@ -69,7 +69,9 @@ export function getTerrainLayerTexture(
     : (textureLookup(material) ?? getFallbackTerrainLayerTexture());
 }
 
-export function getTerrainLayerPreviewColor(material: MaterialDef | null): number {
+export function getTerrainLayerPreviewColor(
+  material: MaterialDef | null
+): number {
   return material === null
     ? new Color("#aea79a").getHex()
     : new Color(material.swatchColorHex).getHex();
@@ -86,7 +88,9 @@ function createPaddedTerrainLayerTextures(
   );
 }
 
-function createPaddedTerrainLayerColors(layerColors: readonly number[]): Color[] {
+function createPaddedTerrainLayerColors(
+  layerColors: readonly number[]
+): Color[] {
   const fallbackColor = getTerrainLayerPreviewColor(null);
 
   return Array.from(

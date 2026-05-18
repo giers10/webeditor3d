@@ -43,7 +43,9 @@ export function createCreateCustomMaterialCommand(
       const currentDocument = context.getDocument();
 
       if (nextMaterial.kind !== "custom") {
-        throw new Error("Only custom materials can be created by this command.");
+        throw new Error(
+          "Only custom materials can be created by this command."
+        );
       }
 
       if (currentDocument.materials[nextMaterial.id] !== undefined) {

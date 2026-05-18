@@ -6109,11 +6109,7 @@ function readSplineCorridorJunctionConnectionValue(
     pathId: expectString(value.pathId, `${label}.pathId`),
     progress: readOptionalFiniteNumber(value.progress, `${label}.progress`, 0),
     clipDistance: normalizeSplineCorridorJunctionClipDistance(
-      readOptionalFiniteNumber(
-        value.clipDistance,
-        `${label}.clipDistance`,
-        1.5
-      )
+      readOptionalFiniteNumber(value.clipDistance, `${label}.clipDistance`, 1.5)
     )
   };
 }
@@ -6162,7 +6158,11 @@ function readSplineCorridorJunctionValue(
         ? undefined
         : isSplineCorridorJunctionShapeMode(value.shapeMode)
           ? normalizeSplineCorridorJunctionShapeMode(value.shapeMode)
-          : expectLiteralString(value.shapeMode, "straight", `${label}.shapeMode`),
+          : expectLiteralString(
+              value.shapeMode,
+              "straight",
+              `${label}.shapeMode`
+            ),
     edge: readScenePathRoadEdgeSettingsValue(value.edge, `${label}.edge`),
     connections: value.connections.map((connectionValue, index) =>
       readSplineCorridorJunctionConnectionValue(

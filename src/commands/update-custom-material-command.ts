@@ -50,7 +50,9 @@ export function createUpdateCustomMaterialCommand(
       }
 
       if (previousMaterial === null) {
-        previousMaterial = cloneMaterialDef(currentMaterial) as CustomMaterialDef;
+        previousMaterial = cloneMaterialDef(
+          currentMaterial
+        ) as CustomMaterialDef;
       }
 
       const nextAlbedoColorHex =

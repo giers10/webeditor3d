@@ -42,7 +42,9 @@ export function createSetCustomMaterialTextureCommand(
       }
 
       if (options.asset !== undefined && options.asset.id !== options.assetId) {
-        throw new Error("Imported material texture asset id must match assetId.");
+        throw new Error(
+          "Imported material texture asset id must match assetId."
+        );
       }
 
       const existingAsset =

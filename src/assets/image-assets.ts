@@ -14,7 +14,11 @@ import {
   getStarterEnvironmentTextureUrl,
   isStarterEnvironmentImageAsset
 } from "./starter-environment-assets";
-import { createProjectAssetStorageKey, type ImageAssetMetadata, type ImageAssetRecord } from "./project-assets";
+import {
+  createProjectAssetStorageKey,
+  type ImageAssetMetadata,
+  type ImageAssetRecord
+} from "./project-assets";
 import {
   type ProjectAssetStorage,
   type ProjectAssetStorageFileRecord,
@@ -49,7 +53,10 @@ function getFileExtension(sourceName: string): string {
   return match === null ? "" : match[1].toLowerCase();
 }
 
-function inferImageMimeType(sourceName: string, fallbackMimeType: string): string {
+function inferImageMimeType(
+  sourceName: string,
+  fallbackMimeType: string
+): string {
   if (fallbackMimeType.trim().startsWith("image/")) {
     return fallbackMimeType.trim();
   }
@@ -73,7 +80,9 @@ function inferImageMimeType(sourceName: string, fallbackMimeType: string): strin
     case "webp":
       return "image/webp";
     default:
-      throw new Error(`Unsupported image asset format for ${sourceName}. Use a browser-supported image file or .exr/.hdr.`);
+      throw new Error(
+        `Unsupported image asset format for ${sourceName}. Use a browser-supported image file or .exr/.hdr.`
+      );
   }
 }
 
@@ -83,27 +92,45 @@ function isHdrFormat(sourceName: string): boolean {
 }
 
 function getImportedFilePath(file: File): string {
-  const relativePath = typeof file.webkitRelativePath === "string" ? file.webkitRelativePath.trim() : "";
+  const relativePath =
+    typeof file.webkitRelativePath === "string"
+      ? file.webkitRelativePath.trim()
+      : "";
   const sourcePath = relativePath.length > 0 ? relativePath : file.name.trim();
   return sourcePath.replace(/\\/gu, "/");
 }
 
-function createDataUrlForStoredFile(file: ProjectAssetStorageFileRecord): string {
+function createDataUrlForStoredFile(
+  file: ProjectAssetStorageFileRecord
+): string {
   const byteArray = new Uint8Array(file.bytes);
   let binary = "";
   const chunkSize = 0x8000;
 
   for (let index = 0; index < byteArray.length; index += chunkSize) {
-    binary += String.fromCharCode(...byteArray.subarray(index, index + chunkSize));
+    binary += String.fromCharCode(
+      ...byteArray.subarray(index, index + chunkSize)
+    );
   }
 
-  const base64 = typeof btoa === "function" ? btoa(binary) : Buffer.from(file.bytes).toString("base64");
+  const base64 =
+    typeof btoa === "function"
+      ? btoa(binary)
+      : Buffer.from(file.bytes).toString("base64");
   return `data:${file.mimeType};base64,${base64}`;
 }
 
-function createTransientResourceUrl(file: ProjectAssetStorageFileRecord): { revoke: () => void; url: string } {
-  if (typeof URL.createObjectURL === "function" && typeof Blob !== "undefined") {
-    const objectUrl = URL.createObjectURL(new Blob([file.bytes], { type: file.mimeType }));
+function createTransientResourceUrl(file: ProjectAssetStorageFileRecord): {
+  revoke: () => void;
+  url: string;
+} {
+  if (
+    typeof URL.createObjectURL === "function" &&
+    typeof Blob !== "undefined"
+  ) {
+    const objectUrl = URL.createObjectURL(
+      new Blob([file.bytes], { type: file.mimeType })
+    );
 
     return {
       url: objectUrl,
@@ -155,8 +182,14 @@ function loadImageElement(sourceUrl: string): Promise<HTMLImageElement> {
 
 function detectImageHasAlpha(image: HTMLImageElement): boolean {
   const canvas = document.createElement("canvas");
-  const sampleWidth = Math.max(1, Math.min(64, image.naturalWidth || image.width));
-  const sampleHeight = Math.max(1, Math.min(64, image.naturalHeight || image.height));
+  const sampleWidth = Math.max(
+    1,
+    Math.min(64, image.naturalWidth || image.width)
+  );
+  const sampleHeight = Math.max(
+    1,
+    Math.min(64, image.naturalHeight || image.height)
+  );
   const context = canvas.getContext("2d", {
     willReadFrequently: true
   });
@@ -191,7 +224,12 @@ function extractImageAssetMetadata(
   const width = image.naturalWidth || image.width;
   const height = image.naturalHeight || image.height;
 
-  if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(height) || height <= 0) {
+  if (
+    !Number.isFinite(width) ||
+    width <= 0 ||
+    !Number.isFinite(height) ||
+    height <= 0
+  ) {
     throw new Error("Imported image assets must have measurable dimensions.");
   }
 
@@ -199,7 +237,9 @@ function extractImageAssetMetadata(
   const aspectRatio = width / height;
 
   if (options.backgroundWarnings && Math.abs(aspectRatio - 2) > 0.15) {
-    warnings.push("Background images work best as a 2:1 equirectangular panorama.");
+    warnings.push(
+      "Background images work best as a 2:1 equirectangular panorama."
+    );
   }
 
   return {
@@ -217,7 +257,9 @@ function extractHdrTextureMetadata(texture: DataTexture): ImageAssetMetadata {
   const warnings: string[] = [];
 
   if (Math.abs(width / height - 2) > 0.15) {
-    warnings.push("Background images work best as a 2:1 equirectangular panorama.");
+    warnings.push(
+      "Background images work best as a 2:1 equirectangular panorama."
+    );
   }
 
   return { kind: "image", width, height, hasAlpha: false, warnings };
@@ -395,7 +437,10 @@ async function loadImageAssetFromPackageRecord(
         : createTransientResourceUrl(previewFileRecord);
 
     try {
-      const texture = await loadHdrTexture(transientResourceUrl.url, asset.sourceName);
+      const texture = await loadHdrTexture(
+        transientResourceUrl.url,
+        asset.sourceName
+      );
       return createLoadedHdrImageAsset(
         asset,
         texture,
@@ -413,7 +458,9 @@ async function loadImageAssetFromPackageRecord(
       if (previewResourceUrl !== transientResourceUrl) {
         previewResourceUrl.revoke();
       }
-      throw new Error(`Image asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`);
+      throw new Error(
+        `Image asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`
+      );
     }
   }
 
@@ -428,7 +475,9 @@ async function loadImageAssetFromPackageRecord(
     );
   } catch (error) {
     transientResourceUrl.revoke();
-    throw new Error(`Image asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`);
+    throw new Error(
+      `Image asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`
+    );
   }
 }
 
@@ -452,11 +501,18 @@ export async function importBackgroundImageAssetFromFile(
       texture = await loadHdrTexture(transientResourceUrl.url, sourceName);
     } catch (error) {
       transientResourceUrl.revoke();
-      throw new Error(`Image import failed for ${sourceName}: ${getErrorDetail(error)}`);
+      throw new Error(
+        `Image import failed for ${sourceName}: ${getErrorDetail(error)}`
+      );
     }
 
     const metadata = extractHdrTextureMetadata(texture);
-    asset = createImageAssetRecord(sourceName, mimeType, bytes.byteLength, metadata);
+    asset = createImageAssetRecord(
+      sourceName,
+      mimeType,
+      bytes.byteLength,
+      metadata
+    );
     loadedAsset = createLoadedHdrImageAsset(
       asset,
       texture,
@@ -472,11 +528,18 @@ export async function importBackgroundImageAssetFromFile(
       image = await loadImageElement(transientResourceUrl.url);
     } catch (error) {
       transientResourceUrl.revoke();
-      throw new Error(`Image import failed for ${sourceName}: ${getErrorDetail(error)}`);
+      throw new Error(
+        `Image import failed for ${sourceName}: ${getErrorDetail(error)}`
+      );
     }
 
     const metadata = extractImageAssetMetadata(image);
-    asset = createImageAssetRecord(sourceName, mimeType, bytes.byteLength, metadata);
+    asset = createImageAssetRecord(
+      sourceName,
+      mimeType,
+      bytes.byteLength,
+      metadata
+    );
     loadedAsset = createLoadedImageAsset(
       asset,
       image,
@@ -576,11 +639,15 @@ export async function loadImageAssetFromStorage(
   try {
     storedAsset = await storage.getAsset(asset.storageKey);
   } catch (error) {
-    throw new Error(`Image asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`);
+    throw new Error(
+      `Image asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`
+    );
   }
 
   if (storedAsset === null) {
-    throw new Error(`Missing stored binary data for imported image asset ${asset.sourceName}.`);
+    throw new Error(
+      `Missing stored binary data for imported image asset ${asset.sourceName}.`
+    );
   }
 
   return loadImageAssetFromPackageRecord(asset, storedAsset);

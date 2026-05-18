@@ -854,8 +854,11 @@ button:disabled {
 }
 
 .material-item__preview--default {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(230, 235, 239, 0.98));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(230, 235, 239, 0.98)
+  );
 }
 
 .material-item__text {
@@ -1824,11 +1827,7 @@ button:disabled {
       rgba(255, 255, 255, 0.22),
       transparent 46%
     ),
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.12),
-      rgba(244, 246, 250, 0.2)
-    );
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(244, 246, 250, 0.2));
   backdrop-filter: blur(12px) saturate(0.72);
 }
 

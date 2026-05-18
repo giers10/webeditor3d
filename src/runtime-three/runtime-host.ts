@@ -4341,7 +4341,10 @@ export class RuntimeHost {
   }
 
   private createRuntimeRoadSurfaceMaterial(path: RuntimePath): Material {
-    return this.createRuntimeRoadGeneratedMaterial(path.road.material, 0x5f5747);
+    return this.createRuntimeRoadGeneratedMaterial(
+      path.road.material,
+      0x5f5747
+    );
   }
 
   private createRuntimeRoadEdgeMaterial(
