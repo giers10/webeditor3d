@@ -4069,6 +4069,31 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("migrates starter material records without kind to read-only starter materials", () => {
+    const legacyDocument = createEmptySceneDocument({
+      name: "Starter Material Kind Migration"
+    });
+    const legacyMaterial = {
+      ...legacyDocument.materials["starter-amber-grid"]
+    } as Record<string, unknown>;
+
+    delete legacyMaterial.kind;
+
+    const migratedDocument = migrateSceneDocument({
+      ...legacyDocument,
+      version: SPLINE_CORRIDOR_JUNCTION_SHAPE_SCENE_DOCUMENT_VERSION,
+      materials: {
+        ...legacyDocument.materials,
+        "starter-amber-grid": legacyMaterial
+      }
+    });
+
+    expect(migratedDocument.materials["starter-amber-grid"]).toMatchObject({
+      id: "starter-amber-grid",
+      kind: "starter"
+    });
+  });
+
   it("migrates slice 1.2 face materials to the PlayerStart-capable schema", () => {
     const migratedDocument = migrateSceneDocument({
       version: 3,
