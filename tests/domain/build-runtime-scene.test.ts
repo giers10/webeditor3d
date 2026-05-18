@@ -1245,6 +1245,76 @@ describe("buildRuntimeSceneFromDocument", () => {
     });
   });
 
+  it("resolves custom whitebox materials with scalar values and texture refs", () => {
+    const imageAsset: ImageAssetRecord = {
+      id: "asset-runtime-material-albedo",
+      kind: "image",
+      sourceName: "runtime-albedo.png",
+      mimeType: "image/png",
+      storageKey: createProjectAssetStorageKey("asset-runtime-material-albedo"),
+      byteLength: 256,
+      metadata: {
+        kind: "image",
+        width: 8,
+        height: 8,
+        hasAlpha: true,
+        warnings: []
+      }
+    };
+    const material = createCustomMaterialDef({
+      id: "material-runtime-custom",
+      name: "Runtime Custom",
+      albedoColorHex: "#88ccff",
+      opacity: 0.5,
+      roughness: 0.25,
+      metallic: 0.8,
+      normalStrength: 0.4,
+      textures: {
+        albedo: {
+          assetId: imageAsset.id
+        },
+        normal: null,
+        roughness: null,
+        metallic: null
+      }
+    });
+    const brush = createBoxBrush({
+      id: "brush-runtime-custom-material"
+    });
+
+    brush.faces.posZ.materialId = material.id;
+
+    const runtimeScene = buildRuntimeSceneFromDocument({
+      ...createEmptySceneDocument({ name: "Custom Material Runtime Scene" }),
+      assets: {
+        [imageAsset.id]: imageAsset
+      },
+      materials: {
+        ...createEmptySceneDocument().materials,
+        [material.id]: material
+      },
+      brushes: {
+        [brush.id]: brush
+      }
+    });
+
+    expect(runtimeScene.brushes[0].faces.posZ.material).toMatchObject({
+      id: material.id,
+      kind: "custom",
+      albedoColorHex: "#88ccff",
+      opacity: 0.5,
+      roughness: 0.25,
+      metallic: 0.8,
+      normalStrength: 0.4,
+      textures: {
+        albedo: {
+          assetId: imageAsset.id
+        }
+      }
+    });
+    expect(runtimeScene.brushes[0].faces.posX.material).toBeNull();
+  });
+
   it("carries climbable whitebox face metadata into runtime brush colliders", () => {
     const brush = createBoxBrush({
       id: "brush-climbable-wall"
