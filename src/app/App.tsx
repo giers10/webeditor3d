@@ -15302,13 +15302,15 @@ export function App({
               currentMaterialId === null
                 ? null
                 : (editorState.document.materials[currentMaterialId] ?? null);
+            const tileSizeMeters =
+              resolveMaterialUvTileSizeMeters(currentMaterial);
 
-            return currentMaterial === null
+            return tileSizeMeters === null
               ? createFitToFaceBoxBrushFaceUvState(selectedBrush, faceId)
               : createFitToMaterialTileBoxBrushFaceUvState(
                   selectedBrush,
                   faceId,
-                  getStarterMaterialTileSizeMeters(currentMaterial)
+                  tileSizeMeters
                 );
           }
         })
@@ -15325,12 +15327,12 @@ export function App({
     }
 
     applyFaceUvState(
-      selectedFaceMaterial === undefined || selectedFaceMaterial === null
+      resolveMaterialUvTileSizeMeters(selectedFaceMaterial) === null
         ? createFitToFaceBoxBrushFaceUvState(selectedBrush, selectedFaceId)
         : createFitToMaterialTileBoxBrushFaceUvState(
             selectedBrush,
             selectedFaceId,
-            getStarterMaterialTileSizeMeters(selectedFaceMaterial)
+            resolveMaterialUvTileSizeMeters(selectedFaceMaterial)!
           ),
       "Fit face UV to face",
       "Fit the selected face UVs to the face bounds."
