@@ -409,6 +409,22 @@ interface TerrainRenderObjects {
   pickMeshes: Mesh<BufferGeometry, Material>[];
 }
 
+export function collectTerrainBrushRaycastObjectsForTerrain(
+  terrainRenderObjects: ReadonlyMap<
+    string,
+    {
+      pickMeshes: readonly Object3D[];
+    }
+  >,
+  targetTerrainId: string
+): Object3D[] {
+  const renderObjects = terrainRenderObjects.get(targetTerrainId);
+
+  return renderObjects === undefined
+    ? []
+    : Array.from(renderObjects.pickMeshes);
+}
+
 interface TerrainRenderChunkObjects {
   mesh: Mesh<BufferGeometry, Material>;
   debugMesh: Mesh<BufferGeometry, MeshBasicMaterial>;
@@ -11957,34 +11973,11 @@ export class ViewportHost {
     return null;
   }
 
-  private getTerrainBrushRaycastObjects(): Object3D[] {
-    const raycastObjects: Object3D[] = [];
-
-    for (const renderObjects of this.brushRenderObjects.values()) {
-      raycastObjects.push(renderObjects.mesh);
-    }
-
-    if (this.currentDocument !== null) {
-      for (const [entityId, renderObjects] of this.entityRenderObjects) {
-        const entity = this.currentDocument.entities[entityId];
-
-        if (entity?.kind !== "triggerVolume") {
-          continue;
-        }
-
-        raycastObjects.push(renderObjects.group);
-      }
-    }
-
-    for (const renderObjects of this.terrainRenderObjects.values()) {
-      raycastObjects.push(...renderObjects.pickMeshes);
-    }
-
-    for (const renderGroup of this.modelRenderObjects.values()) {
-      raycastObjects.push(renderGroup);
-    }
-
-    return raycastObjects;
+  private getTerrainBrushRaycastObjects(terrainId: string): Object3D[] {
+    return collectTerrainBrushRaycastObjectsForTerrain(
+      this.terrainRenderObjects,
+      terrainId
+    );
   }
 
   private getTerrainBrushHitAtClientPosition(
@@ -11999,7 +11992,9 @@ export class ViewportHost {
       return null;
     }
 
-    const raycastObjects = this.getTerrainBrushRaycastObjects();
+    const targetTerrainId = this.currentTerrainBrushState.terrainId;
+    const raycastObjects =
+      this.getTerrainBrushRaycastObjects(targetTerrainId);
 
     if (raycastObjects.length === 0) {
       return null;
@@ -12014,7 +12009,7 @@ export class ViewportHost {
 
     const terrainId = this.extractTerrainIdFromObject(hit.object);
 
-    if (terrainId !== this.currentTerrainBrushState.terrainId) {
+    if (terrainId !== targetTerrainId) {
       return null;
     }
 
