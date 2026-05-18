@@ -10743,6 +10743,14 @@ export class ViewportHost {
     }
   }
 
+  private clearMaterialTextureCache() {
+    for (const cachedTexture of this.materialTextureCache.values()) {
+      disposeMaterialTextureSet(cachedTexture.textureSet);
+    }
+
+    this.materialTextureCache.clear();
+  }
+
   private getOrCreateTextureSet(material: MaterialDef) {
     const signature = createMaterialSignature(material, this.loadedImageAssets);
     const cachedTexture = this.materialTextureCache.get(material.id);
