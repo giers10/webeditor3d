@@ -47,6 +47,7 @@ import {
 import {
   createProjectAssetStorageKey,
   type AudioAssetRecord,
+  type ImageAssetRecord,
   type ModelAssetRecord
 } from "../../src/assets/project-assets";
 import {
@@ -55,6 +56,7 @@ import {
 } from "../../src/interactions/interaction-links";
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import { createProjectSequence } from "../../src/sequencer/project-sequences";
+import { createCustomMaterialDef } from "../../src/materials/starter-material-library";
 
 describe("validateSceneDocument", () => {
   it("accepts a valid first-room document", () => {
@@ -112,6 +114,109 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-terrain-foliage-blocker-mask-value",
           path: `terrains.${terrain.id}.foliageBlockerMask.values.2`
+        })
+      ])
+    );
+  });
+
+  it("validates custom material scalar bounds and texture asset refs", () => {
+    const imageAsset: ImageAssetRecord = {
+      id: "asset-valid-material-map",
+      kind: "image",
+      sourceName: "map.png",
+      mimeType: "image/png",
+      storageKey: createProjectAssetStorageKey("asset-valid-material-map"),
+      byteLength: 128,
+      metadata: {
+        kind: "image",
+        width: 4,
+        height: 4,
+        hasAlpha: false,
+        warnings: []
+      }
+    };
+    const hdrImageAsset: ImageAssetRecord = {
+      ...imageAsset,
+      id: "asset-invalid-material-map-hdr",
+      sourceName: "studio.hdr",
+      mimeType: "image/vnd.radiance",
+      storageKey: createProjectAssetStorageKey(
+        "asset-invalid-material-map-hdr"
+      )
+    };
+    const audioAsset: AudioAssetRecord = {
+      id: "asset-invalid-material-map-audio",
+      kind: "audio",
+      sourceName: "tone.ogg",
+      mimeType: "audio/ogg",
+      storageKey: createProjectAssetStorageKey(
+        "asset-invalid-material-map-audio"
+      ),
+      byteLength: 128,
+      metadata: {
+        kind: "audio",
+        durationSeconds: 1,
+        channelCount: 1,
+        sampleRateHz: 44100,
+        warnings: []
+      }
+    };
+    const validMaterial = createCustomMaterialDef({
+      id: "material-valid-custom",
+      textures: {
+        albedo: {
+          assetId: imageAsset.id
+        },
+        normal: null,
+        roughness: null,
+        metallic: null
+      }
+    });
+    const invalidMaterial = createCustomMaterialDef({
+      id: "material-invalid-custom",
+      opacity: 1.5,
+      textures: {
+        albedo: {
+          assetId: "asset-missing-map"
+        },
+        normal: {
+          assetId: audioAsset.id
+        },
+        roughness: {
+          assetId: hdrImageAsset.id
+        },
+        metallic: null
+      }
+    });
+    const document = createEmptySceneDocument({
+      name: "Material Validation Scene"
+    });
+
+    document.assets[imageAsset.id] = imageAsset;
+    document.assets[hdrImageAsset.id] = hdrImageAsset;
+    document.assets[audioAsset.id] = audioAsset;
+    document.materials[validMaterial.id] = validMaterial;
+    document.materials[invalidMaterial.id] = invalidMaterial;
+
+    const validation = validateSceneDocument(document);
+
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid-material-scalar",
+          path: "materials.material-invalid-custom.opacity"
+        }),
+        expect.objectContaining({
+          code: "missing-material-texture-asset",
+          path: "materials.material-invalid-custom.textures.albedo.assetId"
+        }),
+        expect.objectContaining({
+          code: "invalid-material-texture-asset-kind",
+          path: "materials.material-invalid-custom.textures.normal.assetId"
+        }),
+        expect.objectContaining({
+          code: "invalid-material-texture-image-format",
+          path: "materials.material-invalid-custom.textures.roughness.assetId"
         })
       ])
     );
