@@ -33,6 +33,7 @@ import {
   createFoliageLayer,
   createFoliagePrototype
 } from "../../src/foliage/foliage";
+import { createCustomMaterialDef } from "../../src/materials/starter-material-library";
 
 function createProjectDocumentFixture() {
   const baseProjectDocument = createEmptyProjectDocument({
@@ -219,6 +220,45 @@ describe("deleteProjectAssetFromProjectDocument", () => {
       mode: "image",
       assetId: "",
       environmentIntensity: 0.55
+    });
+  });
+
+  it("clears custom material texture refs when deleting a referenced image asset", () => {
+    const fixture = createProjectDocumentFixture();
+    const material = createCustomMaterialDef({
+      id: "material-delete-image-ref",
+      textures: {
+        albedo: {
+          assetId: fixture.imageAsset.id
+        },
+        normal: {
+          assetId: fixture.imageAsset.id
+        },
+        roughness: null,
+        metallic: null
+      }
+    });
+    const projectDocument: ProjectDocument = {
+      ...fixture.projectDocument,
+      materials: {
+        ...fixture.projectDocument.materials,
+        [material.id]: material
+      }
+    };
+
+    const nextProjectDocument = deleteProjectAssetFromProjectDocument(
+      projectDocument,
+      fixture.imageAsset.id
+    );
+
+    expect(nextProjectDocument.materials[material.id]).toMatchObject({
+      kind: "custom",
+      textures: {
+        albedo: null,
+        normal: null,
+        roughness: null,
+        metallic: null
+      }
     });
   });
 
