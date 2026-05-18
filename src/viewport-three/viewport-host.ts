@@ -10472,8 +10472,12 @@ export class ViewportHost {
     }
 
     const textureSet = this.getOrCreateTextureSet(material);
+    const isCustomMaterial = material.kind === "custom";
+    const materialTransparent =
+      isCustomMaterial &&
+      (material.opacity < 0.999 || textureSet.albedoHasAlpha);
     const faceMaterial = new MeshPhysicalMaterial({
-      color: 0xffffff,
+      color: isCustomMaterial ? material.albedoColorHex : 0xffffff,
       map: textureSet.baseColor,
       normalMap: textureSet.normal,
       roughnessMap: textureSet.roughness,
@@ -10483,13 +10487,27 @@ export class ViewportHost {
           ? HOVERED_FACE_EMISSIVE
           : 0x000000,
       emissiveIntensity: selectedFace ? 0.32 : hoveredFace ? 0.18 : 0,
-      roughness: 1,
+      roughness: isCustomMaterial ? material.roughness : 1,
       metalnessMap: textureSet.metallic,
-      metalness: textureSet.metallic === null ? 0.03 : 1,
+      metalness: isCustomMaterial
+        ? material.metallic
+        : textureSet.metallic === null
+          ? 0.03
+          : 1,
       specularColorMap: textureSet.specular,
       specularColor: new Color(0xffffff),
-      specularIntensity: textureSet.specular === null ? 0.2 : 1
+      specularIntensity: textureSet.specular === null ? 0.2 : 1,
+      transparent: materialTransparent,
+      opacity: isCustomMaterial ? material.opacity : 1,
+      depthWrite: !materialTransparent
     });
+
+    if (isCustomMaterial && textureSet.normal !== null) {
+      faceMaterial.normalScale = new Vector2(
+        material.normalStrength,
+        material.normalStrength
+      );
+    }
 
     if (
       whiteboxBevelSettings !== undefined &&
