@@ -4309,22 +4309,39 @@ export class RuntimeHost {
     }
 
     const textureSet = this.getOrCreateTextureSet(material);
+    const isCustomMaterial = material.kind === "custom";
+    const materialTransparent =
+      isCustomMaterial &&
+      (material.opacity < 0.999 || textureSet.albedoHasAlpha);
+    const roadMaterial = new MeshPhysicalMaterial({
+      color: isCustomMaterial ? material.albedoColorHex : 0xffffff,
+      map: textureSet.baseColor,
+      normalMap: textureSet.normal,
+      roughnessMap: textureSet.roughness,
+      roughness: isCustomMaterial ? material.roughness : 1,
+      metalnessMap: textureSet.metallic,
+      metalness: isCustomMaterial
+        ? material.metallic
+        : textureSet.metallic === null
+          ? 0.03
+          : 1,
+      specularColorMap: textureSet.specular,
+      specularColor: new Color(0xffffff),
+      specularIntensity: textureSet.specular === null ? 0.2 : 1,
+      transparent: materialTransparent,
+      opacity: isCustomMaterial ? material.opacity : 1,
+      depthWrite: !materialTransparent,
+      side: DoubleSide
+    });
 
-    return this.configureRoadSurfaceMaterial(
-      new MeshPhysicalMaterial({
-        color: 0xffffff,
-        map: textureSet.baseColor,
-        normalMap: textureSet.normal,
-        roughnessMap: textureSet.roughness,
-        roughness: 1,
-        metalnessMap: textureSet.metallic,
-        metalness: textureSet.metallic === null ? 0.03 : 1,
-        specularColorMap: textureSet.specular,
-        specularColor: new Color(0xffffff),
-        specularIntensity: textureSet.specular === null ? 0.2 : 1,
-        side: DoubleSide
-      })
-    );
+    if (isCustomMaterial && textureSet.normal !== null) {
+      roadMaterial.normalScale.set(
+        material.normalStrength,
+        material.normalStrength
+      );
+    }
+
+    return this.configureRoadSurfaceMaterial(roadMaterial);
   }
 
   private createRuntimeRoadSurfaceMaterial(path: RuntimePath): Material {
