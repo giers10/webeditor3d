@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NoColorSpace, SRGBColorSpace, Texture } from "three";
+import { NoColorSpace, SRGBColorSpace, Texture, TextureLoader } from "three";
 
 import type { LoadedImageAsset } from "../../src/assets/image-assets";
 import {
@@ -38,7 +38,11 @@ describe("material rendering", () => {
       roughness: 0.24,
       metallic: 0.11
     });
-    const textureSet = createMaterialTextureSet(material, undefined, {});
+    const textureSet = createMaterialTextureSet(
+      material,
+      new TextureLoader(),
+      {}
+    );
 
     expect(textureSet).toEqual({
       baseColor: null,
@@ -70,10 +74,14 @@ describe("material rendering", () => {
       }
     });
 
-    const textureSet = createMaterialTextureSet(material, undefined, {
-      [albedoAsset.assetId]: albedoAsset,
-      [normalAsset.assetId]: normalAsset
-    });
+    const textureSet = createMaterialTextureSet(
+      material,
+      new TextureLoader(),
+      {
+        [albedoAsset.assetId]: albedoAsset,
+        [normalAsset.assetId]: normalAsset
+      }
+    );
 
     expect(textureSet.baseColor).not.toBeNull();
     expect(textureSet.normal).not.toBeNull();
