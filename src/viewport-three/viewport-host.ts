@@ -239,13 +239,13 @@ import {
 import { createModelColliderDebugGroup } from "../geometry/model-instance-collider-debug-mesh";
 import { buildGeneratedModelCollider } from "../geometry/model-instance-collider-generation";
 import { DEFAULT_GRID_SIZE, snapValueToGrid } from "../geometry/grid-snapping";
-import {
-  createStarterMaterialSignature,
-  createStarterMaterialTextureSet,
-  disposeStarterMaterialTextureSet,
-  type StarterMaterialTextureSet
-} from "../materials/starter-material-textures";
 import type { MaterialDef } from "../materials/starter-material-library";
+import {
+  createMaterialSignature,
+  createMaterialTextureSet,
+  disposeMaterialTextureSet,
+  type MaterialTextureSet
+} from "../materials/material-rendering";
 import {
   applyAdvancedRenderingRenderableShadowFlags,
   configureAdvancedRenderingShadowLight,
