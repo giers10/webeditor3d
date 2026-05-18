@@ -184,7 +184,10 @@ function detectImageHasAlpha(image: HTMLImageElement): boolean {
   return false;
 }
 
-function extractImageAssetMetadata(image: HTMLImageElement): ImageAssetMetadata {
+function extractImageAssetMetadata(
+  image: HTMLImageElement,
+  options: { backgroundWarnings: boolean } = { backgroundWarnings: true }
+): ImageAssetMetadata {
   const width = image.naturalWidth || image.width;
   const height = image.naturalHeight || image.height;
 
@@ -195,7 +198,7 @@ function extractImageAssetMetadata(image: HTMLImageElement): ImageAssetMetadata 
   const warnings: string[] = [];
   const aspectRatio = width / height;
 
-  if (Math.abs(aspectRatio - 2) > 0.15) {
+  if (options.backgroundWarnings && Math.abs(aspectRatio - 2) > 0.15) {
     warnings.push("Background images work best as a 2:1 equirectangular panorama.");
   }
 
@@ -483,6 +486,63 @@ export async function importBackgroundImageAssetFromFile(
     );
   }
 
+  const packageRecord: ProjectAssetStoragePackageRecord = {
+    files: { [sourceName]: fileRecord }
+  };
+
+  try {
+    await storage.putAsset(asset.storageKey, packageRecord);
+    return { asset, loadedAsset };
+  } catch (error) {
+    disposeLoadedImageAsset(loadedAsset);
+    await storage.deleteAsset(asset.storageKey).catch(() => undefined);
+    throw error;
+  }
+}
+
+export async function importMaterialImageAssetFromFile(
+  file: File,
+  storage: ProjectAssetStorage
+): Promise<ImportedImageAssetResult> {
+  const sourceName = getImportedFilePath(file);
+  const mimeType = inferImageMimeType(sourceName, file.type);
+
+  if (isHdrFormat(sourceName)) {
+    throw new Error(
+      `Material texture import failed for ${sourceName}: HDR and EXR images are not valid material maps.`
+    );
+  }
+
+  const bytes = await file.arrayBuffer();
+  const fileRecord: ProjectAssetStorageFileRecord = { bytes, mimeType };
+  const transientResourceUrl = createTransientResourceUrl(fileRecord);
+  let image: HTMLImageElement;
+
+  try {
+    image = await loadImageElement(transientResourceUrl.url);
+  } catch (error) {
+    transientResourceUrl.revoke();
+    throw new Error(
+      `Material texture import failed for ${sourceName}: ${getErrorDetail(error)}`
+    );
+  }
+
+  const metadata = extractImageAssetMetadata(image, {
+    backgroundWarnings: false
+  });
+  const asset = createImageAssetRecord(
+    sourceName,
+    mimeType,
+    bytes.byteLength,
+    metadata
+  );
+  const loadedAsset = createLoadedImageAsset(
+    asset,
+    image,
+    transientResourceUrl.url,
+    transientResourceUrl.url,
+    transientResourceUrl.revoke
+  );
   const packageRecord: ProjectAssetStoragePackageRecord = {
     files: { [sourceName]: fileRecord }
   };
