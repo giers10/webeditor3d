@@ -1,11 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createEmptySceneDocument } from "../../src/document/scene-document";
+import { createActorControlTargetRef } from "../../src/controls/control-surface";
+import {
+  createEmptyProjectDocument,
+  createEmptyProjectScene,
+  createEmptySceneDocument,
+  createSceneDocumentFromProject
+} from "../../src/document/scene-document";
+import { createNpcEntity } from "../../src/entities/entity-instances";
 import {
   EditorSimulationController,
   type EditorSimulationUiSnapshot
 } from "../../src/runtime-three/editor-simulation-controller";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
+import {
+  createEmptyProjectScheduler,
+  createProjectScheduleRoutine
+} from "../../src/scheduler/project-scheduler";
 
 function createManualFrameController(options: {
   uiSnapshotIntervalSeconds?: number;
