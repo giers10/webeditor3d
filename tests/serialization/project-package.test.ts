@@ -370,7 +370,7 @@ describe("project package serialization", () => {
     expect(restoredDocument).toEqual(document);
     expect(listPackagedFiles(packageBytes)).toEqual(
       expect.arrayContaining([
-        "assets/project-asset:asset-image-material-package/custom-material-map.png"
+        "assets/asset-image-material-package/custom-material-map.png"
       ])
     );
     await expect(restoredStorage.getAsset(imageAsset.storageKey)).resolves.toEqual({
