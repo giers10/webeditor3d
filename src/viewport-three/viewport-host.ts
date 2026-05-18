@@ -971,7 +971,9 @@ export function resolveViewportWorldState(options: {
 }): ViewportResolvedWorldState {
   const world = options.currentSimulationScene?.world ?? options.currentWorld;
   const timeSettings =
-    options.currentSimulationScene?.time ?? options.currentDocument?.time ?? null;
+    options.currentSimulationScene?.time ??
+    options.currentDocument?.time ??
+    null;
 
   if (world === null) {
     return {
@@ -1528,10 +1530,7 @@ export class ViewportHost {
       this.terrainGridResizeOverlayGroup.add(visual.group);
     }
 
-    applyRendererRenderCategory(
-      this.terrainGridResizeOverlayGroup,
-      "overlay"
-    );
+    applyRendererRenderCategory(this.terrainGridResizeOverlayGroup, "overlay");
     this.scene.add(this.terrainGridResizeOverlayGroup);
     this.scene.add(this.pathGroup);
     this.scene.add(this.entityGroup);
@@ -2790,17 +2789,13 @@ export class ViewportHost {
   }
 
   private applyWorld() {
-    const {
-      world,
-      timeSettings,
-      resolvedTime,
-      resolvedWorld
-    } = resolveViewportWorldState({
-      currentWorld: this.currentWorld,
-      currentDocument: this.currentDocument,
-      currentSimulationScene: this.currentSimulationScene,
-      currentSimulationClock: this.currentSimulationClock
-    });
+    const { world, timeSettings, resolvedTime, resolvedWorld } =
+      resolveViewportWorldState({
+        currentWorld: this.currentWorld,
+        currentDocument: this.currentDocument,
+        currentSimulationScene: this.currentSimulationScene,
+        currentSimulationClock: this.currentSimulationClock
+      });
 
     if (world === null) {
       return;
@@ -7705,7 +7700,10 @@ export class ViewportHost {
           color:
             materialDef === null
               ? fallbackColor
-              : Number.parseInt(materialDef.swatchColorHex.replace("#", ""), 16),
+              : Number.parseInt(
+                  materialDef.swatchColorHex.replace("#", ""),
+                  16
+                ),
           wireframe: true,
           side: DoubleSide
         })
@@ -7773,7 +7771,9 @@ export class ViewportHost {
     );
   }
 
-  private createRoadJunctionMaterial(junction: SplineCorridorJunction): Material {
+  private createRoadJunctionMaterial(
+    junction: SplineCorridorJunction
+  ): Material {
     return this.createRoadGeneratedMaterial(
       junction.materialId,
       PATH_JUNCTION_PREVIEW_COLOR
@@ -7802,7 +7802,10 @@ export class ViewportHost {
     const meshes: Array<Mesh<BufferGeometry, Material>> = [];
 
     if (surfaceGeometry !== null) {
-      const mesh = new Mesh(surfaceGeometry, this.createRoadSurfaceMaterial(path));
+      const mesh = new Mesh(
+        surfaceGeometry,
+        this.createRoadSurfaceMaterial(path)
+      );
       mesh.castShadow = false;
       mesh.receiveShadow = true;
       mesh.userData.pathId = path.id;
@@ -7825,7 +7828,10 @@ export class ViewportHost {
       }
 
       const edge = path.road.edges[side];
-      const edgeMesh = new Mesh(edgeGeometry, this.createRoadEdgeMaterial(edge));
+      const edgeMesh = new Mesh(
+        edgeGeometry,
+        this.createRoadEdgeMaterial(edge)
+      );
       edgeMesh.castShadow = false;
       edgeMesh.receiveShadow = true;
       edgeMesh.userData.pathId = path.id;
@@ -7851,7 +7857,10 @@ export class ViewportHost {
     const meshes: Array<Mesh<BufferGeometry, Material>> = [];
 
     if (geometry !== null) {
-      const mesh = new Mesh(geometry, this.createRoadJunctionMaterial(junction));
+      const mesh = new Mesh(
+        geometry,
+        this.createRoadJunctionMaterial(junction)
+      );
       mesh.castShadow = false;
       mesh.receiveShadow = true;
       mesh.userData.splineCorridorJunctionId = junction.id;
@@ -7872,7 +7881,10 @@ export class ViewportHost {
           });
 
     if (edgeGeometry !== null) {
-      const edgeMesh = new Mesh(edgeGeometry, this.createRoadEdgeMaterial(edge));
+      const edgeMesh = new Mesh(
+        edgeGeometry,
+        this.createRoadEdgeMaterial(edge)
+      );
       edgeMesh.castShadow = false;
       edgeMesh.receiveShadow = true;
       edgeMesh.userData.splineCorridorJunctionId = junction.id;
@@ -7937,7 +7949,10 @@ export class ViewportHost {
       for (const mesh of renderObjects.meshes) {
         this.roadSurfaceGroup.add(mesh);
       }
-      this.roadSurfaceRenderObjects.set(`junction:${junction.id}`, renderObjects);
+      this.roadSurfaceRenderObjects.set(
+        `junction:${junction.id}`,
+        renderObjects
+      );
     }
 
     this.applyShadowState();
@@ -8199,7 +8214,8 @@ export class ViewportHost {
               resolvedPath.segments[0]!.start.z
             ),
             ...resolvedPath.segments.map(
-              (segment) => new Vector3(segment.end.x, segment.end.y, segment.end.z)
+              (segment) =>
+                new Vector3(segment.end.x, segment.end.y, segment.end.z)
             )
           ];
 
@@ -8234,7 +8250,9 @@ export class ViewportHost {
     return mesh;
   }
 
-  private createPathSegmentMeshes(path: ScenePath): PathRenderObjects["segments"] {
+  private createPathSegmentMeshes(
+    path: ScenePath
+  ): PathRenderObjects["segments"] {
     const resolvedPath = resolveScenePath(path, {
       terrains: this.getPathTerrainGlueTerrains()
     });
@@ -8373,7 +8391,11 @@ export class ViewportHost {
         segment.start.y,
         segment.start.z
       );
-      const endCenter = new Vector3(segment.end.x, segment.end.y, segment.end.z);
+      const endCenter = new Vector3(
+        segment.end.x,
+        segment.end.y,
+        segment.end.z
+      );
       const leftStart = this.resolvePathRoadPreviewPoint(
         path,
         startCenter.clone().add(perpendicular),
@@ -8550,7 +8572,11 @@ export class ViewportHost {
       })
     );
 
-    marker.position.set(options.center.x, options.center.y + 0.08, options.center.z);
+    marker.position.set(
+      options.center.x,
+      options.center.y + 0.08,
+      options.center.z
+    );
     marker.rotation.x = Math.PI * 0.5;
     marker.renderOrder = PATH_RENDER_ORDER + 4;
     marker.userData.nonPickable = true;
@@ -8689,7 +8715,8 @@ export class ViewportHost {
     const resolvedPointPositions =
       this.createResolvedPathPointPositionMap(path);
     const pointMeshes = path.points.map((point) => {
-      const pointPosition = resolvedPointPositions.get(point.id) ?? point.position;
+      const pointPosition =
+        resolvedPointPositions.get(point.id) ?? point.position;
       const outlineMesh = new Mesh(
         new SphereGeometry(PATH_POINT_OUTLINE_RADIUS, 16, 12),
         new MeshBasicMaterial({
@@ -8824,7 +8851,8 @@ export class ViewportHost {
         continue;
       }
 
-      const pointPosition = resolvedPointPositions.get(point.id) ?? point.position;
+      const pointPosition =
+        resolvedPointPositions.get(point.id) ?? point.position;
 
       pointMesh.outlineMesh.position.set(
         pointPosition.x,
@@ -11546,7 +11574,10 @@ export class ViewportHost {
       return null;
     }
 
-    const hits = this.raycaster.intersectObjects(renderObjects.pickMeshes, true);
+    const hits = this.raycaster.intersectObjects(
+      renderObjects.pickMeshes,
+      true
+    );
     const width = getTerrainFootprintWidth(terrain);
     const depth = getTerrainFootprintDepth(terrain);
 
@@ -11660,8 +11691,12 @@ export class ViewportHost {
           ? terrain.position.z
           : terrain.position.z + depth * alpha;
     const height =
-      sampleDocumentTerrainHeightAtWorldPosition(terrain, worldX, worldZ, true) ??
-      0;
+      sampleDocumentTerrainHeightAtWorldPosition(
+        terrain,
+        worldX,
+        worldZ,
+        true
+      ) ?? 0;
 
     return new Vector3(
       worldX,
@@ -11781,7 +11816,10 @@ export class ViewportHost {
     const arrowEnd = midpoint.clone().addScaledVector(direction, arrowLength);
     const shaftEnd = arrowEnd
       .clone()
-      .addScaledVector(direction, -TERRAIN_GRID_RESIZE_ARROW_HEAD_LENGTH * 0.72);
+      .addScaledVector(
+        direction,
+        -TERRAIN_GRID_RESIZE_ARROW_HEAD_LENGTH * 0.72
+      );
     const shaftLength = Math.max(0.1, arrowStart.distanceTo(shaftEnd));
     const shaftCenter = arrowStart.clone().add(shaftEnd).multiplyScalar(0.5);
 
@@ -11796,8 +11834,10 @@ export class ViewportHost {
     visual.pickShaft.scale.set(1, shaftLength, 1);
 
     const previousArrowGeometry = visual.line.geometry;
-    visual.line.geometry =
-      new BufferGeometry().setFromPoints([arrowStart, arrowEnd]);
+    visual.line.geometry = new BufferGeometry().setFromPoints([
+      arrowStart,
+      arrowEnd
+    ]);
     previousArrowGeometry.dispose();
     visual.headOutline.position
       .copy(arrowEnd)
@@ -11984,7 +12024,7 @@ export class ViewportHost {
       this.hasTerrainGridResizeChanged(
         activeDrag.baseTerrain,
         finalPreviewTerrain
-    );
+      );
     this.activeTerrainGridResizeDrag = null;
     this.terrainGridResizeHover = null;
 
@@ -12041,8 +12081,7 @@ export class ViewportHost {
     }
 
     const targetTerrainId = this.currentTerrainBrushState.terrainId;
-    const raycastObjects =
-      this.getTerrainBrushRaycastObjects(targetTerrainId);
+    const raycastObjects = this.getTerrainBrushRaycastObjects(targetTerrainId);
 
     if (raycastObjects.length === 0) {
       return null;

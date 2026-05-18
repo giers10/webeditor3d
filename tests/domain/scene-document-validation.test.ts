@@ -140,9 +140,7 @@ describe("validateSceneDocument", () => {
       id: "asset-invalid-material-map-hdr",
       sourceName: "studio.hdr",
       mimeType: "image/vnd.radiance",
-      storageKey: createProjectAssetStorageKey(
-        "asset-invalid-material-map-hdr"
-      )
+      storageKey: createProjectAssetStorageKey("asset-invalid-material-map-hdr")
     };
     const audioAsset: AudioAssetRecord = {
       id: "asset-invalid-material-map-audio",

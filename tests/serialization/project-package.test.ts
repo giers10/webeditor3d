@@ -316,9 +316,7 @@ describe("project package serialization", () => {
       kind: "image",
       sourceName: "custom-material-map.png",
       mimeType: "image/png",
-      storageKey: createProjectAssetStorageKey(
-        "asset-image-material-package"
-      ),
+      storageKey: createProjectAssetStorageKey("asset-image-material-package"),
       byteLength: 4,
       metadata: {
         kind: "image",
@@ -373,7 +371,9 @@ describe("project package serialization", () => {
         "assets/asset-image-material-package/custom-material-map.png"
       ])
     );
-    await expect(restoredStorage.getAsset(imageAsset.storageKey)).resolves.toEqual({
+    await expect(
+      restoredStorage.getAsset(imageAsset.storageKey)
+    ).resolves.toEqual({
       files: {
         [imageAsset.sourceName]: {
           bytes: expect.any(ArrayBuffer),

@@ -318,7 +318,9 @@ describe("deleteProjectAssetFromProjectDocument", () => {
     );
     const nextScene = nextProjectDocument.scenes[fixture.sceneId];
 
-    expect(nextProjectDocument.foliagePrototypes[foliagePrototype.id]).toBeUndefined();
+    expect(
+      nextProjectDocument.foliagePrototypes[foliagePrototype.id]
+    ).toBeUndefined();
     expect(nextScene.foliageLayers[foliageLayer.id]?.prototypeIds).toEqual([
       bundledPrototype.id
     ]);

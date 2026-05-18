@@ -9,10 +9,7 @@ import {
   createProjectAssetStorageKey,
   type ImageAssetRecord
 } from "../../src/assets/project-assets";
-import {
-  BOX_FACE_IDS,
-  type WhiteboxFaceId
-} from "../../src/document/brushes";
+import { BOX_FACE_IDS, type WhiteboxFaceId } from "../../src/document/brushes";
 import { createCustomMaterialDef } from "../../src/materials/starter-material-library";
 
 function createImageAsset(id: string): ImageAssetRecord {

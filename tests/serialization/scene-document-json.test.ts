@@ -186,22 +186,7 @@ describe("scene document JSON", () => {
         }
       ],
       paintWeights: [
-        0.2,
-        0.3,
-        0.1,
-        0,
-        0.4,
-        0.1,
-        0,
-        0,
-        0,
-        0.5,
-        0,
-        0,
-        0.25,
-        0.25,
-        0.25,
-        0
+        0.2, 0.3, 0.1, 0, 0.4, 0.1, 0, 0, 0, 0.5, 0, 0, 0.25, 0.25, 0.25, 0
       ]
     });
     const document = createEmptySceneDocument({
@@ -1073,9 +1058,9 @@ describe("scene document JSON", () => {
     expect(
       migratedDocument.paths[path.id]?.road.edges.right.collisionEnabled
     ).toBe(false);
-    expect(migratedDocument.paths[path.id]?.repeaters[0]?.collisionEnabled).toBe(
-      false
-    );
+    expect(
+      migratedDocument.paths[path.id]?.repeaters[0]?.collisionEnabled
+    ).toBe(false);
     expect(SPLINE_CORRIDOR_COLLISION_SCENE_DOCUMENT_VERSION).toBe(106);
   });
 
@@ -1175,7 +1160,8 @@ describe("scene document JSON", () => {
       splineCorridorJunctions: Record<string, { shapeMode?: unknown }>;
     };
 
-    legacyDocument.version = SPLINE_CORRIDOR_JUNCTION_EDGE_SCENE_DOCUMENT_VERSION;
+    legacyDocument.version =
+      SPLINE_CORRIDOR_JUNCTION_EDGE_SCENE_DOCUMENT_VERSION;
     delete legacyDocument.splineCorridorJunctions[junction.id]?.shapeMode;
 
     const migratedDocument = migrateSceneDocument(legacyDocument);
@@ -3276,12 +3262,13 @@ describe("scene document JSON", () => {
     document.brushes[targetBrush.id] = targetBrush;
     document.entities[linkedNpc.id] = linkedNpc;
     document.entities[silentNpc.id] = silentNpc;
-    document.interactionLinks["link-npc-toggle"] = createToggleVisibilityInteractionLink({
-      id: "link-npc-toggle",
-      sourceEntityId: linkedNpc.id,
-      trigger: "click",
-      targetBrushId: targetBrush.id
-    });
+    document.interactionLinks["link-npc-toggle"] =
+      createToggleVisibilityInteractionLink({
+        id: "link-npc-toggle",
+        sourceEntityId: linkedNpc.id,
+        trigger: "click",
+        targetBrushId: targetBrush.id
+      });
 
     const legacyDocument = JSON.parse(
       serializeSceneDocument(document)

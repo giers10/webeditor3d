@@ -280,7 +280,9 @@ describe("buildRuntimeSceneFromDocument", () => {
     });
 
     const runtimeScene = buildRuntimeSceneFromDocument({
-      ...createEmptySceneDocument({ name: "Mapped Rail Camera Rig Runtime Scene" }),
+      ...createEmptySceneDocument({
+        name: "Mapped Rail Camera Rig Runtime Scene"
+      }),
       paths: {
         [path.id]: path
       },
@@ -683,7 +685,9 @@ describe("buildRuntimeSceneFromDocument", () => {
     expect(runtimeScene.time).not.toBe(document.time);
     expect(runtimeScene.world).toEqual(document.world);
     expect(runtimeScene.world).not.toBe(document.world);
-    expect(runtimeScene.world.sunLight.direction).not.toBe(document.world.sunLight.direction);
+    expect(runtimeScene.world.sunLight.direction).not.toBe(
+      document.world.sunLight.direction
+    );
     expect(runtimeScene.brushes).toHaveLength(1);
     expect(runtimeScene.modelInstances).toEqual([
       {
@@ -832,7 +836,9 @@ describe("buildRuntimeSceneFromDocument", () => {
       y: 0,
       z: 0
     });
-    expect(runtimeScene.brushes[0].faces.posY.material?.id).toBe("starter-concrete-checker");
+    expect(runtimeScene.brushes[0].faces.posY.material?.id).toBe(
+      "starter-concrete-checker"
+    );
     expect(runtimeScene.colliders).toHaveLength(2);
     expect(runtimeScene.colliders[0]).toMatchObject({
       kind: "trimesh",
@@ -863,7 +869,9 @@ describe("buildRuntimeSceneFromDocument", () => {
     });
     const brushCollider = runtimeScene.colliders[0];
     if (brushCollider.kind !== "trimesh") {
-      throw new Error(`Expected a trimesh brush collider, received ${brushCollider.kind}.`);
+      throw new Error(
+        `Expected a trimesh brush collider, received ${brushCollider.kind}.`
+      );
     }
     expect(Array.from(brushCollider.vertices)).toHaveLength(24);
     expect(Array.from(brushCollider.indices)).toHaveLength(36);
@@ -905,8 +913,7 @@ describe("buildRuntimeSceneFromDocument", () => {
           allowLookInputTargetSwitch: playerStart.allowLookInputTargetSwitch,
           targetButtonCyclesActiveTarget:
             playerStart.targetButtonCyclesActiveTarget,
-          invertMouseCameraHorizontal:
-            playerStart.invertMouseCameraHorizontal,
+          invertMouseCameraHorizontal: playerStart.invertMouseCameraHorizontal,
           movement: {
             templateKind: "default",
             moveSpeed: DEFAULT_PLAYER_START_MOVE_SPEED,
@@ -1377,28 +1384,30 @@ describe("buildRuntimeSceneFromDocument", () => {
         [overnightNpc.id]: overnightNpc
       }
     };
-    document.scheduler.routines["routine-daytime"] = createProjectScheduleRoutine({
-      id: "routine-daytime",
-      title: "Day Shift",
-      target: createActorControlTargetRef(daytimeNpc.actorId),
-      startHour: 9,
-      endHour: 17,
-      effect: createSetActorPresenceControlEffect({
+    document.scheduler.routines["routine-daytime"] =
+      createProjectScheduleRoutine({
+        id: "routine-daytime",
+        title: "Day Shift",
         target: createActorControlTargetRef(daytimeNpc.actorId),
-        active: true
-      })
-    });
-    document.scheduler.routines["routine-overnight"] = createProjectScheduleRoutine({
-      id: "routine-overnight",
-      title: "Night Shift",
-      target: createActorControlTargetRef(overnightNpc.actorId),
-      startHour: 22,
-      endHour: 2,
-      effect: createSetActorPresenceControlEffect({
+        startHour: 9,
+        endHour: 17,
+        effect: createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef(daytimeNpc.actorId),
+          active: true
+        })
+      });
+    document.scheduler.routines["routine-overnight"] =
+      createProjectScheduleRoutine({
+        id: "routine-overnight",
+        title: "Night Shift",
         target: createActorControlTargetRef(overnightNpc.actorId),
-        active: true
-      })
-    });
+        startHour: 22,
+        endHour: 2,
+        effect: createSetActorPresenceControlEffect({
+          target: createActorControlTargetRef(overnightNpc.actorId),
+          active: true
+        })
+      });
 
     const daytimeRuntimeScene = buildRuntimeSceneFromDocument(document, {
       runtimeClock: {
@@ -1625,9 +1634,12 @@ describe("buildRuntimeSceneFromDocument", () => {
 
   it("blocks first-person runtime builds when PlayerStart is missing", () => {
     expect(() =>
-      buildRuntimeSceneFromDocument(createEmptySceneDocument({ name: "Missing Player Start" }), {
-        navigationMode: "firstPerson"
-      })
+      buildRuntimeSceneFromDocument(
+        createEmptySceneDocument({ name: "Missing Player Start" }),
+        {
+          navigationMode: "firstPerson"
+        }
+      )
     ).toThrow("First-person run requires an authored Player Start");
   });
 
@@ -1765,7 +1777,9 @@ describe("buildRuntimeSceneFromDocument", () => {
     );
 
     expect(runtimeScene.playerStart?.entityId).toBe(enabledPlayerStart.id);
-    expect(runtimeScene.brushes.map((brush) => brush.id)).toEqual([hiddenBrush.id]);
+    expect(runtimeScene.brushes.map((brush) => brush.id)).toEqual([
+      hiddenBrush.id
+    ]);
     expect(runtimeScene.brushes[0]?.visible).toBe(false);
     expect(runtimeScene.modelInstances).toEqual([
       expect.objectContaining({
@@ -1856,7 +1870,10 @@ describe("buildRuntimeSceneFromDocument", () => {
         z: 8
       }
     });
-    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry("asset-runtime-collider", new BoxGeometry(1, 2, 1));
+    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry(
+      "asset-runtime-collider",
+      new BoxGeometry(1, 2, 1)
+    );
     const modelInstance = createModelInstance({
       id: "model-instance-runtime-collider",
       assetId: asset.id,
@@ -1944,7 +1961,9 @@ describe("buildRuntimeSceneFromDocument", () => {
       runtimeScene.colliders[0] === undefined ||
       runtimeScene.colliders[0].source !== "terrain"
     ) {
-      throw new Error("Expected the runtime collider to be an authored terrain heightfield.");
+      throw new Error(
+        "Expected the runtime collider to be an authored terrain heightfield."
+      );
     }
 
     expect(Array.from(runtimeScene.colliders[0].heights)).toEqual(
@@ -2142,13 +2161,13 @@ describe("buildRuntimeSceneFromDocument", () => {
         })
       })
     ]);
-    expect(runtimeScene.splineCorridorClipIntervalsByPath.get(pathA.id)).toEqual(
-      [
-        expect.objectContaining({
-          junctionId: junction.id
-        })
-      ]
-    );
+    expect(
+      runtimeScene.splineCorridorClipIntervalsByPath.get(pathA.id)
+    ).toEqual([
+      expect.objectContaining({
+        junctionId: junction.id
+      })
+    ]);
   });
 
   it("adds spline corridor box colliders for collision-enabled edges and repeaters", () => {
@@ -2249,7 +2268,10 @@ describe("buildRuntimeSceneFromDocument", () => {
   it("adds static-simple imported-model colliders as compound box pieces", () => {
     const wallGeometry = new PlaneGeometry(4, 4, 4, 4);
     wallGeometry.rotateY(Math.PI * 0.5);
-    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry("asset-runtime-static-simple", wallGeometry);
+    const { asset, loadedAsset } = createFixtureLoadedModelAssetFromGeometry(
+      "asset-runtime-static-simple",
+      wallGeometry
+    );
     const modelInstance = createModelInstance({
       id: "model-instance-runtime-static-simple",
       assetId: asset.id,
@@ -2266,7 +2288,9 @@ describe("buildRuntimeSceneFromDocument", () => {
 
     const runtimeScene = buildRuntimeSceneFromDocument(
       {
-        ...createEmptySceneDocument({ name: "Imported Static Simple Collider Scene" }),
+        ...createEmptySceneDocument({
+          name: "Imported Static Simple Collider Scene"
+        }),
         assets: {
           [asset.id]: asset
         },
@@ -2292,11 +2316,18 @@ describe("buildRuntimeSceneFromDocument", () => {
       decomposition: "surface-voxel-boxes"
     });
 
-    if (runtimeScene.colliders[0].source !== "modelInstance" || runtimeScene.colliders[0].kind !== "compound") {
-      throw new Error("Expected the runtime collider to be a generated compound model collider.");
+    if (
+      runtimeScene.colliders[0].source !== "modelInstance" ||
+      runtimeScene.colliders[0].kind !== "compound"
+    ) {
+      throw new Error(
+        "Expected the runtime collider to be a generated compound model collider."
+      );
     }
 
-    expect(runtimeScene.colliders[0].pieces.every((piece) => piece.kind === "box")).toBe(true);
+    expect(
+      runtimeScene.colliders[0].pieces.every((piece) => piece.kind === "box")
+    ).toBe(true);
   });
 
   it("preserves rotated whitebox box transforms for runner rendering and collision bounds", () => {
@@ -2537,31 +2568,32 @@ describe("buildRuntimeSceneFromDocument", () => {
     document.assets[asset.id] = asset;
     document.entities[npc.id] = npc;
     document.paths[path.id] = path;
-    document.scheduler.routines["routine-patrol"] = createProjectScheduleRoutine({
-      id: "routine-patrol",
-      title: "Patrolling",
-      target: actorTarget,
-      startHour: 9,
-      endHour: 13,
-      effects: [
-        createSetActorPresenceControlEffect({
-          target: actorTarget,
-          active: true
-        }),
-        createPlayActorAnimationControlEffect({
-          target: actorTarget,
-          clipName: "Walk",
-          loop: true
-        }),
-        createFollowActorPathControlEffect({
-          target: actorTarget,
-          pathId: path.id,
-          speed: 2,
-          loop: false,
-          progressMode: "deriveFromTime"
-        })
-      ]
-    });
+    document.scheduler.routines["routine-patrol"] =
+      createProjectScheduleRoutine({
+        id: "routine-patrol",
+        title: "Patrolling",
+        target: actorTarget,
+        startHour: 9,
+        endHour: 13,
+        effects: [
+          createSetActorPresenceControlEffect({
+            target: actorTarget,
+            active: true
+          }),
+          createPlayActorAnimationControlEffect({
+            target: actorTarget,
+            clipName: "Walk",
+            loop: true
+          }),
+          createFollowActorPathControlEffect({
+            target: actorTarget,
+            pathId: path.id,
+            speed: 2,
+            loop: false,
+            progressMode: "deriveFromTime"
+          })
+        ]
+      });
 
     const runtimeScene = buildRuntimeSceneFromDocument(document, {
       runtimeClock: {

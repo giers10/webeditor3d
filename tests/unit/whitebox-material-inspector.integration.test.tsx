@@ -143,18 +143,19 @@ describe("whitebox material inspector", () => {
       .mockImplementation(() => undefined);
     const { container, store, brush } = await renderMaterialInspectorFixture();
 
-    expect(
-      container.querySelector(".material-browser button")
-    ).toHaveAttribute("data-testid", "material-button-default-whitebox");
-    expect(screen.getByTestId("material-button-default-whitebox")).toHaveTextContent(
-      "Default Whitebox"
+    expect(container.querySelector(".material-browser button")).toHaveAttribute(
+      "data-testid",
+      "material-button-default-whitebox"
     );
+    expect(
+      screen.getByTestId("material-button-default-whitebox")
+    ).toHaveTextContent("Default Whitebox");
 
     fireEvent.click(screen.getByTestId("create-custom-material"));
 
-    const customMaterial = Object.values(store.getState().document.materials).find(
-      (material) => material.kind === "custom"
-    );
+    const customMaterial = Object.values(
+      store.getState().document.materials
+    ).find((material) => material.kind === "custom");
 
     expect(customMaterial).toBeDefined();
     expect(
@@ -186,19 +187,23 @@ describe("whitebox material inspector", () => {
       throw new Error("Expected a custom material to be created.");
     }
 
-    expect(store.getState().document.materials[editedMaterialId]).toMatchObject({
-      kind: "custom",
-      albedoColorHex: "#224466",
-      roughness: 0.37,
-      metallic: 0.58
-    });
+    expect(store.getState().document.materials[editedMaterialId]).toMatchObject(
+      {
+        kind: "custom",
+        albedoColorHex: "#224466",
+        roughness: 0.37,
+        metallic: 0.58
+      }
+    );
 
     const exportedProject = store.exportDocumentJson();
     const reloadedStore = createEditorStore();
 
     reloadedStore.importDocumentJson(exportedProject);
 
-    expect(reloadedStore.getState().document.materials[editedMaterialId]).toMatchObject({
+    expect(
+      reloadedStore.getState().document.materials[editedMaterialId]
+    ).toMatchObject({
       kind: "custom",
       albedoColorHex: "#224466",
       roughness: 0.37,

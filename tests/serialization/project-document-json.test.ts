@@ -218,9 +218,9 @@ describe("project document JSON", () => {
 
     document.scenes[document.activeSceneId]!.foliageLayers[layer.id] = layer;
 
-    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
-      document
-    );
+    expect(
+      parseProjectDocumentJson(serializeProjectDocument(document))
+    ).toEqual(document);
   });
 
   it("round-trips terrain foliage masks in project scenes", () => {
@@ -256,9 +256,9 @@ describe("project document JSON", () => {
     scene.foliageLayers[layer.id] = layer;
     scene.terrains[terrain.id] = terrain;
 
-    expect(parseProjectDocumentJson(serializeProjectDocument(document))).toEqual(
-      document
-    );
+    expect(
+      parseProjectDocumentJson(serializeProjectDocument(document))
+    ).toEqual(document);
   });
 
   it("round-trips NPC dialogue references in project scenes", () => {
