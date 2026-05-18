@@ -213,6 +213,51 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("round-trips custom PBR materials with image texture refs", () => {
+    const imageAsset: ImageAssetRecord = {
+      id: "asset-image-material-albedo",
+      kind: "image",
+      sourceName: "material-albedo.png",
+      mimeType: "image/png",
+      storageKey: createProjectAssetStorageKey("asset-image-material-albedo"),
+      byteLength: 256,
+      metadata: {
+        kind: "image",
+        width: 8,
+        height: 8,
+        hasAlpha: true,
+        warnings: []
+      }
+    };
+    const material = createCustomMaterialDef({
+      id: "material-custom-json",
+      name: "Glass Tint",
+      albedoColorHex: "#77aaff",
+      opacity: 0.42,
+      roughness: 0.18,
+      metallic: 0.05,
+      normalStrength: 0.7,
+      textures: {
+        albedo: {
+          assetId: imageAsset.id
+        },
+        normal: null,
+        roughness: null,
+        metallic: null
+      }
+    });
+    const document = createEmptySceneDocument({
+      name: "Custom Material Scene"
+    });
+
+    document.assets[imageAsset.id] = imageAsset;
+    document.materials[material.id] = material;
+
+    expect(parseSceneDocumentJson(serializeSceneDocument(document))).toEqual(
+      document
+    );
+  });
+
   it("round-trips authored foliage layer references in the current schema", () => {
     const bundledPrototype = BUNDLED_FOLIAGE_PROTOTYPES[0];
     const layer = createFoliageLayer({
