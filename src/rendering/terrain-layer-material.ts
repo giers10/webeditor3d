@@ -34,6 +34,7 @@ interface TerrainLayerColorBlendMaterialOptions {
 }
 
 let fallbackTerrainLayerTexture: Texture | null = null;
+const solidColorTerrainLayerTextures = new Map<string, Texture>();
 
 function createFallbackTerrainLayerTexture(): Texture {
   const texture = new DataTexture(
@@ -60,13 +61,46 @@ export function getFallbackTerrainLayerTexture(): Texture {
   return fallbackTerrainLayerTexture;
 }
 
+function getSolidColorTerrainLayerTexture(colorHex: string): Texture {
+  const cachedTexture = solidColorTerrainLayerTextures.get(colorHex);
+
+  if (cachedTexture !== undefined) {
+    return cachedTexture;
+  }
+
+  const color = new Color(colorHex);
+  const texture = new DataTexture(
+    new Uint8Array([
+      Math.round(color.r * 255),
+      Math.round(color.g * 255),
+      Math.round(color.b * 255),
+      255
+    ]),
+    1,
+    1,
+    RGBAFormat,
+    UnsignedByteType
+  );
+
+  texture.colorSpace = SRGBColorSpace;
+  texture.minFilter = LinearFilter;
+  texture.magFilter = LinearFilter;
+  texture.wrapS = ClampToEdgeWrapping;
+  texture.wrapT = ClampToEdgeWrapping;
+  texture.needsUpdate = true;
+  solidColorTerrainLayerTextures.set(colorHex, texture);
+  return texture;
+}
+
 export function getTerrainLayerTexture(
   material: MaterialDef | null,
   textureLookup: (material: MaterialDef) => Texture | null
 ): Texture {
-  return material === null
-    ? getFallbackTerrainLayerTexture()
-    : (textureLookup(material) ?? getFallbackTerrainLayerTexture());
+  if (material === null) {
+    return getFallbackTerrainLayerTexture();
+  }
+
+  return textureLookup(material) ?? getSolidColorTerrainLayerTexture(material.swatchColorHex);
 }
 
 export function getTerrainLayerPreviewColor(
