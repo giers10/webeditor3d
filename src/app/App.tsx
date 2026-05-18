@@ -5015,9 +5015,15 @@ export function App({
   useEffect(() => {
     editorSimulationController.updateInputs({
       document: editorState.document,
+      projectDocument: editorState.projectDocument,
       loadedModelAssets
     });
-  }, [editorSimulationController, editorState.document, loadedModelAssets]);
+  }, [
+    editorSimulationController,
+    editorState.document,
+    editorState.projectDocument,
+    loadedModelAssets
+  ]);
 
   useEffect(() => {
     if (editorState.toolMode === "play") {
