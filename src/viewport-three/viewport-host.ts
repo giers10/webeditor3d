@@ -2364,7 +2364,7 @@ export class ViewportHost {
     this.renderer.autoClear = true;
 
     for (const cachedTexture of this.materialTextureCache.values()) {
-      disposeStarterMaterialTextureSet(cachedTexture.textureSet);
+      disposeMaterialTextureSet(cachedTexture.textureSet);
     }
 
     this.materialTextureCache.clear();
@@ -10740,7 +10740,7 @@ export class ViewportHost {
   }
 
   private getOrCreateTextureSet(material: MaterialDef) {
-    const signature = createStarterMaterialSignature(material);
+    const signature = createMaterialSignature(material, this.loadedImageAssets);
     const cachedTexture = this.materialTextureCache.get(material.id);
 
     if (cachedTexture !== undefined && cachedTexture.signature === signature) {
@@ -10748,12 +10748,13 @@ export class ViewportHost {
     }
 
     if (cachedTexture !== undefined) {
-      disposeStarterMaterialTextureSet(cachedTexture.textureSet);
+      disposeMaterialTextureSet(cachedTexture.textureSet);
     }
 
-    const textureSet = createStarterMaterialTextureSet(
+    const textureSet = createMaterialTextureSet(
       material,
-      this.materialTextureLoader
+      this.materialTextureLoader,
+      this.loadedImageAssets
     );
 
     this.materialTextureCache.set(material.id, {
