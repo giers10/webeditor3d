@@ -112,7 +112,10 @@ import {
   createTeleportPlayerInteractionLink,
   createToggleVisibilityInteractionLink
 } from "../../src/interactions/interaction-links";
-import { STARTER_MATERIAL_LIBRARY } from "../../src/materials/starter-material-library";
+import {
+  STARTER_MATERIAL_LIBRARY,
+  createCustomMaterialDef
+} from "../../src/materials/starter-material-library";
 import { createModelInstance } from "../../src/assets/model-instances";
 import {
   createProjectAssetStorageKey,
