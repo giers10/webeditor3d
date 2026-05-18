@@ -342,6 +342,7 @@ export function deleteProjectAssetFromProjectDocument(
 
   return {
     ...projectDocument,
+    materials: cleanupMaterialsForDeletedAsset(projectDocument.materials, asset),
     assets: nextAssets,
     foliagePrototypes: foliageCleanup.foliagePrototypes,
     scenes: didChangeScenes ? nextScenes : projectDocument.scenes
