@@ -1881,12 +1881,20 @@ export class ViewportHost {
     this.loadedModelAssets = loadedModelAssets;
     this.loadedImageAssets = loadedImageAssets;
     this.environmentBlendCache.clear();
+    this.clearMaterialTextureCache();
 
     if (this.currentWorld !== null) {
       this.applyWorld();
     }
 
     if (this.currentDocument !== null) {
+      this.rebuildBrushMeshes(this.currentDocument, this.currentSelection);
+      this.rebuildTerrains(
+        this.currentDocument,
+        this.currentSelection,
+        this.currentActiveSelectionId
+      );
+      this.rebuildRoadSurfaces(this.currentDocument);
       this.rebuildEntityMarkers(this.currentDocument, this.currentSelection);
       this.rebuildModelInstances(this.currentDocument, this.currentSelection);
       this.applyTransformPreview();
@@ -2363,11 +2371,7 @@ export class ViewportHost {
     this.currentAdvancedRenderingSettings = null;
     this.renderer.autoClear = true;
 
-    for (const cachedTexture of this.materialTextureCache.values()) {
-      disposeMaterialTextureSet(cachedTexture.textureSet);
-    }
-
-    this.materialTextureCache.clear();
+    this.clearMaterialTextureCache();
     this.boxCreatePreviewMesh.geometry.dispose();
     this.boxCreatePreviewMesh.material.dispose();
     this.boxCreatePreviewEdges.geometry.dispose();
