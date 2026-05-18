@@ -8540,6 +8540,7 @@ export function validateSceneDocument(
     }
 
     registerAuthoredId(material.id, path, seenIds, diagnostics);
+    validateMaterialDef(material, path, document.assets, diagnostics);
   }
 
   for (const [assetKey, asset] of Object.entries(document.assets)) {
