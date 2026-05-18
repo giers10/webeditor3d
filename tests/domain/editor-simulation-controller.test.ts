@@ -159,4 +159,36 @@ describe("EditorSimulationController", () => {
     expect(frameListener).toHaveBeenCalledTimes(2);
     expect(uiListener).not.toHaveBeenCalled();
   });
+
+  it("versions clock-only frame updates when the runtime scene cannot build", () => {
+    const document = createEmptySceneDocument();
+    document.time.startTimeOfDayHours = 9;
+    const controller = new EditorSimulationController({
+      requestAnimationFrame: () => 1,
+      cancelAnimationFrame: () => undefined,
+      buildRuntimeScene: () => {
+        throw new Error("Invalid runtime scene");
+      }
+    });
+    const frameListener = vi.fn();
+
+    controller.updateInputs({
+      document,
+      loadedModelAssets: {}
+    });
+
+    const initialFrame = controller.getFrameSnapshot();
+    expect(initialFrame.runtimeScene).toBeNull();
+
+    controller.subscribeFrame(frameListener);
+    controller.stepHours(1);
+
+    const steppedFrame = controller.getFrameSnapshot();
+    expect(steppedFrame.runtimeScene).toBeNull();
+    expect(steppedFrame.clock?.timeOfDayHours).toBe(10);
+    expect(steppedFrame.frameVersion).toBeGreaterThan(
+      initialFrame.frameVersion
+    );
+    expect(frameListener).toHaveBeenLastCalledWith(steppedFrame);
+  });
 });
