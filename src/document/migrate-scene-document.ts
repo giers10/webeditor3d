@@ -426,6 +426,16 @@ function expectPositiveFiniteNumber(value: unknown, label: string): number {
   return numberValue;
 }
 
+function expectUnitIntervalNumber(value: unknown, label: string): number {
+  const numberValue = expectFiniteNumber(value, label);
+
+  if (numberValue < 0 || numberValue > 1) {
+    throw new Error(`${label} must be between 0 and 1.`);
+  }
+
+  return numberValue;
+}
+
 function expectString(value: unknown, label: string): string {
   if (typeof value !== "string") {
     throw new Error(`${label} must be a string.`);
@@ -2761,6 +2771,40 @@ function assertNonZeroVec3(
   }
 }
 
+function readCustomMaterialTextureRefs(
+  value: unknown,
+  label: string
+): CustomMaterialTextureRefs {
+  if (value === undefined || value === null) {
+    return createEmptyCustomMaterialTextureRefs();
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  const textures = createEmptyCustomMaterialTextureRefs();
+
+  for (const slot of MATERIAL_TEXTURE_SLOTS) {
+    const slotValue = value[slot];
+
+    if (slotValue === undefined || slotValue === null) {
+      textures[slot] = null;
+      continue;
+    }
+
+    if (!isRecord(slotValue)) {
+      throw new Error(`${label}.${slot} must be null or an object.`);
+    }
+
+    textures[slot] = {
+      assetId: expectString(slotValue.assetId, `${label}.${slot}.assetId`)
+    };
+  }
+
+  return textures;
+}
+
 function readMaterialRegistry(
   value: unknown,
   label: string,
@@ -2803,6 +2847,64 @@ function readMaterialRegistry(
       continue;
     }
 
+    const kind =
+      materialValue.kind === undefined
+        ? "starter"
+        : expectString(materialValue.kind, `${label}.${materialId}.kind`);
+
+    if (kind === "custom") {
+      const material: MaterialDef = {
+        id: expectString(materialValue.id, `${label}.${materialId}.id`),
+        kind: "custom",
+        name: expectString(materialValue.name, `${label}.${materialId}.name`),
+        swatchColorHex: expectHexColor(
+          materialValue.swatchColorHex,
+          `${label}.${materialId}.swatchColorHex`
+        ),
+        tags: expectStringArray(
+          materialValue.tags,
+          `${label}.${materialId}.tags`
+        ),
+        albedoColorHex: expectHexColor(
+          materialValue.albedoColorHex,
+          `${label}.${materialId}.albedoColorHex`
+        ),
+        opacity: expectUnitIntervalNumber(
+          materialValue.opacity,
+          `${label}.${materialId}.opacity`
+        ),
+        roughness: expectUnitIntervalNumber(
+          materialValue.roughness,
+          `${label}.${materialId}.roughness`
+        ),
+        metallic: expectUnitIntervalNumber(
+          materialValue.metallic,
+          `${label}.${materialId}.metallic`
+        ),
+        normalStrength: expectUnitIntervalNumber(
+          materialValue.normalStrength,
+          `${label}.${materialId}.normalStrength`
+        ),
+        textures: readCustomMaterialTextureRefs(
+          materialValue.textures,
+          `${label}.${materialId}.textures`
+        )
+      };
+
+      if (material.id !== materialId) {
+        throw new Error(
+          `${label}.${materialId}.id must match the registry key.`
+        );
+      }
+
+      materials[materialId] = material;
+      continue;
+    }
+
+    if (kind !== "starter") {
+      throw new Error(`${label}.${materialId}.kind must be starter or custom.`);
+    }
+
     const workflow = expectString(
       materialValue.workflow,
       `${label}.${materialId}.workflow`
@@ -2840,6 +2942,7 @@ function readMaterialRegistry(
 
     const material: MaterialDef = {
       id: expectString(materialValue.id, `${label}.${materialId}.id`),
+      kind: "starter",
       name: expectString(materialValue.name, `${label}.${materialId}.name`),
       assetFolder: expectString(
         materialValue.assetFolder,
