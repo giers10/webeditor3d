@@ -3017,6 +3017,10 @@ export function App({
       : materialInspectorScope === "face"
         ? selectedFaceMaterial
         : null;
+  const materialInspectorCustomMaterial =
+    materialInspectorMaterial?.kind === "custom"
+      ? materialInspectorMaterial
+      : null;
   const materialInspectorActiveLabel =
     materialInspectorScope === "brush" ? "Active Scope" : "Active Face";
   const materialInspectorActiveValue =
