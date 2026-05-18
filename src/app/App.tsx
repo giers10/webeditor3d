@@ -3141,6 +3141,9 @@ export function App({
   );
   const modelAssetList = projectAssetList.filter(isModelAsset);
   const imageAssetList = projectAssetList.filter(isImageAsset);
+  const materialMapImageAssetList = projectAssetList.filter(
+    isMaterialMapImageAsset
+  );
   const audioAssetList = projectAssetList.filter(isAudioAsset);
   const selectedPointLight =
     selectedEntity?.kind === "pointLight" ? selectedEntity : null;
