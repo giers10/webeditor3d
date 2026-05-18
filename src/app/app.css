@@ -382,6 +382,11 @@ button:disabled {
   border-radius: 12px;
 }
 
+.select-input--dense {
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+}
+
 .color-input {
   width: 100%;
   min-height: 46px;
@@ -458,6 +463,10 @@ button:disabled {
 
 .vector-inputs--two {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vector-inputs--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .placeholder-list {
@@ -844,6 +853,11 @@ button:disabled {
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
+.material-item__preview--default {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(230, 235, 239, 0.98));
+}
+
 .material-item__text {
   display: flex;
   flex-direction: column;
@@ -859,6 +873,36 @@ button:disabled {
 .material-item__meta {
   color: var(--color-muted);
   font-size: 0.76rem;
+}
+
+.material-map-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.material-map-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.material-map-row__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.toolbar__button--file {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .face-grid {
