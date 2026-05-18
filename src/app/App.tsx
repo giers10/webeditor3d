@@ -12,6 +12,7 @@ import {
 
 import { createCreateBoxBrushCommand } from "../commands/create-box-brush-command";
 import { createCreateConeBrushCommand } from "../commands/create-cone-brush-command";
+import { createCreateCustomMaterialCommand } from "../commands/create-custom-material-command";
 import { createCreateRadialPrismBrushCommand } from "../commands/create-radial-prism-brush-command";
 import { createCreateSceneCommand } from "../commands/create-scene-command";
 import { createCreateTorusBrushCommand } from "../commands/create-torus-brush-command";
@@ -28,6 +29,7 @@ import { createDuplicateSelectionCommand } from "../commands/duplicate-selection
 import { createImportAudioAssetCommand } from "../commands/import-audio-asset-command";
 import { createImportBackgroundImageAssetCommand } from "../commands/import-background-image-asset-command";
 import { createImportModelAssetCommand } from "../commands/import-model-asset-command";
+import { createSetCustomMaterialTextureCommand } from "../commands/set-custom-material-texture-command";
 import { createAddPathPointCommand } from "../commands/add-path-point-command";
 import { createAddTerrainLayerCommand } from "../commands/add-terrain-layer-command";
 import { createApplySplineRoadToTerrainCommand } from "../commands/apply-spline-road-to-terrain-command";
@@ -75,6 +77,7 @@ import { createUpsertSplineCorridorJunctionCommand } from "../commands/upsert-sp
 import { createUpsertTerrainCommand } from "../commands/upsert-terrain-command";
 import { createUpsertInteractionLinkCommand } from "../commands/upsert-interaction-link-command";
 import { createUpdateFoliageLayerCommand } from "../commands/update-foliage-layer-command";
+import { createUpdateCustomMaterialCommand } from "../commands/update-custom-material-command";
 import {
   applySameKindSelectionClick,
   getSelectedBrushEdgeId,
@@ -156,6 +159,7 @@ import {
 } from "../assets/gltf-model-import";
 import {
   importBackgroundImageAssetFromFile,
+  importMaterialImageAssetFromFile,
   loadImageAssetFromStorage,
   disposeLoadedImageAsset,
   type ImportedImageAssetResult,
@@ -501,10 +505,14 @@ import {
   type ControlEffect
 } from "../controls/control-surface";
 import {
+  MATERIAL_TEXTURE_SLOTS,
   STARTER_MATERIAL_LIBRARY,
+  createCustomMaterialDef,
   getStarterMaterialPreviewUrl,
   getStarterMaterialTileSizeMeters,
-  type MaterialDef
+  type CustomMaterialDef,
+  type MaterialDef,
+  type MaterialTextureSlot
 } from "../materials/starter-material-library";
 import { RunnerCanvas } from "../runner-web/RunnerCanvas";
 import type {
@@ -2198,6 +2206,12 @@ function sortDocumentMaterials(
 }
 
 function getMaterialPreviewStyle(material: MaterialDef): CSSProperties {
+  if (material.kind === "custom") {
+    return {
+      backgroundColor: material.albedoColorHex
+    };
+  }
+
   return {
     backgroundColor: material.swatchColorHex,
     backgroundImage: `url("${getStarterMaterialPreviewUrl(material)}")`,
@@ -2205,6 +2219,43 @@ function getMaterialPreviewStyle(material: MaterialDef): CSSProperties {
     backgroundRepeat: "no-repeat",
     backgroundSize: "cover"
   };
+}
+
+function getMaterialTextureSlotLabel(slot: MaterialTextureSlot): string {
+  switch (slot) {
+    case "albedo":
+      return "Albedo";
+    case "normal":
+      return "Normal";
+    case "roughness":
+      return "Roughness";
+    case "metallic":
+      return "Metallic";
+  }
+}
+
+function getMaterialTextureSlotValueLabel(
+  slot: MaterialTextureSlot,
+  material: CustomMaterialDef,
+  assets: Record<string, ProjectAssetRecord>
+): string {
+  const textureRef = material.textures[slot];
+
+  if (textureRef === null) {
+    return "No map";
+  }
+
+  return assets[textureRef.assetId]?.sourceName ?? textureRef.assetId;
+}
+
+function getMaterialTextureSlotInputId(slot: MaterialTextureSlot): string {
+  return `material-texture-file-${slot}`;
+}
+
+function resolveMaterialUvTileSizeMeters(material: MaterialDef | null) {
+  return material?.kind === "starter"
+    ? getStarterMaterialTileSizeMeters(material)
+    : null;
 }
 
 function rotateQuarterTurns(
