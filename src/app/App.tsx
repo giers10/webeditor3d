@@ -1499,6 +1499,23 @@ function isImageAsset(asset: ProjectAssetRecord): asset is ImageAssetRecord {
   return asset.kind === "image";
 }
 
+function isMaterialMapImageAsset(
+  asset: ProjectAssetRecord
+): asset is ImageAssetRecord {
+  if (asset.kind !== "image") {
+    return false;
+  }
+
+  const sourceName = asset.sourceName.toLowerCase();
+
+  return (
+    asset.mimeType !== "image/x-exr" &&
+    asset.mimeType !== "image/vnd.radiance" &&
+    !sourceName.endsWith(".exr") &&
+    !sourceName.endsWith(".hdr")
+  );
+}
+
 function isAudioAsset(asset: ProjectAssetRecord): asset is AudioAssetRecord {
   return asset.kind === "audio";
 }
