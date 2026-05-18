@@ -319,10 +319,13 @@ import { createSoundEmitterMarkerMeshes } from "./viewport-entity-markers";
 import {
   resolveRuntimeTimeState,
   resolveRuntimeDayNightWorldState,
-  type RuntimeClockState
+  type RuntimeClockState,
+  type RuntimeDayNightWorldState,
+  type RuntimeResolvedTimeState
 } from "../runtime-three/runtime-project-time";
 import { deriveBoxLightVolumePointLights } from "../runtime-three/light-volume-utils";
 import type { RuntimeSceneDefinition } from "../runtime-three/runtime-scene-build";
+import type { ProjectTimeSettings } from "../document/project-time-settings";
 import { resolveTransformPointerDownIntent } from "./transform-pointer-intent";
 import { resolveDominantLocalAxisForWorldAxis } from "./transform-axis-mapping";
 import {
@@ -934,6 +937,54 @@ export function createViewportSimulationMembershipSignatures(
         (interactable) => interactable.entityId
       )
     )
+  };
+}
+
+interface ViewportResolvedWorldState {
+  world: WorldSettings | null;
+  timeSettings: ProjectTimeSettings | null;
+  resolvedTime: RuntimeResolvedTimeState | null;
+  resolvedWorld: RuntimeDayNightWorldState | null;
+}
+
+export function resolveViewportWorldState(options: {
+  currentWorld: WorldSettings | null;
+  currentDocument: Pick<SceneDocument, "time"> | null;
+  currentSimulationScene: Pick<RuntimeSceneDefinition, "time" | "world"> | null;
+  currentSimulationClock: RuntimeClockState | null;
+}): ViewportResolvedWorldState {
+  const world = options.currentSimulationScene?.world ?? options.currentWorld;
+  const timeSettings =
+    options.currentSimulationScene?.time ?? options.currentDocument?.time ?? null;
+
+  if (world === null) {
+    return {
+      world: null,
+      timeSettings,
+      resolvedTime: null,
+      resolvedWorld: null
+    };
+  }
+
+  const resolvedTime =
+    timeSettings !== null && options.currentSimulationClock !== null
+      ? resolveRuntimeTimeState(timeSettings, options.currentSimulationClock)
+      : null;
+  const resolvedWorld =
+    timeSettings !== null && options.currentSimulationClock !== null
+      ? resolveRuntimeDayNightWorldState(
+          world,
+          timeSettings,
+          options.currentSimulationClock,
+          resolvedTime
+        )
+      : null;
+
+  return {
+    world,
+    timeSettings,
+    resolvedTime,
+    resolvedWorld
   };
 }
 
@@ -2719,29 +2770,22 @@ export class ViewportHost {
   }
 
   private applyWorld() {
-    if (this.currentWorld === null) {
+    const {
+      world,
+      timeSettings,
+      resolvedTime,
+      resolvedWorld
+    } = resolveViewportWorldState({
+      currentWorld: this.currentWorld,
+      currentDocument: this.currentDocument,
+      currentSimulationScene: this.currentSimulationScene,
+      currentSimulationClock: this.currentSimulationClock
+    });
+
+    if (world === null) {
       return;
     }
 
-    const world = this.currentSimulationScene?.world ?? this.currentWorld;
-    const resolvedTime =
-      this.currentSimulationScene !== null &&
-      this.currentSimulationClock !== null
-        ? resolveRuntimeTimeState(
-            this.currentSimulationScene.time,
-            this.currentSimulationClock
-          )
-        : null;
-    const resolvedWorld =
-      this.currentSimulationScene !== null &&
-      this.currentSimulationClock !== null
-        ? resolveRuntimeDayNightWorldState(
-            world,
-            this.currentSimulationScene.time,
-            this.currentSimulationClock,
-            resolvedTime
-          )
-        : null;
     const rendererSettings =
       this.displayMode !== "normal"
         ? {
@@ -2849,15 +2893,12 @@ export class ViewportHost {
               world,
               shaderSkyResolvedWorld,
               resolvedTime,
-              this.currentSimulationScene?.time ?? null
+              timeSettings
             )
           : null;
       if (world.background.mode === "shader") {
         this.shaderSkyEnvironmentCache.syncPhaseTextures(
-          resolveWorldShaderSkyEnvironmentPhaseStates(
-            world,
-            this.currentSimulationScene?.time ?? null
-          )
+          resolveWorldShaderSkyEnvironmentPhaseStates(world, timeSettings)
         );
       }
 
