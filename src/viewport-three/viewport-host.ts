@@ -7724,19 +7724,30 @@ export class ViewportHost {
     }
 
     const textureSet = this.getOrCreateTextureSet(materialDef);
+    const isCustomMaterial = materialDef.kind === "custom";
+    const materialTransparent =
+      isCustomMaterial &&
+      (materialDef.opacity < 0.999 || textureSet.albedoHasAlpha);
 
     return this.configureRoadSurfaceMaterial(
       new MeshPhysicalMaterial({
-        color: 0xffffff,
+        color: isCustomMaterial ? materialDef.albedoColorHex : 0xffffff,
         map: textureSet.baseColor,
         normalMap: textureSet.normal,
         roughnessMap: textureSet.roughness,
-        roughness: 1,
+        roughness: isCustomMaterial ? materialDef.roughness : 1,
         metalnessMap: textureSet.metallic,
-        metalness: textureSet.metallic === null ? 0.03 : 1,
+        metalness: isCustomMaterial
+          ? materialDef.metallic
+          : textureSet.metallic === null
+            ? 0.03
+            : 1,
         specularColorMap: textureSet.specular,
         specularColor: new Color(0xffffff),
         specularIntensity: textureSet.specular === null ? 0.2 : 1,
+        transparent: materialTransparent,
+        opacity: isCustomMaterial ? materialDef.opacity : 1,
+        depthWrite: !materialTransparent,
         side: DoubleSide
       })
     );
