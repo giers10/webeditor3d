@@ -46,11 +46,16 @@ import {
 import { createProjectScheduleRoutine } from "../../src/scheduler/project-scheduler";
 import { createProjectSequence } from "../../src/sequencer/project-sequences";
 import { createModelInstance } from "../../src/assets/model-instances";
-import { createProjectAssetStorageKey, type AudioAssetRecord } from "../../src/assets/project-assets";
+import {
+  createProjectAssetStorageKey,
+  type AudioAssetRecord,
+  type ImageAssetRecord
+} from "../../src/assets/project-assets";
 import { buildRuntimeSceneFromDocument } from "../../src/runtime-three/runtime-scene-build";
 import { BUNDLED_FOLIAGE_PROTOTYPES } from "../../src/foliage/bundled-foliage-manifest";
 import { createFoliageLayer } from "../../src/foliage/foliage";
 import { createFixtureLoadedModelAssetFromGeometry } from "../helpers/model-collider-fixtures";
+import { createCustomMaterialDef } from "../../src/materials/starter-material-library";
 
 const defaultMovementTemplate = createPlayerStartMovementTemplate();
 
