@@ -1494,11 +1494,7 @@ export class RuntimeHost {
       this.renderer.autoClear = true;
     }
 
-    for (const cachedTexture of this.materialTextureCache.values()) {
-      disposeStarterMaterialTextureSet(cachedTexture.textureSet);
-    }
-
-    this.materialTextureCache.clear();
+    this.clearMaterialTextureCache();
     this.environmentBlendCache?.dispose();
     this.shaderSkyEnvironmentBlendCache?.dispose();
     this.shaderSkyEnvironmentCache?.dispose();
@@ -5248,10 +5244,18 @@ export class RuntimeHost {
     }
   }
 
+  private clearMaterialTextureCache() {
+    for (const cachedTexture of this.materialTextureCache.values()) {
+      disposeMaterialTextureSet(cachedTexture.textureSet);
+    }
+
+    this.materialTextureCache.clear();
+  }
+
   private getOrCreateTextureSet(
     material: NonNullable<RuntimeBrushFace["material"]>
   ) {
-    const signature = createStarterMaterialSignature(material);
+    const signature = createMaterialSignature(material, this.loadedImageAssets);
     const cachedTexture = this.materialTextureCache.get(material.id);
 
     if (cachedTexture !== undefined && cachedTexture.signature === signature) {
@@ -5259,13 +5263,15 @@ export class RuntimeHost {
     }
 
     if (cachedTexture !== undefined) {
-      disposeStarterMaterialTextureSet(cachedTexture.textureSet);
+      disposeMaterialTextureSet(cachedTexture.textureSet);
     }
 
-    const textureSet = createStarterMaterialTextureSet(
+    const textureSet = createMaterialTextureSet(
       material,
-      this.materialTextureLoader
+      this.materialTextureLoader,
+      this.loadedImageAssets
     );
+
     this.materialTextureCache.set(material.id, {
       signature,
       textureSet
