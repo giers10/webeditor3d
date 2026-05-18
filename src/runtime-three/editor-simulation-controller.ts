@@ -349,6 +349,9 @@ export class EditorSimulationController {
 
   private syncRuntimeSceneToCurrentClock() {
     if (this.runtimeScene === null || this.currentClock === null) {
+      if (this.currentClock !== null) {
+        this.frameVersion += 1;
+      }
       this.emitFrame();
       return;
     }
