@@ -3015,8 +3015,8 @@ export function App({
       ? "Mixed across faces"
       : (materialInspectorMaterial?.name ??
         (materialInspectorMaterialId === null
-          ? "Fallback face color"
-          : (materialInspectorMaterialId ?? "Fallback face color")));
+          ? "Default Whitebox"
+          : (materialInspectorMaterialId ?? "Default Whitebox")));
   const materialInspectorUvState =
     materialInspectorScope === "brush" && selectedBrush !== null
       ? selectedBrush.faces[selectedBrushFaceIds[0]].uv
