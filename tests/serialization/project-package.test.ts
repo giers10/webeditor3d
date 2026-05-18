@@ -25,6 +25,7 @@ import {
   createEmptySceneDocument,
   createProjectDocumentFromSceneDocument
 } from "../../src/document/scene-document";
+import { createCustomMaterialDef } from "../../src/materials/starter-material-library";
 import {
   loadProjectPackage,
   PROJECT_PACKAGE_SCENE_PATH,
@@ -306,6 +307,80 @@ describe("project package serialization", () => {
     expect(restoredAudio.metadata.durationSeconds).toBe(
       audioAsset.metadata.durationSeconds
     );
+  });
+
+  it("bundles image assets referenced only by custom material texture slots", async () => {
+    const storage = createInMemoryProjectAssetStorage();
+    const imageAsset = {
+      id: "asset-image-material-package",
+      kind: "image",
+      sourceName: "custom-material-map.png",
+      mimeType: "image/png",
+      storageKey: createProjectAssetStorageKey(
+        "asset-image-material-package"
+      ),
+      byteLength: 4,
+      metadata: {
+        kind: "image",
+        width: 1,
+        height: 1,
+        hasAlpha: false,
+        warnings: []
+      }
+    } satisfies ImageAssetRecord;
+    const material = createCustomMaterialDef({
+      id: "material-package-custom",
+      textures: {
+        albedo: null,
+        normal: {
+          assetId: imageAsset.id
+        },
+        roughness: null,
+        metallic: null
+      }
+    });
+
+    await storage.putAsset(imageAsset.storageKey, {
+      files: {
+        [imageAsset.sourceName]: {
+          bytes: new Uint8Array([255, 255, 255, 255]).buffer,
+          mimeType: imageAsset.mimeType
+        }
+      }
+    });
+
+    const document = createProjectDocument({
+      ...createEmptySceneDocument({ name: "Material Package Scene" }),
+      assets: {
+        [imageAsset.id]: imageAsset
+      },
+      materials: {
+        ...createEmptySceneDocument().materials,
+        [material.id]: material
+      }
+    });
+
+    const packageBytes = await saveProjectPackage(document, storage);
+    const restoredStorage = createInMemoryProjectAssetStorage();
+    const restoredDocument = await loadProjectPackage(
+      packageBytes,
+      restoredStorage
+    );
+
+    expect(restoredDocument).toEqual(document);
+    expect(listPackagedFiles(packageBytes)).toEqual(
+      expect.arrayContaining([
+        "assets/project-asset:asset-image-material-package/custom-material-map.png"
+      ])
+    );
+    await expect(restoredStorage.getAsset(imageAsset.storageKey)).resolves.toEqual({
+      files: {
+        [imageAsset.sourceName]: {
+          bytes: expect.any(ArrayBuffer),
+          mimeType: imageAsset.mimeType
+        }
+      }
+    });
   });
 
   it("preserves multi-file gltf asset bundles inside the packaged assets directory", async () => {
