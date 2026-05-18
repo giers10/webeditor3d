@@ -202,4 +202,136 @@ describe("EditorSimulationController", () => {
     );
     expect(frameListener).toHaveBeenLastCalledWith(steppedFrame);
   });
+
+  it("validates editor simulation scheduling against the full project", () => {
+    const actorTarget = createActorControlTargetRef("actor-other-scene");
+    const scheduler = createEmptyProjectScheduler();
+    scheduler.routines["routine-other-scene"] = createProjectScheduleRoutine({
+      id: "routine-other-scene",
+      title: "Other Scene Actor",
+      target: actorTarget
+    });
+    const projectDocument = createEmptyProjectDocument({
+      sceneId: "scene-active",
+      scheduler
+    });
+    const otherScene = createEmptyProjectScene({
+      id: "scene-other",
+      name: "Other Scene"
+    });
+    const otherNpc = createNpcEntity({
+      id: "npc-other-scene",
+      actorId: actorTarget.actorId
+    });
+    const projectWithOtherScene = {
+      ...projectDocument,
+      scenes: {
+        ...projectDocument.scenes,
+        [otherScene.id]: {
+          ...otherScene,
+          entities: {
+            [otherNpc.id]: otherNpc
+          }
+        }
+      }
+    };
+    const activeSceneDocument = createSceneDocumentFromProject(
+      projectWithOtherScene,
+      projectWithOtherScene.activeSceneId
+    );
+    const standaloneController = createManualFrameController();
+    const projectAwareController = createManualFrameController();
+
+    standaloneController.updateInputs({
+      document: activeSceneDocument,
+      loadedModelAssets: {}
+    });
+    projectAwareController.updateInputs({
+      document: activeSceneDocument,
+      projectDocument: projectWithOtherScene,
+      loadedModelAssets: {}
+    });
+
+    expect(standaloneController.getUiSnapshot().sceneReady).toBe(false);
+    expect(standaloneController.getUiSnapshot().message).toContain(
+      "does not exist in this document"
+    );
+    expect(projectAwareController.getUiSnapshot().sceneReady).toBe(true);
+    expect(projectAwareController.getUiSnapshot().message).toBeNull();
+  });
+
+  it("does not rebuild for project metadata changes outside the scheduling signature", () => {
+    let buildCount = 0;
+    const projectDocument = createEmptyProjectDocument();
+    const sceneDocument = createSceneDocumentFromProject(projectDocument);
+    const loadedModelAssets = {};
+    const controller = createManualFrameController({
+      onBuild: () => {
+        buildCount += 1;
+      }
+    });
+
+    controller.updateInputs({
+      document: sceneDocument,
+      projectDocument,
+      loadedModelAssets
+    });
+    expect(buildCount).toBe(1);
+
+    controller.updateInputs({
+      document: sceneDocument,
+      projectDocument: {
+        ...projectDocument,
+        name: "Renamed Project"
+      },
+      loadedModelAssets
+    });
+    expect(buildCount).toBe(1);
+  });
+
+  it("rebuilds when project scheduling targets change outside the active scene", () => {
+    let buildCount = 0;
+    const projectDocument = createEmptyProjectDocument();
+    const sceneDocument = createSceneDocumentFromProject(projectDocument);
+    const loadedModelAssets = {};
+    const controller = createManualFrameController({
+      onBuild: () => {
+        buildCount += 1;
+      }
+    });
+
+    controller.updateInputs({
+      document: sceneDocument,
+      projectDocument,
+      loadedModelAssets
+    });
+    expect(buildCount).toBe(1);
+
+    const otherScene = createEmptyProjectScene({
+      id: "scene-other",
+      name: "Other Scene"
+    });
+    const otherNpc = createNpcEntity({
+      id: "npc-other",
+      actorId: "actor-other"
+    });
+
+    controller.updateInputs({
+      document: sceneDocument,
+      projectDocument: {
+        ...projectDocument,
+        scenes: {
+          ...projectDocument.scenes,
+          [otherScene.id]: {
+            ...otherScene,
+            entities: {
+              [otherNpc.id]: otherNpc
+            }
+          }
+        }
+      },
+      loadedModelAssets
+    });
+    expect(buildCount).toBe(2);
+  });
 });
