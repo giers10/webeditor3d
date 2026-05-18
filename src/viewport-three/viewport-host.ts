@@ -876,7 +876,7 @@ function getRotationDegreesFromEntityRotationState(
 
 interface CachedMaterialTexture {
   signature: string;
-  textureSet: StarterMaterialTextureSet;
+  textureSet: MaterialTextureSet;
 }
 
 interface EntityRenderObjects {
