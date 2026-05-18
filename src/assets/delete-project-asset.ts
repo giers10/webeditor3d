@@ -4,6 +4,45 @@ import { foliagePrototypeReferencesProjectAsset } from "../foliage/foliage";
 
 import type { ProjectAssetRecord } from "./project-assets";
 
+function cleanupMaterialsForDeletedAsset(
+  materials: ProjectDocument["materials"],
+  asset: ProjectAssetRecord
+): ProjectDocument["materials"] {
+  if (asset.kind !== "image") {
+    return materials;
+  }
+
+  let didChange = false;
+  const nextMaterials: ProjectDocument["materials"] = {};
+
+  for (const [materialId, material] of Object.entries(materials)) {
+    if (material.kind !== "custom") {
+      nextMaterials[materialId] = material;
+      continue;
+    }
+
+    const nextTextures = { ...material.textures };
+    let didChangeMaterial = false;
+
+    for (const slot of ["albedo", "normal", "roughness", "metallic"] as const) {
+      if (nextTextures[slot]?.assetId === asset.id) {
+        nextTextures[slot] = null;
+        didChange = true;
+        didChangeMaterial = true;
+      }
+    }
+
+    nextMaterials[materialId] = didChangeMaterial
+      ? {
+          ...material,
+          textures: nextTextures
+        }
+      : material;
+  }
+
+  return didChange ? nextMaterials : materials;
+}
+
 function removeInvalidatedInteractionLinks(
   interactionLinks: ProjectScene["interactionLinks"],
   removedModelInstanceIds: ReadonlySet<string>,
