@@ -21578,6 +21578,180 @@ export function App({
                         </div>
 
                         <div className="form-section">
+                          <div className="label">Lens Flare</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={advancedRendering.lensFlare.enabled}
+                              onChange={(event) =>
+                                applyAdvancedRenderingLensFlareEnabled(
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                          </label>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Intensity</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.05"
+                                value={
+                                  advancedRenderingLensFlareIntensityDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingLensFlareIntensityDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingLensFlareIntensity
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingLensFlareIntensity
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingLensFlareIntensity
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingLensFlareIntensity
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Halo Size</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0.25"
+                                max="3"
+                                step="0.05"
+                                value={advancedRenderingLensFlareHaloSizeDraft}
+                                onChange={(event) =>
+                                  setAdvancedRenderingLensFlareHaloSizeDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingLensFlareHaloSize
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingLensFlareHaloSize
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingLensFlareHaloSize
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingLensFlareHaloSize
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                          <div className="vector-inputs vector-inputs--two">
+                            <label className="form-field">
+                              <span className="label">Ghost Strength</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="0"
+                                step="0.05"
+                                value={
+                                  advancedRenderingLensFlareGhostIntensityDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingLensFlareGhostIntensityDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingLensFlareGhostIntensity
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingLensFlareGhostIntensity
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingLensFlareGhostIntensity
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingLensFlareGhostIntensity
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="form-field">
+                              <span className="label">Ghosts</span>
+                              <input
+                                className="text-input"
+                                type="number"
+                                min="1"
+                                max={
+                                  MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT
+                                }
+                                step="1"
+                                value={
+                                  advancedRenderingLensFlareGhostCountDraft
+                                }
+                                onChange={(event) =>
+                                  setAdvancedRenderingLensFlareGhostCountDraft(
+                                    event.currentTarget.value
+                                  )
+                                }
+                                onBlur={
+                                  applyAdvancedRenderingLensFlareGhostCount
+                                }
+                                onKeyDown={(event) =>
+                                  handleDraftVectorKeyDown(
+                                    event,
+                                    applyAdvancedRenderingLensFlareGhostCount
+                                  )
+                                }
+                                onKeyUp={(event) =>
+                                  handleNumberInputKeyUp(
+                                    event,
+                                    applyAdvancedRenderingLensFlareGhostCount
+                                  )
+                                }
+                                onPointerUp={(event) =>
+                                  handleNumberInputPointerUp(
+                                    event,
+                                    applyAdvancedRenderingLensFlareGhostCount
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="form-section">
                           <div className="label">Volume Rendering Paths</div>
                           <div className="vector-inputs vector-inputs--two">
                             <label className="form-field">
