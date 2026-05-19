@@ -265,6 +265,10 @@ import {
   syncScreenSpaceGodRaysLightSource
 } from "../rendering/screen-space-god-rays";
 import {
+  createScreenSpaceLensFlareLightSource,
+  syncScreenSpaceLensFlareLightSource
+} from "../rendering/screen-space-lens-flare";
+import {
   fitCelestialDirectionalShadow,
   resolveDominantCelestialShadowCaster
 } from "../rendering/celestial-shadows";
@@ -1062,6 +1066,8 @@ export class ViewportHost {
   private readonly sunLight = new DirectionalLight();
   private readonly moonLight = new DirectionalLight();
   private readonly godRaysLightSource = createScreenSpaceGodRaysLightSource();
+  private readonly lensFlareLightSource =
+    createScreenSpaceLensFlareLightSource();
   private readonly distanceFogSkyColorSource =
     createDistanceFogSkyColorSource();
   private readonly localLightGroup = new Group();
