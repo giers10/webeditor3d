@@ -1789,8 +1789,12 @@ describe("scene document JSON", () => {
     const emptyScene = createEmptySceneDocument({
       name: "Legacy Lens Flare Scene"
     });
-    const { lensFlare: _lensFlare, ...legacyAdvancedRendering } =
-      emptyScene.world.advancedRendering;
+    const legacyAdvancedRendering: Partial<
+      typeof emptyScene.world.advancedRendering
+    > = {
+      ...emptyScene.world.advancedRendering
+    };
+    delete legacyAdvancedRendering.lensFlare;
 
     const migratedDocument = migrateSceneDocument({
       version: CUSTOM_PBR_MATERIALS_SCENE_DOCUMENT_VERSION,
