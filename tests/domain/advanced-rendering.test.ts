@@ -511,6 +511,95 @@ describe("god rays parameters", () => {
   });
 });
 
+describe("lens flare parameters", () => {
+  it("keeps the pass disabled by default", () => {
+    const settings = createDefaultWorldSettings().advancedRendering;
+
+    expect(resolveLensFlareParameters(settings.lensFlare)).toMatchObject({
+      enabled: false
+    });
+  });
+
+  it("resolves bounded screen-space flare parameters", () => {
+    const settings = createDefaultWorldSettings().advancedRendering.lensFlare;
+    settings.enabled = true;
+    settings.intensity = 12;
+    settings.haloSize = 8;
+    settings.ghostIntensity = 9;
+    settings.ghostCount = 99;
+
+    expect(resolveLensFlareParameters(settings)).toEqual({
+      enabled: true,
+      intensity: 4,
+      haloSize: 3,
+      ghostIntensity: 3,
+      ghostCount: 8
+    });
+  });
+
+  it("syncs the visible sun light source", () => {
+    const lightSource = createScreenSpaceLensFlareLightSource();
+
+    syncScreenSpaceLensFlareLightSource(lightSource, {
+      colorHex: "#ffe0aa",
+      intensity: 1.4,
+      direction: {
+        x: 0.1,
+        y: 0.7,
+        z: -0.4
+      }
+    });
+
+    expect(lightSource).toEqual({
+      colorHex: "#ffe0aa",
+      intensity: 1.4,
+      direction: {
+        x: 0.1,
+        y: 0.7,
+        z: -0.4
+      }
+    });
+
+    syncScreenSpaceLensFlareLightSource(lightSource, null);
+
+    expect(lightSource).toEqual({
+      colorHex: "#ffffff",
+      intensity: 0,
+      direction: null
+    });
+  });
+
+  it("projects the lens flare light direction and rejects behind-camera lights", () => {
+    const camera = new PerspectiveCamera(60, 1, 0.1, 1000);
+
+    const projection = projectScreenSpaceLensFlareLight(camera, {
+      colorHex: "#ffffff",
+      intensity: 1,
+      direction: {
+        x: 0,
+        y: 0,
+        z: -1
+      }
+    });
+
+    expect(projection?.screenPosition.x).toBeCloseTo(0.5, 6);
+    expect(projection?.screenPosition.y).toBeCloseTo(0.5, 6);
+    expect(projection?.visibility).toBeCloseTo(1, 6);
+
+    expect(
+      projectScreenSpaceLensFlareLight(camera, {
+        colorHex: "#ffffff",
+        intensity: 1,
+        direction: {
+          x: 0,
+          y: 0,
+          z: 1
+        }
+      })
+    ).toBeNull();
+  });
+});
+
 describe("createAdvancedRenderingComposer", () => {
   it("keeps depth buffering enabled when the post stack only uses color effects", () => {
     postprocessingState.composerOptions.length = 0;
