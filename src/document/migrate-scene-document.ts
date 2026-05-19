@@ -374,6 +374,7 @@ import {
   createDefaultWorldTimePhaseProfile,
   createDefaultWorldShaderSkySettings,
   DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
+  MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT,
   isAdvancedRenderingDynamicGlobalIlluminationQuality,
   isAdvancedRenderingWaterReflectionMode,
   createDefaultAdvancedRenderingSettings,
@@ -898,6 +899,10 @@ function readAdvancedRenderingSettings(
     throw new Error("world.advancedRendering.godRays must be an object.");
   }
 
+  if (value.lensFlare !== undefined && !isRecord(value.lensFlare)) {
+    throw new Error("world.advancedRendering.lensFlare must be an object.");
+  }
+
   if (value.foliage !== undefined && !isRecord(value.foliage)) {
     throw new Error("world.advancedRendering.foliage must be an object.");
   }
@@ -919,6 +924,7 @@ function readAdvancedRenderingSettings(
     | undefined;
   const distanceFog = value.distanceFog as Record<string, unknown> | undefined;
   const godRays = value.godRays as Record<string, unknown> | undefined;
+  const lensFlare = value.lensFlare as Record<string, unknown> | undefined;
   const foliage = value.foliage as Record<string, unknown> | undefined;
 
   const shadowsMapSize = readOptionalAllowedValue(
@@ -1184,6 +1190,34 @@ function readAdvancedRenderingSettings(
         "world.advancedRendering.godRays.samples",
         defaults.godRays.samples,
         64
+      )
+    },
+    lensFlare: {
+      enabled: readOptionalBoolean(
+        lensFlare?.enabled,
+        "world.advancedRendering.lensFlare.enabled",
+        defaults.lensFlare.enabled
+      ),
+      intensity: readOptionalNonNegativeFiniteNumber(
+        lensFlare?.intensity,
+        "world.advancedRendering.lensFlare.intensity",
+        defaults.lensFlare.intensity
+      ),
+      haloSize: readOptionalPositiveFiniteNumber(
+        lensFlare?.haloSize,
+        "world.advancedRendering.lensFlare.haloSize",
+        defaults.lensFlare.haloSize
+      ),
+      ghostIntensity: readOptionalNonNegativeFiniteNumber(
+        lensFlare?.ghostIntensity,
+        "world.advancedRendering.lensFlare.ghostIntensity",
+        defaults.lensFlare.ghostIntensity
+      ),
+      ghostCount: readOptionalPositiveIntegerWithMax(
+        lensFlare?.ghostCount,
+        "world.advancedRendering.lensFlare.ghostCount",
+        defaults.lensFlare.ghostCount,
+        MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT
       )
     },
     foliage: resolveFoliageQualitySettings({
