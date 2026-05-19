@@ -3,7 +3,14 @@ import { readFile } from "node:fs/promises";
 
 import { describe, expect, it } from "vitest";
 
-import { importModelAssetFromFile, importModelAssetFromFiles, loadModelAssetFromStorage } from "../../src/assets/gltf-model-import";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+
+import {
+  createConfiguredGltfLoader,
+  importModelAssetFromFile,
+  importModelAssetFromFiles,
+  loadModelAssetFromStorage
+} from "../../src/assets/gltf-model-import";
 import { createInMemoryProjectAssetStorage } from "../../src/assets/project-asset-storage";
 
 const tinyGlbFixturePath = path.resolve(process.cwd(), "fixtures/assets/tiny-triangle.glb");
@@ -25,6 +32,12 @@ function createTestFile(bytes: Uint8Array | Buffer, name: string, type: string):
 }
 
 describe("model import", () => {
+  it("configures meshopt decoding for GLTF/GLB assets", () => {
+    const loader = createConfiguredGltfLoader();
+
+    expect(loader.meshoptDecoder).toBe(MeshoptDecoder);
+  });
+
   it("imports and reloads a tiny GLB fixture", async () => {
     const storage = createInMemoryProjectAssetStorage();
     const fileBytes = await readFile(tinyGlbFixturePath);
