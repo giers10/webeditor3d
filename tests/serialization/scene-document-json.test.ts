@@ -1787,6 +1787,42 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("migrates v110 scene documents without lens flare settings to defaults", () => {
+    const emptyScene = createEmptySceneDocument({
+      name: "Legacy Lens Flare Scene"
+    });
+    const { lensFlare: _lensFlare, ...legacyAdvancedRendering } =
+      emptyScene.world.advancedRendering;
+
+    const migratedDocument = migrateSceneDocument({
+      version: CUSTOM_PBR_MATERIALS_SCENE_DOCUMENT_VERSION,
+      name: emptyScene.name,
+      time: emptyScene.time,
+      scheduler: emptyScene.scheduler,
+      world: {
+        ...emptyScene.world,
+        advancedRendering: legacyAdvancedRendering
+      },
+      materials: emptyScene.materials,
+      textures: emptyScene.textures,
+      assets: emptyScene.assets,
+      brushes: emptyScene.brushes,
+      terrains: emptyScene.terrains,
+      foliagePrototypes: emptyScene.foliagePrototypes,
+      foliageLayers: emptyScene.foliageLayers,
+      paths: emptyScene.paths,
+      splineCorridorJunctions: emptyScene.splineCorridorJunctions,
+      modelInstances: emptyScene.modelInstances,
+      entities: emptyScene.entities,
+      interactionLinks: emptyScene.interactionLinks
+    });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.advancedRendering.lensFlare).toEqual(
+      emptyScene.world.advancedRendering.lensFlare
+    );
+  });
+
   it("migrates v93 scene documents without foliage quality settings to defaults", () => {
     const emptyScene = createEmptySceneDocument({
       name: "Legacy Foliage Quality Scene"
