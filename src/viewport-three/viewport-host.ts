@@ -93,6 +93,7 @@ import {
   disposeModelInstance,
   syncModelInstanceSelectionShell
 } from "../assets/model-instance-rendering";
+import { initializeSharedKtx2Loader } from "../assets/ktx2-texture-support";
 import { FoliageInstancedRenderer } from "../foliage/foliage-instanced-renderer";
 import { SplineRepeaterRenderer } from "../spline-corridor/spline-repeater-renderer";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
@@ -1442,6 +1443,7 @@ export class ViewportHost {
   }
 
   constructor() {
+    initializeSharedKtx2Loader(this.renderer);
     enableCameraRendererRenderCategories(this.perspectiveCamera);
     enableCameraRendererRenderCategories(this.orthographicCamera);
     enableCameraRendererRenderCategories(this.waterReflectionCamera);

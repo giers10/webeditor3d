@@ -41,6 +41,7 @@ import {
   createModelInstanceRenderGroup,
   disposeModelInstance
 } from "../assets/model-instance-rendering";
+import { initializeSharedKtx2Loader } from "../assets/ktx2-texture-support";
 import { FoliageInstancedRenderer } from "../foliage/foliage-instanced-renderer";
 import { SplineRepeaterRenderer } from "../spline-corridor/spline-repeater-renderer";
 import type { LoadedModelAsset } from "../assets/gltf-model-import";
@@ -964,6 +965,7 @@ export class RuntimeHost {
       this.renderer?.domElement ?? document.createElement("canvas");
 
     if (this.renderer !== null) {
+      initializeSharedKtx2Loader(this.renderer);
       this.renderer.setPixelRatio(getRendererPixelRatio());
       this.renderer.setClearAlpha(0);
     } else {

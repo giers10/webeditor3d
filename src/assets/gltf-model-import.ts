@@ -1,6 +1,18 @@
-import { Box3, Cache, Group, Mesh, type AnimationClip, type Material, type Object3D, type Texture } from "three";
+import {
+  Box3,
+  Cache,
+  Group,
+  Mesh,
+  type AnimationClip,
+  type Material,
+  type Object3D,
+  type Texture
+} from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
+import {
+  GLTFLoader,
+  type GLTF
+} from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 
 import { createModelInstance, type ModelInstance } from "./model-instances";
@@ -69,8 +81,14 @@ function getFileExtension(sourceName: string): string {
   return match === null ? "" : match[1].toLowerCase();
 }
 
-function inferFileMimeType(sourceName: string, fallbackMimeType: string): string {
-  if (fallbackMimeType.trim().length > 0 && fallbackMimeType !== "application/octet-stream") {
+function inferFileMimeType(
+  sourceName: string,
+  fallbackMimeType: string
+): string {
+  if (
+    fallbackMimeType.trim().length > 0 &&
+    fallbackMimeType !== "application/octet-stream"
+  ) {
     return fallbackMimeType;
   }
 
@@ -101,22 +119,33 @@ function inferFileMimeType(sourceName: string, fallbackMimeType: string): string
     case "gltf":
       return "model/gltf+json";
     default:
-      return fallbackMimeType.trim().length > 0 ? fallbackMimeType : "application/octet-stream";
+      return fallbackMimeType.trim().length > 0
+        ? fallbackMimeType
+        : "application/octet-stream";
   }
 }
 
-function inferModelAssetFormat(sourceName: string, mimeType: string): "glb" | "gltf" {
+function inferModelAssetFormat(
+  sourceName: string,
+  mimeType: string
+): "glb" | "gltf" {
   const extension = getFileExtension(sourceName);
 
   if (mimeType === "model/gltf-binary" || extension === "glb") {
     return "glb";
   }
 
-  if (mimeType === "model/gltf+json" || mimeType === "application/json" || extension === "gltf") {
+  if (
+    mimeType === "model/gltf+json" ||
+    mimeType === "application/json" ||
+    extension === "gltf"
+  ) {
     return "gltf";
   }
 
-  throw new Error(`Unsupported model asset format for ${sourceName}. Use .glb or .gltf.`);
+  throw new Error(
+    `Unsupported model asset format for ${sourceName}. Use .glb or .gltf.`
+  );
 }
 
 function inferModelMimeType(format: "glb" | "gltf"): string {
@@ -164,8 +193,12 @@ function getPathDirectory(path: string): string {
 }
 
 function getRelativePath(fromDirectory: string, targetPath: string): string {
-  const normalizedFromSegments = normalizeRelativePath(fromDirectory).split("/").filter((segment) => segment.length > 0);
-  const normalizedTargetSegments = normalizeRelativePath(targetPath).split("/").filter((segment) => segment.length > 0);
+  const normalizedFromSegments = normalizeRelativePath(fromDirectory)
+    .split("/")
+    .filter((segment) => segment.length > 0);
+  const normalizedTargetSegments = normalizeRelativePath(targetPath)
+    .split("/")
+    .filter((segment) => segment.length > 0);
 
   while (
     normalizedFromSegments.length > 0 &&
@@ -176,12 +209,20 @@ function getRelativePath(fromDirectory: string, targetPath: string): string {
     normalizedTargetSegments.shift();
   }
 
-  return [...new Array(normalizedFromSegments.length).fill(".."), ...normalizedTargetSegments].join("/");
+  return [
+    ...new Array(normalizedFromSegments.length).fill(".."),
+    ...normalizedTargetSegments
+  ].join("/");
 }
 
 function getImportedFilePath(file: File): string {
-  const relativePath = typeof file.webkitRelativePath === "string" ? file.webkitRelativePath.trim() : "";
-  return normalizeRelativePath(relativePath.length > 0 ? relativePath : file.name.trim());
+  const relativePath =
+    typeof file.webkitRelativePath === "string"
+      ? file.webkitRelativePath.trim()
+      : "";
+  return normalizeRelativePath(
+    relativePath.length > 0 ? relativePath : file.name.trim()
+  );
 }
 
 function stringArrayIncludes(value: unknown, item: string): boolean {
@@ -199,7 +240,10 @@ function recordHasKtx2TextureExtension(value: unknown): boolean {
 function gltfJsonUsesKtx2Textures(gltfJson: Record<string, unknown>): boolean {
   if (
     stringArrayIncludes(gltfJson.extensionsUsed, GLTF_KTX2_TEXTURE_EXTENSION) ||
-    stringArrayIncludes(gltfJson.extensionsRequired, GLTF_KTX2_TEXTURE_EXTENSION)
+    stringArrayIncludes(
+      gltfJson.extensionsRequired,
+      GLTF_KTX2_TEXTURE_EXTENSION
+    )
   ) {
     return true;
   }
@@ -211,11 +255,15 @@ function gltfJsonUsesKtx2Textures(gltfJson: Record<string, unknown>): boolean {
       return false;
     }
 
-    return recordHasKtx2TextureExtension((texture as Record<string, unknown>).extensions);
+    return recordHasKtx2TextureExtension(
+      (texture as Record<string, unknown>).extensions
+    );
   });
 }
 
-function parseGlbJsonChunk(arrayBuffer: ArrayBuffer): Record<string, unknown> | null {
+function parseGlbJsonChunk(
+  arrayBuffer: ArrayBuffer
+): Record<string, unknown> | null {
   if (arrayBuffer.byteLength < 20) {
     return null;
   }
@@ -247,9 +295,13 @@ function parseGlbJsonChunk(arrayBuffer: ArrayBuffer): Record<string, unknown> | 
     }
 
     if (chunkType === GLB_JSON_CHUNK_TYPE) {
-      const jsonText = new TextDecoder().decode(arrayBuffer.slice(chunkStart, chunkEnd)).trim();
+      const jsonText = new TextDecoder()
+        .decode(arrayBuffer.slice(chunkStart, chunkEnd))
+        .trim();
       const parsedJson = JSON.parse(jsonText) as unknown;
-      return parsedJson !== null && typeof parsedJson === "object" ? (parsedJson as Record<string, unknown>) : null;
+      return parsedJson !== null && typeof parsedJson === "object"
+        ? (parsedJson as Record<string, unknown>)
+        : null;
     }
 
     offset = chunkEnd + ((4 - (chunkLength % 4)) % 4);
@@ -267,7 +319,9 @@ function glbUsesKtx2Textures(arrayBuffer: ArrayBuffer): boolean {
   }
 }
 
-function createBoundingBoxFromObject(object: Object3D): ModelAssetMetadata["boundingBox"] {
+function createBoundingBoxFromObject(
+  object: Object3D
+): ModelAssetMetadata["boundingBox"] {
   const box = new Box3().setFromObject(object);
 
   if (box.isEmpty()) {
@@ -306,7 +360,9 @@ function collectMaterialNames(scene: Group): string[] {
       return;
     }
 
-    const materials = Array.isArray(maybeMesh.material) ? maybeMesh.material : [maybeMesh.material];
+    const materials = Array.isArray(maybeMesh.material)
+      ? maybeMesh.material
+      : [maybeMesh.material];
 
     for (const material of materials) {
       if (material.name.trim().length > 0) {
@@ -318,7 +374,9 @@ function collectMaterialNames(scene: Group): string[] {
   return [...names].sort((left, right) => left.localeCompare(right));
 }
 
-function collectTextureNames(parserJson: { textures?: Array<{ name?: string }> }): string[] {
+function collectTextureNames(parserJson: {
+  textures?: Array<{ name?: string }>;
+}): string[] {
   const textures = parserJson.textures ?? [];
   const names = new Set<string>();
 
@@ -333,7 +391,11 @@ function collectTextureNames(parserJson: { textures?: Array<{ name?: string }> }
 
 function collectAnimationNames(gltf: GLTF): string[] {
   return gltf.animations
-    .map((animation, index) => (animation.name.trim().length > 0 ? animation.name : `Animation ${index + 1}`))
+    .map((animation, index) =>
+      animation.name.trim().length > 0
+        ? animation.name
+        : `Animation ${index + 1}`
+    )
     .sort((left, right) => left.localeCompare(right));
 }
 
@@ -347,7 +409,10 @@ function countNodes(scene: Group): number {
   return count;
 }
 
-export function extractModelAssetMetadata(gltf: GLTF, format: "glb" | "gltf"): ModelAssetMetadata {
+export function extractModelAssetMetadata(
+  gltf: GLTF,
+  format: "glb" | "gltf"
+): ModelAssetMetadata {
   gltf.scene.updateMatrixWorld(true);
   const boundingBox = createBoundingBoxFromObject(gltf.scene);
 
@@ -359,7 +424,10 @@ export function extractModelAssetMetadata(gltf: GLTF, format: "glb" | "gltf"): M
     }
   });
 
-  const parserJson = gltf.parser.json as { materials?: Array<{ name?: string }>; textures?: Array<{ name?: string }> };
+  const parserJson = gltf.parser.json as {
+    materials?: Array<{ name?: string }>;
+    textures?: Array<{ name?: string }>;
+  };
   const materialNames = collectMaterialNames(gltf.scene);
   const textureNames = collectTextureNames(parserJson);
   const animationNames = collectAnimationNames(gltf);
@@ -387,7 +455,9 @@ export function extractModelAssetMetadata(gltf: GLTF, format: "glb" | "gltf"): M
     sceneName: gltf.scene.name.trim().length > 0 ? gltf.scene.name : null,
     nodeCount: countNodes(gltf.scene),
     meshCount: actualMeshCount,
-    materialNames: [...new Set(materialNames)].sort((left, right) => left.localeCompare(right)),
+    materialNames: [...new Set(materialNames)].sort((left, right) =>
+      left.localeCompare(right)
+    ),
     textureNames,
     animationNames,
     boundingBox,
@@ -395,7 +465,11 @@ export function extractModelAssetMetadata(gltf: GLTF, format: "glb" | "gltf"): M
   };
 }
 
-function createLoadedModelAsset(asset: ModelAssetRecord, template: Group, animations: AnimationClip[]): LoadedModelAsset {
+function createLoadedModelAsset(
+  asset: ModelAssetRecord,
+  template: Group,
+  animations: AnimationClip[]
+): LoadedModelAsset {
   return {
     assetId: asset.id,
     storageKey: asset.storageKey,
@@ -424,14 +498,18 @@ function createModelAssetRecord(
   };
 }
 
-async function loadGltfFromArrayBuffer(arrayBuffer: ArrayBuffer): Promise<GLTF> {
+async function loadGltfFromArrayBuffer(
+  arrayBuffer: ArrayBuffer
+): Promise<GLTF> {
   const loader = createConfiguredGltfLoader({
     ktx2: glbUsesKtx2Textures(arrayBuffer) ? "required" : "if-initialized"
   });
   return loader.parseAsync(arrayBuffer, "");
 }
 
-export function createConfiguredGltfLoader(options: { ktx2?: GltfKtx2Mode } = {}): GLTFLoader {
+export function createConfiguredGltfLoader(
+  options: { ktx2?: GltfKtx2Mode } = {}
+): GLTFLoader {
   const loader = new GLTFLoader();
   loader.setDRACOLoader(getSharedDracoLoader());
 
@@ -457,22 +535,37 @@ function getSharedDracoLoader(): DRACOLoader {
   return sharedDracoLoader;
 }
 
-function createDataUrlForStoredFile(file: ProjectAssetStorageFileRecord): string {
+function createDataUrlForStoredFile(
+  file: ProjectAssetStorageFileRecord
+): string {
   const byteArray = new Uint8Array(file.bytes);
   let binary = "";
   const chunkSize = 0x8000;
 
   for (let index = 0; index < byteArray.length; index += chunkSize) {
-    binary += String.fromCharCode(...byteArray.subarray(index, index + chunkSize));
+    binary += String.fromCharCode(
+      ...byteArray.subarray(index, index + chunkSize)
+    );
   }
 
-  const base64 = typeof btoa === "function" ? btoa(binary) : Buffer.from(file.bytes).toString("base64");
+  const base64 =
+    typeof btoa === "function"
+      ? btoa(binary)
+      : Buffer.from(file.bytes).toString("base64");
   return `data:${file.mimeType};base64,${base64}`;
 }
 
-function createTransientResourceUrl(file: ProjectAssetStorageFileRecord): { revoke: () => void; url: string } {
-  if (typeof URL.createObjectURL === "function" && typeof Blob !== "undefined") {
-    const objectUrl = URL.createObjectURL(new Blob([file.bytes], { type: file.mimeType }));
+function createTransientResourceUrl(file: ProjectAssetStorageFileRecord): {
+  revoke: () => void;
+  url: string;
+} {
+  if (
+    typeof URL.createObjectURL === "function" &&
+    typeof Blob !== "undefined"
+  ) {
+    const objectUrl = URL.createObjectURL(
+      new Blob([file.bytes], { type: file.mimeType })
+    );
 
     return {
       url: objectUrl,
@@ -545,14 +638,18 @@ function rewriteGltfResourceUris(
     return resolvedUri;
   };
 
-  const buffers = Array.isArray(gltfJson.buffers) ? (gltfJson.buffers as Array<Record<string, unknown>>) : [];
+  const buffers = Array.isArray(gltfJson.buffers)
+    ? (gltfJson.buffers as Array<Record<string, unknown>>)
+    : [];
   for (const buffer of buffers) {
     if (typeof buffer.uri === "string") {
       buffer.uri = rewriteUri(buffer.uri);
     }
   }
 
-  const images = Array.isArray(gltfJson.images) ? (gltfJson.images as Array<Record<string, unknown>>) : [];
+  const images = Array.isArray(gltfJson.images)
+    ? (gltfJson.images as Array<Record<string, unknown>>)
+    : [];
   for (const image of images) {
     if (typeof image.uri === "string") {
       image.uri = rewriteUri(image.uri);
@@ -599,16 +696,26 @@ function disposeTexture(texture: Texture, seenTextures: Set<Texture>) {
   texture.dispose();
 }
 
-function disposeMaterialResources(material: Material, disposeTextures: boolean, seenTextures: Set<Texture>) {
+function disposeMaterialResources(
+  material: Material,
+  disposeTextures: boolean,
+  seenTextures: Set<Texture>
+) {
   if (disposeTextures) {
-    for (const value of Object.values(material as unknown as Record<string, unknown>)) {
+    for (const value of Object.values(
+      material as unknown as Record<string, unknown>
+    )) {
       if (value === null || value === undefined) {
         continue;
       }
 
       if (Array.isArray(value)) {
         for (const entry of value) {
-          if (entry !== null && typeof entry === "object" && "isTexture" in entry) {
+          if (
+            entry !== null &&
+            typeof entry === "object" &&
+            "isTexture" in entry
+          ) {
             disposeTexture(entry as Texture, seenTextures);
           }
         }
@@ -625,7 +732,11 @@ function disposeMaterialResources(material: Material, disposeTextures: boolean, 
   material.dispose();
 }
 
-function disposeMeshResources(object: Object3D, disposeTextures: boolean, seenTextures: Set<Texture>) {
+function disposeMeshResources(
+  object: Object3D,
+  disposeTextures: boolean,
+  seenTextures: Set<Texture>
+) {
   const maybeMesh = object as Mesh & { isMesh?: boolean };
 
   if (maybeMesh.isMesh !== true) {
@@ -686,7 +797,9 @@ async function loadModelFileSet(files: File[]): Promise<ImportedModelFileSet> {
   }
 
   if (modelFiles.length > 1) {
-    throw new Error("Select exactly one .glb or .gltf file and any matching sidecar resources.");
+    throw new Error(
+      "Select exactly one .glb or .gltf file and any matching sidecar resources."
+    );
   }
 
   const rootFile = modelFiles[0];
@@ -702,7 +815,10 @@ async function loadModelFileSet(files: File[]): Promise<ImportedModelFileSet> {
   const packageFiles: Record<string, ProjectAssetStorageFileRecord> = {};
 
   for (const { file, bytes } of importedFiles) {
-    const sourcePath = file === rootFile ? normalizeRelativePath(rootFile.name.trim()) : getRelativePath(rootDirectory, getImportedFilePath(file));
+    const sourcePath =
+      file === rootFile
+        ? normalizeRelativePath(rootFile.name.trim())
+        : getRelativePath(rootDirectory, getImportedFilePath(file));
     const mimeType = inferFileMimeType(file.name, file.type);
 
     if (packageFiles[sourcePath] !== undefined) {
@@ -722,7 +838,9 @@ async function loadModelFileSet(files: File[]): Promise<ImportedModelFileSet> {
     };
   }
 
-  const rootEntry = fileEntries.find((entry) => entry.path === normalizeRelativePath(rootFile.name.trim()));
+  const rootEntry = fileEntries.find(
+    (entry) => entry.path === normalizeRelativePath(rootFile.name.trim())
+  );
 
   if (rootEntry === undefined) {
     throw new Error(`Unable to locate the root model file ${rootFile.name}.`);
@@ -737,12 +855,20 @@ async function loadModelFileSet(files: File[]): Promise<ImportedModelFileSet> {
     fileEntries,
     packageRecord,
     rootFile: rootEntry,
-    totalByteLength: fileEntries.reduce((total, entry) => total + entry.bytes.byteLength, 0)
+    totalByteLength: fileEntries.reduce(
+      (total, entry) => total + entry.bytes.byteLength,
+      0
+    )
   };
 }
 
-async function loadGltfFromImportedModelFileSet(fileSet: ImportedModelFileSet): Promise<GLTF> {
-  const rootFormat = inferModelAssetFormat(fileSet.rootFile.path, fileSet.rootFile.mimeType);
+async function loadGltfFromImportedModelFileSet(
+  fileSet: ImportedModelFileSet
+): Promise<GLTF> {
+  const rootFormat = inferModelAssetFormat(
+    fileSet.rootFile.path,
+    fileSet.rootFile.mimeType
+  );
 
   if (rootFormat === "glb") {
     return loadGltfFromArrayBuffer(fileSet.rootFile.bytes);
@@ -750,14 +876,19 @@ async function loadGltfFromImportedModelFileSet(fileSet: ImportedModelFileSet): 
 
   const text = new TextDecoder().decode(fileSet.rootFile.bytes);
   const gltfJson = JSON.parse(text) as Record<string, unknown>;
-  const { missingUris, revokeUrls } = rewriteGltfResourceUris(gltfJson, fileSet.packageRecord.files);
+  const { missingUris, revokeUrls } = rewriteGltfResourceUris(
+    gltfJson,
+    fileSet.packageRecord.files
+  );
 
   if (missingUris.length > 0) {
     for (const revokeUrl of revokeUrls) {
       revokeUrl();
     }
 
-    throw new Error(`Missing external model resource(s): ${missingUris.join(", ")}.`);
+    throw new Error(
+      `Missing external model resource(s): ${missingUris.join(", ")}.`
+    );
   }
 
   const loader = createConfiguredGltfLoader({
@@ -802,11 +933,18 @@ export async function importModelAssetFromFiles(
   try {
     gltf = await loadGltfFromImportedModelFileSet(fileSet);
   } catch (error) {
-    throw new Error(`Model import failed for ${sourceName}: ${getErrorDetail(error)}`);
+    throw new Error(
+      `Model import failed for ${sourceName}: ${getErrorDetail(error)}`
+    );
   }
 
   const metadata = extractModelAssetMetadata(gltf, format);
-  const asset = createModelAssetRecordFromFileSet(sourceName, mimeType, fileSet.totalByteLength, metadata);
+  const asset = createModelAssetRecordFromFileSet(
+    sourceName,
+    mimeType,
+    fileSet.totalByteLength,
+    metadata
+  );
 
   try {
     await storage.putAsset(asset.storageKey, fileSet.packageRecord);
@@ -819,7 +957,11 @@ export async function importModelAssetFromFiles(
     return {
       asset,
       modelInstance,
-      loadedAsset: createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene), gltf.animations)
+      loadedAsset: createLoadedModelAsset(
+        asset,
+        cloneTemplateScene(gltf.scene),
+        gltf.animations
+      )
     };
   } catch (error) {
     await storage.deleteAsset(asset.storageKey).catch(() => undefined);
@@ -862,39 +1004,58 @@ export async function loadModelAssetFromStorage(
   try {
     storedAsset = await storage.getAsset(asset.storageKey);
   } catch (error) {
-    throw new Error(`Model asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`);
+    throw new Error(
+      `Model asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`
+    );
   }
 
   if (storedAsset === null) {
-    throw new Error(`Missing stored binary data for imported model asset ${asset.sourceName}.`);
+    throw new Error(
+      `Missing stored binary data for imported model asset ${asset.sourceName}.`
+    );
   }
 
   const storedModelFile = getStoredModelAssetFile(asset, storedAsset);
 
   if (storedModelFile === null) {
-    throw new Error(`Missing stored root file for imported model asset ${asset.sourceName}.`);
+    throw new Error(
+      `Missing stored root file for imported model asset ${asset.sourceName}.`
+    );
   }
 
   if (asset.metadata.format === "glb") {
     try {
       const gltf = await loadGltfFromArrayBuffer(storedModelFile.bytes);
-      return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene), gltf.animations);
+      return createLoadedModelAsset(
+        asset,
+        cloneTemplateScene(gltf.scene),
+        gltf.animations
+      );
     } catch (error) {
-      throw new Error(`Model asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`);
+      throw new Error(
+        `Model asset reload failed for ${asset.sourceName}: ${getErrorDetail(error)}`
+      );
     }
   }
 
   const fileEntries = storedAsset.files;
   const rootFileBytes = storedModelFile.bytes;
-  const gltfJson = JSON.parse(new TextDecoder().decode(rootFileBytes)) as Record<string, unknown>;
-  const { missingUris, revokeUrls } = rewriteGltfResourceUris(gltfJson, fileEntries);
+  const gltfJson = JSON.parse(
+    new TextDecoder().decode(rootFileBytes)
+  ) as Record<string, unknown>;
+  const { missingUris, revokeUrls } = rewriteGltfResourceUris(
+    gltfJson,
+    fileEntries
+  );
 
   if (missingUris.length > 0) {
     for (const revokeUrl of revokeUrls) {
       revokeUrl();
     }
 
-    throw new Error(`Missing stored external model resource(s): ${missingUris.join(", ")}.`);
+    throw new Error(
+      `Missing stored external model resource(s): ${missingUris.join(", ")}.`
+    );
   }
 
   const loader = createConfiguredGltfLoader({
@@ -903,7 +1064,11 @@ export async function loadModelAssetFromStorage(
 
   try {
     const gltf = await loader.parseAsync(JSON.stringify(gltfJson), "");
-    return createLoadedModelAsset(asset, cloneTemplateScene(gltf.scene), gltf.animations);
+    return createLoadedModelAsset(
+      asset,
+      cloneTemplateScene(gltf.scene),
+      gltf.animations
+    );
   } finally {
     for (const revokeUrl of revokeUrls) {
       revokeUrl();

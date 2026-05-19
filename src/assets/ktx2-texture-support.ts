@@ -21,17 +21,30 @@ function createSharedKtx2Loader(): KTX2Loader {
   return loader;
 }
 
+function disposeFallbackRendererIfSuperseded(renderer: WebGLRenderer) {
+  if (fallbackRenderer === null || fallbackRenderer === renderer) {
+    return;
+  }
+
+  fallbackRenderer.forceContextLoss();
+  fallbackRenderer.dispose();
+  fallbackRenderer = null;
+}
+
 export function getSharedKtx2LoaderIfInitialized(): KTX2Loader | null {
   return sharedKtx2LoaderInitialized ? sharedKtx2Loader : null;
 }
 
-export function initializeSharedKtx2Loader(renderer: WebGLRenderer): KTX2Loader {
+export function initializeSharedKtx2Loader(
+  renderer: WebGLRenderer
+): KTX2Loader {
   if (sharedKtx2Loader === null) {
     sharedKtx2Loader = createSharedKtx2Loader();
   }
 
   sharedKtx2Loader.detectSupport(renderer);
   sharedKtx2LoaderInitialized = true;
+  disposeFallbackRendererIfSuperseded(renderer);
   return sharedKtx2Loader;
 }
 
