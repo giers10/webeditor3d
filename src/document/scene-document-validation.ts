@@ -136,6 +136,7 @@ import {
   MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
   MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
   MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
+  MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT,
   isHexColorString,
   isWorldShaderSkyPresetId,
   type WorldCelestialOrbitAuthoringSettings,
@@ -1413,6 +1414,73 @@ function validateWorldSettings(
         "invalid-advanced-rendering-god-rays-samples",
         "Advanced rendering god rays samples must be a positive integer.",
         "world.advancedRendering.godRays.samples"
+      )
+    );
+  }
+
+  if (!isBoolean(advancedRendering.lensFlare.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-lens-flare-enabled",
+        "Advanced rendering lens flare enabled must be a boolean.",
+        "world.advancedRendering.lensFlare.enabled"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.lensFlare.intensity)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-lens-flare-intensity",
+        "Advanced rendering lens flare intensity must be a non-negative finite number.",
+        "world.advancedRendering.lensFlare.intensity"
+      )
+    );
+  }
+
+  if (!isPositiveFiniteNumber(advancedRendering.lensFlare.haloSize)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-lens-flare-halo-size",
+        "Advanced rendering lens flare halo size must be a positive finite number.",
+        "world.advancedRendering.lensFlare.haloSize"
+      )
+    );
+  }
+
+  if (!isNonNegativeFiniteNumber(advancedRendering.lensFlare.ghostIntensity)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-lens-flare-ghost-intensity",
+        "Advanced rendering lens flare ghost intensity must be a non-negative finite number.",
+        "world.advancedRendering.lensFlare.ghostIntensity"
+      )
+    );
+  }
+
+  if (!isPositiveInteger(advancedRendering.lensFlare.ghostCount)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-lens-flare-ghost-count",
+        "Advanced rendering lens flare ghost count must be a positive integer.",
+        "world.advancedRendering.lensFlare.ghostCount"
+      )
+    );
+  } else if (
+    advancedRendering.lensFlare.ghostCount >
+    MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-lens-flare-ghost-count-range",
+        `Advanced rendering lens flare ghost count must be ${MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT} or less.`,
+        "world.advancedRendering.lensFlare.ghostCount"
       )
     );
   }
