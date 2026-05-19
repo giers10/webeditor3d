@@ -14530,6 +14530,93 @@ export function App({
     }
   };
 
+  const applyAdvancedRenderingLensFlareEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set lens flare",
+      enabled ? "Lens flare enabled." : "Lens flare disabled.",
+      (advancedRendering) => {
+        advancedRendering.lensFlare.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingLensFlareIntensity = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set lens flare intensity",
+        "Updated the lens flare intensity.",
+        (advancedRendering) => {
+          advancedRendering.lensFlare.intensity = readNonNegativeNumberDraft(
+            advancedRenderingLensFlareIntensityDraft,
+            "Lens flare intensity"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingLensFlareHaloSize = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set lens flare halo size",
+        "Updated the lens flare halo size.",
+        (advancedRendering) => {
+          advancedRendering.lensFlare.haloSize = readPositiveNumberDraft(
+            advancedRenderingLensFlareHaloSizeDraft,
+            "Lens flare halo size"
+          );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingLensFlareGhostIntensity = () => {
+    try {
+      applyAdvancedRenderingSettings(
+        "Set lens flare ghost intensity",
+        "Updated the lens flare ghost intensity.",
+        (advancedRendering) => {
+          advancedRendering.lensFlare.ghostIntensity =
+            readNonNegativeNumberDraft(
+              advancedRenderingLensFlareGhostIntensityDraft,
+              "Lens flare ghost intensity"
+            );
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingLensFlareGhostCount = () => {
+    try {
+      const ghostCount = readPositiveIntegerDraft(
+        advancedRenderingLensFlareGhostCountDraft,
+        "Lens flare ghost count"
+      );
+
+      if (ghostCount > MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT) {
+        throw new Error(
+          `Lens flare ghost count must be ${MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT} or less.`
+        );
+      }
+
+      applyAdvancedRenderingSettings(
+        "Set lens flare ghost count",
+        "Updated the lens flare ghost count.",
+        (advancedRendering) => {
+          advancedRendering.lensFlare.ghostCount = ghostCount;
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyAdvancedRenderingFogPath = (path: BoxVolumeRenderPath) => {
     applyAdvancedRenderingSettings(
       "Set fog render path",
