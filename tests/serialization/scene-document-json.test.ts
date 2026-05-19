@@ -1552,6 +1552,13 @@ describe("scene document JSON", () => {
         sourceSize: 1.35,
         samples: 40
       },
+      lensFlare: {
+        enabled: true,
+        intensity: 0.9,
+        haloSize: 1.35,
+        ghostIntensity: 0.8,
+        ghostCount: 6
+      },
       foliage: {
         enabled: true,
         densityMultiplier: 0.75,
