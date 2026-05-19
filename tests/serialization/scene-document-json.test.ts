@@ -1171,9 +1171,7 @@ describe("scene document JSON", () => {
     expect(
       migratedDocument.splineCorridorJunctions[junction.id]?.shapeMode
     ).toBe("straight");
-    expect(CUSTOM_PBR_MATERIALS_SCENE_DOCUMENT_VERSION).toBe(
-      SCENE_DOCUMENT_VERSION
-    );
+    expect(LENS_FLARE_SCENE_DOCUMENT_VERSION).toBe(SCENE_DOCUMENT_VERSION);
   });
 
   it("round-trips spline corridor junctions", () => {
