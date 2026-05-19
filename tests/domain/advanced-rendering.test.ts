@@ -167,6 +167,12 @@ import {
   resolveGodRaysSourceMask,
   syncScreenSpaceGodRaysLightSource
 } from "../../src/rendering/screen-space-god-rays";
+import {
+  createScreenSpaceLensFlareLightSource,
+  projectScreenSpaceLensFlareLight,
+  resolveLensFlareParameters,
+  syncScreenSpaceLensFlareLightSource
+} from "../../src/rendering/screen-space-lens-flare";
 import { resolveDynamicGlobalIlluminationParameters } from "../../src/rendering/screen-space-global-illumination";
 import {
   ALL_RENDER_LAYER_MASK,
