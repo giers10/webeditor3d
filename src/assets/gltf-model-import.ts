@@ -9,6 +9,10 @@ import {
   type ModelAssetMetadata,
   type ModelAssetRecord
 } from "./project-assets";
+import {
+  ensureSharedKtx2LoaderInitialized,
+  getSharedKtx2LoaderIfInitialized
+} from "./ktx2-texture-support";
 import { createOpaqueId } from "../core/ids";
 import type {
   ProjectAssetStorage,
@@ -30,8 +34,13 @@ interface ImportedModelFileSet {
 }
 
 const DRACO_DECODER_PATH = "/draco/gltf/";
+const GLTF_KTX2_TEXTURE_EXTENSION = "KHR_texture_basisu";
+const GLB_MAGIC = 0x46546c67;
+const GLB_JSON_CHUNK_TYPE = 0x4e4f534a;
 
 let sharedDracoLoader: DRACOLoader | null = null;
+
+type GltfKtx2Mode = "if-initialized" | "required";
 
 export interface LoadedModelAsset {
   assetId: string;
@@ -173,6 +182,89 @@ function getRelativePath(fromDirectory: string, targetPath: string): string {
 function getImportedFilePath(file: File): string {
   const relativePath = typeof file.webkitRelativePath === "string" ? file.webkitRelativePath.trim() : "";
   return normalizeRelativePath(relativePath.length > 0 ? relativePath : file.name.trim());
+}
+
+function stringArrayIncludes(value: unknown, item: string): boolean {
+  return Array.isArray(value) && value.some((entry) => entry === item);
+}
+
+function recordHasKtx2TextureExtension(value: unknown): boolean {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    GLTF_KTX2_TEXTURE_EXTENSION in value
+  );
+}
+
+function gltfJsonUsesKtx2Textures(gltfJson: Record<string, unknown>): boolean {
+  if (
+    stringArrayIncludes(gltfJson.extensionsUsed, GLTF_KTX2_TEXTURE_EXTENSION) ||
+    stringArrayIncludes(gltfJson.extensionsRequired, GLTF_KTX2_TEXTURE_EXTENSION)
+  ) {
+    return true;
+  }
+
+  const textures = Array.isArray(gltfJson.textures) ? gltfJson.textures : [];
+
+  return textures.some((texture) => {
+    if (texture === null || typeof texture !== "object") {
+      return false;
+    }
+
+    return recordHasKtx2TextureExtension((texture as Record<string, unknown>).extensions);
+  });
+}
+
+function parseGlbJsonChunk(arrayBuffer: ArrayBuffer): Record<string, unknown> | null {
+  if (arrayBuffer.byteLength < 20) {
+    return null;
+  }
+
+  const dataView = new DataView(arrayBuffer);
+
+  if (dataView.getUint32(0, true) !== GLB_MAGIC) {
+    return null;
+  }
+
+  const version = dataView.getUint32(4, true);
+
+  if (version !== 2) {
+    return null;
+  }
+
+  const declaredLength = dataView.getUint32(8, true);
+  const byteLength = Math.min(declaredLength, arrayBuffer.byteLength);
+  let offset = 12;
+
+  while (offset + 8 <= byteLength) {
+    const chunkLength = dataView.getUint32(offset, true);
+    const chunkType = dataView.getUint32(offset + 4, true);
+    const chunkStart = offset + 8;
+    const chunkEnd = chunkStart + chunkLength;
+
+    if (chunkEnd > byteLength) {
+      return null;
+    }
+
+    if (chunkType === GLB_JSON_CHUNK_TYPE) {
+      const jsonText = new TextDecoder().decode(arrayBuffer.slice(chunkStart, chunkEnd)).trim();
+      const parsedJson = JSON.parse(jsonText) as unknown;
+      return parsedJson !== null && typeof parsedJson === "object" ? (parsedJson as Record<string, unknown>) : null;
+    }
+
+    offset = chunkEnd + ((4 - (chunkLength % 4)) % 4);
+  }
+
+  return null;
+}
+
+function glbUsesKtx2Textures(arrayBuffer: ArrayBuffer): boolean {
+  try {
+    const gltfJson = parseGlbJsonChunk(arrayBuffer);
+    return gltfJson === null ? false : gltfJsonUsesKtx2Textures(gltfJson);
+  } catch {
+    return false;
+  }
 }
 
 function createBoundingBoxFromObject(object: Object3D): ModelAssetMetadata["boundingBox"] {
@@ -333,13 +425,26 @@ function createModelAssetRecord(
 }
 
 async function loadGltfFromArrayBuffer(arrayBuffer: ArrayBuffer): Promise<GLTF> {
-  const loader = createConfiguredGltfLoader();
+  const loader = createConfiguredGltfLoader({
+    ktx2: glbUsesKtx2Textures(arrayBuffer) ? "required" : "if-initialized"
+  });
   return loader.parseAsync(arrayBuffer, "");
 }
 
-export function createConfiguredGltfLoader(): GLTFLoader {
+export function createConfiguredGltfLoader(options: { ktx2?: GltfKtx2Mode } = {}): GLTFLoader {
   const loader = new GLTFLoader();
   loader.setDRACOLoader(getSharedDracoLoader());
+
+  const ktx2Mode = options.ktx2 ?? "if-initialized";
+  const ktx2Loader =
+    ktx2Mode === "required"
+      ? ensureSharedKtx2LoaderInitialized()
+      : getSharedKtx2LoaderIfInitialized();
+
+  if (ktx2Loader !== null) {
+    loader.setKTX2Loader(ktx2Loader);
+  }
+
   return loader;
 }
 
@@ -655,7 +760,9 @@ async function loadGltfFromImportedModelFileSet(fileSet: ImportedModelFileSet): 
     throw new Error(`Missing external model resource(s): ${missingUris.join(", ")}.`);
   }
 
-  const loader = createConfiguredGltfLoader();
+  const loader = createConfiguredGltfLoader({
+    ktx2: gltfJsonUsesKtx2Textures(gltfJson) ? "required" : "if-initialized"
+  });
 
   try {
     return await loader.parseAsync(JSON.stringify(gltfJson), "");
@@ -790,7 +897,9 @@ export async function loadModelAssetFromStorage(
     throw new Error(`Missing stored external model resource(s): ${missingUris.join(", ")}.`);
   }
 
-  const loader = createConfiguredGltfLoader();
+  const loader = createConfiguredGltfLoader({
+    ktx2: gltfJsonUsesKtx2Textures(gltfJson) ? "required" : "if-initialized"
+  });
 
   try {
     const gltf = await loader.parseAsync(JSON.stringify(gltfJson), "");
