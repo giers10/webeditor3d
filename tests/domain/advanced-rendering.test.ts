@@ -796,6 +796,102 @@ describe("createAdvancedRenderingComposer", () => {
     ).toBe(ALL_RENDER_LAYER_MASK);
   });
 
+  it("adds lens flare before post-world overlay layers when a sun source is available", () => {
+    postprocessingState.composerOptions.length = 0;
+    postprocessingState.composerPasses.length = 0;
+    postprocessingState.normalPassTextures.length = 0;
+    postprocessingState.ssaoCalls.length = 0;
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    const lightSource = createScreenSpaceLensFlareLightSource();
+    settings.enabled = true;
+    settings.lensFlare.enabled = true;
+    syncScreenSpaceLensFlareLightSource(lightSource, {
+      colorHex: "#fff1cc",
+      intensity: 1,
+      direction: {
+        x: 0,
+        y: 0.25,
+        z: -1
+      }
+    });
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings,
+      null,
+      null,
+      null,
+      lightSource
+    );
+
+    expect(
+      postprocessingState.composerPasses.map(
+        (pass) => (pass as { name: string }).name
+      )
+    ).toEqual([
+      "RenderPass",
+      "ScreenSpaceLensFlarePass",
+      "RenderPass",
+      "RenderPass",
+      "EffectPass"
+    ]);
+    expect(
+      (postprocessingState.composerPasses[0] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(AO_WORLD_RENDER_LAYER_MASK);
+    expect(
+      (postprocessingState.composerPasses[1] as { needsDepthTexture?: boolean })
+        .needsDepthTexture
+    ).toBe(true);
+    expect(
+      (postprocessingState.composerPasses[2] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(POST_AO_TRANSPARENT_RENDER_LAYER_MASK);
+    expect(
+      (postprocessingState.composerPasses[3] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(OVERLAY_RENDER_LAYER_MASK);
+  });
+
+  it("does not add lens flare when the feature is enabled without a light source", () => {
+    postprocessingState.composerOptions.length = 0;
+    postprocessingState.composerPasses.length = 0;
+    postprocessingState.normalPassTextures.length = 0;
+    postprocessingState.ssaoCalls.length = 0;
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.lensFlare.enabled = true;
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(
+      postprocessingState.composerPasses.map(
+        (pass) => (pass as { name: string }).name
+      )
+    ).toEqual(["RenderPass", "EffectPass"]);
+    expect(
+      (postprocessingState.composerPasses[0] as { renderLayerMask?: number })
+        .renderLayerMask
+    ).toBe(ALL_RENDER_LAYER_MASK);
+  });
+
   it("adds the dynamic GI pass only when dynamic GI is enabled", () => {
     postprocessingState.composerOptions.length = 0;
     postprocessingState.composerPasses.length = 0;
