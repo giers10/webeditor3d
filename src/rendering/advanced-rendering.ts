@@ -67,6 +67,12 @@ import {
   shouldApplyGodRays,
   type ScreenSpaceGodRaysLightSource
 } from "./screen-space-god-rays";
+import {
+  ScreenSpaceLensFlarePass,
+  resolveLensFlareParameters,
+  shouldApplyLensFlare,
+  type ScreenSpaceLensFlareLightSource
+} from "./screen-space-lens-flare";
 
 const AMBIENT_OCCLUSION_LUMINANCE_INFLUENCE = 0.15;
 const MIN_AMBIENT_OCCLUSION_EFFECT_RADIUS = 0.02;
@@ -316,7 +322,8 @@ export function createAdvancedRenderingComposer(
   settings: AdvancedRenderingSettings,
   backgroundScene: Scene | null = null,
   godRaysLightSource: ScreenSpaceGodRaysLightSource | null = null,
-  distanceFogSkyColorSource: DistanceFogSkyColorSource | null = null
+  distanceFogSkyColorSource: DistanceFogSkyColorSource | null = null,
+  lensFlareLightSource: ScreenSpaceLensFlareLightSource | null = null
 ): EffectComposer {
   // The scene is always rendered into the composer's offscreen targets first,
   // so those targets need depth for correct visibility even when no effect samples it.
@@ -342,11 +349,15 @@ export function createAdvancedRenderingComposer(
   const godRaysParameters = resolveGodRaysParameters(settings.godRays);
   const godRaysEnabled =
     shouldApplyGodRays(settings) && godRaysLightSource !== null;
+  const lensFlareParameters = resolveLensFlareParameters(settings.lensFlare);
+  const lensFlareEnabled =
+    shouldApplyLensFlare(settings) && lensFlareLightSource !== null;
   const postWorldLayerIsolationEnabled =
     settings.ambientOcclusion.enabled ||
     dynamicGlobalIlluminationEnabled ||
     distanceFogEnabled ||
-    godRaysEnabled;
+    godRaysEnabled ||
+    lensFlareEnabled;
   const mainRenderLayerMask = postWorldLayerIsolationEnabled
     ? AO_WORLD_RENDER_LAYER_MASK
     : ALL_RENDER_LAYER_MASK;
@@ -456,6 +467,16 @@ export function createAdvancedRenderingComposer(
           : null,
         scene,
         AO_WORLD_RENDER_LAYER_MASK
+      )
+    );
+  }
+
+  if (lensFlareEnabled && lensFlareLightSource !== null) {
+    composer.addPass(
+      new ScreenSpaceLensFlarePass(
+        camera,
+        lensFlareLightSource,
+        lensFlareParameters
       )
     );
   }
