@@ -13,6 +13,7 @@ import {
   GLTFLoader,
   type GLTF
 } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 
 import { createModelInstance, type ModelInstance } from "./model-instances";
@@ -512,6 +513,7 @@ export function createConfiguredGltfLoader(
 ): GLTFLoader {
   const loader = new GLTFLoader();
   loader.setDRACOLoader(getSharedDracoLoader());
+  loader.setMeshoptDecoder(MeshoptDecoder);
 
   const ktx2Mode = options.ktx2 ?? "if-initialized";
   const ktx2Loader =
