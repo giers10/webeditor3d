@@ -4006,6 +4006,32 @@ export function App({
   ] = useState(
     String(editorState.document.world.advancedRendering.godRays.samples)
   );
+  const [
+    advancedRenderingLensFlareIntensityDraft,
+    setAdvancedRenderingLensFlareIntensityDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.lensFlare.intensity)
+  );
+  const [
+    advancedRenderingLensFlareHaloSizeDraft,
+    setAdvancedRenderingLensFlareHaloSizeDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.lensFlare.haloSize)
+  );
+  const [
+    advancedRenderingLensFlareGhostIntensityDraft,
+    setAdvancedRenderingLensFlareGhostIntensityDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.lensFlare.ghostIntensity
+    )
+  );
+  const [
+    advancedRenderingLensFlareGhostCountDraft,
+    setAdvancedRenderingLensFlareGhostCountDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.lensFlare.ghostCount)
+  );
   const [statusMessage, setStatusMessage] = useState(
     initialStatusMessage ?? "Slice 3.5 advanced rendering ready."
   );
@@ -5277,6 +5303,18 @@ export function App({
     );
     setAdvancedRenderingGodRaysSamplesDraft(
       String(advancedRendering.godRays.samples)
+    );
+    setAdvancedRenderingLensFlareIntensityDraft(
+      String(advancedRendering.lensFlare.intensity)
+    );
+    setAdvancedRenderingLensFlareHaloSizeDraft(
+      String(advancedRendering.lensFlare.haloSize)
+    );
+    setAdvancedRenderingLensFlareGhostIntensityDraft(
+      String(advancedRendering.lensFlare.ghostIntensity)
+    );
+    setAdvancedRenderingLensFlareGhostCountDraft(
+      String(advancedRendering.lensFlare.ghostCount)
     );
   }, [editorState.document.world.advancedRendering]);
 
