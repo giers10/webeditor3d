@@ -13,11 +13,24 @@ import {
 } from "../../src/assets/gltf-model-import";
 import { createInMemoryProjectAssetStorage } from "../../src/assets/project-asset-storage";
 
-const tinyGlbFixturePath = path.resolve(process.cwd(), "fixtures/assets/tiny-triangle.glb");
-const externalTriangleGltfPath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/scene.gltf");
-const externalTriangleBinPath = path.resolve(process.cwd(), "fixtures/assets/external-triangle/triangle.bin");
+const tinyGlbFixturePath = path.resolve(
+  process.cwd(),
+  "fixtures/assets/tiny-triangle.glb"
+);
+const externalTriangleGltfPath = path.resolve(
+  process.cwd(),
+  "fixtures/assets/external-triangle/scene.gltf"
+);
+const externalTriangleBinPath = path.resolve(
+  process.cwd(),
+  "fixtures/assets/external-triangle/triangle.bin"
+);
 
-function createTestFile(bytes: Uint8Array | Buffer, name: string, type: string): File {
+function createTestFile(
+  bytes: Uint8Array | Buffer,
+  name: string,
+  type: string
+): File {
   const arrayBuffer = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(arrayBuffer).set(bytes);
 
@@ -41,7 +54,11 @@ describe("model import", () => {
   it("imports and reloads a tiny GLB fixture", async () => {
     const storage = createInMemoryProjectAssetStorage();
     const fileBytes = await readFile(tinyGlbFixturePath);
-    const file = createTestFile(fileBytes, "tiny-triangle.glb", "model/gltf-binary");
+    const file = createTestFile(
+      fileBytes,
+      "tiny-triangle.glb",
+      "model/gltf-binary"
+    );
 
     const importedModel = await importModelAssetFromFile(file, storage);
 
@@ -52,9 +69,14 @@ describe("model import", () => {
 
     const storedAsset = await storage.getAsset(importedModel.asset.storageKey);
 
-    expect(Object.keys(storedAsset?.files ?? {})).toEqual(["tiny-triangle.glb"]);
+    expect(Object.keys(storedAsset?.files ?? {})).toEqual([
+      "tiny-triangle.glb"
+    ]);
 
-    const reloadedAsset = await loadModelAssetFromStorage(storage, importedModel.asset);
+    const reloadedAsset = await loadModelAssetFromStorage(
+      storage,
+      importedModel.asset
+    );
 
     expect(reloadedAsset.metadata.format).toBe("glb");
     expect(reloadedAsset.template.children.length).toBeGreaterThan(0);
@@ -75,13 +97,21 @@ describe("model import", () => {
 
     expect(importedModel.asset.mimeType).toBe("model/gltf+json");
     expect(importedModel.asset.metadata.format).toBe("gltf");
-    expect(importedModel.asset.byteLength).toBe(gltfBytes.byteLength + binBytes.byteLength);
+    expect(importedModel.asset.byteLength).toBe(
+      gltfBytes.byteLength + binBytes.byteLength
+    );
 
     const storedAsset = await storage.getAsset(importedModel.asset.storageKey);
 
-    expect(Object.keys(storedAsset?.files ?? {}).sort()).toEqual(["scene.gltf", "triangle.bin"]);
+    expect(Object.keys(storedAsset?.files ?? {}).sort()).toEqual([
+      "scene.gltf",
+      "triangle.bin"
+    ]);
 
-    const reloadedAsset = await loadModelAssetFromStorage(storage, importedModel.asset);
+    const reloadedAsset = await loadModelAssetFromStorage(
+      storage,
+      importedModel.asset
+    );
 
     expect(reloadedAsset.metadata.meshCount).toBe(1);
     expect(reloadedAsset.template.children.length).toBeGreaterThan(0);
