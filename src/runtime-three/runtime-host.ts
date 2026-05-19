@@ -3024,57 +3024,63 @@ export class RuntimeHost {
         shaderSkyState
       )
     );
-    const godRaysLightInput =
+    const screenSpaceSunLightInput =
       shaderSkyState !== null
-        ? resolveDominantScreenSpaceGodRaysLightInput(
-            shaderSkyState.celestial.sunVisible
-              ? {
-                  colorHex: shaderSkyState.celestial.sunColorHex,
-                  intensity:
-                    shaderSkyState.celestial.sunIntensity *
-                    resolveWorldCelestialHorizonVisibility(
-                      shaderSkyState.celestial.sunDirection.y,
-                      shaderSkyState.sky.horizonHeight
-                    ),
-                  direction: shaderSkyState.celestial.sunDirection
-                }
-              : null,
-            shaderSkyState.celestial.moonVisible
-              ? {
-                  colorHex: shaderSkyState.celestial.moonColorHex,
-                  intensity:
-                    shaderSkyState.celestial.moonIntensity *
-                    resolveWorldCelestialHorizonVisibility(
-                      shaderSkyState.celestial.moonDirection.y,
-                      shaderSkyState.sky.horizonHeight
-                    ),
-                  direction: shaderSkyState.celestial.moonDirection
-                }
-              : null
-          )
-        : resolveDominantScreenSpaceGodRaysLightInput(
-            celestialBodiesState.sun === null
-              ? null
-              : {
-                  colorHex: celestialBodiesState.sun.colorHex,
-                  direction: celestialBodiesState.sun.direction,
-                  intensity:
-                    celestialBodiesState.sun.intensity *
-                    celestialBodiesState.sun.horizonVisibility
-                },
-            celestialBodiesState.moon === null
-              ? null
-              : {
-                  colorHex: celestialBodiesState.moon.colorHex,
-                  direction: celestialBodiesState.moon.direction,
-                  intensity:
-                    celestialBodiesState.moon.intensity *
-                    celestialBodiesState.moon.horizonVisibility
-                }
-          );
+        ? shaderSkyState.celestial.sunVisible
+          ? {
+              colorHex: shaderSkyState.celestial.sunColorHex,
+              intensity:
+                shaderSkyState.celestial.sunIntensity *
+                resolveWorldCelestialHorizonVisibility(
+                  shaderSkyState.celestial.sunDirection.y,
+                  shaderSkyState.sky.horizonHeight
+                ),
+              direction: shaderSkyState.celestial.sunDirection
+            }
+          : null
+        : celestialBodiesState.sun === null
+          ? null
+          : {
+              colorHex: celestialBodiesState.sun.colorHex,
+              direction: celestialBodiesState.sun.direction,
+              intensity:
+                celestialBodiesState.sun.intensity *
+                celestialBodiesState.sun.horizonVisibility
+            };
+    const screenSpaceMoonLightInput =
+      shaderSkyState !== null
+        ? shaderSkyState.celestial.moonVisible
+          ? {
+              colorHex: shaderSkyState.celestial.moonColorHex,
+              intensity:
+                shaderSkyState.celestial.moonIntensity *
+                resolveWorldCelestialHorizonVisibility(
+                  shaderSkyState.celestial.moonDirection.y,
+                  shaderSkyState.sky.horizonHeight
+                ),
+              direction: shaderSkyState.celestial.moonDirection
+            }
+          : null
+        : celestialBodiesState.moon === null
+          ? null
+          : {
+              colorHex: celestialBodiesState.moon.colorHex,
+              direction: celestialBodiesState.moon.direction,
+              intensity:
+                celestialBodiesState.moon.intensity *
+                celestialBodiesState.moon.horizonVisibility
+            };
+    const godRaysLightInput = resolveDominantScreenSpaceGodRaysLightInput(
+      screenSpaceSunLightInput,
+      screenSpaceMoonLightInput
+    );
     syncScreenSpaceGodRaysLightSource(
       this.godRaysLightSource,
       godRaysLightInput
+    );
+    syncScreenSpaceLensFlareLightSource(
+      this.lensFlareLightSource,
+      screenSpaceSunLightInput
     );
     const environmentState = resolveWorldEnvironmentState(
       resolvedWorld.background,
@@ -3203,7 +3209,8 @@ export class RuntimeHost {
       settings,
       this.worldBackgroundRenderer.scene,
       this.godRaysLightSource,
-      this.distanceFogSkyColorSource
+      this.distanceFogSkyColorSource,
+      this.lensFlareLightSource
     );
     this.currentAdvancedRenderingSettings =
       cloneAdvancedRenderingSettings(settings);
