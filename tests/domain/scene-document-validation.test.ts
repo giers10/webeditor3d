@@ -1881,6 +1881,14 @@ describe("validateSceneDocument", () => {
         sourceSize: 0,
         samples: 0
       },
+      lensFlare: {
+        ...document.world.advancedRendering.lensFlare,
+        enabled: "yes",
+        intensity: -0.1,
+        haloSize: 0,
+        ghostIntensity: Number.NaN,
+        ghostCount: 99
+      },
       foliage: {
         ...document.world.advancedRendering.foliage,
         enabled: "yes",
@@ -2025,6 +2033,26 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-advanced-rendering-god-rays-samples",
           path: "world.advancedRendering.godRays.samples"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-lens-flare-enabled",
+          path: "world.advancedRendering.lensFlare.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-lens-flare-intensity",
+          path: "world.advancedRendering.lensFlare.intensity"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-lens-flare-halo-size",
+          path: "world.advancedRendering.lensFlare.haloSize"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-lens-flare-ghost-intensity",
+          path: "world.advancedRendering.lensFlare.ghostIntensity"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-lens-flare-ghost-count-range",
+          path: "world.advancedRendering.lensFlare.ghostCount"
         }),
         expect.objectContaining({
           code: "invalid-foliage-quality-enabled",
