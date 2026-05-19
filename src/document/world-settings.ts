@@ -196,6 +196,14 @@ export interface AdvancedRenderingGodRaysSettings {
   samples: number;
 }
 
+export interface AdvancedRenderingLensFlareSettings {
+  enabled: boolean;
+  intensity: number;
+  haloSize: number;
+  ghostIntensity: number;
+  ghostCount: number;
+}
+
 export interface FoliageQualitySettings {
   enabled: boolean;
   densityMultiplier: number;
@@ -214,6 +222,7 @@ export interface AdvancedRenderingSettings {
   whiteboxBevel: AdvancedRenderingWhiteboxBevelSettings;
   distanceFog: AdvancedRenderingDistanceFogSettings;
   godRays: AdvancedRenderingGodRaysSettings;
+  lensFlare: AdvancedRenderingLensFlareSettings;
   foliage: FoliageQualitySettings;
   fogPath: BoxVolumeRenderPath;
   waterPath: BoxVolumeRenderPath;
@@ -319,6 +328,11 @@ const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_EXPOSURE = 0.28;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_DENSITY = 0.72;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SOURCE_SIZE = 1;
 const DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SAMPLES = 48;
+const DEFAULT_ADVANCED_RENDERING_LENS_FLARE_INTENSITY = 0.55;
+const DEFAULT_ADVANCED_RENDERING_LENS_FLARE_HALO_SIZE = 1;
+const DEFAULT_ADVANCED_RENDERING_LENS_FLARE_GHOST_INTENSITY = 0.65;
+const DEFAULT_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT = 5;
+export const MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT = 8 as const;
 const DEFAULT_FOLIAGE_QUALITY_ENABLED = true;
 const DEFAULT_FOLIAGE_QUALITY_DENSITY_MULTIPLIER = 1;
 const DEFAULT_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER = 1;
@@ -665,6 +679,14 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
       sourceSize: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SOURCE_SIZE,
       samples: DEFAULT_ADVANCED_RENDERING_GOD_RAYS_SAMPLES
     },
+    lensFlare: {
+      enabled: false,
+      intensity: DEFAULT_ADVANCED_RENDERING_LENS_FLARE_INTENSITY,
+      haloSize: DEFAULT_ADVANCED_RENDERING_LENS_FLARE_HALO_SIZE,
+      ghostIntensity:
+        DEFAULT_ADVANCED_RENDERING_LENS_FLARE_GHOST_INTENSITY,
+      ghostCount: DEFAULT_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT
+    },
     foliage: createDefaultFoliageQualitySettings(),
     fogPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
     waterPath: DEFAULT_BOX_VOLUME_RENDER_PATH,
@@ -994,6 +1016,9 @@ export function cloneAdvancedRenderingSettings(
     godRays: {
       ...settings.godRays
     },
+    lensFlare: {
+      ...settings.lensFlare
+    },
     foliage: cloneFoliageQualitySettings(settings.foliage),
     fogPath: settings.fogPath,
     waterPath: settings.waterPath,
@@ -1198,6 +1223,11 @@ export function areAdvancedRenderingSettingsEqual(
     left.godRays.density === right.godRays.density &&
     left.godRays.sourceSize === right.godRays.sourceSize &&
     left.godRays.samples === right.godRays.samples &&
+    left.lensFlare.enabled === right.lensFlare.enabled &&
+    left.lensFlare.intensity === right.lensFlare.intensity &&
+    left.lensFlare.haloSize === right.lensFlare.haloSize &&
+    left.lensFlare.ghostIntensity === right.lensFlare.ghostIntensity &&
+    left.lensFlare.ghostCount === right.lensFlare.ghostCount &&
     areFoliageQualitySettingsEqual(left.foliage, right.foliage) &&
     left.fogPath === right.fogPath &&
     left.waterPath === right.waterPath &&
