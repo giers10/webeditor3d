@@ -26,6 +26,13 @@ export const ADVANCED_RENDERING_TONE_MAPPING_MODES = [
   "cineon",
   "acesFilmic"
 ] as const;
+export const ADVANCED_RENDERING_ANTI_ALIASING_MODES = [
+  "smaa",
+  "fxaa",
+  "msaa2x",
+  "msaa4x",
+  "msaa8x"
+] as const;
 export const BOX_VOLUME_RENDER_PATHS = ["performance", "quality"] as const;
 export const ADVANCED_RENDERING_WATER_REFLECTION_MODES = [
   "none",
@@ -52,6 +59,8 @@ export type AdvancedRenderingShadowType =
   (typeof ADVANCED_RENDERING_SHADOW_TYPES)[number];
 export type AdvancedRenderingToneMappingMode =
   (typeof ADVANCED_RENDERING_TONE_MAPPING_MODES)[number];
+export type AdvancedRenderingAntiAliasingMode =
+  (typeof ADVANCED_RENDERING_ANTI_ALIASING_MODES)[number];
 export type BoxVolumeRenderPath = (typeof BOX_VOLUME_RENDER_PATHS)[number];
 export type AdvancedRenderingWaterReflectionMode =
   (typeof ADVANCED_RENDERING_WATER_REFLECTION_MODES)[number];
@@ -165,6 +174,11 @@ export interface AdvancedRenderingToneMappingSettings {
   exposure: number;
 }
 
+export interface AdvancedRenderingAntiAliasingSettings {
+  enabled: boolean;
+  mode: AdvancedRenderingAntiAliasingMode;
+}
+
 export interface AdvancedRenderingDepthOfFieldSettings {
   enabled: boolean;
   focusDistance: number;
@@ -226,6 +240,7 @@ export interface AdvancedRenderingSettings {
   dynamicGlobalIllumination: AdvancedRenderingDynamicGlobalIlluminationSettings;
   bloom: AdvancedRenderingBloomSettings;
   toneMapping: AdvancedRenderingToneMappingSettings;
+  antiAliasing: AdvancedRenderingAntiAliasingSettings;
   depthOfField: AdvancedRenderingDepthOfFieldSettings;
   whiteboxBevel: AdvancedRenderingWhiteboxBevelSettings;
   distanceFog: AdvancedRenderingDistanceFogSettings;
@@ -317,6 +332,9 @@ const DEFAULT_ADVANCED_RENDERING_BLOOM_RADIUS = 0.35;
 const DEFAULT_ADVANCED_RENDERING_TONE_MAPPING_MODE: AdvancedRenderingToneMappingMode =
   "acesFilmic";
 const DEFAULT_ADVANCED_RENDERING_TONE_MAPPING_EXPOSURE = 1;
+const DEFAULT_ADVANCED_RENDERING_ANTI_ALIASING_ENABLED = true;
+const DEFAULT_ADVANCED_RENDERING_ANTI_ALIASING_MODE: AdvancedRenderingAntiAliasingMode =
+  "smaa";
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCUS_DISTANCE = 10;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_FOCAL_LENGTH = 0.03;
 const DEFAULT_ADVANCED_RENDERING_DEPTH_OF_FIELD_BOKEH_SCALE = 1.5;
@@ -538,6 +556,14 @@ export function isAdvancedRenderingToneMappingMode(
   );
 }
 
+export function isAdvancedRenderingAntiAliasingMode(
+  value: unknown
+): value is AdvancedRenderingAntiAliasingMode {
+  return ADVANCED_RENDERING_ANTI_ALIASING_MODES.includes(
+    value as AdvancedRenderingAntiAliasingMode
+  );
+}
+
 export function isBoxVolumeRenderPath(
   value: unknown
 ): value is BoxVolumeRenderPath {
@@ -693,6 +719,10 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
     toneMapping: {
       mode: DEFAULT_ADVANCED_RENDERING_TONE_MAPPING_MODE,
       exposure: DEFAULT_ADVANCED_RENDERING_TONE_MAPPING_EXPOSURE
+    },
+    antiAliasing: {
+      enabled: DEFAULT_ADVANCED_RENDERING_ANTI_ALIASING_ENABLED,
+      mode: DEFAULT_ADVANCED_RENDERING_ANTI_ALIASING_MODE
     },
     depthOfField: {
       enabled: false,
@@ -1050,6 +1080,9 @@ export function cloneAdvancedRenderingSettings(
     toneMapping: {
       ...settings.toneMapping
     },
+    antiAliasing: {
+      ...settings.antiAliasing
+    },
     depthOfField: {
       ...settings.depthOfField
     },
@@ -1246,6 +1279,8 @@ export function areAdvancedRenderingSettingsEqual(
     left.bloom.radius === right.bloom.radius &&
     left.toneMapping.mode === right.toneMapping.mode &&
     left.toneMapping.exposure === right.toneMapping.exposure &&
+    left.antiAliasing.enabled === right.antiAliasing.enabled &&
+    left.antiAliasing.mode === right.antiAliasing.mode &&
     left.depthOfField.enabled === right.depthOfField.enabled &&
     left.depthOfField.focusDistance === right.depthOfField.focusDistance &&
     left.depthOfField.focalLength === right.depthOfField.focalLength &&
