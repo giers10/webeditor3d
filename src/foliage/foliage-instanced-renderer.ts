@@ -3,12 +3,16 @@ import {
   Color,
   Frustum,
   Group,
+  InstancedBufferAttribute,
   InstancedMesh,
   Matrix4,
   Mesh,
+  MeshStandardMaterial,
   Sphere,
+  Vector2,
   Vector3,
   type BufferGeometry,
+  type IUniform,
   type Material
 } from "three";
 
@@ -61,6 +65,28 @@ interface FoliageTemplateSourceMesh {
 }
 
 const VIEW_SIGNATURE_PRECISION = 100;
+const FOLIAGE_WIND_ATTRIBUTE_NAME = "foliageWind";
+const FOLIAGE_WIND_SHADER_KEY = "foliage-wind-v1";
+
+type FoliageWindCompileShader = Parameters<
+  MeshStandardMaterial["onBeforeCompile"]
+>[0];
+type FoliageWindCompileRenderer = Parameters<
+  MeshStandardMaterial["onBeforeCompile"]
+>[1];
+
+interface FoliageWindUniformSet {
+  time: IUniform<number>;
+  strength: IUniform<number>;
+  speed: IUniform<number>;
+  direction: IUniform<Vector2>;
+}
+
+interface FoliageWindMaterialOptions {
+  getSettings: () => FoliageQualitySettings;
+  getTime: () => number;
+  registerUniforms: (uniforms: FoliageWindUniformSet) => void;
+}
 
 function stableStringify(value: unknown): string {
   if (
