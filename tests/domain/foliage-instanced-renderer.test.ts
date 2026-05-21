@@ -1,6 +1,9 @@
 import {
   Group,
+  InstancedMesh,
+  MeshStandardMaterial,
   PerspectiveCamera,
+  type Material,
   type Object3D
 } from "three";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -27,7 +30,7 @@ vi.mock("../../src/foliage/bundled-foliage-model-loader", async () => {
       template.add(
         new three.Mesh(
           new three.BoxGeometry(1, 1, 1),
-          new three.MeshBasicMaterial()
+          new three.MeshStandardMaterial()
         )
       );
 
@@ -96,13 +99,17 @@ function createRendererInput() {
       enabled: true,
       densityMultiplier: 1,
       maxDistanceMultiplier: 1,
-      shadows: "near" as const
+      shadows: "near" as const,
+      windEnabled: true,
+      windStrength: 1,
+      windSpeed: 1,
+      windDirectionDegrees: 35
     }
   };
 }
 
-function getInstancedMeshes(group: Group): Object3D[] {
-  const meshes: Object3D[] = [];
+function getInstancedMeshes(group: Group): InstancedMesh[] {
+  const meshes: InstancedMesh[] = [];
 
   group.traverse((object) => {
     const maybeInstancedMesh = object as Object3D & {
@@ -110,11 +117,15 @@ function getInstancedMeshes(group: Group): Object3D[] {
     };
 
     if (maybeInstancedMesh.isInstancedMesh === true) {
-      meshes.push(object);
+      meshes.push(object as InstancedMesh);
     }
   });
 
   return meshes;
+}
+
+function getSingleMaterial(material: Material | Material[]): Material {
+  return Array.isArray(material) ? material[0]! : material;
 }
 
 function getVisibleBatchKeys(group: Group): string[] {
@@ -198,5 +209,104 @@ describe("FoliageInstancedRenderer", () => {
     expect(getVisibleBatchKeys(renderer.group)).not.toEqual(
       initialVisibleBatchKeys
     );
+  });
+
+  it("patches standard foliage materials with GPU wind attributes and uniforms", async () => {
+    let rebuildCount = 0;
+    const rebuildWaiters: Array<() => void> = [];
+    const renderer = new FoliageInstancedRenderer({
+      onRebuilt: () => {
+        rebuildCount += 1;
+        rebuildWaiters.shift()?.();
+      }
+    });
+    const waitForRebuild = () =>
+      new Promise<void>((resolve) => {
+        rebuildWaiters.push(resolve);
+      });
+    const input = createRendererInput();
+    const initialRebuild = waitForRebuild();
+
+    renderer.sync(input);
+    renderer.updateView(createCamera({ x: 8, y: 8, z: 8 }));
+    await initialRebuild;
+
+    const instancedMesh = getInstancedMeshes(renderer.group)[0]!;
+    const material = getSingleMaterial(instancedMesh.material);
+
+    expect(material).toBeInstanceOf(MeshStandardMaterial);
+    expect(instancedMesh.geometry.getAttribute("foliageWind")?.itemSize).toBe(
+      2
+    );
+    expect(material.customProgramCacheKey()).toContain("foliage-wind-v1");
+
+    const shader = {
+      uniforms: {},
+      vertexShader:
+        "#include <common>\nvoid main() {\n#include <project_vertex>\n}",
+      fragmentShader: ""
+    } as any;
+
+    material.onBeforeCompile(shader, {} as never);
+
+    expect(shader.vertexShader).toContain("attribute vec2 foliageWind");
+    expect(shader.vertexShader).toContain("foliageWindStrength");
+    expect(shader.uniforms.foliageWindStrength.value).toBe(1);
+    expect(shader.uniforms.foliageWindSpeed.value).toBe(1);
+
+    const initialLoadCallCount = loaderState.loadCalls.length;
+    const initialRebuildCount = rebuildCount;
+    renderer.sync({
+      ...input,
+      quality: {
+        ...input.quality,
+        windStrength: 2.25,
+        windSpeed: 3,
+        windDirectionDegrees: 90
+      }
+    });
+    await Promise.resolve();
+
+    expect(getInstancedMeshes(renderer.group)[0]).toBe(instancedMesh);
+    expect(loaderState.loadCalls).toHaveLength(initialLoadCallCount);
+    expect(rebuildCount).toBe(initialRebuildCount);
+    expect(shader.uniforms.foliageWindStrength.value).toBe(2.25);
+    expect(shader.uniforms.foliageWindSpeed.value).toBe(3);
+    expect(shader.uniforms.foliageWindDirection.value.x).toBeCloseTo(0, 6);
+    expect(shader.uniforms.foliageWindDirection.value.y).toBeCloseTo(1, 6);
+
+    renderer.updateWind(0.5);
+    expect(shader.uniforms.foliageWindTime.value).toBeCloseTo(0.5);
+  });
+
+  it("leaves foliage materials and geometry unpatched when wind is disabled", async () => {
+    const rebuildWaiters: Array<() => void> = [];
+    const renderer = new FoliageInstancedRenderer({
+      onRebuilt: () => {
+        rebuildWaiters.shift()?.();
+      }
+    });
+    const waitForRebuild = () =>
+      new Promise<void>((resolve) => {
+        rebuildWaiters.push(resolve);
+      });
+    const input = createRendererInput();
+    const initialRebuild = waitForRebuild();
+
+    renderer.sync({
+      ...input,
+      quality: {
+        ...input.quality,
+        windEnabled: false
+      }
+    });
+    renderer.updateView(createCamera({ x: 8, y: 8, z: 8 }));
+    await initialRebuild;
+
+    const instancedMesh = getInstancedMeshes(renderer.group)[0]!;
+    const material = getSingleMaterial(instancedMesh.material);
+
+    expect(instancedMesh.geometry.getAttribute("foliageWind")).toBeUndefined();
+    expect(material.customProgramCacheKey()).not.toContain("foliage-wind-v1");
   });
 });
