@@ -114,12 +114,13 @@ function stableStringify(value: unknown): string {
   return JSON.stringify(String(value));
 }
 
-function resolveFoliageWindDirectionVector(
+function writeFoliageWindDirectionVector(
+  target: Vector2,
   settings: FoliageQualitySettings
 ): Vector2 {
   const radians = (settings.windDirectionDegrees * Math.PI) / 180;
 
-  return new Vector2(Math.cos(radians), Math.sin(radians)).normalize();
+  return target.set(Math.cos(radians), Math.sin(radians)).normalize();
 }
 
 function createFoliageWindUniformSet(
@@ -130,7 +131,9 @@ function createFoliageWindUniformSet(
     time: { value: time },
     strength: { value: settings.windStrength },
     speed: { value: settings.windSpeed },
-    direction: { value: resolveFoliageWindDirectionVector(settings) }
+    direction: {
+      value: writeFoliageWindDirectionVector(new Vector2(), settings)
+    }
   };
 }
 
@@ -142,7 +145,7 @@ function writeFoliageWindUniformValues(
   uniforms.time.value = time;
   uniforms.strength.value = settings.windStrength;
   uniforms.speed.value = settings.windSpeed;
-  uniforms.direction.value.copy(resolveFoliageWindDirectionVector(settings));
+  writeFoliageWindDirectionVector(uniforms.direction.value, settings);
 }
 
 function patchFoliageWindMaterial(
