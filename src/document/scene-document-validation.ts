@@ -136,6 +136,10 @@ import {
   MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
   MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
   MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
+  MIN_FOLIAGE_QUALITY_WIND_SPEED,
+  MAX_FOLIAGE_QUALITY_WIND_SPEED,
+  MIN_FOLIAGE_QUALITY_WIND_STRENGTH,
+  MAX_FOLIAGE_QUALITY_WIND_STRENGTH,
   MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT,
   isHexColorString,
   isWorldShaderSkyPresetId,
@@ -1537,6 +1541,68 @@ function validateWorldSettings(
         "invalid-foliage-quality-shadows",
         "Foliage shadows must be off, near, or full.",
         "world.advancedRendering.foliage.shadows"
+      )
+    );
+  }
+
+  if (!isBoolean(advancedRendering.foliage.windEnabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-quality-wind-enabled",
+        "Foliage wind enabled must be a boolean.",
+        "world.advancedRendering.foliage.windEnabled"
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      advancedRendering.foliage.windStrength,
+      MIN_FOLIAGE_QUALITY_WIND_STRENGTH,
+      MAX_FOLIAGE_QUALITY_WIND_STRENGTH
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-quality-wind-strength",
+        `Foliage wind strength must be a finite number between ${MIN_FOLIAGE_QUALITY_WIND_STRENGTH} and ${MAX_FOLIAGE_QUALITY_WIND_STRENGTH}.`,
+        "world.advancedRendering.foliage.windStrength"
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      advancedRendering.foliage.windSpeed,
+      MIN_FOLIAGE_QUALITY_WIND_SPEED,
+      MAX_FOLIAGE_QUALITY_WIND_SPEED
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-quality-wind-speed",
+        `Foliage wind speed must be a finite number between ${MIN_FOLIAGE_QUALITY_WIND_SPEED} and ${MAX_FOLIAGE_QUALITY_WIND_SPEED}.`,
+        "world.advancedRendering.foliage.windSpeed"
+      )
+    );
+  }
+
+  if (
+    !isFiniteNumberInRange(
+      advancedRendering.foliage.windDirectionDegrees,
+      0,
+      360
+    )
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-foliage-quality-wind-direction",
+        "Foliage wind direction must be a finite number between 0 and 360 degrees.",
+        "world.advancedRendering.foliage.windDirectionDegrees"
       )
     );
   }
