@@ -51,6 +51,11 @@ interface TerrainMeshBuildOptions {
   foliageBlockerMask?: boolean;
 }
 
+interface TerrainLodSamplePoint {
+  sampleX: number;
+  sampleZ: number;
+}
+
 export interface TerrainLodLevelMeshData {
   level: number;
   stride: number;
@@ -420,6 +425,166 @@ function buildTerrainChunkSourceBounds(
   return localBounds;
 }
 
+function clampSampleCoordinate(value: number, maxSample: number): number {
+  return Math.min(maxSample, Math.max(0, value));
+}
+
+function interpolateScalar(
+  topLeft: number,
+  topRight: number,
+  bottomLeft: number,
+  bottomRight: number,
+  tx: number,
+  tz: number
+): number {
+  const top = topLeft + (topRight - topLeft) * tx;
+  const bottom = bottomLeft + (bottomRight - bottomLeft) * tx;
+
+  return top + (bottom - top) * tz;
+}
+
+function sampleTerrainScalarAtSamplePosition(
+  terrain: Pick<Terrain, "sampleCountX" | "sampleCountZ">,
+  sampleX: number,
+  sampleZ: number,
+  sampleValue: (sampleX: number, sampleZ: number) => number
+): number {
+  const clampedSampleX = clampSampleCoordinate(
+    sampleX,
+    terrain.sampleCountX - 1
+  );
+  const clampedSampleZ = clampSampleCoordinate(
+    sampleZ,
+    terrain.sampleCountZ - 1
+  );
+  const sampleX0 = Math.floor(clampedSampleX);
+  const sampleZ0 = Math.floor(clampedSampleZ);
+  const sampleX1 = Math.min(sampleX0 + 1, terrain.sampleCountX - 1);
+  const sampleZ1 = Math.min(sampleZ0 + 1, terrain.sampleCountZ - 1);
+  const tx = sampleX1 === sampleX0 ? 0 : clampedSampleX - sampleX0;
+  const tz = sampleZ1 === sampleZ0 ? 0 : clampedSampleZ - sampleZ0;
+
+  return interpolateScalar(
+    sampleValue(sampleX0, sampleZ0),
+    sampleValue(sampleX1, sampleZ0),
+    sampleValue(sampleX0, sampleZ1),
+    sampleValue(sampleX1, sampleZ1),
+    tx,
+    tz
+  );
+}
+
+function sampleTerrainHeightAtSamplePosition(
+  terrain: Terrain,
+  sampleX: number,
+  sampleZ: number
+): number {
+  return sampleTerrainScalarAtSamplePosition(
+    terrain,
+    sampleX,
+    sampleZ,
+    (x, z) => getTerrainHeightAtSample(terrain, x, z)
+  );
+}
+
+function sampleTerrainLayerWeightsAtSamplePosition(
+  terrain: Terrain,
+  sampleX: number,
+  sampleZ: number
+): number[] {
+  const layerWeights = new Array<number>(terrain.layers.length).fill(0);
+
+  for (let layerIndex = 0; layerIndex < terrain.layers.length; layerIndex += 1) {
+    layerWeights[layerIndex] = sampleTerrainScalarAtSamplePosition(
+      terrain,
+      sampleX,
+      sampleZ,
+      (x, z) => getTerrainSampleLayerWeights(terrain, x, z)[layerIndex] ?? 0
+    );
+  }
+
+  return layerWeights;
+}
+
+function sampleTerrainFoliageWeightAtSamplePosition(
+  terrain: Terrain,
+  sampleX: number,
+  sampleZ: number,
+  options: TerrainMeshBuildOptions
+): number {
+  const foliageMask =
+    options.foliageMaskLayerId === undefined ||
+    options.foliageMaskLayerId === null
+      ? null
+      : getTerrainFoliageMask(terrain, options.foliageMaskLayerId);
+
+  if (options.foliageBlockerMask === true) {
+    return sampleTerrainScalarAtSamplePosition(
+      terrain,
+      sampleX,
+      sampleZ,
+      (x, z) =>
+        getTerrainFoliageBlockerMaskValueAtSample(
+          terrain.foliageBlockerMask,
+          x,
+          z
+        )
+    );
+  }
+
+  if (foliageMask === null) {
+    return 0;
+  }
+
+  return sampleTerrainScalarAtSamplePosition(
+    terrain,
+    sampleX,
+    sampleZ,
+    (x, z) => getTerrainFoliageMaskValueAtSample(foliageMask, x, z)
+  );
+}
+
+function pushTerrainLodNormal(
+  terrain: Terrain,
+  sampleX: number,
+  sampleZ: number,
+  normals: number[]
+) {
+  const leftSampleX = clampSampleCoordinate(sampleX - 1, terrain.sampleCountX - 1);
+  const rightSampleX = clampSampleCoordinate(sampleX + 1, terrain.sampleCountX - 1);
+  const bottomSampleZ = clampSampleCoordinate(
+    sampleZ - 1,
+    terrain.sampleCountZ - 1
+  );
+  const topSampleZ = clampSampleCoordinate(sampleZ + 1, terrain.sampleCountZ - 1);
+  const dxDenominator = Math.max(
+    (rightSampleX - leftSampleX) * terrain.cellSize,
+    Number.EPSILON
+  );
+  const dzDenominator = Math.max(
+    (topSampleZ - bottomSampleZ) * terrain.cellSize,
+    Number.EPSILON
+  );
+  const slopeX =
+    (sampleTerrainHeightAtSamplePosition(terrain, rightSampleX, sampleZ) -
+      sampleTerrainHeightAtSamplePosition(terrain, leftSampleX, sampleZ)) /
+    dxDenominator;
+  const slopeZ =
+    (sampleTerrainHeightAtSamplePosition(terrain, sampleX, topSampleZ) -
+      sampleTerrainHeightAtSamplePosition(terrain, sampleX, bottomSampleZ)) /
+    dzDenominator;
+  const normalX = -slopeX;
+  const normalY = 1;
+  const normalZ = -slopeZ;
+  const normalLength = Math.hypot(normalX, normalY, normalZ) || 1;
+
+  normals.push(
+    normalX / normalLength,
+    normalY / normalLength,
+    normalZ / normalLength
+  );
+}
+
 function pushTerrainLodVertex(
   terrain: Terrain,
   sampleX: number,
@@ -429,12 +594,14 @@ function pushTerrainLodVertex(
   uvs: number[],
   layerWeights: number[],
   foliageMaskWeights: number[],
+  normals: number[],
   options: TerrainMeshBuildOptions
 ) {
   const localX = sampleX * terrain.cellSize;
-  const localY = getTerrainHeightAtSample(terrain, sampleX, sampleZ) + yOffset;
+  const localY =
+    sampleTerrainHeightAtSamplePosition(terrain, sampleX, sampleZ) + yOffset;
   const localZ = sampleZ * terrain.cellSize;
-  const sampleLayerWeights = getTerrainSampleLayerWeights(
+  const sampleLayerWeights = sampleTerrainLayerWeightsAtSamplePosition(
     terrain,
     sampleX,
     sampleZ
@@ -444,23 +611,15 @@ function pushTerrainLodVertex(
   uvs.push(terrain.position.x + localX, terrain.position.z + localZ);
 
   pushPaddedTerrainLayerWeights(layerWeights, sampleLayerWeights);
-
-  const foliageMask =
-    options.foliageMaskLayerId === undefined ||
-    options.foliageMaskLayerId === null
-      ? null
-      : getTerrainFoliageMask(terrain, options.foliageMaskLayerId);
   foliageMaskWeights.push(
-    options.foliageBlockerMask === true
-      ? getTerrainFoliageBlockerMaskValueAtSample(
-          terrain.foliageBlockerMask,
-          sampleX,
-          sampleZ
-        )
-      : foliageMask === null
-        ? 0
-        : getTerrainFoliageMaskValueAtSample(foliageMask, sampleX, sampleZ)
+    sampleTerrainFoliageWeightAtSamplePosition(
+      terrain,
+      sampleX,
+      sampleZ,
+      options
+    )
   );
+  pushTerrainLodNormal(terrain, sampleX, sampleZ, normals);
 }
 
 function pushTerrainLodSkirtSegment(
@@ -474,6 +633,7 @@ function pushTerrainLodSkirtSegment(
   uvs: number[],
   layerWeights: number[],
   foliageMaskWeights: number[],
+  normals: number[],
   indices: number[],
   options: TerrainMeshBuildOptions
 ) {
@@ -487,6 +647,7 @@ function pushTerrainLodSkirtSegment(
     uvs,
     layerWeights,
     foliageMaskWeights,
+    normals,
     options
   );
   const topEnd = positions.length / 3;
@@ -499,6 +660,7 @@ function pushTerrainLodSkirtSegment(
     uvs,
     layerWeights,
     foliageMaskWeights,
+    normals,
     options
   );
   const bottomStart = positions.length / 3;
@@ -511,6 +673,7 @@ function pushTerrainLodSkirtSegment(
     uvs,
     layerWeights,
     foliageMaskWeights,
+    normals,
     options
   );
   const bottomEnd = positions.length / 3;
@@ -523,11 +686,152 @@ function pushTerrainLodSkirtSegment(
     uvs,
     layerWeights,
     foliageMaskWeights,
+    normals,
     options
   );
 
   indices.push(topStart, bottomStart, bottomEnd);
   indices.push(topStart, bottomEnd, topEnd);
+}
+
+function createTerrainLodVertexKey(
+  sampleX: number,
+  sampleZ: number,
+  yOffset: number
+): string {
+  return `${sampleX.toFixed(6)}:${sampleZ.toFixed(6)}:${yOffset.toFixed(6)}`;
+}
+
+function getOrCreateTerrainLodVertex(
+  terrain: Terrain,
+  sampleX: number,
+  sampleZ: number,
+  yOffset: number,
+  vertexIndices: Map<string, number>,
+  positions: number[],
+  uvs: number[],
+  layerWeights: number[],
+  foliageMaskWeights: number[],
+  normals: number[],
+  options: TerrainMeshBuildOptions
+): number {
+  const key = createTerrainLodVertexKey(sampleX, sampleZ, yOffset);
+  const existingIndex = vertexIndices.get(key);
+
+  if (existingIndex !== undefined) {
+    return existingIndex;
+  }
+
+  const nextIndex = positions.length / 3;
+  pushTerrainLodVertex(
+    terrain,
+    sampleX,
+    sampleZ,
+    yOffset,
+    positions,
+    uvs,
+    layerWeights,
+    foliageMaskWeights,
+    normals,
+    options
+  );
+  vertexIndices.set(key, nextIndex);
+  return nextIndex;
+}
+
+function areTerrainLodSamplePointsEqual(
+  left: TerrainLodSamplePoint,
+  right: TerrainLodSamplePoint
+): boolean {
+  return left.sampleX === right.sampleX && left.sampleZ === right.sampleZ;
+}
+
+function pushTerrainLodBoundaryPoint(
+  points: TerrainLodSamplePoint[],
+  point: TerrainLodSamplePoint
+) {
+  const previous = points[points.length - 1];
+
+  if (previous !== undefined && areTerrainLodSamplePointsEqual(previous, point)) {
+    return;
+  }
+
+  points.push(point);
+}
+
+function pushTerrainLodBoundarySegment(
+  points: TerrainLodSamplePoint[],
+  from: TerrainLodSamplePoint,
+  to: TerrainLodSamplePoint,
+  dense: boolean
+) {
+  const deltaX = to.sampleX - from.sampleX;
+  const deltaZ = to.sampleZ - from.sampleZ;
+  const stepCount = dense ? Math.max(Math.abs(deltaX), Math.abs(deltaZ)) : 1;
+
+  if (points.length === 0) {
+    pushTerrainLodBoundaryPoint(points, from);
+  }
+
+  for (let step = 1; step <= stepCount; step += 1) {
+    const t = step / stepCount;
+
+    pushTerrainLodBoundaryPoint(points, {
+      sampleX: from.sampleX + deltaX * t,
+      sampleZ: from.sampleZ + deltaZ * t
+    });
+  }
+}
+
+function createTerrainLodCellBoundaryPoints(
+  startSampleX: number,
+  startSampleZ: number,
+  endSampleX: number,
+  endSampleZ: number,
+  cellStartSampleX: number,
+  cellStartSampleZ: number,
+  cellEndSampleX: number,
+  cellEndSampleZ: number
+): TerrainLodSamplePoint[] {
+  const points: TerrainLodSamplePoint[] = [];
+
+  pushTerrainLodBoundarySegment(
+    points,
+    { sampleX: cellStartSampleX, sampleZ: cellStartSampleZ },
+    { sampleX: cellStartSampleX, sampleZ: cellEndSampleZ },
+    cellStartSampleX === startSampleX
+  );
+  pushTerrainLodBoundarySegment(
+    points,
+    { sampleX: cellStartSampleX, sampleZ: cellEndSampleZ },
+    { sampleX: cellEndSampleX, sampleZ: cellEndSampleZ },
+    cellEndSampleZ === endSampleZ
+  );
+  pushTerrainLodBoundarySegment(
+    points,
+    { sampleX: cellEndSampleX, sampleZ: cellEndSampleZ },
+    { sampleX: cellEndSampleX, sampleZ: cellStartSampleZ },
+    cellEndSampleX === endSampleX
+  );
+  pushTerrainLodBoundarySegment(
+    points,
+    { sampleX: cellEndSampleX, sampleZ: cellStartSampleZ },
+    { sampleX: cellStartSampleX, sampleZ: cellStartSampleZ },
+    cellStartSampleZ === startSampleZ
+  );
+
+  const first = points[0];
+  const last = points[points.length - 1];
+
+  if (
+    first !== undefined &&
+    last !== undefined &&
+    areTerrainLodSamplePointsEqual(first, last)
+  ) {
+    points.pop();
+  }
+
+  return points;
 }
 
 function buildTerrainLodLevelMeshData(
@@ -554,36 +858,135 @@ function buildTerrainLodLevelMeshData(
   const uvs: number[] = [];
   const layerWeights: number[] = [];
   const foliageMaskWeights: number[] = [];
+  const normals: number[] = [];
   const indices: number[] = [];
-
-  for (const sampleZ of sampleZs) {
-    for (const sampleX of sampleXs) {
-      pushTerrainLodVertex(
-        terrain,
-        sampleX,
-        sampleZ,
-        0,
-        positions,
-        uvs,
-        layerWeights,
-        foliageMaskWeights,
-        options
-      );
-    }
-  }
-
-  const sampleCountX = sampleXs.length;
+  const vertexIndices = new Map<string, number>();
 
   for (let zIndex = 0; zIndex < sampleZs.length - 1; zIndex += 1) {
     for (let xIndex = 0; xIndex < sampleXs.length - 1; xIndex += 1) {
-      const topLeft = zIndex * sampleCountX + xIndex;
-      const topRight = topLeft + 1;
-      const bottomLeft = (zIndex + 1) * sampleCountX + xIndex;
-      const bottomRight = bottomLeft + 1;
       const sampleX = sampleXs[xIndex]!;
       const nextSampleX = sampleXs[xIndex + 1]!;
       const sampleZ = sampleZs[zIndex]!;
       const nextSampleZ = sampleZs[zIndex + 1]!;
+      const boundaryPoints = createTerrainLodCellBoundaryPoints(
+        startSampleX,
+        startSampleZ,
+        endSampleX,
+        endSampleZ,
+        sampleX,
+        sampleZ,
+        nextSampleX,
+        nextSampleZ
+      );
+
+      if (boundaryPoints.length > 4) {
+        const centerIndex = getOrCreateTerrainLodVertex(
+          terrain,
+          (sampleX + nextSampleX) * 0.5,
+          (sampleZ + nextSampleZ) * 0.5,
+          0,
+          vertexIndices,
+          positions,
+          uvs,
+          layerWeights,
+          foliageMaskWeights,
+          normals,
+          options
+        );
+
+        for (
+          let boundaryIndex = 0;
+          boundaryIndex < boundaryPoints.length;
+          boundaryIndex += 1
+        ) {
+          const currentPoint = boundaryPoints[boundaryIndex]!;
+          const nextPoint =
+            boundaryPoints[(boundaryIndex + 1) % boundaryPoints.length]!;
+          const currentIndex = getOrCreateTerrainLodVertex(
+            terrain,
+            currentPoint.sampleX,
+            currentPoint.sampleZ,
+            0,
+            vertexIndices,
+            positions,
+            uvs,
+            layerWeights,
+            foliageMaskWeights,
+            normals,
+            options
+          );
+          const nextIndex = getOrCreateTerrainLodVertex(
+            terrain,
+            nextPoint.sampleX,
+            nextPoint.sampleZ,
+            0,
+            vertexIndices,
+            positions,
+            uvs,
+            layerWeights,
+            foliageMaskWeights,
+            normals,
+            options
+          );
+
+          indices.push(centerIndex, currentIndex, nextIndex);
+        }
+
+        continue;
+      }
+
+      const topLeft = getOrCreateTerrainLodVertex(
+        terrain,
+        sampleX,
+        sampleZ,
+        0,
+        vertexIndices,
+        positions,
+        uvs,
+        layerWeights,
+        foliageMaskWeights,
+        normals,
+        options
+      );
+      const topRight = getOrCreateTerrainLodVertex(
+        terrain,
+        nextSampleX,
+        sampleZ,
+        0,
+        vertexIndices,
+        positions,
+        uvs,
+        layerWeights,
+        foliageMaskWeights,
+        normals,
+        options
+      );
+      const bottomLeft = getOrCreateTerrainLodVertex(
+        terrain,
+        sampleX,
+        nextSampleZ,
+        0,
+        vertexIndices,
+        positions,
+        uvs,
+        layerWeights,
+        foliageMaskWeights,
+        normals,
+        options
+      );
+      const bottomRight = getOrCreateTerrainLodVertex(
+        terrain,
+        nextSampleX,
+        nextSampleZ,
+        0,
+        vertexIndices,
+        positions,
+        uvs,
+        layerWeights,
+        foliageMaskWeights,
+        normals,
+        options
+      );
       const diagonal = chooseCellDiagonal(
         getTerrainHeightAtSample(terrain, sampleX, sampleZ),
         getTerrainHeightAtSample(terrain, nextSampleX, sampleZ),
@@ -603,77 +1006,99 @@ function buildTerrainLodLevelMeshData(
 
   const skirtStartVertexCount = positions.length / 3;
   const skirtDepth = Math.max(terrain.cellSize * stride * 1.5, 0.5);
+  const terrainEndSampleX = terrain.sampleCountX - 1;
+  const terrainEndSampleZ = terrain.sampleCountZ - 1;
 
-  for (let xIndex = 0; xIndex < sampleXs.length - 1; xIndex += 1) {
-    pushTerrainLodSkirtSegment(
-      terrain,
-      sampleXs[xIndex]!,
-      startSampleZ,
-      sampleXs[xIndex + 1]!,
-      startSampleZ,
-      skirtDepth,
-      positions,
-      uvs,
-      layerWeights,
-      foliageMaskWeights,
-      indices,
-      options
-    );
-    pushTerrainLodSkirtSegment(
-      terrain,
-      sampleXs[xIndex + 1]!,
-      endSampleZ,
-      sampleXs[xIndex]!,
-      endSampleZ,
-      skirtDepth,
-      positions,
-      uvs,
-      layerWeights,
-      foliageMaskWeights,
-      indices,
-      options
-    );
+  if (startSampleZ === 0) {
+    for (let sampleX = startSampleX; sampleX < endSampleX; sampleX += 1) {
+      pushTerrainLodSkirtSegment(
+        terrain,
+        sampleX,
+        startSampleZ,
+        sampleX + 1,
+        startSampleZ,
+        skirtDepth,
+        positions,
+        uvs,
+        layerWeights,
+        foliageMaskWeights,
+        normals,
+        indices,
+        options
+      );
+    }
   }
 
-  for (let zIndex = 0; zIndex < sampleZs.length - 1; zIndex += 1) {
-    pushTerrainLodSkirtSegment(
-      terrain,
-      startSampleX,
-      sampleZs[zIndex + 1]!,
-      startSampleX,
-      sampleZs[zIndex]!,
-      skirtDepth,
-      positions,
-      uvs,
-      layerWeights,
-      foliageMaskWeights,
-      indices,
-      options
-    );
-    pushTerrainLodSkirtSegment(
-      terrain,
-      endSampleX,
-      sampleZs[zIndex]!,
-      endSampleX,
-      sampleZs[zIndex + 1]!,
-      skirtDepth,
-      positions,
-      uvs,
-      layerWeights,
-      foliageMaskWeights,
-      indices,
-      options
-    );
+  if (endSampleZ === terrainEndSampleZ) {
+    for (let sampleX = startSampleX; sampleX < endSampleX; sampleX += 1) {
+      pushTerrainLodSkirtSegment(
+        terrain,
+        sampleX + 1,
+        endSampleZ,
+        sampleX,
+        endSampleZ,
+        skirtDepth,
+        positions,
+        uvs,
+        layerWeights,
+        foliageMaskWeights,
+        normals,
+        indices,
+        options
+      );
+    }
+  }
+
+  if (startSampleX === 0) {
+    for (let sampleZ = startSampleZ; sampleZ < endSampleZ; sampleZ += 1) {
+      pushTerrainLodSkirtSegment(
+        terrain,
+        startSampleX,
+        sampleZ + 1,
+        startSampleX,
+        sampleZ,
+        skirtDepth,
+        positions,
+        uvs,
+        layerWeights,
+        foliageMaskWeights,
+        normals,
+        indices,
+        options
+      );
+    }
+  }
+
+  if (endSampleX === terrainEndSampleX) {
+    for (let sampleZ = startSampleZ; sampleZ < endSampleZ; sampleZ += 1) {
+      pushTerrainLodSkirtSegment(
+        terrain,
+        endSampleX,
+        sampleZ,
+        endSampleX,
+        sampleZ + 1,
+        skirtDepth,
+        positions,
+        uvs,
+        layerWeights,
+        foliageMaskWeights,
+        normals,
+        indices,
+        options
+      );
+    }
   }
 
   const typedPositions = new Float32Array(positions);
   const typedUvs = new Float32Array(uvs);
   const typedLayerWeights = new Float32Array(layerWeights);
   const typedFoliageMaskWeights = new Float32Array(foliageMaskWeights);
+  const typedNormals = new Float32Array(normals);
   const typedIndices = new Uint32Array(indices);
   const geometry = new BufferGeometry();
 
   geometry.setAttribute("position", new BufferAttribute(typedPositions, 3));
+  geometry.setAttribute("normal", new BufferAttribute(typedNormals, 3));
   geometry.setAttribute("uv", new BufferAttribute(typedUvs, 2));
   setTerrainLayerWeightAttributes(geometry, typedLayerWeights);
   geometry.setAttribute(
@@ -681,20 +1106,15 @@ function buildTerrainLodLevelMeshData(
     new BufferAttribute(typedFoliageMaskWeights, 1)
   );
   geometry.setIndex(new BufferAttribute(typedIndices, 1));
-  geometry.computeVertexNormals();
   geometry.computeBoundingBox();
   geometry.computeBoundingSphere();
-
-  const normalAttribute = geometry.getAttribute("normal");
-  const normals = new Float32Array(normalAttribute.array.length);
-  normals.set(normalAttribute.array as ArrayLike<number>);
 
   return {
     level,
     stride,
     geometry,
     positions: typedPositions,
-    normals,
+    normals: typedNormals,
     uvs: typedUvs,
     layerWeights: typedLayerWeights,
     foliageMaskWeights: typedFoliageMaskWeights,
