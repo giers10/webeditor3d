@@ -341,7 +341,11 @@ describe("foliage render batch helpers", () => {
           enabled: false,
           densityMultiplier: 1,
           maxDistanceMultiplier: 1,
-          shadows: "near"
+          shadows: "near",
+          windEnabled: true,
+          windStrength: 1,
+          windSpeed: 1,
+          windDirectionDegrees: 35
         }
       }
     );
@@ -373,7 +377,11 @@ describe("foliage render batch helpers", () => {
           enabled: true,
           densityMultiplier: 1,
           maxDistanceMultiplier: 1,
-          shadows: "near"
+          shadows: "near",
+          windEnabled: true,
+          windStrength: 1,
+          windSpeed: 1,
+          windDirectionDegrees: 35
         }
       }
     );

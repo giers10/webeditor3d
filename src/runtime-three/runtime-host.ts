@@ -5704,6 +5704,7 @@ export class RuntimeHost {
 
     this.updateTerrainLodVisibility();
     this.foliageRenderer.updateView(this.camera);
+    this.foliageRenderer.updateWind(simulationDt);
     this.updateUnderwaterSceneFog();
     this.syncCelestialShadowState();
 

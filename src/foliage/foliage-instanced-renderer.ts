@@ -473,6 +473,8 @@ export class FoliageInstancedRenderer {
   private scatter: FoliageScatterResult | null = null;
   private prototypeRegistry: FoliagePrototypeRegistry = {};
   private quality: FoliageQualitySettings = resolveFoliageQualitySettings(null);
+  private windTime = 0;
+  private windUniforms: FoliageWindUniformSet[] = [];
   private currentView: FoliageRenderView | null = null;
   private viewSignature: string | null = null;
   private renderResourceSignature: string | null = null;
@@ -496,6 +498,18 @@ export class FoliageInstancedRenderer {
     this.onDiagnostic = options.onDiagnostic;
     this.group.name = "foliageInstancedRenderer";
     this.group.userData.nonPickable = true;
+  }
+
+  updateWind(deltaSeconds: number) {
+    if (!this.shouldApplyWindShader()) {
+      return;
+    }
+
+    if (Number.isFinite(deltaSeconds) && deltaSeconds > 0) {
+      this.windTime += deltaSeconds;
+    }
+
+    this.writeWindUniforms();
   }
 
   sync(input: FoliageInstancedRendererSyncInput) {
@@ -536,6 +550,7 @@ export class FoliageInstancedRenderer {
       renderResourceSignature === this.renderResourceSignature &&
       this.scatter !== null
     ) {
+      this.writeWindUniforms();
       this.applyCurrentViewToRenderResources();
       return;
     }
@@ -668,6 +683,7 @@ export class FoliageInstancedRenderer {
     this.currentView = null;
     this.viewSignature = null;
     this.renderResourceSignature = null;
+    this.windUniforms = [];
     this.sourceMeshPromisesByBundledPath.clear();
     this.clearActiveBatches();
   }
@@ -677,6 +693,7 @@ export class FoliageInstancedRenderer {
     this.activeBatchKeyByChunkKey.clear();
     this.activeLodLevelByChunkKey.clear();
     this.renderChunks = [];
+    this.windUniforms = [];
 
     if (this.activeBatchGroup === null) {
       return;
@@ -694,6 +711,41 @@ export class FoliageInstancedRenderer {
     }
 
     console.warn(message);
+  }
+
+  private shouldApplyWindShader(): boolean {
+    return (
+      this.quality.enabled &&
+      this.quality.densityMultiplier > 0 &&
+      this.quality.windEnabled
+    );
+  }
+
+  private registerWindUniforms = (uniforms: FoliageWindUniformSet) => {
+    writeFoliageWindUniformValues(uniforms, this.quality, this.windTime);
+    this.windUniforms.push(uniforms);
+  };
+
+  private writeWindUniforms() {
+    if (!this.shouldApplyWindShader()) {
+      return;
+    }
+
+    for (const uniforms of this.windUniforms) {
+      writeFoliageWindUniformValues(uniforms, this.quality, this.windTime);
+    }
+  }
+
+  private getWindMaterialOptions(): FoliageWindMaterialOptions | undefined {
+    if (!this.shouldApplyWindShader()) {
+      return undefined;
+    }
+
+    return {
+      getSettings: () => this.quality,
+      getTime: () => this.windTime,
+      registerUniforms: this.registerWindUniforms
+    };
   }
 
   private loadTemplateSourceMeshes(
@@ -761,8 +813,12 @@ export class FoliageInstancedRenderer {
       batchGroup.userData.foliageLayerId = batch.layerId;
       batchGroup.userData.foliageTerrainId = batch.terrainId;
 
+      const windOptions = this.getWindMaterialOptions();
+
       for (const sourceMesh of sourceMeshes) {
-        batchGroup.add(createInstancedMeshForSource(batch, sourceMesh));
+        batchGroup.add(
+          createInstancedMeshForSource(batch, sourceMesh, windOptions)
+        );
       }
 
       applyRendererRenderCategoryFromMaterial(batchGroup);

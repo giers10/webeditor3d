@@ -14188,6 +14188,7 @@ export class ViewportHost {
     this.updateTransformGizmoPose();
     this.updateTerrainLodVisibility();
     this.foliageRenderer.updateView(this.getActiveCamera());
+    this.foliageRenderer.updateWind(dt);
     this.volumeTime += dt;
 
     for (const uniform of this.volumeAnimatedUniforms) {
