@@ -208,8 +208,12 @@ import {
   MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT,
   MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
   MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
+  MAX_FOLIAGE_QUALITY_WIND_SPEED,
+  MAX_FOLIAGE_QUALITY_WIND_STRENGTH,
   MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
   MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
+  MIN_FOLIAGE_QUALITY_WIND_SPEED,
+  MIN_FOLIAGE_QUALITY_WIND_STRENGTH,
   areWorldSettingsEqual,
   changeWorldBackgroundMode,
   cloneWorldSettings,
@@ -1265,6 +1269,12 @@ function readUnitIntervalNumberDraft(source: string, label: string): number {
 
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function normalizeDegrees(value: number): number {
+  const normalized = value % 360;
+
+  return normalized < 0 ? normalized + 360 : normalized;
 }
 
 function assertAdvancedRenderingDistanceFogRange(
@@ -3821,6 +3831,26 @@ export function App({
     )
   );
   const [
+    advancedRenderingFoliageWindStrengthDraft,
+    setAdvancedRenderingFoliageWindStrengthDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.foliage.windStrength)
+  );
+  const [
+    advancedRenderingFoliageWindSpeedDraft,
+    setAdvancedRenderingFoliageWindSpeedDraft
+  ] = useState(
+    String(editorState.document.world.advancedRendering.foliage.windSpeed)
+  );
+  const [
+    advancedRenderingFoliageWindDirectionDraft,
+    setAdvancedRenderingFoliageWindDirectionDraft
+  ] = useState(
+    String(
+      editorState.document.world.advancedRendering.foliage.windDirectionDegrees
+    )
+  );
+  const [
     advancedRenderingAmbientOcclusionIntensityDraft,
     setAdvancedRenderingAmbientOcclusionIntensityDraft
   ] = useState(
@@ -5222,6 +5252,15 @@ export function App({
     );
     setAdvancedRenderingFoliageMaxDistanceMultiplierDraft(
       String(advancedRendering.foliage.maxDistanceMultiplier)
+    );
+    setAdvancedRenderingFoliageWindStrengthDraft(
+      String(advancedRendering.foliage.windStrength)
+    );
+    setAdvancedRenderingFoliageWindSpeedDraft(
+      String(advancedRendering.foliage.windSpeed)
+    );
+    setAdvancedRenderingFoliageWindDirectionDraft(
+      String(advancedRendering.foliage.windDirectionDegrees)
     );
     setAdvancedRenderingAmbientOcclusionIntensityDraft(
       String(advancedRendering.ambientOcclusion.intensity)
@@ -13890,6 +13929,89 @@ export function App({
     );
   };
 
+  const applyAdvancedRenderingFoliageWindEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set foliage wind",
+      enabled ? "Foliage wind enabled." : "Foliage wind disabled.",
+      (advancedRendering) => {
+        advancedRendering.foliage.windEnabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingFoliageWindStrength = () => {
+    try {
+      const windStrength = clampNumber(
+        readFiniteNumberDraft(
+          advancedRenderingFoliageWindStrengthDraft,
+          "Foliage wind strength"
+        ),
+        MIN_FOLIAGE_QUALITY_WIND_STRENGTH,
+        MAX_FOLIAGE_QUALITY_WIND_STRENGTH
+      );
+
+      setAdvancedRenderingFoliageWindStrengthDraft(String(windStrength));
+      applyAdvancedRenderingSettings(
+        "Set foliage wind strength",
+        "Updated the foliage wind strength.",
+        (advancedRendering) => {
+          advancedRendering.foliage.windStrength = windStrength;
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingFoliageWindSpeed = () => {
+    try {
+      const windSpeed = clampNumber(
+        readFiniteNumberDraft(
+          advancedRenderingFoliageWindSpeedDraft,
+          "Foliage wind speed"
+        ),
+        MIN_FOLIAGE_QUALITY_WIND_SPEED,
+        MAX_FOLIAGE_QUALITY_WIND_SPEED
+      );
+
+      setAdvancedRenderingFoliageWindSpeedDraft(String(windSpeed));
+      applyAdvancedRenderingSettings(
+        "Set foliage wind speed",
+        "Updated the foliage wind speed.",
+        (advancedRendering) => {
+          advancedRendering.foliage.windSpeed = windSpeed;
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
+  const applyAdvancedRenderingFoliageWindDirection = () => {
+    try {
+      const windDirectionDegrees = normalizeDegrees(
+        readFiniteNumberDraft(
+          advancedRenderingFoliageWindDirectionDraft,
+          "Foliage wind direction"
+        )
+      );
+
+      setAdvancedRenderingFoliageWindDirectionDraft(
+        String(windDirectionDegrees)
+      );
+      applyAdvancedRenderingSettings(
+        "Set foliage wind direction",
+        "Updated the foliage wind direction.",
+        (advancedRendering) => {
+          advancedRendering.foliage.windDirectionDegrees =
+            windDirectionDegrees;
+        }
+      );
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error));
+    }
+  };
+
   const applyAdvancedRenderingShadowsEnabled = (enabled: boolean) => {
     applyAdvancedRenderingSettings(
       "Set advanced rendering shadows",
@@ -20273,6 +20395,125 @@ export function App({
                           ))}
                         </select>
                       </label>
+                      <label className="form-field form-field--toggle">
+                        <span className="label">Wind</span>
+                        <input
+                          type="checkbox"
+                          checked={advancedRendering.foliage.windEnabled}
+                          onChange={(event) =>
+                            applyAdvancedRenderingFoliageWindEnabled(
+                              event.currentTarget.checked
+                            )
+                          }
+                        />
+                      </label>
+                      <div className="vector-inputs vector-inputs--three">
+                        <label className="form-field">
+                          <span className="label">Strength</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min={MIN_FOLIAGE_QUALITY_WIND_STRENGTH}
+                            max={MAX_FOLIAGE_QUALITY_WIND_STRENGTH}
+                            step="0.05"
+                            value={advancedRenderingFoliageWindStrengthDraft}
+                            onChange={(event) =>
+                              setAdvancedRenderingFoliageWindStrengthDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={applyAdvancedRenderingFoliageWindStrength}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingFoliageWindStrength
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingFoliageWindStrength
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingFoliageWindStrength
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Speed</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min={MIN_FOLIAGE_QUALITY_WIND_SPEED}
+                            max={MAX_FOLIAGE_QUALITY_WIND_SPEED}
+                            step="0.05"
+                            value={advancedRenderingFoliageWindSpeedDraft}
+                            onChange={(event) =>
+                              setAdvancedRenderingFoliageWindSpeedDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={applyAdvancedRenderingFoliageWindSpeed}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingFoliageWindSpeed
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingFoliageWindSpeed
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingFoliageWindSpeed
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="form-field">
+                          <span className="label">Direction</span>
+                          <input
+                            className="text-input"
+                            type="number"
+                            min="0"
+                            max="360"
+                            step="1"
+                            value={advancedRenderingFoliageWindDirectionDraft}
+                            onChange={(event) =>
+                              setAdvancedRenderingFoliageWindDirectionDraft(
+                                event.currentTarget.value
+                              )
+                            }
+                            onBlur={applyAdvancedRenderingFoliageWindDirection}
+                            onKeyDown={(event) =>
+                              handleDraftVectorKeyDown(
+                                event,
+                                applyAdvancedRenderingFoliageWindDirection
+                              )
+                            }
+                            onKeyUp={(event) =>
+                              handleNumberInputKeyUp(
+                                event,
+                                applyAdvancedRenderingFoliageWindDirection
+                              )
+                            }
+                            onPointerUp={(event) =>
+                              handleNumberInputPointerUp(
+                                event,
+                                applyAdvancedRenderingFoliageWindDirection
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
                     </div>
 
                     {!advancedRendering.enabled ? null : (

@@ -1172,7 +1172,7 @@ describe("scene document JSON", () => {
     expect(
       migratedDocument.splineCorridorJunctions[junction.id]?.shapeMode
     ).toBe("straight");
-    expect(LENS_FLARE_SCENE_DOCUMENT_VERSION).toBe(SCENE_DOCUMENT_VERSION);
+    expect(FOLIAGE_WIND_SCENE_DOCUMENT_VERSION).toBe(SCENE_DOCUMENT_VERSION);
   });
 
   it("round-trips spline corridor junctions", () => {
@@ -1858,6 +1858,33 @@ describe("scene document JSON", () => {
       entities: emptyScene.entities,
       interactionLinks: emptyScene.interactionLinks
     });
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.advancedRendering.foliage).toEqual(
+      emptyScene.world.advancedRendering.foliage
+    );
+  });
+
+  it("migrates v111 scene documents without foliage wind settings to defaults", () => {
+    const emptyScene = createEmptySceneDocument({
+      name: "Legacy Foliage Wind Scene"
+    });
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(emptyScene)
+    ) as Record<string, any>;
+    const legacyFoliage =
+      legacyDocument.world.advancedRendering.foliage as Record<
+        string,
+        unknown
+      >;
+
+    legacyDocument.version = LENS_FLARE_SCENE_DOCUMENT_VERSION;
+    delete legacyFoliage.windEnabled;
+    delete legacyFoliage.windStrength;
+    delete legacyFoliage.windSpeed;
+    delete legacyFoliage.windDirectionDegrees;
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
 
     expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
     expect(migratedDocument.world.advancedRendering.foliage).toEqual(
