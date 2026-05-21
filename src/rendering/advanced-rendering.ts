@@ -28,6 +28,7 @@ import {
   DepthOfFieldEffect,
   EffectComposer,
   EffectPass,
+  FXAAEffect,
   NormalPass,
   RenderPass,
   ShaderPass,
@@ -40,6 +41,7 @@ import {
 
 import type {
   AdvancedRenderingSettings,
+  AdvancedRenderingAntiAliasingMode,
   BoxVolumeRenderPath,
   AdvancedRenderingShadowType,
   AdvancedRenderingToneMappingMode
@@ -246,6 +248,48 @@ export function getAdvancedRenderingToneMappingMode(
   }
 }
 
+function getAdvancedRenderingAntiAliasingMultisampling(
+  renderer: WebGLRenderer,
+  settings: AdvancedRenderingSettings
+) {
+  if (
+    !settings.enabled ||
+    !settings.antiAliasing.enabled ||
+    !renderer.capabilities.isWebGL2
+  ) {
+    return 0;
+  }
+
+  switch (settings.antiAliasing.mode) {
+    case "msaa2x":
+      return 2;
+    case "msaa4x":
+      return 4;
+    case "msaa8x":
+      return 8;
+    case "smaa":
+    case "fxaa":
+      return 0;
+  }
+}
+
+function createAdvancedRenderingAntiAliasingEffect(
+  mode: AdvancedRenderingAntiAliasingMode
+): FXAAEffect | SMAAEffect | null {
+  switch (mode) {
+    case "smaa":
+      return new SMAAEffect({
+        preset: SMAAPreset.MEDIUM
+      });
+    case "fxaa":
+      return new FXAAEffect();
+    case "msaa2x":
+    case "msaa4x":
+    case "msaa8x":
+      return null;
+  }
+}
+
 export function configureAdvancedRenderingRenderer(
   renderer: WebGLRenderer,
   settings: AdvancedRenderingSettings
@@ -330,7 +374,10 @@ export function createAdvancedRenderingComposer(
   const composer = new EffectComposer(renderer, {
     depthBuffer: true,
     stencilBuffer: false,
-    multisampling: 0,
+    multisampling: getAdvancedRenderingAntiAliasingMultisampling(
+      renderer,
+      settings
+    ),
     frameBufferType: renderer.capabilities.isWebGL2
       ? HalfFloatType
       : UnsignedByteType
@@ -376,7 +423,7 @@ export function createAdvancedRenderingComposer(
   }
 
   const effects: Array<
-    BloomEffect | DepthOfFieldEffect | ToneMappingEffect | SMAAEffect
+    BloomEffect | DepthOfFieldEffect | FXAAEffect | ToneMappingEffect | SMAAEffect
   > = [];
 
   if (settings.ambientOcclusion.enabled || dynamicGlobalIlluminationEnabled) {
@@ -523,11 +570,15 @@ export function createAdvancedRenderingComposer(
       mode: getAdvancedRenderingToneMappingMode(settings.toneMapping.mode)
     })
   );
-  effects.push(
-    new SMAAEffect({
-      preset: SMAAPreset.MEDIUM
-    })
-  );
+  if (settings.antiAliasing.enabled) {
+    const antiAliasingEffect = createAdvancedRenderingAntiAliasingEffect(
+      settings.antiAliasing.mode
+    );
+
+    if (antiAliasingEffect !== null) {
+      effects.push(antiAliasingEffect);
+    }
+  }
 
   composer.addPass(new EffectPass(camera, ...effects));
 

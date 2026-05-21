@@ -198,6 +198,7 @@ import {
   type FaceUvState
 } from "../document/brushes";
 import {
+  ADVANCED_RENDERING_ANTI_ALIASING_MODES,
   ADVANCED_RENDERING_DYNAMIC_GLOBAL_ILLUMINATION_QUALITIES,
   ADVANCED_RENDERING_WATER_REFLECTION_MODES,
   BOX_VOLUME_RENDER_PATHS,
@@ -225,6 +226,7 @@ import {
   type WorldBackgroundSettings,
   type AdvancedRenderingSettings,
   type AdvancedRenderingDistanceFogSettings,
+  type AdvancedRenderingAntiAliasingMode,
   type BoxVolumeRenderPath,
   type AdvancedRenderingWaterReflectionMode,
   type AdvancedRenderingDynamicGlobalIlluminationQuality,
