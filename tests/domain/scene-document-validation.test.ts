@@ -1847,6 +1847,11 @@ describe("validateSceneDocument", () => {
         mode: "filmic",
         exposure: 0
       },
+      antiAliasing: {
+        ...document.world.advancedRendering.antiAliasing,
+        enabled: "yes",
+        mode: "temporal"
+      },
       fogPath: "high",
       waterPath: "ultra",
       depthOfField: {
@@ -1957,6 +1962,14 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-advanced-rendering-tone-mapping-exposure",
           path: "world.advancedRendering.toneMapping.exposure"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-anti-aliasing-enabled",
+          path: "world.advancedRendering.antiAliasing.enabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-advanced-rendering-anti-aliasing-mode",
+          path: "world.advancedRendering.antiAliasing.mode"
         }),
         expect.objectContaining({
           code: "invalid-advanced-rendering-dof-focal-length",

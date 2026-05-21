@@ -115,6 +115,10 @@ vi.mock("postprocessing", () => {
     constructor() {}
   }
 
+  class MockFXAAEffect {
+    constructor() {}
+  }
+
   class MockSMAAEffect {
     constructor() {}
   }
@@ -125,6 +129,7 @@ vi.mock("postprocessing", () => {
     DepthOfFieldEffect: MockDepthOfFieldEffect,
     EffectComposer: MockEffectComposer,
     EffectPass: MockEffectPass,
+    FXAAEffect: MockFXAAEffect,
     NormalPass: MockNormalPass,
     Pass: MockPass,
     RenderPass: MockRenderPass,
@@ -188,6 +193,28 @@ import {
   shouldApplyWhiteboxBevel
 } from "../../src/rendering/whitebox-bevel-material";
 import { resolveWorldBackgroundSkyColorState } from "../../src/rendering/world-background-renderer";
+
+function resetPostprocessingState() {
+  postprocessingState.composerOptions.length = 0;
+  postprocessingState.composerPasses.length = 0;
+  postprocessingState.normalPassTextures.length = 0;
+  postprocessingState.ssaoCalls.length = 0;
+}
+
+function getLastEffectPassEffectNames() {
+  const effectPasses = postprocessingState.composerPasses.filter(
+    (pass) => (pass as { name?: string }).name === "EffectPass"
+  );
+  const lastEffectPass = effectPasses.at(-1) as
+    | { effects: unknown[] }
+    | undefined;
+
+  return (
+    lastEffectPass?.effects.map(
+      (effect) => (effect as { constructor: { name: string } }).constructor.name
+    ) ?? []
+  );
+}
 
 describe("resolveBoxVolumeRenderPaths", () => {
   it("uses authored fog and water paths when advanced rendering is enabled", () => {
