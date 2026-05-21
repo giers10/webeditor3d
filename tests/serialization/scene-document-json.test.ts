@@ -1874,9 +1874,14 @@ describe("scene document JSON", () => {
     const emptyScene = createEmptySceneDocument({
       name: "Legacy Foliage Wind Scene"
     });
-    const legacyDocument = JSON.parse(
-      serializeSceneDocument(emptyScene)
-    ) as Record<string, any>;
+    const legacyDocument = JSON.parse(serializeSceneDocument(emptyScene)) as {
+      version: number;
+      world: {
+        advancedRendering: {
+          foliage: Record<string, unknown>;
+        };
+      };
+    };
     const legacyFoliage = legacyDocument.world.advancedRendering
       .foliage as Record<string, unknown>;
 
@@ -1898,11 +1903,13 @@ describe("scene document JSON", () => {
     const emptyScene = createEmptySceneDocument({
       name: "Legacy Anti-Aliasing Scene"
     });
-    const legacyDocument = JSON.parse(
-      serializeSceneDocument(emptyScene)
-    ) as Record<string, any>;
-    const legacyAdvancedRendering = legacyDocument.world
-      .advancedRendering as Record<string, unknown>;
+    const legacyDocument = JSON.parse(serializeSceneDocument(emptyScene)) as {
+      version: number;
+      world: {
+        advancedRendering: Record<string, unknown>;
+      };
+    };
+    const legacyAdvancedRendering = legacyDocument.world.advancedRendering;
 
     legacyDocument.version = FOLIAGE_WIND_SCENE_DOCUMENT_VERSION;
     delete legacyAdvancedRendering.antiAliasing;
