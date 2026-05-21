@@ -114,14 +114,128 @@ function stableStringify(value: unknown): string {
   return JSON.stringify(String(value));
 }
 
-function cloneMaterial(material: Material): Material {
-  return material.clone();
+function resolveFoliageWindDirectionVector(
+  settings: FoliageQualitySettings
+): Vector2 {
+  const radians = (settings.windDirectionDegrees * Math.PI) / 180;
+
+  return new Vector2(Math.cos(radians), Math.sin(radians)).normalize();
 }
 
-function cloneMaterialSet(material: Material | Material[]): Material | Material[] {
+function createFoliageWindUniformSet(
+  settings: FoliageQualitySettings,
+  time: number
+): FoliageWindUniformSet {
+  return {
+    time: { value: time },
+    strength: { value: settings.windStrength },
+    speed: { value: settings.windSpeed },
+    direction: { value: resolveFoliageWindDirectionVector(settings) }
+  };
+}
+
+function writeFoliageWindUniformValues(
+  uniforms: FoliageWindUniformSet,
+  settings: FoliageQualitySettings,
+  time: number
+) {
+  uniforms.time.value = time;
+  uniforms.strength.value = settings.windStrength;
+  uniforms.speed.value = settings.windSpeed;
+  uniforms.direction.value.copy(resolveFoliageWindDirectionVector(settings));
+}
+
+function patchFoliageWindMaterial(
+  material: MeshStandardMaterial,
+  options: FoliageWindMaterialOptions
+) {
+  const previousOnBeforeCompile = material.onBeforeCompile.bind(material);
+  const previousCustomProgramCacheKey =
+    material.customProgramCacheKey.bind(material);
+
+  material.onBeforeCompile = (
+    shader: FoliageWindCompileShader,
+    renderer: FoliageWindCompileRenderer
+  ) => {
+    previousOnBeforeCompile(shader, renderer);
+
+    const uniforms = createFoliageWindUniformSet(
+      options.getSettings(),
+      options.getTime()
+    );
+
+    shader.uniforms.foliageWindTime = uniforms.time;
+    shader.uniforms.foliageWindStrength = uniforms.strength;
+    shader.uniforms.foliageWindSpeed = uniforms.speed;
+    shader.uniforms.foliageWindDirection = uniforms.direction;
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+attribute vec2 ${FOLIAGE_WIND_ATTRIBUTE_NAME};
+uniform float foliageWindTime;
+uniform float foliageWindStrength;
+uniform float foliageWindSpeed;
+uniform vec2 foliageWindDirection;`
+      )
+      .replace(
+        "#include <project_vertex>",
+        `vec4 mvPosition = vec4( transformed, 1.0 );
+#ifdef USE_BATCHING
+  mvPosition = batchingMatrix * mvPosition;
+#endif
+#ifdef USE_INSTANCING
+  mvPosition = instanceMatrix * mvPosition;
+#endif
+float foliageWindHeightMask = clamp(position.y, 0.0, 1.0);
+foliageWindHeightMask *= foliageWindHeightMask;
+float foliageWindInstanceStrength = max(${FOLIAGE_WIND_ATTRIBUTE_NAME}.y, 0.0);
+float foliageWindAmount =
+  foliageWindStrength * foliageWindInstanceStrength * foliageWindHeightMask;
+vec2 foliageWindSideDirection = vec2(-foliageWindDirection.y, foliageWindDirection.x);
+float foliageWindPhase =
+  dot(mvPosition.xz, foliageWindDirection * 0.22) +
+  ${FOLIAGE_WIND_ATTRIBUTE_NAME}.x +
+  foliageWindTime * foliageWindSpeed;
+float foliageWindPrimary = sin(foliageWindPhase);
+float foliageWindSecondary = sin(foliageWindPhase * 1.73 + foliageWindTime * foliageWindSpeed * 0.37);
+mvPosition.xz += foliageWindDirection * foliageWindPrimary * foliageWindAmount * 0.18;
+mvPosition.xz += foliageWindSideDirection * foliageWindSecondary * foliageWindAmount * 0.045;
+mvPosition.y += foliageWindSecondary * foliageWindAmount * 0.025;
+mvPosition = modelViewMatrix * mvPosition;
+gl_Position = projectionMatrix * mvPosition;`
+      );
+
+    options.registerUniforms(uniforms);
+  };
+  material.customProgramCacheKey = () =>
+    `${previousCustomProgramCacheKey()}|${FOLIAGE_WIND_SHADER_KEY}`;
+  material.needsUpdate = true;
+}
+
+function cloneMaterial(
+  material: Material,
+  windOptions?: FoliageWindMaterialOptions
+): Material {
+  const clonedMaterial = material.clone();
+
+  if (
+    windOptions !== undefined &&
+    clonedMaterial instanceof MeshStandardMaterial
+  ) {
+    patchFoliageWindMaterial(clonedMaterial, windOptions);
+  }
+
+  return clonedMaterial;
+}
+
+function cloneMaterialSet(
+  material: Material | Material[],
+  windOptions?: FoliageWindMaterialOptions
+): Material | Material[] {
   return Array.isArray(material)
-    ? material.map((entry) => cloneMaterial(entry))
-    : cloneMaterial(material);
+    ? material.map((entry) => cloneMaterial(entry, windOptions))
+    : cloneMaterial(material, windOptions);
 }
 
 function disposeMaterial(material: Material | Material[]) {
@@ -268,18 +382,35 @@ function createFoliageRenderResourceSignature(options: {
     quality: {
       enabled: options.quality.enabled,
       densityMultiplier: options.quality.densityMultiplier,
-      shadows: options.quality.shadows
+      shadows: options.quality.shadows,
+      windEnabled: options.quality.windEnabled
     }
   });
 }
 
+function createFoliageWindAttribute(
+  instances: FoliageRenderBatch["instances"]
+): InstancedBufferAttribute {
+  const values = new Float32Array(instances.length * 2);
+
+  for (let index = 0; index < instances.length; index += 1) {
+    const instance = instances[index]!;
+
+    values[index * 2] = instance.windPhase;
+    values[index * 2 + 1] = Math.max(0, instance.windStrength);
+  }
+
+  return new InstancedBufferAttribute(values, 2);
+}
+
 function createInstancedMeshForSource(
   batch: FoliageRenderBatch,
-  sourceMesh: FoliageTemplateSourceMesh
+  sourceMesh: FoliageTemplateSourceMesh,
+  windOptions?: FoliageWindMaterialOptions
 ): InstancedMesh {
   const mesh = new InstancedMesh(
     sourceMesh.geometry.clone(),
-    cloneMaterialSet(sourceMesh.material),
+    cloneMaterialSet(sourceMesh.material, windOptions),
     batch.instances.length
   );
   const color = new Color();
@@ -312,6 +443,13 @@ function createInstancedMeshForSource(
   }
 
   mesh.instanceMatrix.needsUpdate = true;
+
+  if (windOptions !== undefined) {
+    mesh.geometry.setAttribute(
+      FOLIAGE_WIND_ATTRIBUTE_NAME,
+      createFoliageWindAttribute(batch.instances)
+    );
+  }
 
   if (mesh.instanceColor !== null) {
     mesh.instanceColor.needsUpdate = true;
