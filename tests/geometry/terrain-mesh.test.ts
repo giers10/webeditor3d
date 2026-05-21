@@ -362,7 +362,7 @@ describe("terrain mesh generation", () => {
     }
   });
 
-  it("adds terrain LoD skirt vertices to hide hard-switch edge cracks", () => {
+  it("adds terrain LoD skirt vertices on terrain perimeter edges", () => {
     const terrain = createTerrain({
       sampleCountX: 9,
       sampleCountZ: 9
