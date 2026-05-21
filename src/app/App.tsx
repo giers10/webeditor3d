@@ -2559,6 +2559,23 @@ function formatAdvancedRenderingToneMappingLabel(
   }
 }
 
+function formatAdvancedRenderingAntiAliasingModeLabel(
+  mode: AdvancedRenderingAntiAliasingMode
+): string {
+  switch (mode) {
+    case "smaa":
+      return "SMAA";
+    case "fxaa":
+      return "FXAA";
+    case "msaa2x":
+      return "MSAA 2x";
+    case "msaa4x":
+      return "MSAA 4x";
+    case "msaa8x":
+      return "MSAA 8x";
+  }
+}
+
 function formatAdvancedRenderingDynamicGlobalIlluminationQualityLabel(
   quality: AdvancedRenderingDynamicGlobalIlluminationQuality
 ): string {
@@ -13852,6 +13869,28 @@ export function App({
       enabled ? "Advanced rendering enabled." : "Advanced rendering disabled.",
       (advancedRendering) => {
         advancedRendering.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingAntiAliasingEnabled = (enabled: boolean) => {
+    applyAdvancedRenderingSettings(
+      "Set anti-aliasing",
+      enabled ? "Anti-aliasing enabled." : "Anti-aliasing disabled.",
+      (advancedRendering) => {
+        advancedRendering.antiAliasing.enabled = enabled;
+      }
+    );
+  };
+
+  const applyAdvancedRenderingAntiAliasingMode = (
+    mode: AdvancedRenderingAntiAliasingMode
+  ) => {
+    applyAdvancedRenderingSettings(
+      "Set anti-aliasing mode",
+      `Anti-aliasing mode set to ${formatAdvancedRenderingAntiAliasingModeLabel(mode)}.`,
+      (advancedRendering) => {
+        advancedRendering.antiAliasing.mode = mode;
       }
     );
   };
