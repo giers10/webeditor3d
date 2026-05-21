@@ -41,6 +41,10 @@ export const MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER = 0 as const;
 export const MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER = 8 as const;
 export const MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER = 0.1 as const;
 export const MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER = 2 as const;
+export const MIN_FOLIAGE_QUALITY_WIND_STRENGTH = 0 as const;
+export const MAX_FOLIAGE_QUALITY_WIND_STRENGTH = 4 as const;
+export const MIN_FOLIAGE_QUALITY_WIND_SPEED = 0 as const;
+export const MAX_FOLIAGE_QUALITY_WIND_SPEED = 8 as const;
 
 export type AdvancedRenderingShadowMapSize =
   (typeof ADVANCED_RENDERING_SHADOW_MAP_SIZES)[number];
@@ -209,6 +213,10 @@ export interface FoliageQualitySettings {
   densityMultiplier: number;
   maxDistanceMultiplier: number;
   shadows: FoliageQualityShadowMode;
+  windEnabled: boolean;
+  windStrength: number;
+  windSpeed: number;
+  windDirectionDegrees: number;
 }
 
 export interface AdvancedRenderingSettings {
@@ -337,6 +345,10 @@ const DEFAULT_FOLIAGE_QUALITY_ENABLED = true;
 const DEFAULT_FOLIAGE_QUALITY_DENSITY_MULTIPLIER = 1;
 const DEFAULT_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER = 1;
 const DEFAULT_FOLIAGE_QUALITY_SHADOWS: FoliageQualityShadowMode = "near";
+const DEFAULT_FOLIAGE_QUALITY_WIND_ENABLED = true;
+const DEFAULT_FOLIAGE_QUALITY_WIND_STRENGTH = 0.65;
+const DEFAULT_FOLIAGE_QUALITY_WIND_SPEED = 1;
+const DEFAULT_FOLIAGE_QUALITY_WIND_DIRECTION_DEGREES = 35;
 const DEFAULT_BOX_VOLUME_RENDER_PATH: BoxVolumeRenderPath = "performance";
 const DEFAULT_ADVANCED_RENDERING_WATER_REFLECTION_MODE: AdvancedRenderingWaterReflectionMode =
   "none";
