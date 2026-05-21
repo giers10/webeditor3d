@@ -486,9 +486,9 @@ describe("god rays parameters", () => {
       }
     };
 
-    expect(
-      resolveDominantScreenSpaceGodRaysLightInput(visibleSun, null)
-    ).toBe(visibleSun);
+    expect(resolveDominantScreenSpaceGodRaysLightInput(visibleSun, null)).toBe(
+      visibleSun
+    );
     expect(
       resolveDominantScreenSpaceGodRaysLightInput(visibleSun, visibleMoon)
     ).toBe(visibleMoon);
@@ -532,9 +532,9 @@ describe("god rays parameters", () => {
     ).toBeGreaterThan(0.5);
     expect(resolveGodRaysSourceMask(0.035)).toBeLessThan(0.5);
     expect(resolveGodRaysSourceMask(0.035, 2)).toBeGreaterThan(0.5);
-    expect(
-      resolveGodRaysSourceMask(GOD_RAYS_SOURCE_MASK_RADII.haloOuter)
-    ).toBe(0);
+    expect(resolveGodRaysSourceMask(GOD_RAYS_SOURCE_MASK_RADII.haloOuter)).toBe(
+      0
+    );
   });
 });
 
@@ -665,6 +665,131 @@ describe("createAdvancedRenderingComposer", () => {
         .renderLayerMask
     ).toBe(ALL_RENDER_LAYER_MASK);
     expect(postprocessingState.ssaoCalls).toHaveLength(0);
+  });
+
+  it("keeps SMAA as the default post-process anti-aliasing effect", () => {
+    resetPostprocessingState();
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(postprocessingState.composerOptions[0]).toMatchObject({
+      multisampling: 0
+    });
+    expect(getLastEffectPassEffectNames()).toEqual([
+      "MockToneMappingEffect",
+      "MockSMAAEffect"
+    ]);
+  });
+
+  it("can disable anti-aliasing in the post stack", () => {
+    resetPostprocessingState();
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.antiAliasing.enabled = false;
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(postprocessingState.composerOptions[0]).toMatchObject({
+      multisampling: 0
+    });
+    expect(getLastEffectPassEffectNames()).toEqual(["MockToneMappingEffect"]);
+  });
+
+  it("uses FXAA when selected", () => {
+    resetPostprocessingState();
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.antiAliasing.mode = "fxaa";
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(postprocessingState.composerOptions[0]).toMatchObject({
+      multisampling: 0
+    });
+    expect(getLastEffectPassEffectNames()).toEqual([
+      "MockToneMappingEffect",
+      "MockFXAAEffect"
+    ]);
+  });
+
+  it("uses composer MSAA samples on WebGL2 when an MSAA mode is selected", () => {
+    resetPostprocessingState();
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.antiAliasing.mode = "msaa4x";
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: true
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(postprocessingState.composerOptions[0]).toMatchObject({
+      multisampling: 4
+    });
+    expect(getLastEffectPassEffectNames()).toEqual(["MockToneMappingEffect"]);
+  });
+
+  it("falls back to no composer MSAA samples outside WebGL2", () => {
+    resetPostprocessingState();
+
+    const settings = createDefaultWorldSettings().advancedRendering;
+    settings.enabled = true;
+    settings.antiAliasing.mode = "msaa8x";
+
+    createAdvancedRenderingComposer(
+      {
+        capabilities: {
+          isWebGL2: false
+        }
+      } as unknown as never,
+      new Scene(),
+      new PerspectiveCamera(),
+      settings
+    );
+
+    expect(postprocessingState.composerOptions[0]).toMatchObject({
+      multisampling: 0
+    });
+    expect(getLastEffectPassEffectNames()).toEqual(["MockToneMappingEffect"]);
   });
 
   it("adds distance fog before post-world overlay layers", () => {

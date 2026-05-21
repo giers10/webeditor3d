@@ -1147,7 +1147,9 @@ function validateWorldSettings(
     );
   }
 
-  if (!isAdvancedRenderingAntiAliasingMode(advancedRendering.antiAliasing.mode)) {
+  if (
+    !isAdvancedRenderingAntiAliasingMode(advancedRendering.antiAliasing.mode)
+  ) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -1261,9 +1263,7 @@ function validateWorldSettings(
     );
   }
 
-  if (
-    !isNonNegativeFiniteNumber(advancedRendering.distanceFog.nearDistance)
-  ) {
+  if (!isNonNegativeFiniteNumber(advancedRendering.distanceFog.nearDistance)) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -3611,7 +3611,12 @@ function validateSplineCorridorJunction(
       )
     );
   } else {
-    validateScenePathRoadEdge(junction.edge, `${path}.edge`, document, diagnostics);
+    validateScenePathRoadEdge(
+      junction.edge,
+      `${path}.edge`,
+      document,
+      diagnostics
+    );
   }
 
   if (!Array.isArray(junction.connections) || junction.connections.length < 2) {
@@ -3950,8 +3955,7 @@ function validateTerrain(
       );
     }
 
-    const expectedFoliageMaskValueCount =
-      mask.resolutionX * mask.resolutionZ;
+    const expectedFoliageMaskValueCount = mask.resolutionX * mask.resolutionZ;
 
     if (mask.values.length !== expectedFoliageMaskValueCount) {
       diagnostics.push(
@@ -5172,9 +5176,7 @@ function validatePlayerStartEntity(
     );
   }
 
-  if (
-    !isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.climb)
-  ) {
+  if (!isPlayerStartGamepadActionBinding(entity.inputBindings?.gamepad.climb)) {
     diagnostics.push(
       createDiagnostic(
         "error",
@@ -5957,10 +5959,7 @@ function validateNpcEntity(
     );
   }
 
-  if (
-    typeof entity.targetAnchor !== "object" ||
-    entity.targetAnchor === null
-  ) {
+  if (typeof entity.targetAnchor !== "object" || entity.targetAnchor === null) {
     diagnostics.push(
       createDiagnostic(
         "error",

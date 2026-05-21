@@ -14044,8 +14044,7 @@ export function App({
         "Set foliage wind direction",
         "Updated the foliage wind direction.",
         (advancedRendering) => {
-          advancedRendering.foliage.windDirectionDegrees =
-            windDirectionDegrees;
+          advancedRendering.foliage.windDirectionDegrees = windDirectionDegrees;
         }
       );
     } catch (error) {
@@ -21920,9 +21919,7 @@ export function App({
                                 type="number"
                                 min="0"
                                 step="0.05"
-                                value={
-                                  advancedRenderingLensFlareIntensityDraft
-                                }
+                                value={advancedRenderingLensFlareIntensityDraft}
                                 onChange={(event) =>
                                   setAdvancedRenderingLensFlareIntensityDraft(
                                     event.currentTarget.value
@@ -21965,9 +21962,7 @@ export function App({
                                     event.currentTarget.value
                                   )
                                 }
-                                onBlur={
-                                  applyAdvancedRenderingLensFlareHaloSize
-                                }
+                                onBlur={applyAdvancedRenderingLensFlareHaloSize}
                                 onKeyDown={(event) =>
                                   handleDraftVectorKeyDown(
                                     event,

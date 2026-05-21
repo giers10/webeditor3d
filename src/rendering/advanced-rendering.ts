@@ -423,7 +423,11 @@ export function createAdvancedRenderingComposer(
   }
 
   const effects: Array<
-    BloomEffect | DepthOfFieldEffect | FXAAEffect | ToneMappingEffect | SMAAEffect
+    | BloomEffect
+    | DepthOfFieldEffect
+    | FXAAEffect
+    | ToneMappingEffect
+    | SMAAEffect
   > = [];
 
   if (settings.ambientOcclusion.enabled || dynamicGlobalIlluminationEnabled) {

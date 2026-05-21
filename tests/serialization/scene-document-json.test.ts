@@ -1877,11 +1877,8 @@ describe("scene document JSON", () => {
     const legacyDocument = JSON.parse(
       serializeSceneDocument(emptyScene)
     ) as Record<string, any>;
-    const legacyFoliage =
-      legacyDocument.world.advancedRendering.foliage as Record<
-        string,
-        unknown
-      >;
+    const legacyFoliage = legacyDocument.world.advancedRendering
+      .foliage as Record<string, unknown>;
 
     legacyDocument.version = LENS_FLARE_SCENE_DOCUMENT_VERSION;
     delete legacyFoliage.windEnabled;

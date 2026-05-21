@@ -889,9 +889,7 @@ function readAdvancedRenderingSettings(
   }
 
   if (value.antiAliasing !== undefined && !isRecord(value.antiAliasing)) {
-    throw new Error(
-      "world.advancedRendering.antiAliasing must be an object."
-    );
+    throw new Error("world.advancedRendering.antiAliasing must be an object.");
   }
 
   if (value.depthOfField !== undefined && !isRecord(value.depthOfField)) {

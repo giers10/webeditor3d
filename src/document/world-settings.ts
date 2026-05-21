@@ -759,8 +759,7 @@ export function createDefaultAdvancedRenderingSettings(): AdvancedRenderingSetti
       enabled: false,
       intensity: DEFAULT_ADVANCED_RENDERING_LENS_FLARE_INTENSITY,
       haloSize: DEFAULT_ADVANCED_RENDERING_LENS_FLARE_HALO_SIZE,
-      ghostIntensity:
-        DEFAULT_ADVANCED_RENDERING_LENS_FLARE_GHOST_INTENSITY,
+      ghostIntensity: DEFAULT_ADVANCED_RENDERING_LENS_FLARE_GHOST_INTENSITY,
       ghostCount: DEFAULT_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT
     },
     foliage: createDefaultFoliageQualitySettings(),
