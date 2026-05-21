@@ -56,16 +56,8 @@ function collectTopEdgeKeys(options: {
       options.level.positions[positionOffset + varyingOffset]! /
       options.terrain.cellSize;
     const roundedVaryingSample = Math.round(varyingSample);
-    const maxVaryingSample =
-      options.axis === "x"
-        ? options.terrain.sampleCountZ - 1
-        : options.terrain.sampleCountX - 1;
 
     if (Math.abs(varyingSample - roundedVaryingSample) > epsilon) {
-      continue;
-    }
-
-    if (roundedVaryingSample === 0 || roundedVaryingSample === maxVaryingSample) {
       continue;
     }
 
@@ -122,8 +114,16 @@ function collectLoweredEdgeVertexCount(options: {
       options.level.positions[positionOffset + varyingOffset]! /
       options.terrain.cellSize;
     const roundedVaryingSample = Math.round(varyingSample);
+    const maxVaryingSample =
+      options.axis === "x"
+        ? options.terrain.sampleCountZ - 1
+        : options.terrain.sampleCountX - 1;
 
     if (Math.abs(varyingSample - roundedVaryingSample) > epsilon) {
+      continue;
+    }
+
+    if (roundedVaryingSample === 0 || roundedVaryingSample === maxVaryingSample) {
       continue;
     }
 
