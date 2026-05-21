@@ -1527,6 +1527,10 @@ describe("scene document JSON", () => {
         mode: "acesFilmic",
         exposure: 1.25
       },
+      antiAliasing: {
+        enabled: true,
+        mode: "fxaa"
+      },
       whiteboxBevel: {
         enabled: true,
         edgeWidth: 0.18,
