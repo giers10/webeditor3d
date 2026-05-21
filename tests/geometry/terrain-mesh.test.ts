@@ -1,13 +1,146 @@
 import { describe, expect, it } from "vitest";
 
-import { createTerrain } from "../../src/document/terrains";
+import {
+  createTerrain,
+  getTerrainHeightAtSample,
+  type Terrain
+} from "../../src/document/terrains";
 import {
   buildTerrainDerivedMeshData,
   buildTerrainLodChunkMeshData,
   buildTerrainLodMeshData,
+  type TerrainLodLevelMeshData,
   resolveTerrainLodLevelIndex,
   resolveTerrainLodLevelIndexWithHysteresis
 } from "../../src/geometry/terrain-mesh";
+
+function createJaggedTerrainHeights(sampleCountX: number, sampleCountZ: number) {
+  return Array.from({ length: sampleCountX * sampleCountZ }, (_, index) => {
+    const sampleX = index % sampleCountX;
+    const sampleZ = Math.floor(index / sampleCountX);
+
+    return (
+      ((sampleX * 17 + sampleZ * 31) % 13) -
+      6 +
+      (sampleX % 2 === 0 ? 0.35 : -0.2) +
+      (sampleZ % 3 === 0 ? 0.5 : -0.15)
+    );
+  });
+}
+
+function collectTopEdgeKeys(options: {
+  terrain: Terrain;
+  level: TerrainLodLevelMeshData;
+  axis: "x" | "z";
+  sampleCoordinate: number;
+}): string[] {
+  const keys = new Set<string>();
+  const coordinateOffset = options.axis === "x" ? 0 : 2;
+  const varyingOffset = options.axis === "x" ? 2 : 0;
+  const epsilon = 1e-5;
+
+  for (
+    let positionOffset = 0;
+    positionOffset < options.level.positions.length;
+    positionOffset += 3
+  ) {
+    const sampleCoordinate =
+      options.level.positions[positionOffset + coordinateOffset]! /
+      options.terrain.cellSize;
+
+    if (Math.abs(sampleCoordinate - options.sampleCoordinate) > epsilon) {
+      continue;
+    }
+
+    const varyingSample =
+      options.level.positions[positionOffset + varyingOffset]! /
+      options.terrain.cellSize;
+    const roundedVaryingSample = Math.round(varyingSample);
+
+    if (Math.abs(varyingSample - roundedVaryingSample) > epsilon) {
+      continue;
+    }
+
+    const sampleX =
+      options.axis === "x"
+        ? options.sampleCoordinate
+        : roundedVaryingSample;
+    const sampleZ =
+      options.axis === "x"
+        ? roundedVaryingSample
+        : options.sampleCoordinate;
+    const expectedHeight = getTerrainHeightAtSample(
+      options.terrain,
+      sampleX,
+      sampleZ
+    );
+    const height = options.level.positions[positionOffset + 1]!;
+
+    if (Math.abs(height - expectedHeight) > epsilon) {
+      continue;
+    }
+
+    keys.add(`${roundedVaryingSample}:${height.toFixed(6)}`);
+  }
+
+  return [...keys].sort((left, right) => Number(left.split(":")[0]) - Number(right.split(":")[0]));
+}
+
+function collectLoweredEdgeVertexCount(options: {
+  terrain: Terrain;
+  level: TerrainLodLevelMeshData;
+  axis: "x" | "z";
+  sampleCoordinate: number;
+}): number {
+  const coordinateOffset = options.axis === "x" ? 0 : 2;
+  const varyingOffset = options.axis === "x" ? 2 : 0;
+  const epsilon = 1e-5;
+  let count = 0;
+
+  for (
+    let positionOffset = 0;
+    positionOffset < options.level.positions.length;
+    positionOffset += 3
+  ) {
+    const sampleCoordinate =
+      options.level.positions[positionOffset + coordinateOffset]! /
+      options.terrain.cellSize;
+
+    if (Math.abs(sampleCoordinate - options.sampleCoordinate) > epsilon) {
+      continue;
+    }
+
+    const varyingSample =
+      options.level.positions[positionOffset + varyingOffset]! /
+      options.terrain.cellSize;
+    const roundedVaryingSample = Math.round(varyingSample);
+
+    if (Math.abs(varyingSample - roundedVaryingSample) > epsilon) {
+      continue;
+    }
+
+    const sampleX =
+      options.axis === "x"
+        ? options.sampleCoordinate
+        : roundedVaryingSample;
+    const sampleZ =
+      options.axis === "x"
+        ? roundedVaryingSample
+        : options.sampleCoordinate;
+    const expectedHeight = getTerrainHeightAtSample(
+      options.terrain,
+      sampleX,
+      sampleZ
+    );
+    const height = options.level.positions[positionOffset + 1]!;
+
+    if (height < expectedHeight - epsilon) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
 
 describe("terrain mesh generation", () => {
   it("chooses the forward diagonal when the opposite-corner height delta is smaller", () => {
@@ -251,6 +384,116 @@ describe("terrain mesh generation", () => {
 
     expect(level!.skirtVertexCount).toBeGreaterThan(0);
     expect(level!.positions.length / 3).toBeGreaterThan(9 * 9);
+  });
+
+  it("keeps shared terrain LoD chunk borders at full source resolution for every level", () => {
+    const terrain = createTerrain({
+      sampleCountX: 129,
+      sampleCountZ: 129,
+      heights: createJaggedTerrainHeights(129, 129)
+    });
+    const lodMesh = buildTerrainLodMeshData(terrain);
+    const westChunk = lodMesh.chunks.find(
+      (chunk) => chunk.chunkX === 0 && chunk.chunkZ === 0
+    );
+    const eastChunk = lodMesh.chunks.find(
+      (chunk) => chunk.chunkX === 1 && chunk.chunkZ === 0
+    );
+    const southChunk = lodMesh.chunks.find(
+      (chunk) => chunk.chunkX === 0 && chunk.chunkZ === 0
+    );
+    const northChunk = lodMesh.chunks.find(
+      (chunk) => chunk.chunkX === 0 && chunk.chunkZ === 1
+    );
+
+    expect(westChunk).toBeDefined();
+    expect(eastChunk).toBeDefined();
+    expect(southChunk).toBeDefined();
+    expect(northChunk).toBeDefined();
+
+    const expectedVerticalEdge = Array.from({ length: 65 }, (_, sampleZ) => {
+      const height = getTerrainHeightAtSample(terrain, 64, sampleZ);
+
+      return `${sampleZ}:${height.toFixed(6)}`;
+    });
+    const expectedHorizontalEdge = Array.from({ length: 65 }, (_, sampleX) => {
+      const height = getTerrainHeightAtSample(terrain, sampleX, 64);
+
+      return `${sampleX}:${height.toFixed(6)}`;
+    });
+
+    for (const level of westChunk!.levels) {
+      expect(
+        collectTopEdgeKeys({
+          terrain,
+          level,
+          axis: "x",
+          sampleCoordinate: 64
+        })
+      ).toEqual(expectedVerticalEdge);
+    }
+
+    for (const level of eastChunk!.levels) {
+      expect(
+        collectTopEdgeKeys({
+          terrain,
+          level,
+          axis: "x",
+          sampleCoordinate: 64
+        })
+      ).toEqual(expectedVerticalEdge);
+    }
+
+    for (const level of southChunk!.levels) {
+      expect(
+        collectTopEdgeKeys({
+          terrain,
+          level,
+          axis: "z",
+          sampleCoordinate: 64
+        })
+      ).toEqual(expectedHorizontalEdge);
+    }
+
+    for (const level of northChunk!.levels) {
+      expect(
+        collectTopEdgeKeys({
+          terrain,
+          level,
+          axis: "z",
+          sampleCoordinate: 64
+        })
+      ).toEqual(expectedHorizontalEdge);
+    }
+  });
+
+  it("does not add vertical terrain LoD skirts on shared chunk borders", () => {
+    const terrain = createTerrain({
+      sampleCountX: 129,
+      sampleCountZ: 65,
+      heights: createJaggedTerrainHeights(129, 65)
+    });
+    const lodMesh = buildTerrainLodMeshData(terrain);
+    const westChunk = lodMesh.chunks.find(
+      (chunk) => chunk.chunkX === 0 && chunk.chunkZ === 0
+    );
+    const eastChunk = lodMesh.chunks.find(
+      (chunk) => chunk.chunkX === 1 && chunk.chunkZ === 0
+    );
+
+    expect(westChunk).toBeDefined();
+    expect(eastChunk).toBeDefined();
+
+    for (const level of [...westChunk!.levels, ...eastChunk!.levels]) {
+      expect(
+        collectLoweredEdgeVertexCount({
+          terrain,
+          level,
+          axis: "x",
+          sampleCoordinate: 64
+        })
+      ).toBe(0);
+    }
   });
 
   it("selects coarser terrain LoD levels as perspective distance increases", () => {
