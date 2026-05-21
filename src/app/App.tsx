@@ -20560,6 +20560,45 @@ export function App({
                     {!advancedRendering.enabled ? null : (
                       <>
                         <div className="form-section">
+                          <div className="label">Anti-Aliasing</div>
+                          <label className="form-field form-field--toggle">
+                            <span className="label">Enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={advancedRendering.antiAliasing.enabled}
+                              onChange={(event) =>
+                                applyAdvancedRenderingAntiAliasingEnabled(
+                                  event.currentTarget.checked
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span className="label">Method</span>
+                            <select
+                              className="select-input"
+                              value={advancedRendering.antiAliasing.mode}
+                              onChange={(event) =>
+                                applyAdvancedRenderingAntiAliasingMode(
+                                  event.currentTarget
+                                    .value as AdvancedRenderingAntiAliasingMode
+                                )
+                              }
+                            >
+                              {ADVANCED_RENDERING_ANTI_ALIASING_MODES.map(
+                                (mode) => (
+                                  <option key={mode} value={mode}>
+                                    {formatAdvancedRenderingAntiAliasingModeLabel(
+                                      mode
+                                    )}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                          </label>
+                        </div>
+
+                        <div className="form-section">
                           <div className="label">Shadows</div>
                           <label className="form-field form-field--toggle">
                             <span className="label">Enabled</span>

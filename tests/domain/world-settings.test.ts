@@ -33,6 +33,9 @@ describe("world settings helpers", () => {
     expect(clone.advancedRendering.dynamicGlobalIllumination).not.toBe(
       source.advancedRendering.dynamicGlobalIllumination
     );
+    expect(clone.advancedRendering.antiAliasing).not.toBe(
+      source.advancedRendering.antiAliasing
+    );
     expect(clone.advancedRendering.whiteboxBevel).not.toBe(
       source.advancedRendering.whiteboxBevel
     );
@@ -174,6 +177,15 @@ describe("world settings helpers", () => {
     const right = cloneWorldSettings(left);
 
     right.advancedRendering.dynamicGlobalIllumination.enabled = true;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
+
+  it("treats anti-aliasing settings as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.advancedRendering.antiAliasing.mode = "fxaa";
 
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });
