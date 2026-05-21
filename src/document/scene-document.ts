@@ -36,7 +36,8 @@ import {
   type FoliagePrototypeRegistry
 } from "../foliage/foliage";
 
-export const SCENE_DOCUMENT_VERSION = 112 as const;
+export const SCENE_DOCUMENT_VERSION = 113 as const;
+export const ANTI_ALIASING_SCENE_DOCUMENT_VERSION = 113 as const;
 export const FOLIAGE_WIND_SCENE_DOCUMENT_VERSION = 112 as const;
 export const LENS_FLARE_SCENE_DOCUMENT_VERSION = 111 as const;
 export const CUSTOM_PBR_MATERIALS_SCENE_DOCUMENT_VERSION = 110 as const;

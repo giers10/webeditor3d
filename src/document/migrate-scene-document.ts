@@ -176,6 +176,7 @@ import {
 import {
   BOX_BRUSH_SCENE_DOCUMENT_VERSION,
   ANIMATION_PLAYBACK_SCENE_DOCUMENT_VERSION,
+  ANTI_ALIASING_SCENE_DOCUMENT_VERSION,
   ATMOSPHERE_POLISH_SCENE_DOCUMENT_VERSION,
   AUTHORED_TERRAIN_COLLISION_SCENE_DOCUMENT_VERSION,
   AUTHORED_TERRAIN_FOUNDATION_SCENE_DOCUMENT_VERSION,
@@ -378,6 +379,7 @@ import {
   createDefaultWorldShaderSkySettings,
   DEFAULT_NIGHT_IMAGE_ENVIRONMENT_INTENSITY,
   MAX_ADVANCED_RENDERING_LENS_FLARE_GHOST_COUNT,
+  isAdvancedRenderingAntiAliasingMode,
   isAdvancedRenderingDynamicGlobalIlluminationQuality,
   isAdvancedRenderingWaterReflectionMode,
   createDefaultAdvancedRenderingSettings,
@@ -886,6 +888,12 @@ function readAdvancedRenderingSettings(
     throw new Error("world.advancedRendering.toneMapping must be an object.");
   }
 
+  if (value.antiAliasing !== undefined && !isRecord(value.antiAliasing)) {
+    throw new Error(
+      "world.advancedRendering.antiAliasing must be an object."
+    );
+  }
+
   if (value.depthOfField !== undefined && !isRecord(value.depthOfField)) {
     throw new Error("world.advancedRendering.depthOfField must be an object.");
   }
@@ -919,6 +927,9 @@ function readAdvancedRenderingSettings(
     | undefined;
   const bloom = value.bloom as Record<string, unknown> | undefined;
   const toneMapping = value.toneMapping as Record<string, unknown> | undefined;
+  const antiAliasing = value.antiAliasing as
+    | Record<string, unknown>
+    | undefined;
   const depthOfField = value.depthOfField as
     | Record<string, unknown>
     | undefined;
@@ -947,6 +958,12 @@ function readAdvancedRenderingSettings(
     "world.advancedRendering.toneMapping.mode",
     defaults.toneMapping.mode,
     isAdvancedRenderingToneMappingMode
+  );
+  const antiAliasingMode = readOptionalAllowedValue(
+    antiAliasing?.mode,
+    "world.advancedRendering.antiAliasing.mode",
+    defaults.antiAliasing.mode,
+    isAdvancedRenderingAntiAliasingMode
   );
   const dynamicGlobalIlluminationQuality = readOptionalAllowedValue(
     dynamicGlobalIllumination?.quality,
@@ -1068,6 +1085,14 @@ function readAdvancedRenderingSettings(
         "world.advancedRendering.toneMapping.exposure",
         defaults.toneMapping.exposure
       )
+    },
+    antiAliasing: {
+      enabled: readOptionalBoolean(
+        antiAliasing?.enabled,
+        "world.advancedRendering.antiAliasing.enabled",
+        defaults.antiAliasing.enabled
+      ),
+      mode: antiAliasingMode
     },
     depthOfField: {
       enabled: readOptionalBoolean(
@@ -6901,7 +6926,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== NPC_TARGETING_SCENE_DOCUMENT_VERSION &&
     source.version !== CUSTOM_PBR_MATERIALS_SCENE_DOCUMENT_VERSION &&
     source.version !== LENS_FLARE_SCENE_DOCUMENT_VERSION &&
-    source.version !== FOLIAGE_WIND_SCENE_DOCUMENT_VERSION
+    source.version !== FOLIAGE_WIND_SCENE_DOCUMENT_VERSION &&
+    source.version !== ANTI_ALIASING_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
       `Unsupported scene document version: ${String(source.version)}.`

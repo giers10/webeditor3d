@@ -125,6 +125,7 @@ import {
   type Terrain
 } from "./terrains";
 import {
+  isAdvancedRenderingAntiAliasingMode,
   isAdvancedRenderingWaterReflectionMode,
   isAdvancedRenderingDynamicGlobalIlluminationQuality,
   isAdvancedRenderingShadowMapSize,
@@ -1131,6 +1132,28 @@ function validateWorldSettings(
         "invalid-advanced-rendering-tone-mapping-exposure",
         "Advanced rendering tone mapping exposure must be a positive finite number.",
         "world.advancedRendering.toneMapping.exposure"
+      )
+    );
+  }
+
+  if (!isBoolean(advancedRendering.antiAliasing.enabled)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-anti-aliasing-enabled",
+        "Advanced rendering anti-aliasing enabled must be a boolean.",
+        "world.advancedRendering.antiAliasing.enabled"
+      )
+    );
+  }
+
+  if (!isAdvancedRenderingAntiAliasingMode(advancedRendering.antiAliasing.mode)) {
+    diagnostics.push(
+      createDiagnostic(
+        "error",
+        "invalid-advanced-rendering-anti-aliasing-mode",
+        "Advanced rendering anti-aliasing mode must be smaa, fxaa, msaa2x, msaa4x, or msaa8x.",
+        "world.advancedRendering.antiAliasing.mode"
       )
     );
   }
