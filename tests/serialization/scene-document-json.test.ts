@@ -1897,6 +1897,28 @@ describe("scene document JSON", () => {
     );
   });
 
+  it("migrates v112 scene documents without anti-aliasing settings to defaults", () => {
+    const emptyScene = createEmptySceneDocument({
+      name: "Legacy Anti-Aliasing Scene"
+    });
+    const legacyDocument = JSON.parse(
+      serializeSceneDocument(emptyScene)
+    ) as Record<string, any>;
+    const legacyAdvancedRendering = legacyDocument.world
+      .advancedRendering as Record<string, unknown>;
+
+    legacyDocument.version = FOLIAGE_WIND_SCENE_DOCUMENT_VERSION;
+    delete legacyAdvancedRendering.antiAliasing;
+
+    const migratedDocument = migrateSceneDocument(legacyDocument);
+
+    expect(migratedDocument.version).toBe(SCENE_DOCUMENT_VERSION);
+    expect(migratedDocument.world.advancedRendering.antiAliasing).toEqual(
+      emptyScene.world.advancedRendering.antiAliasing
+    );
+    expect(ANTI_ALIASING_SCENE_DOCUMENT_VERSION).toBe(SCENE_DOCUMENT_VERSION);
+  });
+
   it("defaults missing water reflection mode and clamps legacy foam limits during migration", () => {
     const migratedDocument = migrateSceneDocument({
       version: SCENE_DOCUMENT_VERSION,
