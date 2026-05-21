@@ -309,4 +309,37 @@ describe("FoliageInstancedRenderer", () => {
     expect(instancedMesh.geometry.getAttribute("foliageWind")).toBeUndefined();
     expect(material.customProgramCacheKey()).not.toContain("foliage-wind-v1");
   });
+
+  it("writes zero wind influence for prototypes with no authored wind strength", async () => {
+    const rebuildWaiters: Array<() => void> = [];
+    const renderer = new FoliageInstancedRenderer({
+      onRebuilt: () => {
+        rebuildWaiters.shift()?.();
+      }
+    });
+    const waitForRebuild = () =>
+      new Promise<void>((resolve) => {
+        rebuildWaiters.push(resolve);
+      });
+    const input = createRendererInput();
+    const prototype = BUNDLED_FOLIAGE_PROTOTYPES[0]!;
+    input.bundledFoliagePrototypes[prototype.id] = {
+      ...prototype,
+      windStrength: 0
+    };
+    const initialRebuild = waitForRebuild();
+
+    renderer.sync(input);
+    renderer.updateView(createCamera({ x: 8, y: 8, z: 8 }));
+    await initialRebuild;
+
+    const instancedMesh = getInstancedMeshes(renderer.group)[0]!;
+    const windAttribute = instancedMesh.geometry.getAttribute("foliageWind");
+    const values = Array.from(windAttribute.array as Float32Array);
+
+    expect(values.length).toBeGreaterThan(0);
+    expect(values.filter((_value, index) => index % 2 === 1)).toEqual(
+      new Array(values.length / 2).fill(0)
+    );
+  });
 });
