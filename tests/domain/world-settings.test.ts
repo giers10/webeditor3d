@@ -196,20 +196,48 @@ describe("world settings helpers", () => {
     expect(areWorldSettingsEqual(left, right)).toBe(false);
   });
 
+  it("treats foliage wind settings as part of authored world equality", () => {
+    const left = createDefaultWorldSettings();
+    const right = cloneWorldSettings(left);
+
+    right.advancedRendering.foliage.windDirectionDegrees += 15;
+
+    expect(areWorldSettingsEqual(left, right)).toBe(false);
+  });
+
   it("bounds resolved foliage quality multipliers", () => {
     expect(
       resolveFoliageQualitySettings({
         enabled: true,
         densityMultiplier: 9,
         maxDistanceMultiplier: 0.01,
-        shadows: "full"
+        shadows: "full",
+        windEnabled: true,
+        windStrength: 9,
+        windSpeed: -1,
+        windDirectionDegrees: -45
       })
     ).toEqual({
       enabled: true,
       densityMultiplier: 8,
       maxDistanceMultiplier: 0.1,
-      shadows: "full"
+      shadows: "full",
+      windEnabled: true,
+      windStrength: 4,
+      windSpeed: 0,
+      windDirectionDegrees: 315
     });
+  });
+
+  it("defaults missing legacy foliage wind settings during resolution", () => {
+    expect(
+      resolveFoliageQualitySettings({
+        enabled: true,
+        densityMultiplier: 1,
+        maxDistanceMultiplier: 1,
+        shadows: "near"
+      } as any)
+    ).toEqual(createDefaultWorldSettings().advancedRendering.foliage);
   });
 
   it("treats the scene project-time lighting toggle as part of authored world equality", () => {

@@ -44,6 +44,7 @@ import {
   FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FOLIAGE_MASKS_SCENE_DOCUMENT_VERSION,
   FOLIAGE_QUALITY_SCENE_DOCUMENT_VERSION,
+  FOLIAGE_WIND_SCENE_DOCUMENT_VERSION,
   IMPORTED_MODEL_COLLIDERS_SCENE_DOCUMENT_VERSION,
   LENS_FLARE_SCENE_DOCUMENT_VERSION,
   LOCAL_LIGHTS_AND_SKYBOX_SCENE_DOCUMENT_VERSION,
@@ -1561,7 +1562,11 @@ describe("scene document JSON", () => {
         enabled: true,
         densityMultiplier: 0.75,
         maxDistanceMultiplier: 1.25,
-        shadows: "near"
+        shadows: "near",
+        windEnabled: true,
+        windStrength: 1.4,
+        windSpeed: 1.8,
+        windDirectionDegrees: 120
       },
       fogPath: "quality",
       waterPath: "performance",

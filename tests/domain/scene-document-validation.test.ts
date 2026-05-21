@@ -1894,7 +1894,11 @@ describe("validateSceneDocument", () => {
         enabled: "yes",
         densityMultiplier: 9,
         maxDistanceMultiplier: 0,
-        shadows: "close"
+        shadows: "close",
+        windEnabled: "yes",
+        windStrength: -0.1,
+        windSpeed: Number.NaN,
+        windDirectionDegrees: 420
       }
     } as any;
 
@@ -2069,6 +2073,22 @@ describe("validateSceneDocument", () => {
         expect.objectContaining({
           code: "invalid-foliage-quality-shadows",
           path: "world.advancedRendering.foliage.shadows"
+        }),
+        expect.objectContaining({
+          code: "invalid-foliage-quality-wind-enabled",
+          path: "world.advancedRendering.foliage.windEnabled"
+        }),
+        expect.objectContaining({
+          code: "invalid-foliage-quality-wind-strength",
+          path: "world.advancedRendering.foliage.windStrength"
+        }),
+        expect.objectContaining({
+          code: "invalid-foliage-quality-wind-speed",
+          path: "world.advancedRendering.foliage.windSpeed"
+        }),
+        expect.objectContaining({
+          code: "invalid-foliage-quality-wind-direction",
+          path: "world.advancedRendering.foliage.windDirectionDegrees"
         }),
         expect.objectContaining({
           code: "invalid-advanced-rendering-fog-path",
