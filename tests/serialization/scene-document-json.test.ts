@@ -1173,7 +1173,7 @@ describe("scene document JSON", () => {
     expect(
       migratedDocument.splineCorridorJunctions[junction.id]?.shapeMode
     ).toBe("straight");
-    expect(FOLIAGE_WIND_SCENE_DOCUMENT_VERSION).toBe(SCENE_DOCUMENT_VERSION);
+    expect(FOLIAGE_WIND_SCENE_DOCUMENT_VERSION).toBe(112);
   });
 
   it("round-trips spline corridor junctions", () => {
