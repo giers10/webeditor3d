@@ -334,7 +334,7 @@ describe("FoliageInstancedRenderer", () => {
     await initialRebuild;
 
     const instancedMesh = getInstancedMeshes(renderer.group)[0]!;
-    const windAttribute = instancedMesh.geometry.getAttribute("foliageWind");
+    const windAttribute = instancedMesh.geometry.getAttribute("foliageWind")!;
     const values = Array.from(windAttribute.array as Float32Array);
 
     expect(values.length).toBeGreaterThan(0);
