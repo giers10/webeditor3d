@@ -37,11 +37,7 @@ export interface DerivedTerrainMeshData {
 export const TERRAIN_LOD_CHUNK_SIZE_CELLS = 64;
 export const TERRAIN_LOD_STRIDES = [1, 2, 4, 8, 16] as const;
 export const TERRAIN_LOD_DEBUG_COLORS = [
-  0xff4d4d,
-  0xffa53d,
-  0xffe66d,
-  0x4ee06f,
-  0x4ba3ff
+  0xff4d4d, 0xffa53d, 0xffe66d, 0x4ee06f, 0x4ba3ff
 ] as const;
 const TERRAIN_LOD_DISTANCE_MULTIPLIERS = [0.75, 1.5, 3, 6] as const;
 const TERRAIN_LOD_HYSTERESIS_RATIO = 0.16;
@@ -232,7 +228,9 @@ export function buildTerrainDerivedMeshData(
   const vertexCount = terrain.sampleCountX * terrain.sampleCountZ;
   const positions = new Float32Array(vertexCount * 3);
   const uvs = new Float32Array(vertexCount * 2);
-  const layerWeights = new Float32Array(vertexCount * TERRAIN_SHADER_LAYER_COUNT);
+  const layerWeights = new Float32Array(
+    vertexCount * TERRAIN_SHADER_LAYER_COUNT
+  );
   const foliageMaskWeights = new Float32Array(vertexCount);
   const foliageMask =
     options.foliageMaskLayerId === undefined ||
@@ -289,11 +287,7 @@ export function buildTerrainDerivedMeshData(
             )
           : foliageMask === null
             ? 0
-            : getTerrainFoliageMaskValueAtSample(
-                foliageMask,
-                sampleX,
-                sampleZ
-              );
+            : getTerrainFoliageMaskValueAtSample(foliageMask, sampleX, sampleZ);
       foliageMaskWeightOffset += 1;
     }
   }
@@ -494,7 +488,11 @@ function sampleTerrainLayerWeightsAtSamplePosition(
 ): number[] {
   const layerWeights = new Array<number>(terrain.layers.length).fill(0);
 
-  for (let layerIndex = 0; layerIndex < terrain.layers.length; layerIndex += 1) {
+  for (
+    let layerIndex = 0;
+    layerIndex < terrain.layers.length;
+    layerIndex += 1
+  ) {
     layerWeights[layerIndex] = sampleTerrainScalarAtSamplePosition(
       terrain,
       sampleX,
@@ -550,13 +548,22 @@ function pushTerrainLodNormal(
   sampleZ: number,
   normals: number[]
 ) {
-  const leftSampleX = clampSampleCoordinate(sampleX - 1, terrain.sampleCountX - 1);
-  const rightSampleX = clampSampleCoordinate(sampleX + 1, terrain.sampleCountX - 1);
+  const leftSampleX = clampSampleCoordinate(
+    sampleX - 1,
+    terrain.sampleCountX - 1
+  );
+  const rightSampleX = clampSampleCoordinate(
+    sampleX + 1,
+    terrain.sampleCountX - 1
+  );
   const bottomSampleZ = clampSampleCoordinate(
     sampleZ - 1,
     terrain.sampleCountZ - 1
   );
-  const topSampleZ = clampSampleCoordinate(sampleZ + 1, terrain.sampleCountZ - 1);
+  const topSampleZ = clampSampleCoordinate(
+    sampleZ + 1,
+    terrain.sampleCountZ - 1
+  );
   const dxDenominator = Math.max(
     (rightSampleX - leftSampleX) * terrain.cellSize,
     Number.EPSILON
@@ -752,7 +759,10 @@ function pushTerrainLodBoundaryPoint(
 ) {
   const previous = points[points.length - 1];
 
-  if (previous !== undefined && areTerrainLodSamplePointsEqual(previous, point)) {
+  if (
+    previous !== undefined &&
+    areTerrainLodSamplePointsEqual(previous, point)
+  ) {
     return;
   }
 
@@ -844,16 +854,8 @@ function buildTerrainLodLevelMeshData(
   stride: number,
   options: TerrainMeshBuildOptions
 ): TerrainLodLevelMeshData {
-  const sampleXs = createLodSampleCoordinates(
-    startSampleX,
-    endSampleX,
-    stride
-  );
-  const sampleZs = createLodSampleCoordinates(
-    startSampleZ,
-    endSampleZ,
-    stride
-  );
+  const sampleXs = createLodSampleCoordinates(startSampleX, endSampleX, stride);
+  const sampleZs = createLodSampleCoordinates(startSampleZ, endSampleZ, stride);
   const positions: number[] = [];
   const uvs: number[] = [];
   const layerWeights: number[] = [];
@@ -1307,29 +1309,23 @@ export function resolveTerrainLodLevelIndexWithHysteresis(options: {
   const lowerBoundary =
     activeLevelIndex <= 0
       ? Number.NEGATIVE_INFINITY
-      : TERRAIN_LOD_DISTANCE_MULTIPLIERS[activeLevelIndex - 1] ??
+      : (TERRAIN_LOD_DISTANCE_MULTIPLIERS[activeLevelIndex - 1] ??
         TERRAIN_LOD_DISTANCE_MULTIPLIERS[
           TERRAIN_LOD_DISTANCE_MULTIPLIERS.length - 1
-        ]!;
+        ]!);
   const upperBoundary =
     activeLevelIndex >= options.levelCount - 1
       ? Number.POSITIVE_INFINITY
-      : TERRAIN_LOD_DISTANCE_MULTIPLIERS[activeLevelIndex] ??
+      : (TERRAIN_LOD_DISTANCE_MULTIPLIERS[activeLevelIndex] ??
         TERRAIN_LOD_DISTANCE_MULTIPLIERS[
           TERRAIN_LOD_DISTANCE_MULTIPLIERS.length - 1
-        ]!;
+        ]!);
 
-  if (
-    normalizedDistance >
-    upperBoundary * (1 + TERRAIN_LOD_HYSTERESIS_RATIO)
-  ) {
+  if (normalizedDistance > upperBoundary * (1 + TERRAIN_LOD_HYSTERESIS_RATIO)) {
     return Math.min(activeLevelIndex + 1, options.levelCount - 1);
   }
 
-  if (
-    normalizedDistance <
-    lowerBoundary * (1 - TERRAIN_LOD_HYSTERESIS_RATIO)
-  ) {
+  if (normalizedDistance < lowerBoundary * (1 - TERRAIN_LOD_HYSTERESIS_RATIO)) {
     return Math.max(activeLevelIndex - 1, 0);
   }
 

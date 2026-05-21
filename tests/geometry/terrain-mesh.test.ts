@@ -14,7 +14,10 @@ import {
   resolveTerrainLodLevelIndexWithHysteresis
 } from "../../src/geometry/terrain-mesh";
 
-function createJaggedTerrainHeights(sampleCountX: number, sampleCountZ: number) {
+function createJaggedTerrainHeights(
+  sampleCountX: number,
+  sampleCountZ: number
+) {
   return Array.from({ length: sampleCountX * sampleCountZ }, (_, index) => {
     const sampleX = index % sampleCountX;
     const sampleZ = Math.floor(index / sampleCountX);
@@ -62,13 +65,9 @@ function collectTopEdgeKeys(options: {
     }
 
     const sampleX =
-      options.axis === "x"
-        ? options.sampleCoordinate
-        : roundedVaryingSample;
+      options.axis === "x" ? options.sampleCoordinate : roundedVaryingSample;
     const sampleZ =
-      options.axis === "x"
-        ? roundedVaryingSample
-        : options.sampleCoordinate;
+      options.axis === "x" ? roundedVaryingSample : options.sampleCoordinate;
     const expectedHeight = getTerrainHeightAtSample(
       options.terrain,
       sampleX,
@@ -83,7 +82,9 @@ function collectTopEdgeKeys(options: {
     keys.add(`${roundedVaryingSample}:${height.toFixed(6)}`);
   }
 
-  return [...keys].sort((left, right) => Number(left.split(":")[0]) - Number(right.split(":")[0]));
+  return [...keys].sort(
+    (left, right) => Number(left.split(":")[0]) - Number(right.split(":")[0])
+  );
 }
 
 function collectLoweredEdgeVertexCount(options: {
@@ -123,18 +124,17 @@ function collectLoweredEdgeVertexCount(options: {
       continue;
     }
 
-    if (roundedVaryingSample === 0 || roundedVaryingSample === maxVaryingSample) {
+    if (
+      roundedVaryingSample === 0 ||
+      roundedVaryingSample === maxVaryingSample
+    ) {
       continue;
     }
 
     const sampleX =
-      options.axis === "x"
-        ? options.sampleCoordinate
-        : roundedVaryingSample;
+      options.axis === "x" ? options.sampleCoordinate : roundedVaryingSample;
     const sampleZ =
-      options.axis === "x"
-        ? roundedVaryingSample
-        : options.sampleCoordinate;
+      options.axis === "x" ? roundedVaryingSample : options.sampleCoordinate;
     const expectedHeight = getTerrainHeightAtSample(
       options.terrain,
       sampleX,
@@ -201,27 +201,16 @@ describe("terrain mesh generation", () => {
     });
     const derivedMesh = buildTerrainDerivedMeshData(terrain);
 
-    expect(Array.from(derivedMesh.uvs)).toEqual([10, -6, 12, -6, 10, -4, 12, -4]);
+    expect(Array.from(derivedMesh.uvs)).toEqual([
+      10, -6, 12, -6, 10, -4, 12, -4
+    ]);
   });
 
   it("derives full per-vertex layer weights from the compact terrain paint data", () => {
     const terrain = createTerrain({
       sampleCountX: 2,
       sampleCountZ: 2,
-      paintWeights: [
-        0.2,
-        0.3,
-        0.1,
-        0,
-        0.5,
-        0,
-        0.1,
-        0.1,
-        0.1,
-        0.25,
-        0.25,
-        0.25
-      ]
+      paintWeights: [0.2, 0.3, 0.1, 0, 0.5, 0, 0.1, 0.1, 0.1, 0.25, 0.25, 0.25]
     });
 
     const derivedMesh = buildTerrainDerivedMeshData(terrain);
@@ -318,11 +307,7 @@ describe("terrain mesh generation", () => {
 
     expect(chunk).toBeDefined();
     expect(chunk!.levels.map((level) => level.stride)).toEqual([
-      1,
-      2,
-      4,
-      8,
-      16
+      1, 2, 4, 8, 16
     ]);
 
     const vertexCounts = chunk!.levels.map(
@@ -362,11 +347,7 @@ describe("terrain mesh generation", () => {
     const [chunk] = buildTerrainLodMeshData(terrain).chunks;
     const [level] = chunk!.levels;
 
-    for (
-      let offset = 0;
-      offset < level!.layerWeights.length;
-      offset += 8
-    ) {
+    for (let offset = 0; offset < level!.layerWeights.length; offset += 8) {
       const sum =
         level!.layerWeights[offset]! +
         level!.layerWeights[offset + 1]! +
