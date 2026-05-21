@@ -573,7 +573,11 @@ export function createDefaultFoliageQualitySettings(): FoliageQualitySettings {
     enabled: DEFAULT_FOLIAGE_QUALITY_ENABLED,
     densityMultiplier: DEFAULT_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
     maxDistanceMultiplier: DEFAULT_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
-    shadows: DEFAULT_FOLIAGE_QUALITY_SHADOWS
+    shadows: DEFAULT_FOLIAGE_QUALITY_SHADOWS,
+    windEnabled: DEFAULT_FOLIAGE_QUALITY_WIND_ENABLED,
+    windStrength: DEFAULT_FOLIAGE_QUALITY_WIND_STRENGTH,
+    windSpeed: DEFAULT_FOLIAGE_QUALITY_WIND_SPEED,
+    windDirectionDegrees: DEFAULT_FOLIAGE_QUALITY_WIND_DIRECTION_DEGREES
   };
 }
 
@@ -586,25 +590,51 @@ export function resolveFoliageQualitySettings(
     return defaults;
   }
 
+  const candidate = settings as Partial<FoliageQualitySettings>;
+
   return {
-    enabled: settings.enabled,
-    densityMultiplier: Number.isFinite(settings.densityMultiplier)
+    enabled:
+      typeof candidate.enabled === "boolean"
+        ? candidate.enabled
+        : defaults.enabled,
+    densityMultiplier: Number.isFinite(candidate.densityMultiplier)
       ? clamp(
-          settings.densityMultiplier,
+          candidate.densityMultiplier!,
           MIN_FOLIAGE_QUALITY_DENSITY_MULTIPLIER,
           MAX_FOLIAGE_QUALITY_DENSITY_MULTIPLIER
         )
       : defaults.densityMultiplier,
-    maxDistanceMultiplier: Number.isFinite(settings.maxDistanceMultiplier)
+    maxDistanceMultiplier: Number.isFinite(candidate.maxDistanceMultiplier)
       ? clamp(
-          settings.maxDistanceMultiplier,
+          candidate.maxDistanceMultiplier!,
           MIN_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER,
           MAX_FOLIAGE_QUALITY_MAX_DISTANCE_MULTIPLIER
         )
       : defaults.maxDistanceMultiplier,
-    shadows: isFoliageQualityShadowMode(settings.shadows)
-      ? settings.shadows
-      : defaults.shadows
+    shadows: isFoliageQualityShadowMode(candidate.shadows)
+      ? candidate.shadows
+      : defaults.shadows,
+    windEnabled:
+      typeof candidate.windEnabled === "boolean"
+        ? candidate.windEnabled
+        : defaults.windEnabled,
+    windStrength: Number.isFinite(candidate.windStrength)
+      ? clamp(
+          candidate.windStrength!,
+          MIN_FOLIAGE_QUALITY_WIND_STRENGTH,
+          MAX_FOLIAGE_QUALITY_WIND_STRENGTH
+        )
+      : defaults.windStrength,
+    windSpeed: Number.isFinite(candidate.windSpeed)
+      ? clamp(
+          candidate.windSpeed!,
+          MIN_FOLIAGE_QUALITY_WIND_SPEED,
+          MAX_FOLIAGE_QUALITY_WIND_SPEED
+        )
+      : defaults.windSpeed,
+    windDirectionDegrees: Number.isFinite(candidate.windDirectionDegrees)
+      ? normalizeDegrees(candidate.windDirectionDegrees!)
+      : defaults.windDirectionDegrees
   };
 }
 
@@ -624,7 +654,11 @@ export function areFoliageQualitySettingsEqual(
     left.enabled === right.enabled &&
     left.densityMultiplier === right.densityMultiplier &&
     left.maxDistanceMultiplier === right.maxDistanceMultiplier &&
-    left.shadows === right.shadows
+    left.shadows === right.shadows &&
+    left.windEnabled === right.windEnabled &&
+    left.windStrength === right.windStrength &&
+    left.windSpeed === right.windSpeed &&
+    left.windDirectionDegrees === right.windDirectionDegrees
   );
 }
 

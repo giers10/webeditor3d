@@ -196,6 +196,7 @@ import {
   FOLIAGE_FOUNDATION_SCENE_DOCUMENT_VERSION,
   FOLIAGE_MASKS_SCENE_DOCUMENT_VERSION,
   FOLIAGE_QUALITY_SCENE_DOCUMENT_VERSION,
+  FOLIAGE_WIND_SCENE_DOCUMENT_VERSION,
   GOD_RAYS_SCENE_DOCUMENT_VERSION,
   GOD_RAYS_SOURCE_SIZE_SCENE_DOCUMENT_VERSION,
   DEFAULT_PROJECT_NAME,
@@ -1238,7 +1239,27 @@ function readAdvancedRenderingSettings(
         "world.advancedRendering.foliage.maxDistanceMultiplier",
         defaults.foliage.maxDistanceMultiplier
       ),
-      shadows: foliageShadowMode
+      shadows: foliageShadowMode,
+      windEnabled: readOptionalBoolean(
+        foliage?.windEnabled,
+        "world.advancedRendering.foliage.windEnabled",
+        defaults.foliage.windEnabled
+      ),
+      windStrength: readOptionalFiniteNumber(
+        foliage?.windStrength,
+        "world.advancedRendering.foliage.windStrength",
+        defaults.foliage.windStrength
+      ),
+      windSpeed: readOptionalFiniteNumber(
+        foliage?.windSpeed,
+        "world.advancedRendering.foliage.windSpeed",
+        defaults.foliage.windSpeed
+      ),
+      windDirectionDegrees: readOptionalFiniteNumber(
+        foliage?.windDirectionDegrees,
+        "world.advancedRendering.foliage.windDirectionDegrees",
+        defaults.foliage.windDirectionDegrees
+      )
     }),
     fogPath,
     waterPath,
@@ -6879,7 +6900,8 @@ export function migrateSceneDocument(source: unknown): SceneDocument {
     source.version !== SPLINE_CORRIDOR_JUNCTION_SHAPE_SCENE_DOCUMENT_VERSION &&
     source.version !== NPC_TARGETING_SCENE_DOCUMENT_VERSION &&
     source.version !== CUSTOM_PBR_MATERIALS_SCENE_DOCUMENT_VERSION &&
-    source.version !== LENS_FLARE_SCENE_DOCUMENT_VERSION
+    source.version !== LENS_FLARE_SCENE_DOCUMENT_VERSION &&
+    source.version !== FOLIAGE_WIND_SCENE_DOCUMENT_VERSION
   ) {
     throw new Error(
       `Unsupported scene document version: ${String(source.version)}.`
